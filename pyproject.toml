@@ -1,0 +1,17 @@
+[project]
+name = "hexastack-workspace"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "packages/*",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.2",
+    "ty>=0.0.69",
+]
+

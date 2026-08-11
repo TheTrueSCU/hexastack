@@ -1,0 +1,2 @@
+class HexastackError(Exception):
+    pass

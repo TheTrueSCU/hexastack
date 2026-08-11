@@ -1,0 +1,23 @@
+[project]
+name = "hexastack-fastapi"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.141.1",
+    "hexastack-core",
+    "hexastack-cqrs",
+    "rodi>=2.1.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }

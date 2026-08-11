@@ -1,0 +1,22 @@
+[project]
+name = "hexastack-cqrs"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "hexastack-core",
+    "huey>=3.3.4",
+    "pydantic>=2.13.4",
+    "tenacity>=9.1.4",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
