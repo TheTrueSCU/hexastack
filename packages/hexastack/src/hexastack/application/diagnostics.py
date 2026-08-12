@@ -20,6 +20,7 @@ from hexastack.domain.diagnostics import (
     SystemInfoDTO,
 )
 
+<<<<<<< Updated upstream
 _KNOWN_PACKAGES = sorted([
     "hexastack",
     "hexastack-cli",
@@ -38,6 +39,32 @@ _OPTIONAL_LIBS = sorted([
     "typer",
     "uvicorn",
 ])
+=======
+_KNOWN_PACKAGES = sorted(
+    [
+        "hexastack",
+        "hexastack-cli",
+        "hexastack-core",
+        "hexastack-cqrs",
+        "hexastack-db",
+        "hexastack-fastapi",
+        "hexastack-logging",
+    ]
+)
+
+_OPTIONAL_LIBS = sorted(
+    [
+        "fastapi",
+        "huey",
+        "loguru",
+        "rich",
+        "sqlalchemy",
+        "structlog",
+        "typer",
+        "uvicorn",
+    ]
+)
+>>>>>>> Stashed changes
 
 
 @query_handler(GetSystemInfoQuery)
@@ -119,9 +146,13 @@ class InspectRegistryHandler:
         if self._handlers is not None:
             for cls in self._handlers.all:
                 name = getattr(cls, "__name__", str(cls))
+<<<<<<< Updated upstream
                 if "Command" in name or issubclass(
                     cls, type("Command", (), {})
                 ):
+=======
+                if "Command" in name or issubclass(cls, type("Command", (), {})):
+>>>>>>> Stashed changes
                     commands.append(name)
                 else:
                     queries.append(name)
