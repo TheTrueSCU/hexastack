@@ -218,6 +218,7 @@ dependencies = [
     { name = "hexastack-core" },
     { name = "huey" },
     { name = "pydantic" },
+    { name = "rodi" },
     { name = "tenacity" },
 ]
 
@@ -226,6 +227,7 @@ requires-dist = [
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "huey", specifier = ">=3.3.4" },
     { name = "pydantic", specifier = ">=2.13.4" },
+    { name = "rodi", specifier = ">=2.1.0" },
     { name = "tenacity", specifier = ">=9.1.4" },
 ]
 

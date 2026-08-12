@@ -2,14 +2,38 @@ from hexastack_core.infra import ConfigRegistry
 from pydantic import BaseModel, Field
 
 
+class CorrelationMiddlewareConfig(BaseModel):
+    """Configuration schema for CQRS correlation context middleware.
+
+    Notes/Architectural Intent:
+        Controls automatic generation and propagation of correlation IDs across message boundaries.
+    """
+
+    enable: bool = Field(default=True)
+    order: int = Field(default=10)
+
+
+class LoggingMiddlewareConfig(BaseModel):
+    """Configuration schema for CQRS message logging middleware.
+
+    Notes/Architectural Intent:
+        Controls structured logging behavior, payload serialization, and pipeline execution order.
+    """
+
+    enable: bool = Field(default=True)
+    order: int = Field(default=30)
+    log_payload: bool = Field(default=True)
+
+
 class RetryMiddlewareConfig(BaseModel):
     """Configuration schema for CQRS retry middleware.
 
     Notes/Architectural Intent:
-        Controls attempt limits and resilience parameters for command/query execution.
+        Controls attempt limits, circuit breaker, resilience parameters, and pipeline execution order.
     """
 
     enable: bool = Field(default=True)
+    order: int = Field(default=50)
     max_attempts: int = Field(default=3, ge=1)
     circuit_breaker_threshold: int = Field(default=5, ge=1)
     recovery_timeout_seconds: float = Field(default=10.0, gt=0.0)
@@ -19,22 +43,23 @@ class TimingMiddlewareConfig(BaseModel):
     """Configuration schema for CQRS execution timing middleware.
 
     Notes/Architectural Intent:
-        Controls duration tracking and threshold limits for slow execution warnings.
+        Controls duration tracking, threshold limits for slow execution warnings, and pipeline order.
     """
 
     enable_slow_warning: bool = Field(default=True)
+    order: int = Field(default=20)
     slow_threshold_seconds: float = Field(default=1.0, gt=0.0)
 
 
-class LoggingMiddlewareConfig(BaseModel):
-    """Configuration schema for CQRS message logging middleware.
+class UnitOfWorkMiddlewareConfig(BaseModel):
+    """Configuration schema for CQRS unit of work transaction middleware.
 
     Notes/Architectural Intent:
-        Controls structured logging behavior and payload serialization toggles.
+        Controls automatic transaction lifecycle wrapping and pipeline execution order.
     """
 
     enable: bool = Field(default=True)
-    log_payload: bool = Field(default=True)
+    order: int = Field(default=40)
 
 
 class CqrsMiddlewareConfig(BaseModel):
@@ -44,9 +69,15 @@ class CqrsMiddlewareConfig(BaseModel):
         Groups middleware settings under `hexastack.cqrs.middleware.<name>`.
     """
 
+    correlation: CorrelationMiddlewareConfig = Field(
+        default_factory=CorrelationMiddlewareConfig
+    )
     logging: LoggingMiddlewareConfig = Field(default_factory=LoggingMiddlewareConfig)
     retry: RetryMiddlewareConfig = Field(default_factory=RetryMiddlewareConfig)
     timing: TimingMiddlewareConfig = Field(default_factory=TimingMiddlewareConfig)
+    unit_of_work: UnitOfWorkMiddlewareConfig = Field(
+        default_factory=UnitOfWorkMiddlewareConfig
+    )
 
 
 class HexastackCqrsConfig(BaseModel):

@@ -1,12 +1,15 @@
 import importlib
 import inspect
 import pkgutil
+from collections.abc import Callable
 from types import ModuleType
-from typing import Any
+from typing import Any, cast
 
 from hexastack_core.infra.decorators import ConfigMetadata, ExceptionMetadata
 from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_core.ports.presenter import Presenter
 from pydantic import BaseModel
+from rodi import Container
 
 from hexastack_cqrs.infra.decorators import HandlerMetadata, PresenterMetadata
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
@@ -18,22 +21,43 @@ class AutodiscoveryScanner:
     Notes/Architectural Intent:
         Eliminates global singleton registries by discovering metadata-tagged commands, queries,
         events, presenters, exception handlers, and configuration schemas, binding them
-        explicitly to the supplied ExecutionPipeline and ConfigRegistry instances.
+        explicitly to the supplied ExecutionPipeline, rodi Container, and ConfigRegistry instances.
     """
 
     def __init__(
         self,
         pipeline: ExecutionPipeline,
         config_registry: ConfigRegistry | None = None,
+        container: Container | None = None,
     ) -> None:
-        """Initialize AutodiscoveryScanner with target ExecutionPipeline and optional ConfigRegistry.
+        """Initialize AutodiscoveryScanner with pipeline, config registry, and optional DI container.
 
         Args:
             pipeline: The ExecutionPipeline instance to register discovered handlers and presenters into.
             config_registry: Optional ConfigRegistry instance to register discovered configuration sections.
+            container: Optional rodi Container for resolving class-based handler dependencies.
         """
         self._pipeline = pipeline
         self._config_registry = config_registry
+        self._container = container
+
+    def _resolve_callable(self, obj: Any) -> Callable[..., Any]:
+        """Resolve a callable handler from a function or class object.
+
+        Args:
+            obj: The discovered function or class object.
+
+        Returns:
+            Callable handler invoking the function or container-resolved class instance.
+        """
+        if inspect.isclass(obj):
+            container = self._container
+            if container is not None:
+                if obj not in container:
+                    container.register(obj)
+                return lambda *args, **kwargs: cast(Callable[..., Any], container.resolve(obj))(*args, **kwargs)
+            return cast(Callable[..., Any], obj())
+        return cast(Callable[..., Any], obj)
 
     def scan_module(self, module: ModuleType | str) -> int:
         """Scan a Python module and register all tagged components into pipeline and registries.
@@ -57,27 +81,40 @@ class AutodiscoveryScanner:
 
             match getattr(obj, "__hexastack_handler__", None):
                 case HandlerMetadata(kind="command", target_cls=target_cls):
-                    self._pipeline._handler_registry.register(target_cls, obj)
+                    callable_handler = self._resolve_callable(obj)
+                    self._pipeline._handler_registry.register(target_cls, callable_handler)
                     self._pipeline._command_registry.register(target_cls)
                     count += 1
                 case HandlerMetadata(kind="query", target_cls=target_cls):
-                    self._pipeline._handler_registry.register(target_cls, obj)
+                    callable_handler = self._resolve_callable(obj)
+                    self._pipeline._handler_registry.register(target_cls, callable_handler)
                     self._pipeline._query_registry.register(target_cls)
                     count += 1
                 case HandlerMetadata(kind="event", target_cls=target_cls):
+                    callable_handler = self._resolve_callable(obj)
                     event_bus: Any = self._pipeline._event_bus
                     if hasattr(event_bus, "subscribe"):
-                        event_bus.subscribe(target_cls, obj)
+                        event_bus.subscribe(target_cls, callable_handler)
                         count += 1
                 case PresenterMetadata(target_cls=target_cls, output_format=output_format):
-                    presenter_inst = obj() if inspect.isclass(obj) else obj
+                    presenter_inst: Presenter
+                    if inspect.isclass(obj) and self._container is not None:
+                        if obj not in self._container:
+                            self._container.register(obj)
+                        presenter_inst = cast(Presenter, self._container.resolve(obj))
+                    elif inspect.isclass(obj):
+                        presenter_inst = cast(Presenter, obj())
+                    else:
+                        presenter_inst = cast(Presenter, obj)
+
                     self._pipeline._presenter_registry.register(
                         target_cls, output_format, presenter_inst
                     )
                     count += 1
                 case ExceptionMetadata(target_cls=target_cls):
                     if self._pipeline._exception_registry is not None:
-                        self._pipeline._exception_registry.register(target_cls, obj)
+                        callable_handler = self._resolve_callable(obj)
+                        self._pipeline._exception_registry.register(target_cls, callable_handler)
                         count += 1
                 case ConfigMetadata(section_name=section_name):
                     if (

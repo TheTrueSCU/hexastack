@@ -1,10 +1,13 @@
 from hexastack_cqrs.infra.autodiscovery import AutodiscoveryScanner
+from hexastack_cqrs.infra.bootstrap import BootstrapResult, bootstrap
 from hexastack_cqrs.infra.config import (
+    CorrelationMiddlewareConfig,
     CqrsMiddlewareConfig,
     HexastackCqrsConfig,
     LoggingMiddlewareConfig,
     RetryMiddlewareConfig,
     TimingMiddlewareConfig,
+    UnitOfWorkMiddlewareConfig,
     register_cqrs_config,
 )
 from hexastack_cqrs.infra.decorators import (
@@ -47,10 +50,12 @@ from hexastack_cqrs.infra.registries import (
 __all__ = [
     "AmbiguousMessageError",
     "AutodiscoveryScanner",
+    "BootstrapResult",
     "CommandRegistry",
     "CommandRegistryError",
     "ConfigMetadata",
     "CorrelationMiddleware",
+    "CorrelationMiddlewareConfig",
     "CqrsMiddlewareConfig",
     "ExceptionMetadata",
     "ExecutionPipeline",
@@ -72,7 +77,9 @@ __all__ = [
     "TimingMiddleware",
     "TimingMiddlewareConfig",
     "UnitOfWorkMiddleware",
+    "UnitOfWorkMiddlewareConfig",
     "UnregisteredMessageError",
+    "bootstrap",
     "command_handler",
     "config_section",
     "event_listener",
