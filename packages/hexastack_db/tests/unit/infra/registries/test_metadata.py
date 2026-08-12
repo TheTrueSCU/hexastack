@@ -61,13 +61,17 @@ def test_auto_create_tables_creates_schema(tmp_path):
     register_metadata(HexastackBase.metadata)
 
     db_path = tmp_path / "test.db"
-    result = _bootstrap_with_url(f"sqlite:///{db_path}", auto_create_tables=True, tmp_path=tmp_path)
+    result = _bootstrap_with_url(
+        f"sqlite:///{db_path}", auto_create_tables=True, tmp_path=tmp_path
+    )
 
     engine = result.get("db_engine")
     assert engine is not None
 
     with engine.connect() as conn:
-        rows = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()
+        rows = conn.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table'")
+        ).fetchall()
         table_names = [r[0] for r in rows]
         assert "test_products_registry" in table_names
 
@@ -76,10 +80,14 @@ def test_auto_create_tables_false_skips_creation(tmp_path):
     """Bootstrap with auto_create_tables=False must NOT create tables."""
     register_metadata(HexastackBase.metadata)
 
-    result = _bootstrap_with_url("sqlite:///:memory:", auto_create_tables=False, tmp_path=tmp_path)
+    result = _bootstrap_with_url(
+        "sqlite:///:memory:", auto_create_tables=False, tmp_path=tmp_path
+    )
 
     engine = result.get("db_engine")
     with engine.connect() as conn:
-        rows = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()
+        rows = conn.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table'")
+        ).fetchall()
         table_names = [r[0] for r in rows]
         assert "test_products_registry" not in table_names

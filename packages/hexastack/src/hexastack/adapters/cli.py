@@ -1,8 +1,5 @@
 import importlib.util
-<<<<<<< Updated upstream
-=======
 from pathlib import Path
->>>>>>> Stashed changes
 
 import typer
 from hexastack_cli.infra.decorators import (
@@ -69,11 +66,6 @@ def add_serve_command(app: typer.Typer) -> None:
         help="Launch the Hexastack local development server (requires hexastack[web]).",
     )
     def serve(
-<<<<<<< Updated upstream
-        host: str = typer.Option("127.0.0.1", "--host", "-h", help="Bind host address."),
-        port: int = typer.Option(8000, "--port", "-p", help="Bind port number."),
-        reload: bool = typer.Option(True, "--reload/--no-reload", help="Enable live reloading."),
-=======
         host: str = typer.Option(
             "127.0.0.1", "--host", "-h", help="Bind host address."
         ),
@@ -81,7 +73,6 @@ def add_serve_command(app: typer.Typer) -> None:
         reload: bool = typer.Option(
             True, "--reload/--no-reload", help="Enable live reloading."
         ),
->>>>>>> Stashed changes
     ) -> None:
         if importlib.util.find_spec("uvicorn") is None:
             raise MissingDependencyError(
@@ -103,11 +94,6 @@ def add_serve_command(app: typer.Typer) -> None:
         uvicorn.run(demo_app, host=host, port=port, reload=reload)
 
 
-<<<<<<< Updated upstream
-__all__ = [
-    "DemoGroupDocs",
-    "InspectGroupDocs",
-=======
 def add_db_commands(app: typer.Typer) -> None:
     """Register 'db' subcommand group with migration management commands.
 
@@ -282,6 +268,5 @@ __all__ = [
     "DemoGroupDocs",
     "InspectGroupDocs",
     "add_db_commands",
->>>>>>> Stashed changes
     "add_serve_command",
 ]

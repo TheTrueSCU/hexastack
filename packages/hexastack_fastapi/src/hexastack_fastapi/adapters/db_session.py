@@ -60,7 +60,9 @@ class DbSessionMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._session_factory = session_factory
 
-    async def dispatch(self, request: Request, call_next: Callable[..., Any]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[..., Any]
+    ) -> Response:
         """Attach a fresh session to each request; close it after response.
 
         Args:
@@ -103,7 +105,9 @@ class AsyncDbSessionMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._session_factory = session_factory
 
-    async def dispatch(self, request: Request, call_next: Callable[..., Any]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[..., Any]
+    ) -> Response:
         """Attach a fresh AsyncSession to each request; close it after response.
 
         Args:

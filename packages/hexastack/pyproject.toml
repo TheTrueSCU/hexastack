@@ -17,15 +17,12 @@ dependencies = [
 cli = [
     "hexastack-cli",
 ]
-<<<<<<< Updated upstream
-=======
 db = [
     "hexastack-db",
 ]
 sql = [
     "hexastack-db",
 ]
->>>>>>> Stashed changes
 fastapi = [
     "hexastack-fastapi",
 ]
@@ -35,10 +32,7 @@ web = [
 ]
 all = [
     "hexastack-cli",
-<<<<<<< Updated upstream
-=======
     "hexastack-db",
->>>>>>> Stashed changes
     "hexastack-fastapi",
     "uvicorn[standard]>=0.30.0",
 ]
@@ -56,7 +50,4 @@ hexastack-cqrs = { workspace = true }
 hexastack-logging = { workspace = true }
 hexastack-fastapi = { workspace = true }
 hexastack-cli = { workspace = true }
-<<<<<<< Updated upstream
-=======
 hexastack-db = { workspace = true }
->>>>>>> Stashed changes
