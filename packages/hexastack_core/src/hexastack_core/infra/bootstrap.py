@@ -7,6 +7,10 @@ from typing import Any
 
 from rodi import Container
 
+from hexastack_core.infra.autodiscovery import (
+    DiscoveryVisitor,
+    scan_modules,
+)
 from hexastack_core.infra.config import HexastackConfig
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
@@ -17,8 +21,8 @@ class BootstrapContext:
     """Contextual runtime state passed across bootstrap phases.
 
     Notes/Architectural Intent:
-        Aggregates DI container, configuration models, and module scanning metadata
-        for extension modules to populate without direct inter-package couplings.
+        Aggregates DI container, configuration models, registered discovery visitors,
+        and module scanning metadata for single-pass multi-subsystem discovery.
     """
 
     container: Container
@@ -26,6 +30,21 @@ class BootstrapContext:
     config_registry: ConfigRegistry
     packages_to_scan: list[str | ModuleType] | None = None
     properties: dict[str, Any] = field(default_factory=dict)
+    visitors: list[DiscoveryVisitor] = field(default_factory=list)
+
+    def register_visitor(self, visitor: DiscoveryVisitor) -> None:
+        """Register a visitor callback to participate in single-pass module scanning.
+
+        Args:
+            visitor: Callable receiving (discovered_member, module).
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        self.visitors.append(visitor)
 
 
 @dataclass(frozen=True)
@@ -84,6 +103,10 @@ def bootstrap(
 ) -> BootstrapResult:
     """Bootstrap a complete Hexastack application runtime through modular extensions.
 
+    Notes/Architectural Intent:
+        Orchestrates Phase 1 config registration, TOML loading, Phase 2 subsystem configuration,
+        single-pass reflective module scanning across all registered visitors, and container customization.
+
     Args:
         config_path: Optional path to a TOML configuration file.
         bootstrappers: Optional explicit list of BootstrapperPort extensions.
@@ -125,7 +148,7 @@ def bootstrap(
     if config_path and Path(config_path).exists():
         loaded_config = config_reg.load_config_toml(config_path)
 
-    # 4. Phase 2: Runtime Configuration
+    # 4. Phase 2: Runtime Subsystem Configuration
     context = BootstrapContext(
         container=di,
         config=loaded_config,
@@ -137,7 +160,12 @@ def bootstrap(
     for b in sorted_bootstrappers:
         b.configure(context)
 
-    # 5. User container customization hook
+    # 5. Phase 3: Single-Pass Reflective Scanning
+    effective_packages = packages_to_scan or context.properties.get("packages_to_scan")
+    if effective_packages and context.visitors:
+        scan_modules(effective_packages, context.visitors)
+
+    # 6. User container customization hook
     if configure_container is not None:
         configure_container(di)
 
@@ -148,3 +176,10 @@ def bootstrap(
         bootstrappers=sorted_bootstrappers,
         properties=context.properties,
     )
+
+
+__all__ = [
+    "BootstrapContext",
+    "BootstrapResult",
+    "bootstrap",
+]

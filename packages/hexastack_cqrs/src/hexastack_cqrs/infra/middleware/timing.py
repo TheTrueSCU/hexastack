@@ -58,9 +58,7 @@ class TimingMiddleware:
                 extra=extra,
             )
 
-    def __call__[G: Generic, R](
-        self, instance: G, next_call: Callable[[G], R]
-    ) -> R:
+    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
         """Measure next_call execution time and log elapsed duration with slow warnings.
 
         Args:
@@ -79,6 +77,7 @@ class TimingMiddleware:
         result = next_call(instance)
 
         if inspect.iscoroutine(result):
+
             async def _async_wrapped() -> Any:
                 try:
                     return await result

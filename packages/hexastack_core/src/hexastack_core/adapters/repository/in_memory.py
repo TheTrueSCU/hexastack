@@ -24,7 +24,9 @@ class InMemoryRepository[E, ID](Repository[E, ID]):
         """
         self._store: dict[ID, E] = {}
         self._id_getter: Callable[[E], ID] = (
-            id_getter if id_getter is not None else (lambda entity: getattr(entity, id_attr))
+            id_getter
+            if id_getter is not None
+            else (lambda entity: getattr(entity, id_attr))
         )
 
     def add(self, entity: E) -> None:

@@ -1,3 +1,7 @@
+from hexastack_core.infra.autodiscovery import (
+    DiscoveryVisitor,
+    scan_modules,
+)
 from hexastack_core.infra.bootstrap import (
     BootstrapContext,
     BootstrapResult,
@@ -31,6 +35,7 @@ __all__ = [
     "ConfigMetadata",
     "ConfigRegistry",
     "ConfigRegistryError",
+    "DiscoveryVisitor",
     "ExceptionMetadata",
     "ExceptionRegistry",
     "ExceptionRegistryError",
@@ -44,4 +49,5 @@ __all__ = [
     "bootstrap",
     "config_section",
     "exception_handler",
+    "scan_modules",
 ]

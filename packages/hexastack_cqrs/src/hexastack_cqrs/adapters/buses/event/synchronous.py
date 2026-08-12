@@ -76,9 +76,7 @@ class SynchronousEventBus(EventBusPort):
 
             pipeline(event)
 
-    def subscribe(
-        self, event_cls: type[Event], handler: Callable[[Any], None]
-    ) -> None:
+    def subscribe(self, event_cls: type[Event], handler: Callable[[Any], None]) -> None:
         """Subscribe a handler callable to receive events of type event_cls.
 
         Args:

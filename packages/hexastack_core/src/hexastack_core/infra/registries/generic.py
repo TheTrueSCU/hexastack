@@ -64,9 +64,7 @@ class GenericHandlerRegistry[T, P]:
         """
         self._mapper.clear()
 
-    def get(
-        self, cls: type[T], exact: bool = False
-    ) -> Callable[[Any], P] | None:
+    def get(self, cls: type[T], exact: bool = False) -> Callable[[Any], P] | None:
         """Retrieve handler callable registered for class cls.
 
         Args:

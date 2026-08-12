@@ -27,7 +27,7 @@ from hexastack_cqrs.adapters.buses.event.synchronous import (
 from hexastack_cqrs.adapters.buses.query.synchronous import (
     SynchronousQueryBus,
 )
-from hexastack_cqrs.infra.autodiscovery import AutodiscoveryScanner
+from hexastack_cqrs.infra.autodiscovery import create_cqrs_visitor
 from hexastack_cqrs.infra.config import (
     CqrsMiddlewareConfig,
     HexastackCqrsConfig,
@@ -135,18 +135,14 @@ class CqrsBootstrapper(BootstrapperPort):
             ordered_middlewares.append(
                 (
                     mw_conf.timing.order,
-                    TimingMiddleware(
-                        logger=active_logger, config=mw_conf.timing
-                    ),
+                    TimingMiddleware(logger=active_logger, config=mw_conf.timing),
                 )
             )
         if mw_conf.logging.enable:
             ordered_middlewares.append(
                 (
                     mw_conf.logging.order,
-                    LoggingMiddleware(
-                        logger=active_logger, config=mw_conf.logging
-                    ),
+                    LoggingMiddleware(logger=active_logger, config=mw_conf.logging),
                 )
             )
         if mw_conf.unit_of_work.enable and UnitOfWorkPort in di:
@@ -160,9 +156,7 @@ class CqrsBootstrapper(BootstrapperPort):
             ordered_middlewares.append(
                 (
                     mw_conf.retry.order,
-                    TenacityRetryMiddleware(
-                        logger=active_logger, config=mw_conf.retry
-                    ),
+                    TenacityRetryMiddleware(logger=active_logger, config=mw_conf.retry),
                 )
             )
 
@@ -208,18 +202,13 @@ class CqrsBootstrapper(BootstrapperPort):
             query_registry=qry_reg,
         )
 
-        # 7. Autodiscovery scanning
-        if context.packages_to_scan:
-            scanner = AutodiscoveryScanner(
-                pipeline=pipeline,
-                config_registry=context.config_registry,
-                container=di,
-            )
-            for pkg in context.packages_to_scan:
-                if isinstance(pkg, str) or hasattr(pkg, "__path__"):
-                    scanner.scan_package(pkg)
-                else:
-                    scanner.scan_module(pkg)
+        # 7. Register CQRS discovery visitor for single-pass scanning
+        visitor = create_cqrs_visitor(
+            pipeline=pipeline,
+            container=di,
+            config_registry=context.config_registry,
+        )
+        context.register_visitor(visitor)
 
     def register_config(self, registry: ConfigRegistry) -> None:
         """Phase 1: Register CQRS configuration schemas under 'cqrs'.
@@ -269,3 +258,10 @@ def bootstrap_cqrs(
     )
     result: CqrsBootstrapResult = res.get("cqrs_result")
     return result
+
+
+__all__ = [
+    "CqrsBootstrapResult",
+    "CqrsBootstrapper",
+    "bootstrap_cqrs",
+]

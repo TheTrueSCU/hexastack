@@ -12,9 +12,7 @@ class PassThroughMiddleware:
     def __init__(self) -> None:
         self.invoked = False
 
-    def __call__[G: Generic, R](
-        self, instance: G, next_call: Callable[[G], R]
-    ) -> R:
+    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
         self.invoked = True
         return next_call(instance)
 

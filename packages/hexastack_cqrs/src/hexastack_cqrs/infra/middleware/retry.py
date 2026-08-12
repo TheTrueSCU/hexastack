@@ -35,9 +35,7 @@ class TenacityRetryMiddleware:
         self._logger = logger
         self._config = config or RetryMiddlewareConfig()
 
-    def __call__[G: Generic, R](
-        self, instance: G, next_call: Callable[[G], R]
-    ) -> R:
+    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
         """Execute next_call with retry policies and debug logging.
 
         Args:

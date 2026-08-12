@@ -1,4 +1,3 @@
-
 from hexastack_core.domain import Result
 
 

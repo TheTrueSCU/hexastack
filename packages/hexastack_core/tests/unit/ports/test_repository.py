@@ -1,4 +1,3 @@
-
 from hexastack_core.adapters.repository import InMemoryRepository
 from hexastack_core.ports.repository import Repository
 

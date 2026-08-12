@@ -40,9 +40,7 @@ class HexastackConfig:
         self._core = core
         self._sections = sections
 
-    def get_section[T: BaseModel](
-        self, section_name: str, expected_type: type[T]
-    ) -> T:
+    def get_section[T: BaseModel](self, section_name: str, expected_type: type[T]) -> T:
         """Retrieve a specific package configuration section by name.
 
         Args:

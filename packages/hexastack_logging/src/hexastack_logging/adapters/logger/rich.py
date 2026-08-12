@@ -1,6 +1,7 @@
 import importlib
 from typing import Any
 
+from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_core.ports.logging import Extras, LoggingPort
 from hexastack_core.utils.context import get_correlation_id
 
@@ -19,14 +20,14 @@ class RichLogger(LoggingPort):
             console: Optional rich.console.Console instance.
 
         Raises:
-            ImportError: If rich package is not installed.
+            MissingDependencyError: If rich package is not installed.
         """
         if console is None:
             try:
                 rich_console_mod = importlib.import_module("rich.console")
                 self._console: Any = rich_console_mod.Console()
             except ImportError as err:
-                raise ImportError(
+                raise MissingDependencyError(
                     "rich is required for RichLogger. Install via 'pip install hexastack-logging[rich]'."
                 ) from err
         else:

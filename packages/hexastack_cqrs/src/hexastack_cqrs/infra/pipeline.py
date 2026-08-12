@@ -128,9 +128,8 @@ class ExecutionPipeline:
             return raw_result
 
         except Exception as exc:
-            if (
-                self._exception_registry is not None
-                and (error_data := self._exception_registry.handle(exc, reraise=False))
+            if self._exception_registry is not None and (
+                error_data := self._exception_registry.handle(exc, reraise=False)
             ):
                 return error_data
             raise
@@ -168,6 +167,10 @@ class ExecutionPipeline:
 
         if matches:
             cls = matches[0]
-            return self.execute(cls.model_validate(payload), output_format=output_format)
+            return self.execute(
+                cls.model_validate(payload), output_format=output_format
+            )
 
-        raise UnregisteredMessageError(f"No Command or Query registered with name '{name}'")
+        raise UnregisteredMessageError(
+            f"No Command or Query registered with name '{name}'"
+        )

@@ -99,6 +99,7 @@ class NativeAsyncCommandBus(CommandBusPort):
         Raises:
             Exception: If submitting task to thread pool executor fails.
         """
+
         def _run() -> Any:
             pipeline: Callable[[Generic], Any] = lambda inst: self._registry.handle(
                 inst, reraise=True

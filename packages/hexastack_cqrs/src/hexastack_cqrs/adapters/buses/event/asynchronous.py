@@ -77,8 +77,11 @@ class HueyEventBus(EventBusPort):
         tasks: list[Any] = []
 
         for handler in target_handlers:
+
             @self._huey.task()
-            def _execute_subscriber(evt: Event, h: Callable[[Any], None] = handler) -> None:
+            def _execute_subscriber(
+                evt: Event, h: Callable[[Any], None] = handler
+            ) -> None:
                 pipeline: Callable[[Generic], Any] = lambda inst: h(inst)
                 for mw in reversed(self._middleware):
                     next_fn = pipeline
@@ -90,9 +93,7 @@ class HueyEventBus(EventBusPort):
 
         return tasks
 
-    def subscribe(
-        self, event_cls: type[Event], handler: Callable[[Any], None]
-    ) -> None:
+    def subscribe(self, event_cls: type[Event], handler: Callable[[Any], None]) -> None:
         """Subscribe a handler callable to receive events of type event_cls.
 
         Args:
@@ -131,7 +132,9 @@ class NativeAsyncEventBus(EventBusPort):
         """
         self._middleware = list(middleware) if middleware is not None else []
         self._subscribers: dict[type[Event], list[Callable[[Any], None]]] = {}
-        self._executor = executor or ThreadPoolExecutor(thread_name_prefix="cqrs-event-async")
+        self._executor = executor or ThreadPoolExecutor(
+            thread_name_prefix="cqrs-event-async"
+        )
 
     def clear(self) -> None:
         """Clear all event subscriptions from the bus.
@@ -178,6 +181,7 @@ class NativeAsyncEventBus(EventBusPort):
         futures: list[Future[None]] = []
 
         for handler in target_handlers:
+
             def _run_subscriber(h: Callable[[Any], None] = handler) -> None:
                 pipeline: Callable[[Generic], Any] = lambda inst: h(inst)
                 for mw in reversed(self._middleware):
@@ -190,9 +194,7 @@ class NativeAsyncEventBus(EventBusPort):
 
         return futures
 
-    def subscribe(
-        self, event_cls: type[Event], handler: Callable[[Any], None]
-    ) -> None:
+    def subscribe(self, event_cls: type[Event], handler: Callable[[Any], None]) -> None:
         """Subscribe a handler callable to receive events of type event_cls.
 
         Args:

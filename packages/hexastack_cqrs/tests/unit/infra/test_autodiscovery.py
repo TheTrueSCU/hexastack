@@ -4,7 +4,9 @@ from typing import Any
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra import ConfigRegistry, ExceptionRegistry
 from hexastack_core.ports import Presenter
-from hexastack_cqrs.infra.autodiscovery import AutodiscoveryScanner
+from hexastack_cqrs.infra.autodiscovery import (
+    autodiscover_cqrs,
+)
 from hexastack_cqrs.infra.decorators import (
     command_handler,
     config_section,
@@ -43,7 +45,7 @@ class OrderConfig(BaseModel):
     max_orders: int = 100
 
 
-def test_autodiscovery_scanner_module():
+def test_autodiscover_cqrs_module():
     mod = types.ModuleType("dummy_handlers_mod")
 
     @command_handler(CreateOrder)
@@ -92,10 +94,12 @@ def test_autodiscovery_scanner_module():
         handler_registry=HandlerRegistry(),
         exception_registry=exc_reg,
     )
-    scanner = AutodiscoveryScanner(pipeline=pipeline, config_registry=config_reg)
 
-    count = scanner.scan_module(mod)
-    assert count == 6
+    autodiscover_cqrs(
+        packages_or_modules=[mod],
+        pipeline=pipeline,
+        config_registry=config_reg,
+    )
 
     # 1. Execute discovered command with discovered presenter
     res_cmd = pipeline.execute(CreateOrder(order_id="101"), output_format="json")

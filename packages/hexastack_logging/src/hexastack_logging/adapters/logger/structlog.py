@@ -1,6 +1,7 @@
 import importlib
 from typing import Any
 
+from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_core.ports.logging import Extras, LoggingPort
 from hexastack_core.utils.context import get_correlation_id, get_user_context
 
@@ -20,14 +21,14 @@ class StructlogAdapter(LoggingPort):
             logger: Optional structlog logger instance.
 
         Raises:
-            ImportError: If structlog package is not installed.
+            MissingDependencyError: If structlog package is not installed.
         """
         if logger is None:
             try:
                 structlog_mod = importlib.import_module("structlog")
                 self._logger: Any = structlog_mod.get_logger()
             except ImportError as err:
-                raise ImportError(
+                raise MissingDependencyError(
                     "structlog is required for StructlogAdapter. Install via 'pip install hexastack-logging[structlog]'."
                 ) from err
         else:

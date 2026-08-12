@@ -1,6 +1,7 @@
 import importlib
 from typing import Any
 
+from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_core.ports.logging import Extras, LoggingPort
 from hexastack_core.utils.context import get_correlation_id, get_user_context
 
@@ -20,14 +21,14 @@ class LoguruAdapter(LoggingPort):
             logger: Optional loguru logger instance.
 
         Raises:
-            ImportError: If loguru package is not installed.
+            MissingDependencyError: If loguru package is not installed.
         """
         if logger is None:
             try:
                 loguru_mod = importlib.import_module("loguru")
                 self._logger: Any = loguru_mod.logger
             except ImportError as err:
-                raise ImportError(
+                raise MissingDependencyError(
                     "loguru is required for LoguruAdapter. Install via 'pip install hexastack-logging[loguru]'."
                 ) from err
         else:

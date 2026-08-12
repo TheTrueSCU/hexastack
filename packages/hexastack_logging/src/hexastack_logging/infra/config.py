@@ -63,9 +63,7 @@ class SanitizerConfig(BaseModel):
     """
 
     enable: bool = Field(default=True)
-    masked_keys: list[str] = Field(
-        default_factory=lambda: sorted(_DEFAULT_MASKED_KEYS)
-    )
+    masked_keys: list[str] = Field(default_factory=lambda: sorted(_DEFAULT_MASKED_KEYS))
     mask_replacement: str = Field(default="***REDACTED***")
     regex_patterns: list[str] = Field(default_factory=lambda: list(_DEFAULT_PATTERNS))
 
@@ -209,9 +207,7 @@ def configure_logging(
         if sanitizer_filter:
             queue_handler.addFilter(sanitizer_filter)
 
-        listener = QueueListener(
-            log_queue, *sink_handlers, respect_handler_level=True
-        )
+        listener = QueueListener(log_queue, *sink_handlers, respect_handler_level=True)
         listener.start()
         logger.addHandler(queue_handler)
     else:

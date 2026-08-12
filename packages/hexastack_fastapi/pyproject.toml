@@ -1,7 +1,7 @@
 [project]
 name = "hexastack-fastapi"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI presentation adapter for Hexastack"
 readme = "README.md"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
@@ -12,6 +12,9 @@ dependencies = [
     "hexastack-core",
     "hexastack-cqrs",
 ]
+
+[project.entry-points."hexastack.bootstrappers"]
+fastapi = "hexastack_fastapi.infra.bootstrap:FastApiBootstrapper"
 
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]

@@ -19,18 +19,14 @@ class QueryTrackingMiddleware:
     def __init__(self) -> None:
         self.called = False
 
-    def __call__[G: Generic, R](
-        self, instance: G, next_call: Callable[[G], R]
-    ) -> R:
+    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
         self.called = True
         return next_call(instance)
 
 
 def test_synchronous_query_bus_dispatch():
     registry = HandlerRegistry()
-    registry.register(
-        GetUserProfile, lambda q: {"id": q.user_id, "name": "Alice"}
-    )
+    registry.register(GetUserProfile, lambda q: {"id": q.user_id, "name": "Alice"})
 
     bus = SynchronousQueryBus(handler_registry=registry)
     result = bus.dispatch(GetUserProfile(user_id="u-1"))
@@ -40,9 +36,7 @@ def test_synchronous_query_bus_dispatch():
 
 def test_synchronous_query_bus_with_middleware():
     registry = HandlerRegistry()
-    registry.register(
-        GetUserProfile, lambda q: {"id": q.user_id, "name": "Bob"}
-    )
+    registry.register(GetUserProfile, lambda q: {"id": q.user_id, "name": "Bob"})
 
     mw = QueryTrackingMiddleware()
     bus = SynchronousQueryBus(handler_registry=registry, middleware=[mw])

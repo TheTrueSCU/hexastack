@@ -50,9 +50,9 @@ class ConsoleFormatter(logging.Formatter):
         Raises:
             None.
         """
-        time_str = datetime.fromtimestamp(
-            record.created, tz=UTC
-        ).strftime(self._datefmt)
+        time_str = datetime.fromtimestamp(record.created, tz=UTC).strftime(
+            self._datefmt
+        )
         level_name = record.levelname
 
         if self._colorize:

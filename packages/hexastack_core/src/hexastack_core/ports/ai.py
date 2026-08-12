@@ -15,7 +15,9 @@ class LlmProviderPort(ABC):
     """
 
     @abstractmethod
-    def generate_structured(self, prompt: str, response_schema: type[BaseModel]) -> BaseModel:
+    def generate_structured(
+        self, prompt: str, response_schema: type[BaseModel]
+    ) -> BaseModel:
         """Generate structured output adhering to a Pydantic schema.
 
         Args:
@@ -56,9 +58,7 @@ class VectorStorePort(ABC):
     """
 
     @abstractmethod
-    def search(
-        self, query_embedding: list[float], limit: int = 5
-    ) -> list[Metadata]:
+    def search(self, query_embedding: list[float], limit: int = 5) -> list[Metadata]:
         """Search for vector entries similar to query_embedding.
 
         Args:

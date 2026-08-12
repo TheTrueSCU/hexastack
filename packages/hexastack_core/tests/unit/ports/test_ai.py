@@ -20,9 +20,7 @@ class MockVectorStore(VectorStorePort):
     def __init__(self) -> None:
         self.store: dict[str, tuple[list[float], Metadata]] = {}
 
-    def search(
-        self, query_embedding: list[float], limit: int = 5
-    ) -> list[Metadata]:
+    def search(self, query_embedding: list[float], limit: int = 5) -> list[Metadata]:
         return [meta for _, meta in list(self.store.values())[:limit]]
 
     def upsert(

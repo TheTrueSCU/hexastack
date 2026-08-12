@@ -31,9 +31,7 @@ class LoggingMiddleware:
         self._logger = logger
         self._config = config or LoggingMiddlewareConfig()
 
-    def __call__[G: Generic, R](
-        self, instance: G, next_call: Callable[[G], R]
-    ) -> R:
+    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
         """Log message details, invoke downstream handler, and log outcome.
 
         Args:
@@ -68,6 +66,7 @@ class LoggingMiddleware:
             raise
 
         if inspect.iscoroutine(result):
+
             async def _async_wrapped() -> Any:
                 try:
                     async_res = await result

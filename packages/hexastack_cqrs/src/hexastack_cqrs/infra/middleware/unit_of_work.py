@@ -36,9 +36,7 @@ class UnitOfWorkMiddleware:
             return self._uow_or_factory
         return self._uow_or_factory()
 
-    def __call__[G: Generic, R](
-        self, instance: G, next_call: Callable[[G], R]
-    ) -> R:
+    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
         """Execute next_call inside a Unit of Work transactional lifecycle.
 
         Args:
@@ -61,6 +59,7 @@ class UnitOfWorkMiddleware:
             raise
 
         if inspect.iscoroutine(result):
+
             async def _async_wrapped() -> Any:
                 try:
                     res = await result

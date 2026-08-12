@@ -79,9 +79,7 @@ def test_pipeline_execute_event():
     )
     event_logs: list[str] = []
 
-    event_bus.subscribe(
-        UserCreated, lambda evt: event_logs.append(evt.user_id)
-    )
+    event_bus.subscribe(UserCreated, lambda evt: event_logs.append(evt.user_id))
     result = pipeline.execute(UserCreated(user_id="u-evt"))
 
     assert result is None
@@ -149,9 +147,7 @@ def test_pipeline_execute_by_name():
         query_registry=query_reg,
     )
 
-    cmd_res = pipeline.execute_by_name(
-        "CreateUser", {"user_id": "u5", "name": "Eve"}
-    )
+    cmd_res = pipeline.execute_by_name("CreateUser", {"user_id": "u5", "name": "Eve"})
     assert isinstance(cmd_res, UserDTO)
     assert cmd_res.user_id == "u5"
 

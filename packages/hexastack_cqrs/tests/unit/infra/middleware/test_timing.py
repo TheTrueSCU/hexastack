@@ -14,7 +14,9 @@ class _DummyCommand(Command):
 
 def test_timing_middleware_normal_execution():
     logger = InMemoryLogger()
-    config = TimingMiddlewareConfig(enable_slow_warning=True, slow_threshold_seconds=1.0)
+    config = TimingMiddlewareConfig(
+        enable_slow_warning=True, slow_threshold_seconds=1.0
+    )
     middleware = TimingMiddleware(logger=logger, config=config)
 
     def fast_handler(cmd: _DummyCommand) -> str:
@@ -34,7 +36,9 @@ def test_timing_middleware_normal_execution():
 
 def test_timing_middleware_slow_execution_warning():
     logger = InMemoryLogger()
-    config = TimingMiddlewareConfig(enable_slow_warning=True, slow_threshold_seconds=0.01)
+    config = TimingMiddlewareConfig(
+        enable_slow_warning=True, slow_threshold_seconds=0.01
+    )
     middleware = TimingMiddleware(logger=logger, config=config)
 
     def slow_handler(cmd: _DummyCommand) -> str:
@@ -52,7 +56,9 @@ def test_timing_middleware_slow_execution_warning():
 
 def test_timing_middleware_slow_warning_disabled():
     logger = InMemoryLogger()
-    config = TimingMiddlewareConfig(enable_slow_warning=False, slow_threshold_seconds=0.01)
+    config = TimingMiddlewareConfig(
+        enable_slow_warning=False, slow_threshold_seconds=0.01
+    )
     middleware = TimingMiddleware(logger=logger, config=config)
 
     def slow_handler(cmd: _DummyCommand) -> str:
@@ -70,7 +76,9 @@ def test_timing_middleware_slow_warning_disabled():
 @pytest.mark.anyio
 async def test_timing_middleware_async_coroutine_execution():
     logger = InMemoryLogger()
-    config = TimingMiddlewareConfig(enable_slow_warning=True, slow_threshold_seconds=0.01)
+    config = TimingMiddlewareConfig(
+        enable_slow_warning=True, slow_threshold_seconds=0.01
+    )
     middleware = TimingMiddleware(logger=logger, config=config)
 
     async def async_slow_handler(cmd: _DummyCommand) -> str:
