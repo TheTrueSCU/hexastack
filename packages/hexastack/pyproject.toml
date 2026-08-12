@@ -29,6 +29,12 @@ fastapi = [
 graphql = [
     "hexastack-graphql",
 ]
+grpc = [
+    "hexastack-grpc",
+]
+mcp = [
+    "hexastack-mcp",
+]
 web = [
     "hexastack-fastapi",
     "uvicorn[standard]>=0.30.0",
@@ -38,6 +44,8 @@ all = [
     "hexastack-db",
     "hexastack-fastapi",
     "hexastack-graphql",
+    "hexastack-grpc",
+    "hexastack-mcp",
     "uvicorn[standard]>=0.30.0",
 ]
 
@@ -56,3 +64,5 @@ hexastack-fastapi = { workspace = true }
 hexastack-cli = { workspace = true }
 hexastack-db = { workspace = true }
 hexastack-graphql = { workspace = true }
+hexastack-grpc = { workspace = true }
+hexastack-mcp = { workspace = true }

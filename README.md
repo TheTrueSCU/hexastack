@@ -18,6 +18,8 @@ graph TD
         CLI["hexastack-cli (Typer + Rich)"]
         REST["hexastack-fastapi (FastAPI)"]
         GQL["hexastack-graphql (Strawberry GraphQL)"]
+        MCP["hexastack-mcp (Model Context Protocol)"]
+        GRPC["hexastack-grpc (gRPC / Protobuf)"]
     end
 
     subgraph CQRSExecution ["Application / CQRS Pipeline"]
@@ -37,6 +39,8 @@ graph TD
     CLI --> BUS
     REST --> BUS
     GQL --> BUS
+    MCP --> BUS
+    GRPC --> BUS
     BUS --> MW
     MW --> CORE
     CORE -.-> DB
@@ -46,7 +50,7 @@ graph TD
 ### Core Tenets
 
 1. **Dependency Inversion & Zero Framework Lock-In**:
-   The domain and abstract ports in `hexastack-core` have zero third-party web or database framework dependencies. Core depends exclusively on `pydantic` (validation) and `rodi` (dependency injection). Frameworks (FastAPI, Typer, SQLAlchemy, Strawberry, Loguru, Huey) exist purely in the outer adapter layers.
+   The domain and abstract ports in `hexastack-core` have zero third-party web or database framework dependencies. Core depends exclusively on `pydantic` (validation) and `rodi` (dependency injection). Frameworks (FastAPI, Typer, SQLAlchemy, Strawberry, Anthropic MCP, gRPC, Loguru, Huey) exist purely in the outer adapter layers.
 2. **First-Class CQRS Segregation**:
    Mutating operations (Commands) and read-only operations (Queries) run on distinct pipelines. Commands traverse configurable middleware pipelines (telemetry, correlation ID propagation, retry policies, automatic transaction management) while Queries return optimized DTO projections.
 3. **DI-Mediated Decoupling**:
@@ -55,7 +59,7 @@ graph TD
    Applications and extensions configure deterministically in 3 distinct phases:
    - **Phase 1: Config Registration** (`register_config`): Extensions register Pydantic configuration schemas under `[hexastack.<section>]`.
    - **Phase 2: Subsystem Assembly** (`configure`): Extensions configure runtime resources and register instances/factories into the DI container ordered by explicit priority (`order`).
-   - **Phase 3: Reflective Module Scanning** (`scan_modules`): Single-pass reflective scanning discovers and binds handlers, routes, and CLI commands via declarative decorators.
+   - **Phase 3: Reflective Module Scanning** (`scan_modules`): Single-pass reflective scanning discovers and binds handlers, routes, CLI commands, and MCP tools via declarative decorators.
 
 ---
 
@@ -71,6 +75,8 @@ graph TD
     DB["hexastack-db (Persistence & Migrations)"]
     FastAPI["hexastack-fastapi (REST API)"]
     GraphQL["hexastack-graphql (Strawberry GraphQL)"]
+    MCP["hexastack-mcp (Model Context Protocol)"]
+    GRPC["hexastack-grpc (gRPC / Protobuf)"]
     CLI["hexastack-cli (Typer CLI)"]
 
     Umbrella --> Core
@@ -79,6 +85,8 @@ graph TD
     Umbrella -. optional .-> DB
     Umbrella -. optional .-> FastAPI
     Umbrella -. optional .-> GraphQL
+    Umbrella -. optional .-> MCP
+    Umbrella -. optional .-> GRPC
     Umbrella -. optional .-> CLI
 
     CQRS --> Core
@@ -89,6 +97,11 @@ graph TD
     GraphQL --> Core
     GraphQL --> CQRS
     GraphQL -. optional .-> FastAPI
+    MCP --> Core
+    MCP --> CQRS
+    MCP -. optional .-> FastAPI
+    GRPC --> Core
+    GRPC --> CQRS
     CLI --> Core
     CLI --> CQRS
 ```
@@ -101,6 +114,8 @@ graph TD
 | [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
 | [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
 | [`hexastack-graphql`](file:///home/rjdw/Projects/hexastack/packages/hexastack_graphql) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
+| [`hexastack-mcp`](file:///home/rjdw/Projects/hexastack/packages/hexastack_mcp) | Model Context Protocol adapter, AI agent CQRS tools, resources, prompts, and SSE transport | `pip install hexastack-mcp[fastapi]` | `hexastack[mcp]` |
+| [`hexastack-grpc`](file:///home/rjdw/Projects/hexastack/packages/hexastack_grpc) | High-performance gRPC presentation adapter, interceptors (correlation, logging, timing) | `pip install hexastack-grpc[reflection]` | `hexastack[grpc]` |
 | [`hexastack-cli`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cli) | CLI presentation layer with nested commands, command aliases, and Rich formatted output | `pip install hexastack-cli` | `hexastack[cli]` |
 | [`hexastack`](file:///home/rjdw/Projects/hexastack/packages/hexastack) | Umbrella distribution package and diagnostic demo CLI application | `pip install hexastack` | `hexastack[all]` |
 

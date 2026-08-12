@@ -29,15 +29,19 @@ _KNOWN_PACKAGES = sorted(
         "hexastack-db",
         "hexastack-fastapi",
         "hexastack-graphql",
+        "hexastack-grpc",
         "hexastack-logging",
+        "hexastack-mcp",
     ]
 )
 
 _OPTIONAL_LIBS = sorted(
     [
         "fastapi",
+        "grpc",
         "huey",
         "loguru",
+        "mcp",
         "rich",
         "sqlalchemy",
         "strawberry",

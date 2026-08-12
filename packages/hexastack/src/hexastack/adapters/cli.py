@@ -1,4 +1,5 @@
 import importlib.util
+import os
 from pathlib import Path
 
 import typer
@@ -53,12 +54,6 @@ def add_serve_command(app: typer.Typer) -> None:
 
     Args:
         app: Target Typer application instance.
-
-    Returns:
-        None.
-
-    Raises:
-        None.
     """
 
     @app.command(
@@ -95,22 +90,7 @@ def add_serve_command(app: typer.Typer) -> None:
 
 
 def add_db_commands(app: typer.Typer) -> None:
-    """Register 'db' subcommand group with migration management commands.
-
-    Notes/Architectural Intent:
-        All commands guard against missing hexastack-db[migrations] and raise
-        a clear MissingDependencyError. The DATABASE_URL env var or --url flag
-        always overrides the default SQLite connection URL.
-
-    Args:
-        app: Target Typer application instance.
-
-    Returns:
-        None.
-
-    Raises:
-        None.
-    """
+    """Register 'db' subcommand group with migration management commands."""
     if importlib.util.find_spec("hexastack_db") is None:
         return
 
@@ -149,8 +129,6 @@ def add_db_commands(app: typer.Typer) -> None:
         ),
     ) -> None:
         _require_migrations()
-        import os
-
         from hexastack_db.infra.config import HexastackDatabaseConfig
         from hexastack_db.infra.migrations import init_migrations
 
@@ -264,9 +242,71 @@ def add_db_commands(app: typer.Typer) -> None:
         stamp(_get_config(directory, url), revision)
 
 
+def add_mcp_commands(app: typer.Typer) -> None:
+    """Register 'mcp' subcommand group for AI agent integration."""
+    if importlib.util.find_spec("hexastack_mcp") is None:
+        return
+
+    mcp_app = typer.Typer(
+        name="mcp",
+        help="Model Context Protocol (MCP) AI agent tools and server.",
+        no_args_is_help=True,
+    )
+    app.add_typer(mcp_app, name="mcp")
+
+    @mcp_app.command(
+        name="run",
+        help="Launch the MCP server in stdio mode (for Claude, Cursor, Antigravity).",
+    )
+    def mcp_run() -> None:
+        from hexastack_core.infra.bootstrap import bootstrap
+        from hexastack_mcp.adapters.stdio import run_stdio_server
+        from mcp.server import MCPServer
+
+        import hexastack.application.diagnostics
+
+        runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+        server = runtime.container.resolve(MCPServer)
+        run_stdio_server(server)
+
+
+def add_grpc_commands(app: typer.Typer) -> None:
+    """Register 'grpc' subcommand group for RPC services."""
+    if importlib.util.find_spec("hexastack_grpc") is None:
+        return
+
+    grpc_app = typer.Typer(
+        name="grpc",
+        help="High-performance gRPC server management.",
+        no_args_is_help=True,
+    )
+    app.add_typer(grpc_app, name="grpc")
+
+    @grpc_app.command(
+        name="serve",
+        help="Launch the gRPC server daemon.",
+    )
+    def grpc_serve(
+        host: str = typer.Option("0.0.0.0", "--host", "-h", help="Bind host."),
+        port: int = typer.Option(50051, "--port", "-p", help="Bind port."),
+    ) -> None:
+        import grpc
+        from hexastack_core.infra.bootstrap import bootstrap
+        from hexastack_grpc.adapters.server import run_grpc_server
+
+        import hexastack.application.diagnostics
+
+        runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+        server = runtime.container.resolve(grpc.Server)
+        typer.echo(f"Starting gRPC server on {host}:{port}...")
+        run_grpc_server(server, block=True)
+
+
 __all__ = [
     "DemoGroupDocs",
     "InspectGroupDocs",
     "add_db_commands",
+    "add_grpc_commands",
+    "add_mcp_commands",
     "add_serve_command",
 ]

@@ -7,7 +7,12 @@ def main() -> None:
     """CLI script entrypoint executing the Hexastack diagnostic and inspection application."""
     import hexastack.adapters.cli
     import hexastack.application.diagnostics
-    from hexastack.adapters.cli import add_db_commands, add_serve_command
+    from hexastack.adapters.cli import (
+        add_db_commands,
+        add_grpc_commands,
+        add_mcp_commands,
+        add_serve_command,
+    )
 
     result = bootstrap(
         packages_to_scan=[
@@ -19,6 +24,8 @@ def main() -> None:
     if cli_app is not None:
         add_serve_command(cli_app)
         add_db_commands(cli_app)
+        add_mcp_commands(cli_app)
+        add_grpc_commands(cli_app)
         cli_app()
     else:
         sys.stderr.write(

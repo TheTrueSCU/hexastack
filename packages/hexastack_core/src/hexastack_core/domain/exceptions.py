@@ -40,10 +40,35 @@ class UnitOfWorkError(HexastackError):
     """
 
 
+class NotFoundError(HexastackError):
+    """Domain exception raised when a requested entity or aggregate is not found."""
+
+
+class ValidationError(HexastackError):
+    """Domain exception raised when business validation or invariant checking fails."""
+
+
+class ConflictError(HexastackError):
+    """Domain exception raised when a resource state conflict occurs (e.g. duplicate key)."""
+
+
+class AuthenticationError(HexastackError):
+    """Domain exception raised when authentication credentials are missing or invalid."""
+
+
+class PermissionDeniedError(HexastackError):
+    """Domain exception raised when an authenticated caller lacks required authorization."""
+
+
 __all__ = [
+    "AuthenticationError",
+    "ConflictError",
     "DependencyResolutionError",
     "HexastackError",
     "HexastackRegistryError",
     "MissingDependencyError",
+    "NotFoundError",
+    "PermissionDeniedError",
     "UnitOfWorkError",
+    "ValidationError",
 ]
