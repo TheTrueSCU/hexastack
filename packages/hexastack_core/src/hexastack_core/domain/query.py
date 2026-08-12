@@ -1,6 +1,9 @@
+from hexastack_core.domain.generic import Generic
 
-from pydantic import BaseModel, ConfigDict
 
+class Query[T](Generic):
+    """Base class for all read-only Query objects in CQRS.
 
-class Query[T](BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    Notes/Architectural Intent:
+        Queries represent side-effect-free data retrieval requests expecting a return value of type T.
+    """
