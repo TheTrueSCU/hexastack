@@ -34,9 +34,9 @@ def _tag_object(obj: Any, metadata: Any) -> None:
     setattr(obj, _HANDLER_META_ATTR, metadata)
 
 
-def config_section(
+def config_section[T: BaseModel](
     section_name: str,
-) -> Callable[[type[BaseModel]], type[BaseModel]]:
+) -> Callable[[type[T]], type[T]]:
     """Mark a Pydantic BaseModel as a configuration section schema.
 
     Args:

@@ -1,0 +1,246 @@
+import logging
+import queue
+from logging.handlers import (
+    QueueHandler,
+    QueueListener,
+    RotatingFileHandler,
+    TimedRotatingFileHandler,
+)
+from pathlib import Path
+from typing import Literal
+
+from hexastack_core.infra.decorators import config_section
+from hexastack_core.infra.registries.config import ConfigRegistry
+from pydantic import BaseModel, Field
+
+from hexastack_logging.infra.filters import (
+    CorrelationIdFilter,
+    SanitizerFilter,
+)
+from hexastack_logging.infra.formatters.console import ConsoleFormatter
+from hexastack_logging.infra.formatters.json import JsonFormatter
+from hexastack_logging.infra.sanitizer import (
+    _DEFAULT_MASKED_KEYS,
+    _DEFAULT_PATTERNS,
+    Sanitizer,
+)
+
+
+class FileLoggingConfig(BaseModel):
+    """Configuration schema for file-based logging and log rotation.
+
+    Notes/Architectural Intent:
+        Controls disk log writing, rotation triggers (size vs. time intervals),
+        retention backup counts, and destination file paths.
+    """
+
+    enable: bool = Field(default=False)
+    path: str = Field(default="logs/app.log")
+    format: Literal["console", "json"] = Field(default="json")
+    max_bytes: int = Field(default=10_485_760)  # 10 MB
+    backup_count: int = Field(default=5)
+    rotation_type: Literal["size", "time"] = Field(default="size")
+    when: str = Field(default="midnight")
+
+
+class AsyncQueueConfig(BaseModel):
+    """Configuration schema for non-blocking queue-based background log emission.
+
+    Notes/Architectural Intent:
+        Offloads disk and stream I/O from request worker threads and async event loops
+        to a dedicated background worker thread using QueueHandler and QueueListener.
+    """
+
+    enable: bool = Field(default=False)
+    max_size: int = Field(default=10_000)
+
+
+class SanitizerConfig(BaseModel):
+    """Configuration schema for log sanitization and credential masking.
+
+    Notes/Architectural Intent:
+        Controls automatic redaction of sensitive dictionary keys and regex pattern matches.
+    """
+
+    enable: bool = Field(default=True)
+    masked_keys: list[str] = Field(
+        default_factory=lambda: sorted(_DEFAULT_MASKED_KEYS)
+    )
+    mask_replacement: str = Field(default="***REDACTED***")
+    regex_patterns: list[str] = Field(default_factory=lambda: list(_DEFAULT_PATTERNS))
+
+
+@config_section("logging")
+class HexastackLoggingConfig(BaseModel):
+    """Configuration schema for application-wide logging.
+
+    Notes/Architectural Intent:
+        Controls log levels, output formatting (console vs. JSON), ANSI colorization,
+        context propagation settings, data sanitization, file rotation, and async queueing.
+    """
+
+    level: str = Field(default="INFO")
+    format: Literal["console", "json"] = Field(default="console")
+    colorize: bool = Field(default=True)
+    include_context: bool = Field(default=True)
+    datefmt: str = Field(default="%Y-%m-%d %H:%M:%S")
+    sanitizer: SanitizerConfig = Field(default_factory=SanitizerConfig)
+    file: FileLoggingConfig = Field(default_factory=FileLoggingConfig)
+    queue: AsyncQueueConfig = Field(default_factory=AsyncQueueConfig)
+    loggers: dict[str, str] = Field(default_factory=dict)
+
+
+def _get_formatter(
+    fmt: str,
+    colorize: bool,
+    datefmt: str,
+    include_context: bool,
+) -> logging.Formatter:
+    """Instantiate appropriate Formatter based on format type."""
+    if fmt == "json":
+        return JsonFormatter(include_context=include_context)
+    return ConsoleFormatter(
+        colorize=colorize,
+        datefmt=datefmt,
+        include_context=include_context,
+    )
+
+
+def configure_logging(
+    config: HexastackLoggingConfig | None = None,
+    target_logger: logging.Logger | None = None,
+) -> QueueListener | None:
+    """Configure a Python logging.Logger with filters, sanitization, file rotation, and async queues.
+
+    Args:
+        config: Optional HexastackLoggingConfig instance (defaults to standard settings).
+        target_logger: Optional Logger to configure (defaults to root logger).
+
+    Returns:
+        The started QueueListener instance if async queueing is enabled, otherwise None.
+
+    Raises:
+        None.
+    """
+    cfg = config or HexastackLoggingConfig()
+    logger = target_logger or logging.getLogger()
+
+    # 1. Set global log level
+    level_num = getattr(logging, cfg.level.upper(), logging.INFO)
+    logger.setLevel(level_num)
+
+    # 2. Configure per-module / fine-grained log levels
+    for mod_name, mod_level in cfg.loggers.items():
+        sub_level = getattr(logging, mod_level.upper(), logging.INFO)
+        logging.getLogger(mod_name).setLevel(sub_level)
+
+    # 3. Prepare filters
+    correlation_filter = CorrelationIdFilter()
+    sanitizer_filter: SanitizerFilter | None = None
+    if cfg.sanitizer.enable:
+        san = Sanitizer(
+            masked_keys=cfg.sanitizer.masked_keys,
+            mask_replacement=cfg.sanitizer.mask_replacement,
+            regex_patterns=cfg.sanitizer.regex_patterns,
+        )
+        sanitizer_filter = SanitizerFilter(san)
+
+    # 4. Prepare Stream (Console) Handler
+    stream_formatter = _get_formatter(
+        fmt=cfg.format,
+        colorize=cfg.colorize,
+        datefmt=cfg.datefmt,
+        include_context=cfg.include_context,
+    )
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(level_num)
+    stream_handler.setFormatter(stream_formatter)
+    stream_handler.addFilter(correlation_filter)
+    if sanitizer_filter:
+        stream_handler.addFilter(sanitizer_filter)
+
+    sink_handlers: list[logging.Handler] = [stream_handler]
+
+    # 5. Prepare File Handler if enabled
+    if cfg.file.enable:
+        log_file_path = Path(cfg.file.path)
+        log_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        file_formatter = _get_formatter(
+            fmt=cfg.file.format,
+            colorize=False,
+            datefmt=cfg.datefmt,
+            include_context=cfg.include_context,
+        )
+
+        file_handler: logging.Handler
+        if cfg.file.rotation_type == "time":
+            file_handler = TimedRotatingFileHandler(
+                filename=str(log_file_path),
+                when=cfg.file.when,
+                backupCount=cfg.file.backup_count,
+                encoding="utf-8",
+            )
+        else:
+            file_handler = RotatingFileHandler(
+                filename=str(log_file_path),
+                maxBytes=cfg.file.max_bytes,
+                backupCount=cfg.file.backup_count,
+                encoding="utf-8",
+            )
+
+        file_handler.setLevel(level_num)
+        file_handler.setFormatter(file_formatter)
+        file_handler.addFilter(correlation_filter)
+        if sanitizer_filter:
+            file_handler.addFilter(sanitizer_filter)
+        sink_handlers.append(file_handler)
+
+    # 6. Apply Async Queue or Direct Handlers
+    logger.handlers.clear()
+    listener: QueueListener | None = None
+    if cfg.queue.enable:
+        log_queue: queue.Queue[logging.LogRecord] = queue.Queue(
+            maxsize=cfg.queue.max_size
+        )
+        queue_handler = QueueHandler(log_queue)
+        queue_handler.setLevel(level_num)
+        queue_handler.addFilter(correlation_filter)
+        if sanitizer_filter:
+            queue_handler.addFilter(sanitizer_filter)
+
+        listener = QueueListener(
+            log_queue, *sink_handlers, respect_handler_level=True
+        )
+        listener.start()
+        logger.addHandler(queue_handler)
+    else:
+        for h in sink_handlers:
+            logger.addHandler(h)
+
+    return listener
+
+
+def register_logging_config(registry: ConfigRegistry) -> None:
+    """Register logging configuration schema with a ConfigRegistry under 'logging'.
+
+    Args:
+        registry: Target ConfigRegistry instance.
+
+    Returns:
+        None.
+
+    Raises:
+        None.
+    """
+    registry.register_config_section("logging", HexastackLoggingConfig)
+
+
+__all__ = [
+    "AsyncQueueConfig",
+    "FileLoggingConfig",
+    "HexastackLoggingConfig",
+    "SanitizerConfig",
+    "configure_logging",
+    "register_logging_config",
+]

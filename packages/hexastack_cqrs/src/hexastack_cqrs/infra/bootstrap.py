@@ -1,12 +1,19 @@
-from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 
 from hexastack_core.adapters.logging import StandardLogger
+from hexastack_core.infra.bootstrap import (
+    BootstrapContext,
+    BootstrapResult,
+)
+from hexastack_core.infra.bootstrap import (
+    bootstrap as core_bootstrap,
+)
 from hexastack_core.infra.config import HexastackConfig
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.infra.registries.exception import ExceptionRegistry
+from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from rodi import Container
@@ -45,11 +52,11 @@ from hexastack_cqrs.ports.buses import (
 
 
 @dataclass(frozen=True)
-class BootstrapResult:
-    """Dataclass holding all initialized registries, container, and execution pipeline.
+class CqrsBootstrapResult:
+    """Dataclass holding initialized CQRS registries, container, and execution pipeline.
 
     Notes/Architectural Intent:
-        Encapsulates the complete bootstrapped application runtime context for web and CLI adapters.
+        Encapsulates the complete bootstrapped CQRS runtime context for application adapters.
     """
 
     pipeline: ExecutionPipeline
@@ -63,160 +70,202 @@ class BootstrapResult:
     query_registry: QueryRegistry
 
 
-def bootstrap(
+class CqrsBootstrapper(BootstrapperPort):
+    """Bootstrap extension configuring CQRS buses, middleware pipeline, and autodiscovery.
+
+    Notes/Architectural Intent:
+        Implements BootstrapperPort for hexastack-cqrs, registering 'cqrs' config
+        schemas in Phase 1 and assembling ExecutionPipeline with DI in Phase 2.
+    """
+
+    name: str = "cqrs"
+    order: int = 20
+
+    def configure(self, context: BootstrapContext) -> None:
+        """Phase 2: Assemble CQRS registries, buses, middleware, and pipeline.
+
+        Args:
+            context: BootstrapContext containing DI container and configuration.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        di = context.container
+
+        # 1. Initialize CQRS Registries
+        exc_reg = ExceptionRegistry()
+        pres_reg = PresenterRegistry()
+        hand_reg = HandlerRegistry()
+        cmd_reg = CommandRegistry()
+        qry_reg = QueryRegistry()
+
+        di.add_instance(exc_reg, declared_class=ExceptionRegistry)
+        di.add_instance(pres_reg, declared_class=PresenterRegistry)
+        di.add_instance(hand_reg, declared_class=HandlerRegistry)
+        di.add_instance(cmd_reg, declared_class=CommandRegistry)
+        di.add_instance(qry_reg, declared_class=QueryRegistry)
+
+        # 2. Resolve or fallback logger
+        active_logger: LoggingPort
+        if LoggingPort in di:
+            active_logger = di.resolve(LoggingPort)
+        else:
+            active_logger = StandardLogger()
+            di.add_instance(active_logger, declared_class=LoggingPort)
+
+        # 3. Read CQRS configuration
+        cqrs_config = HexastackCqrsConfig()
+        if context.config is not None:
+            section = context.config.get_section("cqrs", HexastackCqrsConfig)
+            if section is not None:
+                cqrs_config = section
+
+        # 4. Assemble Ordered Middleware Pipeline
+        mw_conf: CqrsMiddlewareConfig = cqrs_config.middleware
+        ordered_middlewares: list[tuple[int, GenericMiddleware]] = []
+
+        if mw_conf.correlation.enable:
+            ordered_middlewares.append(
+                (mw_conf.correlation.order, CorrelationMiddleware())
+            )
+        if mw_conf.timing.enable_slow_warning:
+            ordered_middlewares.append(
+                (
+                    mw_conf.timing.order,
+                    TimingMiddleware(
+                        logger=active_logger, config=mw_conf.timing
+                    ),
+                )
+            )
+        if mw_conf.logging.enable:
+            ordered_middlewares.append(
+                (
+                    mw_conf.logging.order,
+                    LoggingMiddleware(
+                        logger=active_logger, config=mw_conf.logging
+                    ),
+                )
+            )
+        if mw_conf.unit_of_work.enable and UnitOfWorkPort in di:
+            ordered_middlewares.append(
+                (
+                    mw_conf.unit_of_work.order,
+                    UnitOfWorkMiddleware(lambda: di.resolve(UnitOfWorkPort)),
+                )
+            )
+        if mw_conf.retry.enable:
+            ordered_middlewares.append(
+                (
+                    mw_conf.retry.order,
+                    TenacityRetryMiddleware(
+                        logger=active_logger, config=mw_conf.retry
+                    ),
+                )
+            )
+
+        middleware_list: list[GenericMiddleware] = [
+            mw for _, mw in sorted(ordered_middlewares, key=lambda p: p[0])
+        ]
+
+        # 5. Assemble Buses
+        cmd_bus = SynchronousCommandBus(
+            handler_registry=hand_reg, middleware=middleware_list
+        )
+        qry_bus = SynchronousQueryBus(
+            handler_registry=hand_reg, middleware=middleware_list
+        )
+        evt_bus = SynchronousEventBus(middleware=middleware_list)
+
+        di.add_instance(cmd_bus, declared_class=CommandBusPort)
+        di.add_instance(qry_bus, declared_class=QueryBusPort)
+        di.add_instance(evt_bus, declared_class=EventBusPort)
+
+        # 6. Construct ExecutionPipeline
+        pipeline = ExecutionPipeline(
+            handler_registry=hand_reg,
+            command_registry=cmd_reg,
+            query_registry=qry_reg,
+            presenter_registry=pres_reg,
+            exception_registry=exc_reg,
+            command_bus=cmd_bus,
+            query_bus=qry_bus,
+            event_bus=evt_bus,
+        )
+        di.add_instance(pipeline, declared_class=ExecutionPipeline)
+        context.properties["pipeline"] = pipeline
+        context.properties["cqrs_result"] = CqrsBootstrapResult(
+            pipeline=pipeline,
+            container=di,
+            config=context.config,
+            config_registry=context.config_registry,
+            exception_registry=exc_reg,
+            presenter_registry=pres_reg,
+            handler_registry=hand_reg,
+            command_registry=cmd_reg,
+            query_registry=qry_reg,
+        )
+
+        # 7. Autodiscovery scanning
+        if context.packages_to_scan:
+            scanner = AutodiscoveryScanner(
+                pipeline=pipeline,
+                config_registry=context.config_registry,
+                container=di,
+            )
+            for pkg in context.packages_to_scan:
+                if isinstance(pkg, str) or hasattr(pkg, "__path__"):
+                    scanner.scan_package(pkg)
+                else:
+                    scanner.scan_module(pkg)
+
+    def register_config(self, registry: ConfigRegistry) -> None:
+        """Phase 1: Register CQRS configuration schemas under 'cqrs'.
+
+        Args:
+            registry: Target ConfigRegistry instance.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        register_cqrs_config(registry)
+
+
+def bootstrap_cqrs(
     config_path: str | Path | None = None,
     packages_to_scan: list[str | ModuleType] | None = None,
     container: Container | None = None,
-    configure_container: Callable[[Container], None] | None = None,
-    logger: LoggingPort | None = None,
-    command_bus: CommandBusPort | None = None,
-    query_bus: QueryBusPort | None = None,
-    event_bus: EventBusPort | None = None,
-) -> BootstrapResult:
-    """Bootstrap a complete Hexastack CQRS application runtime with rodi DI, ordered middleware, and autodiscovery.
+    bootstrappers: list[BootstrapperPort] | None = None,
+) -> CqrsBootstrapResult:
+    """Convenience helper to bootstrap application and extract CQRS runtime context.
 
     Args:
-        config_path: Optional path to a TOML configuration file.
-        packages_to_scan: Optional list of package or module paths to autodiscover.
-        container: Optional pre-configured rodi Container instance.
-        configure_container: Optional callback hook to register user services into container.
-        logger: Optional LoggingPort instance (defaults to StandardLogger or InMemoryLogger).
-        command_bus: Optional custom CommandBusPort instance.
-        query_bus: Optional custom QueryBusPort instance.
-        event_bus: Optional custom EventBusPort instance.
+        config_path: Optional path to TOML configuration file.
+        packages_to_scan: Optional list of packages to scan.
+        container: Optional rodi Container.
+        bootstrappers: Optional list of extra bootstrappers.
 
     Returns:
-        BootstrapResult containing configured pipeline, DI container, and registries.
+        CqrsBootstrapResult containing pipeline, DI container, and registries.
 
     Raises:
         None.
     """
-    di = container or Container()
+    bts: list[BootstrapperPort] = [CqrsBootstrapper()]
+    if bootstrappers:
+        bts.extend(bootstrappers)
 
-    # 1. Initialize Registries
-    config_reg = ConfigRegistry()
-    register_cqrs_config(config_reg)
-    exc_reg = ExceptionRegistry()
-    pres_reg = PresenterRegistry()
-    hand_reg = HandlerRegistry()
-    cmd_reg = CommandRegistry()
-    qry_reg = QueryRegistry()
-
-    # Register registries in DI container
-    di.add_instance(config_reg, declared_class=ConfigRegistry)
-    di.add_instance(exc_reg, declared_class=ExceptionRegistry)
-    di.add_instance(pres_reg, declared_class=PresenterRegistry)
-    di.add_instance(hand_reg, declared_class=HandlerRegistry)
-    di.add_instance(cmd_reg, declared_class=CommandRegistry)
-    di.add_instance(qry_reg, declared_class=QueryRegistry)
-
-    # 2. Logger setup
-    active_logger = logger or StandardLogger()
-    di.add_instance(active_logger, declared_class=LoggingPort)
-
-    # 3. Load TOML Configuration if available
-    loaded_config: HexastackConfig | None = None
-    cqrs_config = HexastackCqrsConfig()
-
-    if config_path and Path(config_path).exists():
-        loaded_config = config_reg.load_config_toml(config_path)
-        cqrs_section = loaded_config.get_section("cqrs", HexastackCqrsConfig)
-        if cqrs_section is not None:
-            cqrs_config = cqrs_section
-
-    # 4. User container customization
-    if configure_container is not None:
-        configure_container(di)
-
-    # 5. Assemble Ordered Middleware Pipeline
-    mw_conf: CqrsMiddlewareConfig = cqrs_config.middleware
-    ordered_middlewares: list[tuple[int, GenericMiddleware]] = []
-
-    if mw_conf.correlation.enable:
-        ordered_middlewares.append(
-            (mw_conf.correlation.order, CorrelationMiddleware())
-        )
-    if mw_conf.timing.enable_slow_warning:
-        ordered_middlewares.append(
-            (
-                mw_conf.timing.order,
-                TimingMiddleware(logger=active_logger, config=mw_conf.timing),
-            )
-        )
-    if mw_conf.logging.enable:
-        ordered_middlewares.append(
-            (
-                mw_conf.logging.order,
-                LoggingMiddleware(logger=active_logger, config=mw_conf.logging),
-            )
-        )
-    if mw_conf.unit_of_work.enable and UnitOfWorkPort in di:
-        ordered_middlewares.append(
-            (
-                mw_conf.unit_of_work.order,
-                UnitOfWorkMiddleware(lambda: di.resolve(UnitOfWorkPort)),
-            )
-        )
-    if mw_conf.retry.enable:
-        ordered_middlewares.append(
-            (
-                mw_conf.retry.order,
-                TenacityRetryMiddleware(
-                    logger=active_logger, config=mw_conf.retry
-                ),
-            )
-        )
-
-    # Sort middleware by order ascending (outermost to innermost)
-    middleware_list: list[GenericMiddleware] = [
-        mw for _, mw in sorted(ordered_middlewares, key=lambda pair: pair[0])
-    ]
-
-    # 6. Assemble Buses
-    cmd_bus = command_bus or SynchronousCommandBus(
-        handler_registry=hand_reg, middleware=middleware_list
+    res: BootstrapResult = core_bootstrap(
+        config_path=config_path,
+        packages_to_scan=packages_to_scan,
+        container=container,
+        bootstrappers=bts,
+        auto_discover=True,
     )
-    qry_bus = query_bus or SynchronousQueryBus(
-        handler_registry=hand_reg, middleware=middleware_list
-    )
-    evt_bus = event_bus or SynchronousEventBus(middleware=middleware_list)
-
-    di.add_instance(cmd_bus, declared_class=CommandBusPort)
-    di.add_instance(qry_bus, declared_class=QueryBusPort)
-    di.add_instance(evt_bus, declared_class=EventBusPort)
-
-    # 7. Construct ExecutionPipeline
-    pipeline = ExecutionPipeline(
-        handler_registry=hand_reg,
-        command_registry=cmd_reg,
-        query_registry=qry_reg,
-        presenter_registry=pres_reg,
-        exception_registry=exc_reg,
-        command_bus=cmd_bus,
-        query_bus=qry_bus,
-        event_bus=evt_bus,
-    )
-    di.add_instance(pipeline, declared_class=ExecutionPipeline)
-
-    # 8. Autodiscovery
-    if packages_to_scan:
-        scanner = AutodiscoveryScanner(
-            pipeline=pipeline, config_registry=config_reg, container=di
-        )
-        for pkg in packages_to_scan:
-            if isinstance(pkg, str) or hasattr(pkg, "__path__"):
-                scanner.scan_package(pkg)
-            else:
-                scanner.scan_module(pkg)
-
-    return BootstrapResult(
-        pipeline=pipeline,
-        container=di,
-        config=loaded_config,
-        config_registry=config_reg,
-        exception_registry=exc_reg,
-        presenter_registry=pres_reg,
-        handler_registry=hand_reg,
-        command_registry=cmd_reg,
-        query_registry=qry_reg,
-    )
+    result: CqrsBootstrapResult = res.get("cqrs_result")
+    return result

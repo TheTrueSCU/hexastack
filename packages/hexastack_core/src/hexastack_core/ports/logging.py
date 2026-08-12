@@ -13,6 +13,25 @@ class LoggingPort(ABC):
     """
 
     @abstractmethod
+    def critical(
+        self, message: str, extra: Extras | None = None, exc: Exception | None = None
+    ) -> None:
+        """Log a critical-level message with optional exception context.
+
+        Args:
+            message: Text message to log.
+            extra: Optional key-value dictionary of contextual metadata.
+            exc: Optional exception instance to log traceback for.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        ...
+
+    @abstractmethod
     def debug(self, message: str, extra: Extras | None = None) -> None:
         """Log a debug-level message.
 

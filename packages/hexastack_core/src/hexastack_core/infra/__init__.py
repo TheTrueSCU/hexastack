@@ -1,3 +1,8 @@
+from hexastack_core.infra.bootstrap import (
+    BootstrapContext,
+    BootstrapResult,
+    bootstrap,
+)
 from hexastack_core.infra.config import (
     HexastackConfig,
     HexastackConfigError,
@@ -21,6 +26,8 @@ from hexastack_core.infra.registries import (
 )
 
 __all__ = [
+    "BootstrapContext",
+    "BootstrapResult",
     "ConfigMetadata",
     "ConfigRegistry",
     "ConfigRegistryError",
@@ -34,6 +41,7 @@ __all__ = [
     "HexastackConfig",
     "HexastackConfigError",
     "HexastackCoreConfig",
+    "bootstrap",
     "config_section",
     "exception_handler",
 ]

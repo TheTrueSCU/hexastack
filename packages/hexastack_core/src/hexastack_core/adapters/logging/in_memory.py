@@ -52,6 +52,26 @@ class InMemoryLogger(LoggingPort):
         """
         self._entries.clear()
 
+    def critical(
+        self, message: str, extra: Extras | None = None, exc: Exception | None = None
+    ) -> None:
+        """Capture a critical-level log entry with optional exception.
+
+        Args:
+            message: Text message to log.
+            extra: Optional key-value dictionary of contextual metadata.
+            exc: Optional exception instance.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        self._entries.append(
+            LogEntry(level="critical", message=message, extra=extra, exc=exc)
+        )
+
     def debug(self, message: str, extra: Extras | None = None) -> None:
         """Capture a debug-level log entry.
 
@@ -80,7 +100,7 @@ class InMemoryLogger(LoggingPort):
         """Filter and retrieve captured log entries matching a specific log level.
 
         Args:
-            level: The target log level name (e.g. 'debug', 'info', 'warning', 'error').
+            level: The target log level name (e.g. 'debug', 'info', 'warning', 'error', 'critical').
 
         Returns:
             Filtered list of LogEntry records matching level.

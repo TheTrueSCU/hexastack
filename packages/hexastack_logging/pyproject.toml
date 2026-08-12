@@ -11,6 +11,19 @@ dependencies = [
     "hexastack-core",
 ]
 
+[project.optional-dependencies]
+loguru = ["loguru>=0.7.0"]
+rich = ["rich>=13.0.0"]
+structlog = ["structlog>=24.0.0"]
+all = [
+    "loguru>=0.7.0",
+    "rich>=13.0.0",
+    "structlog>=24.0.0",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+logging = "hexastack_logging.infra.bootstrap:LoggingBootstrapper"
+
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"

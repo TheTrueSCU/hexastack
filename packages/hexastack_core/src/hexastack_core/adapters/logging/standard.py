@@ -24,6 +24,24 @@ class StandardLogger(LoggingPort):
         else:
             self._logger = logging.getLogger("hexastack")
 
+    def critical(
+        self, message: str, extra: Extras | None = None, exc: Exception | None = None
+    ) -> None:
+        """Emit a critical-level log message to the underlying standard logger.
+
+        Args:
+            message: Text message to log.
+            extra: Optional key-value dictionary of contextual metadata.
+            exc: Optional exception instance to attach traceback.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        self._logger.critical(message, exc_info=exc, extra=extra)
+
     def debug(self, message: str, extra: Extras | None = None) -> None:
         """Emit a debug-level log message to the underlying standard logger.
 
