@@ -85,9 +85,7 @@ def _build_dynamic_cli_runner(
             field_data.update(cli_flags)
 
             instance = model_cls(**field_data)
-            result = pipeline.execute(
-                instance, output_format=requested_output
-            )
+            result = pipeline.execute(instance, output_format=requested_output)
 
             # Resolve asynchronous handler coroutine if returned
             if inspect.iscoroutine(result):
@@ -95,9 +93,7 @@ def _build_dynamic_cli_runner(
 
             if result is not None:
                 if isinstance(result, Generic):
-                    active_presenter.present(
-                        result, format_mode=requested_output
-                    )
+                    active_presenter.present(result, format_mode=requested_output)
                 elif not quiet_mode or requested_output:
                     if requested_output == "json":
                         sys.stdout.write(
@@ -108,9 +104,7 @@ def _build_dynamic_cli_runner(
                         sys.stdout.write(f"{result}\n")
                         sys.stdout.flush()
                     else:
-                        active_console.print(
-                            f"[bold green]{result}[/bold green]"
-                        )
+                        active_console.print(f"[bold green]{result}[/bold green]")
         except Exception as exc:
             if debug_mode:
                 active_presenter.print_exception()

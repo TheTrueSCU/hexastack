@@ -31,11 +31,7 @@ def _normalize_group_path(group: str | Sequence[str] | None) -> list[str]:
     if not group:
         return []
     if isinstance(group, str):
-        return [
-            part.strip()
-            for part in re.split(r"[./\s]+", group)
-            if part.strip()
-        ]
+        return [part.strip() for part in re.split(r"[./\s]+", group) if part.strip()]
     return [str(part).strip() for part in group if str(part).strip()]
 
 
@@ -72,9 +68,7 @@ def create_cli_visitor(
             current_path.append(part)
             key = tuple(current_path)
             if key not in subgroups:
-                help_text = group_docs.get(
-                    key, f"{part.title()} management commands"
-                )
+                help_text = group_docs.get(key, f"{part.title()} management commands")
                 sub_app = typer.Typer(
                     name=part,
                     help=help_text,
@@ -133,9 +127,7 @@ def create_cli_visitor(
         targets = _resolve_targets(meta, default_name)
 
         for group_parts, cmd_name, help_text in targets:
-            target_app = (
-                _get_or_create_subgroup(group_parts) if group_parts else app
-            )
+            target_app = _get_or_create_subgroup(group_parts) if group_parts else app
 
             if meta.kind == "command" and issubclass(obj, Command):
                 register_cqrs_command(

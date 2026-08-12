@@ -63,15 +63,11 @@ def test_register_cqrs_command_and_query():
     captured_user: list[tuple[str | None, str | None]] = []
 
     handler_reg = HandlerRegistry()
-    handler_reg.register(
-        AddNumbersCommand, lambda cmd: SumDTO(result=cmd.a + cmd.b)
-    )
+    handler_reg.register(AddNumbersCommand, lambda cmd: SumDTO(result=cmd.a + cmd.b))
     handler_reg.register(
         PositionalCommand, lambda cmd: f"Processed {cmd.item_id}:{cmd.amount}"
     )
-    handler_reg.register(
-        MultiplyQuery, lambda qry: qry.x * qry.y
-    )
+    handler_reg.register(MultiplyQuery, lambda qry: qry.x * qry.y)
 
     def _fail_handler(cmd: FailingCommand) -> None:
         raise ValueError("Invalid operation")
@@ -144,7 +140,9 @@ def test_register_cqrs_command_and_query():
     # 6. Error handling exit code 1 with and without --debug
     res_err = runner.invoke(app, ["failing", "--flag"])
     assert res_err.exit_code == 1
-    assert "Invalid operation" in res_err.stdout or "Invalid operation" in res_err.stderr
+    assert (
+        "Invalid operation" in res_err.stdout or "Invalid operation" in res_err.stderr
+    )
 
     res_debug_err = runner.invoke(app, ["failing", "--flag", "--debug"])
     assert res_debug_err.exit_code == 1
@@ -169,9 +167,7 @@ def test_register_cqrs_command_and_query():
     assert ("usr-99", "tenant-corp") in captured_user
 
     # 8. Raw JSON payload input via --input
-    res_input = runner.invoke(
-        app, ["add-numbers", "--input", '{"a": 100, "b": 200}']
-    )
+    res_input = runner.invoke(app, ["add-numbers", "--input", '{"a": 100, "b": 200}'])
     assert res_input.exit_code == 0
     assert "300" in res_input.stdout
 

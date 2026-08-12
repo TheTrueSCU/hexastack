@@ -68,9 +68,7 @@ def test_autodiscover_cli_commands_nested_subgroups_and_aliases():
         CreateUserCommand,
         lambda cmd: UserDTO(username=f"Created user: {cmd.name}"),
     )
-    handler_reg.register(
-        GetUserQuery, lambda qry: f"Found user {qry.name}"
-    )
+    handler_reg.register(GetUserQuery, lambda qry: f"Found user {qry.name}")
     handler_reg.register(
         SetBioCommand, lambda cmd: BioDTO(status=f"Updated bio to: {cmd.bio}")
     )

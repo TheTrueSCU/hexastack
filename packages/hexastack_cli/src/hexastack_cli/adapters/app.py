@@ -68,9 +68,7 @@ def create_cli_app(
         pres_reg = container.resolve(PresenterRegistry)
         terminal_presenter = RichTerminalPresenter(console=active_console)
         pres_reg.register(Generic, "rich", terminal_presenter)
-        container.add_instance(
-            terminal_presenter, declared_class=RichTerminalPresenter
-        )
+        container.add_instance(terminal_presenter, declared_class=RichTerminalPresenter)
 
     return app
 

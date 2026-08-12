@@ -12,9 +12,7 @@ def test_create_cli_app_defaults():
     pres_reg = PresenterRegistry()
     container.add_instance(pres_reg, declared_class=PresenterRegistry)
 
-    cfg = HexastackCliConfig(
-        app_name="my-tool", version="1.2.3", help_text="My Tool"
-    )
+    cfg = HexastackCliConfig(app_name="my-tool", version="1.2.3", help_text="My Tool")
     app = create_cli_app(config=cfg, container=container)
 
     assert isinstance(app, typer.Typer)

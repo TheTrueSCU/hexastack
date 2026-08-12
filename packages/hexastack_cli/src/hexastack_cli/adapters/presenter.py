@@ -32,9 +32,7 @@ class RichTerminalPresenter(Presenter):
             stderr_console: Optional rich.console.Console instance for stderr.
         """
         no_color = bool(os.environ.get("NO_COLOR"))
-        self._console = console or Console(
-            no_color=no_color, highlight=not no_color
-        )
+        self._console = console or Console(no_color=no_color, highlight=not no_color)
         self._stderr = stderr_console or Console(
             stderr=True, no_color=no_color, highlight=not no_color
         )
@@ -123,9 +121,7 @@ class RichTerminalPresenter(Presenter):
             table.add_column("Value", style="green")
             for k, v in data.items():
                 val_str = (
-                    json.dumps(v, indent=2)
-                    if isinstance(v, dict | list)
-                    else str(v)
+                    json.dumps(v, indent=2) if isinstance(v, dict | list) else str(v)
                 )
                 table.add_row(str(k), val_str)
             self._console.print(
