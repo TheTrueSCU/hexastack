@@ -1,4 +1,3 @@
-import pytest
 import strawberry
 from hexastack_graphql.infra.decorators import (
     get_schema_registry,
@@ -8,73 +7,50 @@ from hexastack_graphql.infra.decorators import (
 from hexastack_graphql.infra.registries.schema import GraphQLSchemaRegistry
 
 
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_schema_registry()
-    reg.clear()
-    yield
-    reg.clear()
-
-
 def test_empty_registry_builds_default_ping_schema():
     reg = GraphQLSchemaRegistry()
     schema = reg.build_schema()
-    result = schema.execute_sync("{ ping }")
-    assert result.errors is None
-    assert result.data == {"ping": "pong"}
+    assert isinstance(schema, strawberry.Schema)
+    res = schema.execute_sync("{ ping }")
+    assert res.data == {"ping": "pong"}
 
 
-def test_custom_query_type_registration():
-    reg = GraphQLSchemaRegistry()
+def test_schema_registry_with_query_and_mutation():
+    reg = get_schema_registry()
 
-    @strawberry.type
-    class UserQuery:
+    @graphql_query_type
+    class QueryRoot:
         @strawberry.field
         def hello(self, name: str = "World") -> str:
             return f"Hello, {name}!"
 
-    reg.register_query_type(UserQuery)
+    @graphql_mutation_type
+    class MutationRoot:
+        @strawberry.mutation
+        def add(self, a: int, b: int) -> int:
+            return a + b
+
     schema = reg.build_schema()
+    res_q = schema.execute_sync('{ hello(name: "Hexastack") }')
+    assert res_q.data == {"hello": "Hello, Hexastack!"}
 
-    result = schema.execute_sync('{ hello(name: "Hexastack") }')
-    assert result.errors is None
-    assert result.data == {"hello": "Hello, Hexastack!"}
+    res_m = schema.execute_sync("mutation { add(a: 2, b: 3) }")
+    assert res_m.data == {"add": 5}
 
 
-def test_custom_mutation_type_registration():
+def test_schema_registry_with_custom_schema():
     reg = GraphQLSchemaRegistry()
 
     @strawberry.type
-    class Mutation:
-        @strawberry.mutation
-        def create_user(self, username: str) -> str:
-            return f"User {username} created"
-
-    reg.register_mutation_type(Mutation)
-    schema = reg.build_schema()
-
-    result = schema.execute_sync('mutation { createUser(username: "alice") }')
-    assert result.errors is None
-    assert result.data == {"createUser": "User alice created"}
-
-
-def test_decorators_registration():
-    @graphql_query_type
-    class MyQuery:
+    class CustomQuery:
         @strawberry.field
-        def message(self) -> str:
-            return "from query decorator"
+        def custom(self) -> str:
+            return "custom_val"
 
-    @graphql_mutation_type
-    class MyMutation:
-        @strawberry.mutation
-        def send(self, text: str) -> str:
-            return f"sent: {text}"
+    custom_schema = strawberry.Schema(query=CustomQuery)
+    reg.set_custom_schema(custom_schema)
 
-    schema = get_schema_registry().build_schema()
-
-    q_res = schema.execute_sync("{ message }")
-    assert q_res.data == {"message": "from query decorator"}
-
-    m_res = schema.execute_sync('mutation { send(text: "hi") }')
-    assert m_res.data == {"send": "sent: hi"}
+    schema = reg.build_schema()
+    assert schema is custom_schema
+    res = schema.execute_sync("{ custom }")
+    assert res.data == {"custom": "custom_val"}

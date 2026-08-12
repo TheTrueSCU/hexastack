@@ -1,4 +1,3 @@
-import pytest
 import strawberry
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_graphql.infra.bootstrap import (
@@ -6,17 +5,8 @@ from hexastack_graphql.infra.bootstrap import (
     GraphQLBootstrapResult,
 )
 from hexastack_graphql.infra.decorators import (
-    get_schema_registry,
     graphql_query_type,
 )
-
-
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_schema_registry()
-    reg.clear()
-    yield
-    reg.clear()
 
 
 def test_graphql_bootstrapper_initialization():

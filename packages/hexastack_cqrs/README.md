@@ -51,6 +51,9 @@ hexastack_cqrs/
 graph TD
     subgraph DrivingAdapters ["Inbound Driving Adapters"]
         FASTAPI["hexastack-fastapi"]
+        GRAPHQL["hexastack-graphql"]
+        MCP["hexastack-mcp"]
+        GRPC["hexastack-grpc"]
         CLI["hexastack-cli"]
     end
 
@@ -69,6 +72,12 @@ graph TD
 
     FASTAPI -->|dispatches to| CBUS
     FASTAPI -->|dispatches to| QBUS
+    GRAPHQL -->|dispatches to| CBUS
+    GRAPHQL -->|dispatches to| QBUS
+    MCP -->|dispatches to| CBUS
+    MCP -->|dispatches to| QBUS
+    GRPC -->|dispatches to| CBUS
+    GRPC -->|dispatches to| QBUS
     CLI -->|dispatches to| CBUS
     CLI -->|dispatches to| QBUS
 

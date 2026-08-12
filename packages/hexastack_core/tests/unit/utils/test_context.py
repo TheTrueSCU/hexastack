@@ -1,6 +1,7 @@
 from hexastack_core.utils.context import (
     UserContext,
     correlation_id_ctx,
+    correlation_scope,
     get_correlation_id,
     get_user_context,
     new_correlation_id,
@@ -42,3 +43,20 @@ def test_context_helper_functions():
     set_user_context(None)
     assert get_user_context() is None
     user_ctx.reset(user_token)
+
+
+def test_correlation_scope():
+    token = set_correlation_id("initial-id")
+
+    with correlation_scope("scoped-id-123") as cid:
+        assert cid == "scoped-id-123"
+        assert get_correlation_id() == "scoped-id-123"
+
+    assert get_correlation_id() == "initial-id"
+
+    with correlation_scope() as auto_cid:
+        assert len(auto_cid) > 0
+        assert get_correlation_id() == auto_cid
+
+    assert get_correlation_id() == "initial-id"
+    correlation_id_ctx.reset(token)

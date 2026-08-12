@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-import pytest
 import strawberry
 from hexastack_core.domain.command import Command
 from hexastack_core.domain.query import Query
@@ -18,14 +17,6 @@ from hexastack_graphql.infra.resolvers import (
     dispatch_query,
 )
 from strawberry.types import Info
-
-
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_schema_registry()
-    reg.clear()
-    yield
-    reg.clear()
 
 
 @dataclass(frozen=True)

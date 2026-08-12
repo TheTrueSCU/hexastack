@@ -68,11 +68,7 @@ class DatabaseBootstrapper(BootstrapperPort):
         di = context.container
 
         # 1. Read Database Configuration
-        db_config = HexastackDatabaseConfig()
-        if context.config is not None:
-            section = context.config.get_section("database", HexastackDatabaseConfig)
-            if section is not None:
-                db_config = section
+        db_config = context.get_config("database", HexastackDatabaseConfig)
 
         engine: Engine | AsyncEngine
         session_factory: Any

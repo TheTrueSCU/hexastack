@@ -46,11 +46,7 @@ class McpBootstrapper(BootstrapperPort):
         Returns:
             None.
         """
-        cfg = HexastackMcpConfig()
-        if context.config is not None:
-            section = context.config.get_section("mcp", HexastackMcpConfig)
-            if section is not None:
-                cfg = section
+        cfg = context.get_config("mcp", HexastackMcpConfig)
 
         registry = get_mcp_registry()
 

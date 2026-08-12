@@ -2,20 +2,11 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import grpc
-import pytest
 from hexastack_grpc.infra.config import HexastackGrpcConfig
 from hexastack_grpc.infra.decorators import (
     get_grpc_registry,
     grpc_service,
 )
-
-
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_grpc_registry()
-    reg.clear()
-    yield
-    reg.clear()
 
 
 class DummyServicer:

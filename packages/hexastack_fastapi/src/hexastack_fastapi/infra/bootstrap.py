@@ -39,11 +39,7 @@ class FastApiBootstrapper(BootstrapperPort):
         from hexastack_fastapi.adapters.routing import CqrsRouter
         from hexastack_fastapi.infra.autodiscovery import create_route_visitor
 
-        cfg = HexastackFastApiConfig()
-        if context.config is not None:
-            section = context.config.get_section("fastapi", HexastackFastApiConfig)
-            if section is not None:
-                cfg = section
+        cfg = context.get_config("fastapi", HexastackFastApiConfig)
 
         pipeline = context.properties.get("pipeline")
         if pipeline is None and ExecutionPipeline in context.container:

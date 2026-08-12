@@ -5,6 +5,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from pydantic import BaseModel
 from rodi import Container
 
 from hexastack_core.infra.autodiscovery import (
@@ -37,14 +38,34 @@ class BootstrapContext:
 
         Args:
             visitor: Callable receiving (discovered_member, module).
-
-        Returns:
-            None.
-
-        Raises:
-            None.
         """
         self.visitors.append(visitor)
+
+    def get_config[T: BaseModel](
+        self,
+        section: str,
+        schema_cls: type[T],
+        default: T | None = None,
+    ) -> T:
+        """Retrieve typed configuration section or construct default schema instance.
+
+        Notes/Architectural Intent:
+            Eliminates repetitive configuration section lookup boilerplate across
+            subsystem bootstrappers.
+
+        Args:
+            section: Section name registered in configuration registry.
+            schema_cls: Pydantic BaseModel class for the section.
+            default: Optional fallback instance if section is not present in config.
+
+        Returns:
+            The parsed section model instance, or a new default schema_cls() instance.
+        """
+        if self.config is not None:
+            val = self.config.get_section(section, schema_cls)
+            if val is not None:
+                return val
+        return default if default is not None else schema_cls()
 
 
 @dataclass(frozen=True)
@@ -71,9 +92,6 @@ class BootstrapResult:
 
         Returns:
             The stored property value or default.
-
-        Raises:
-            None.
         """
         return self.properties.get(key, default)
 
@@ -117,9 +135,6 @@ def bootstrap(
 
     Returns:
         BootstrapResult containing configured container, config, and properties.
-
-    Raises:
-        None.
     """
     di = container or Container()
 

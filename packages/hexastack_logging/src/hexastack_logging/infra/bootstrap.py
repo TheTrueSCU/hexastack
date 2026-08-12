@@ -33,11 +33,7 @@ class LoggingBootstrapper(BootstrapperPort):
         Raises:
             None.
         """
-        cfg: HexastackLoggingConfig = HexastackLoggingConfig()
-        if context.config is not None:
-            section = context.config.get_section("logging", HexastackLoggingConfig)
-            if section is not None:
-                cfg = section
+        cfg = context.get_config("logging", HexastackLoggingConfig)
 
         logger = StructuredLogger(config=cfg)
         context.container.add_instance(logger, declared_class=LoggingPort)

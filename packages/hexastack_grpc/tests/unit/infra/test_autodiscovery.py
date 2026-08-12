@@ -2,23 +2,13 @@ import types
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
 from hexastack_grpc.infra.autodiscovery import (
     autodiscover_grpc_services,
 )
 from hexastack_grpc.infra.decorators import (
-    get_grpc_registry,
     grpc_service,
 )
 from hexastack_grpc.infra.registries.service import GrpcServiceRegistry
-
-
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_grpc_registry()
-    reg.clear()
-    yield
-    reg.clear()
 
 
 def test_autodiscover_grpc_services():

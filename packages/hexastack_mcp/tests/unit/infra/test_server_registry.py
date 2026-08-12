@@ -16,14 +16,6 @@ from hexastack_mcp.infra.decorators import (
 from mcp.types import CallToolResult, TextContent
 
 
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_mcp_registry()
-    reg.clear()
-    yield
-    reg.clear()
-
-
 @dataclass(frozen=True)
 class CalculateTaxCommand(Command):
     amount: float

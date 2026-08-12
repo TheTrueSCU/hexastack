@@ -45,7 +45,9 @@ hexastack_logging/
 graph TD
     subgraph SiblingConsumers ["Consumers of LoggerPort"]
         CQRS["hexastack-cqrs (LoggingMiddleware)"]
-        FASTAPI["hexastack-fastapi (LoggingMiddleware)"]
+        FASTAPI["hexastack-fastapi (HttpLoggingMiddleware)"]
+        GRPC["hexastack-grpc (LoggingServerInterceptor)"]
+        GRAPHQL["hexastack-graphql (CorrelationExtension)"]
         CORE_CTX["hexastack-core (get_correlation_id)"]
     end
 
@@ -61,6 +63,8 @@ graph TD
 
     CQRS -. resolves from DI .-> ADAPTERS
     FASTAPI -. resolves from DI .-> ADAPTERS
+    GRPC -. resolves from DI .-> ADAPTERS
+    GRAPHQL -. resolves from DI .-> ADAPTERS
 ```
 
 ### Explicit Dependencies (Direct)

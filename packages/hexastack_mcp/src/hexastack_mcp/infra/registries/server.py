@@ -3,10 +3,10 @@ import json
 import platform
 import sys
 from collections.abc import Callable
-from dataclasses import is_dataclass
 from typing import Any
 
 from hexastack_core.domain.command import Command
+from hexastack_core.utils.inspection import inspect_model_parameters
 from hexastack_cqrs.ports.buses import (
     CommandBusPort,
     QueryBusPort,
@@ -19,7 +19,6 @@ from hexastack_mcp.domain.metadata import (
 )
 from hexastack_mcp.infra.config import HexastackMcpConfig
 from mcp.server import MCPServer
-from pydantic import BaseModel
 from rodi import Container
 
 
@@ -72,37 +71,7 @@ class McpServerRegistry:
     ) -> Callable[..., Any]:
         """Synthesize a typed callable from a Command or Query class for MCP schema generation."""
         # 1. Extract parameter definitions
-        params: list[inspect.Parameter] = []
-
-        if is_dataclass(target_cls):
-            fields = target_cls.__dataclass_fields__  # type: ignore[attr-defined]
-            for f_name, f_info in fields.items():
-                default = (
-                    inspect.Parameter.empty
-                    if f_info.default is f_info.default_factory
-                    else f_info.default
-                )
-                params.append(
-                    inspect.Parameter(
-                        name=f_name,
-                        kind=inspect.Parameter.KEYWORD_ONLY,
-                        default=default,
-                        annotation=f_info.type,
-                    )
-                )
-        elif issubclass(target_cls, BaseModel):
-            for f_name, f_info in target_cls.model_fields.items():
-                default = (
-                    inspect.Parameter.empty if f_info.is_required() else f_info.default
-                )
-                params.append(
-                    inspect.Parameter(
-                        name=f_name,
-                        kind=inspect.Parameter.KEYWORD_ONLY,
-                        default=default,
-                        annotation=f_info.annotation or Any,
-                    )
-                )
+        params = inspect_model_parameters(target_cls)
 
         async def dynamic_mcp_tool(**kwargs: Any) -> Any:
             try:

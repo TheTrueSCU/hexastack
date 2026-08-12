@@ -1,22 +1,12 @@
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_mcp.adapters.fastapi import mount_mcp_sse
 from hexastack_mcp.infra.decorators import (
-    get_mcp_registry,
     mcp_tool,
 )
 from mcp.server import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
-
-
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_mcp_registry()
-    reg.clear()
-    yield
-    reg.clear()
 
 
 def test_fastapi_mcp_sse_mount():

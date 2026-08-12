@@ -52,6 +52,9 @@ graph TD
         LOG["hexastack-logging"]
         DB["hexastack-db"]
         FASTAPI["hexastack-fastapi"]
+        GRAPHQL["hexastack-graphql"]
+        MCP["hexastack-mcp"]
+        GRPC["hexastack-grpc"]
         CLI["hexastack-cli"]
         UMBRELLA["hexastack"]
     end
@@ -67,6 +70,9 @@ graph TD
     LOG -->|implements LoggerPort & BootstrapperPort| CoreKernel
     DB -->|implements Repository & UnitOfWork ports| CoreKernel
     FASTAPI -->|implements BootstrapperPort, consumes DI| CoreKernel
+    GRAPHQL -->|implements BootstrapperPort, consumes DI| CoreKernel
+    MCP -->|implements BootstrapperPort, consumes DI| CoreKernel
+    GRPC -->|implements BootstrapperPort, consumes DI| CoreKernel
     CLI -->|implements BootstrapperPort, consumes DI| CoreKernel
     UMBRELLA -->|orchestrates bootstrap| CoreKernel
 ```

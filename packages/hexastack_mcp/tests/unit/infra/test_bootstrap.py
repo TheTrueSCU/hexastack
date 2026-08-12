@@ -1,32 +1,28 @@
-import pytest
 from hexastack_core.infra.bootstrap import bootstrap
+from hexastack_mcp.infra.bootstrap import (
+    HexastackMcpConfig,
+    McpBootstrapResult,
+)
 from hexastack_mcp.infra.decorators import (
-    get_mcp_registry,
     mcp_tool,
 )
 from mcp.server import MCPServer
 
 
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_mcp_registry()
-    reg.clear()
-    yield
-    reg.clear()
-
-
 def test_mcp_bootstrapper_registration():
-    @mcp_tool(name="health_check")
-    def health() -> str:
-        return "healthy"
+    @mcp_tool(name="echo_tool", description="Echoes text input")
+    def echo(text: str) -> str:
+        return text
 
     runtime = bootstrap(packages_to_scan=[__name__])
 
-    # Verify MCPServer resolved in container
+    # Verify MCPServer in DI container
     server = runtime.container.resolve(MCPServer)
     assert server is not None
     assert server.name == "Hexastack MCP Server"
 
-    # Verify context properties
-    assert "mcp_server" in runtime.properties
-    assert "mcp_result" in runtime.properties
+    # Verify result in context properties
+    res = runtime.properties.get("mcp_result")
+    assert isinstance(res, McpBootstrapResult)
+    assert isinstance(res.config, HexastackMcpConfig)
+    assert res.server is server

@@ -54,11 +54,7 @@ class GrpcBootstrapper(BootstrapperPort):
         Returns:
             None.
         """
-        cfg = HexastackGrpcConfig()
-        if context.config is not None:
-            section = context.config.get_section("grpc", HexastackGrpcConfig)
-            if section is not None:
-                cfg = section
+        cfg = context.get_config("grpc", HexastackGrpcConfig)
 
         registry = get_grpc_registry()
 

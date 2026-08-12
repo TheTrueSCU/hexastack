@@ -10,8 +10,8 @@
 
 `hexastack` acts as the umbrella distribution for the entire Hexastack monorepo, offering:
 
-- **Scoped Extras**: Single-command installs for scoped use cases (e.g., `pip install hexastack[cli]`, `pip install hexastack[web]`, `pip install hexastack[db]`).
-- **Interactive Diagnostic CLI**: The `hexastack` terminal command provides system health checks, package inspection, CQRS message route exploration, local FastAPI development servers, and Alembic database migration management.
+- **Scoped Extras**: Single-command installs for scoped use cases (e.g., `pip install hexastack[cli]`, `pip install hexastack[web]`, `pip install hexastack[graphql]`, `pip install hexastack[mcp]`, `pip install hexastack[grpc]`, `pip install hexastack[db]`).
+- **Interactive Diagnostic CLI**: The `hexastack` terminal command provides system health checks, package inspection, CQRS message route exploration, local FastAPI dev server launching, MCP server execution, gRPC daemon hosting, and Alembic database migration management.
 
 ---
 
@@ -24,6 +24,8 @@ graph TD
         DIAG["Diagnostics Handlers (info, inspect, ping)"]
         DEMO_SERVER["FastAPI Demo Server (serve)"]
         DB_CLI["Alembic Migration Tooling (db)"]
+        MCP_CLI["MCP Server Runner (mcp)"]
+        GRPC_CLI["gRPC Server Daemon (grpc)"]
     end
 
     subgraph BaseDependencies ["Default Direct Dependencies"]
@@ -35,6 +37,9 @@ graph TD
     subgraph ScopedExtras ["Optional Scoped Extras"]
         CLI["hexastack-cli (hexastack[cli])"]
         FASTAPI["hexastack-fastapi (hexastack[fastapi])"]
+        GRAPHQL["hexastack-graphql (hexastack[graphql])"]
+        MCP["hexastack-mcp (hexastack[mcp])"]
+        GRPC["hexastack-grpc (hexastack[grpc])"]
         DB["hexastack-db (hexastack[db])"]
         UVICORN["uvicorn[standard] (hexastack[web])"]
     end
@@ -47,17 +52,22 @@ graph TD
     DEMO_SERVER -. optional extra .-> FASTAPI
     DEMO_SERVER -. optional extra .-> UVICORN
     DB_CLI -. optional extra .-> DB
+    MCP_CLI -. optional extra .-> MCP
+    GRPC_CLI -. optional extra .-> GRPC
 ```
 
 ### Explicit Dependencies (Direct)
-- `hexastack-core`: Core kernel and bootstrap engine.
-- `hexastack-cqrs`: Command and query buses.
-- `hexastack-logging`: Structured logging.
+- `hexastack-core`: Core kernel, DI container (`rodi`), and bootstrap engine.
+- `hexastack-cqrs`: Command, query, and event execution buses.
+- `hexastack-logging`: Structured logging and telemetry.
 
 ### Optional Integrations (Extras)
 - `[cli]`: Installs `hexastack-cli` for interactive CLI commands.
 - `[db]` / `[sql]`: Installs `hexastack-db` for persistence and Alembic migrations.
 - `[fastapi]`: Installs `hexastack-fastapi`.
+- `[graphql]`: Installs `hexastack-graphql`.
+- `[mcp]`: Installs `hexastack-mcp` for Model Context Protocol AI agent tools.
+- `[grpc]`: Installs `hexastack-grpc` for high-performance RPC services.
 - `[web]`: Installs `hexastack-fastapi` and `uvicorn[standard]`.
 - `[all]`: Complete installation with all adapters and development tools.
 
@@ -75,6 +85,15 @@ pip install "hexastack[cli]"
 # Full web stack (FastAPI + Uvicorn)
 pip install "hexastack[web]"
 
+# GraphQL support
+pip install "hexastack[graphql]"
+
+# Model Context Protocol support
+pip install "hexastack[mcp]"
+
+# gRPC support
+pip install "hexastack[grpc]"
+
 # Database support with migrations
 pip install "hexastack[db]"
 
@@ -89,17 +108,23 @@ pip install "hexastack[all]"
 When installed with `hexastack[all]` or `hexastack[cli]`:
 
 ```bash
-# Check installed packages and optional dependency statuses (alphabetized)
+# Check installed packages and optional dependency statuses
 hexastack info
 
 # Inspect registered CQRS commands, queries, and configs
 hexastack inspect registry
 
 # Send a test ping command through the CQRS pipeline
-hexastack demo ping --message "Hello Hexastack"
+hexastack ping --message "Hello Hexastack"
 
 # Launch local FastAPI dev server with live reload (requires hexastack[web])
 hexastack serve --host 127.0.0.1 --port 8000
+
+# Launch MCP server in stdio mode (requires hexastack[mcp])
+hexastack mcp run
+
+# Launch gRPC daemon (requires hexastack[grpc])
+hexastack grpc serve --host 0.0.0.0 --port 50051
 
 # Manage database migrations (requires hexastack[db])
 hexastack db init migrations/

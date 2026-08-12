@@ -49,11 +49,7 @@ class GraphQLBootstrapper(BootstrapperPort):
         Raises:
             None.
         """
-        cfg = HexastackGraphQLConfig()
-        if context.config is not None:
-            section = context.config.get_section("graphql", HexastackGraphQLConfig)
-            if section is not None:
-                cfg = section
+        cfg = context.get_config("graphql", HexastackGraphQLConfig)
 
         registry = get_schema_registry()
 

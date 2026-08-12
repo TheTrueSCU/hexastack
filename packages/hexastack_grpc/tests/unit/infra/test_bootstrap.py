@@ -1,20 +1,8 @@
 from unittest.mock import MagicMock
 
 import grpc
-import pytest
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_grpc.infra.decorators import (
-    get_grpc_registry,
-    grpc_service,
-)
-
-
-@pytest.fixture(autouse=True)
-def clean_registry():
-    reg = get_grpc_registry()
-    reg.clear()
-    yield
-    reg.clear()
+from hexastack_grpc.infra.decorators import grpc_service
 
 
 def test_grpc_bootstrapper():

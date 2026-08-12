@@ -1,8 +1,6 @@
-import pytest
 from hexastack_db.infra.bootstrap import DatabaseBootstrapper
 from hexastack_db.infra.mixins import HexastackBase, UuidPrimaryKeyMixin
 from hexastack_db.infra.registries.metadata import (
-    clear_metadata_registry,
     get_registered_metadata,
     register_metadata,
 )
@@ -13,14 +11,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 class ProductRecord(UuidPrimaryKeyMixin, HexastackBase):
     __tablename__ = "test_products_registry"
     name: Mapped[str] = mapped_column()
-
-
-@pytest.fixture(autouse=True)
-def clean_registry():
-    """Reset the metadata registry before each test to avoid cross-test pollution."""
-    clear_metadata_registry()
-    yield
-    clear_metadata_registry()
 
 
 def test_register_metadata_adds_to_registry():
