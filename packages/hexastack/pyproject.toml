@@ -26,6 +26,9 @@ sql = [
 fastapi = [
     "hexastack-fastapi",
 ]
+graphql = [
+    "hexastack-graphql",
+]
 web = [
     "hexastack-fastapi",
     "uvicorn[standard]>=0.30.0",
@@ -34,6 +37,7 @@ all = [
     "hexastack-cli",
     "hexastack-db",
     "hexastack-fastapi",
+    "hexastack-graphql",
     "uvicorn[standard]>=0.30.0",
 ]
 
@@ -51,3 +55,4 @@ hexastack-logging = { workspace = true }
 hexastack-fastapi = { workspace = true }
 hexastack-cli = { workspace = true }
 hexastack-db = { workspace = true }
+hexastack-graphql = { workspace = true }

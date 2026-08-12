@@ -17,6 +17,7 @@ graph TD
     subgraph DrivingAdapters ["Driving Adapters (Primary / Inbound)"]
         CLI["hexastack-cli (Typer + Rich)"]
         REST["hexastack-fastapi (FastAPI)"]
+        GQL["hexastack-graphql (Strawberry GraphQL)"]
     end
 
     subgraph CQRSExecution ["Application / CQRS Pipeline"]
@@ -35,6 +36,7 @@ graph TD
 
     CLI --> BUS
     REST --> BUS
+    GQL --> BUS
     BUS --> MW
     MW --> CORE
     CORE -.-> DB
@@ -44,7 +46,7 @@ graph TD
 ### Core Tenets
 
 1. **Dependency Inversion & Zero Framework Lock-In**:
-   The domain and abstract ports in `hexastack-core` have zero third-party web or database framework dependencies. Core depends exclusively on `pydantic` (validation) and `rodi` (dependency injection). Frameworks (FastAPI, Typer, SQLAlchemy, Loguru, Huey) exist purely in the outer adapter layers.
+   The domain and abstract ports in `hexastack-core` have zero third-party web or database framework dependencies. Core depends exclusively on `pydantic` (validation) and `rodi` (dependency injection). Frameworks (FastAPI, Typer, SQLAlchemy, Strawberry, Loguru, Huey) exist purely in the outer adapter layers.
 2. **First-Class CQRS Segregation**:
    Mutating operations (Commands) and read-only operations (Queries) run on distinct pipelines. Commands traverse configurable middleware pipelines (telemetry, correlation ID propagation, retry policies, automatic transaction management) while Queries return optimized DTO projections.
 3. **DI-Mediated Decoupling**:
@@ -68,6 +70,7 @@ graph TD
     Logging["hexastack-logging (Telemetry)"]
     DB["hexastack-db (Persistence & Migrations)"]
     FastAPI["hexastack-fastapi (REST API)"]
+    GraphQL["hexastack-graphql (Strawberry GraphQL)"]
     CLI["hexastack-cli (Typer CLI)"]
 
     Umbrella --> Core
@@ -75,6 +78,7 @@ graph TD
     Umbrella --> Logging
     Umbrella -. optional .-> DB
     Umbrella -. optional .-> FastAPI
+    Umbrella -. optional .-> GraphQL
     Umbrella -. optional .-> CLI
 
     CQRS --> Core
@@ -82,6 +86,9 @@ graph TD
     DB --> Core
     FastAPI --> Core
     FastAPI --> CQRS
+    GraphQL --> Core
+    GraphQL --> CQRS
+    GraphQL -. optional .-> FastAPI
     CLI --> Core
     CLI --> CQRS
 ```
@@ -93,6 +100,7 @@ graph TD
 | [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
 | [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
 | [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
+| [`hexastack-graphql`](file:///home/rjdw/Projects/hexastack/packages/hexastack_graphql) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
 | [`hexastack-cli`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cli) | CLI presentation layer with nested commands, command aliases, and Rich formatted output | `pip install hexastack-cli` | `hexastack[cli]` |
 | [`hexastack`](file:///home/rjdw/Projects/hexastack/packages/hexastack) | Umbrella distribution package and diagnostic demo CLI application | `pip install hexastack` | `hexastack[all]` |
 

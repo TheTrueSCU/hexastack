@@ -28,6 +28,7 @@ _KNOWN_PACKAGES = sorted(
         "hexastack-cqrs",
         "hexastack-db",
         "hexastack-fastapi",
+        "hexastack-graphql",
         "hexastack-logging",
     ]
 )
@@ -39,6 +40,7 @@ _OPTIONAL_LIBS = sorted(
         "loguru",
         "rich",
         "sqlalchemy",
+        "strawberry",
         "structlog",
         "typer",
         "uvicorn",

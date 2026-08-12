@@ -10,6 +10,7 @@ members = [
     "hexastack-cqrs",
     "hexastack-db",
     "hexastack-fastapi",
+    "hexastack-graphql",
     "hexastack-logging",
     "hexastack-workspace",
 ]
@@ -223,6 +224,18 @@ wheels = [
 ]
 
 [[package]]
+name = "cross-web"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4a/a0/bdb8370215987cc5bde497cb8b976b17ab14841566ecef2aab6ae3e6c7b0/cross_web-0.7.0.tar.gz", hash = "sha256:15fbc8b9a824a055db8127fd6e43e0773074f620fdecb6b2b587d3d0a2bdd459", size = 332407, upload-time = "2026-05-19T14:18:48.849Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7a/4a/78b52ec2edcbd9b123638f4e0421fd8699ebe653ebf63ac5f82abd2665bc/cross_web-0.7.0-py3-none-any.whl", hash = "sha256:ddea9be3c68b48eaf16561847a5831a559786949c544b3701432e00a4e8d19d9", size = 25207, upload-time = "2026-05-19T14:18:47.614Z" },
+]
+
+[[package]]
 name = "distlib"
 version = "0.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -254,6 +267,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f6/57/3ba6e6cb097f85b855b00163d169f35365f44277df044dcf96d55b8f62a3/filelock-3.32.2.tar.gz", hash = "sha256:c33351e1f49cae33414acbc6d56784e6ecee82514ec90795da1161fc4836b5b8", size = 217172, upload-time = "2026-07-29T22:46:04.895Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c1/e8/72f8cef9fdfeffe06213fe8508039396ee48daa0e3259457ed766173bfd6/filelock-3.32.2-py3-none-any.whl", hash = "sha256:87dd94cf281e586d135fa51132b8e3d9a598b316e90377a288663c9321036c82", size = 98830, upload-time = "2026-07-29T22:46:03.52Z" },
+]
+
+[[package]]
+name = "graphql-core"
+version = "3.2.11"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4d/90/f2aff026ab4aebd80eb71905106a0885f4cfde85dcf965543f45bed0d9ee/graphql_core-3.2.11.tar.gz", hash = "sha256:e7e156d10beb127cab5c89ff0da71416fc73d27c484a4757d3b2d35633774802", size = 528407, upload-time = "2026-06-05T13:45:22.915Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/15/b92b4e1d88d02c6eff9733c9eea21846ab435cc4d813d84ccc5d335955df/graphql_core-3.2.11-py3-none-any.whl", hash = "sha256:0b3e35ff41e9adba53021ab0cef475eb18f57c7f53f0f2ca55567fbf3c537ea0", size = 214879, upload-time = "2026-06-05T13:45:21.245Z" },
 ]
 
 [[package]]
@@ -327,6 +349,7 @@ all = [
     { name = "hexastack-cli" },
     { name = "hexastack-db" },
     { name = "hexastack-fastapi" },
+    { name = "hexastack-graphql" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 cli = [
@@ -337,6 +360,9 @@ db = [
 ]
 fastapi = [
     { name = "hexastack-fastapi" },
+]
+graphql = [
+    { name = "hexastack-graphql" },
 ]
 sql = [
     { name = "hexastack-db" },
@@ -358,11 +384,13 @@ requires-dist = [
     { name = "hexastack-fastapi", marker = "extra == 'all'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", marker = "extra == 'fastapi'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", marker = "extra == 'web'", editable = "packages/hexastack_fastapi" },
+    { name = "hexastack-graphql", marker = "extra == 'all'", editable = "packages/hexastack_graphql" },
+    { name = "hexastack-graphql", marker = "extra == 'graphql'", editable = "packages/hexastack_graphql" },
     { name = "hexastack-logging", editable = "packages/hexastack_logging" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["cli", "db", "sql", "fastapi", "web", "all"]
+provides-extras = ["cli", "db", "sql", "fastapi", "graphql", "web", "all"]
 
 [[package]]
 name = "hexastack-cli"
@@ -478,6 +506,32 @@ requires-dist = [
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
 ]
+
+[[package]]
+name = "hexastack-graphql"
+version = "0.1.0"
+source = { editable = "packages/hexastack_graphql" }
+dependencies = [
+    { name = "hexastack-core" },
+    { name = "hexastack-cqrs" },
+    { name = "strawberry-graphql" },
+]
+
+[package.optional-dependencies]
+fastapi = [
+    { name = "fastapi" },
+    { name = "hexastack-fastapi" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.141.1" },
+    { name = "hexastack-core", editable = "packages/hexastack_core" },
+    { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "hexastack-fastapi", marker = "extra == 'fastapi'", editable = "packages/hexastack_fastapi" },
+    { name = "strawberry-graphql", specifier = ">=0.260.0" },
+]
+provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-logging"
@@ -992,6 +1046,18 @@ wheels = [
 ]
 
 [[package]]
+name = "python-dateutil"
+version = "2.9.0.post0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432, upload-time = "2024-03-01T18:36:20.211Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892, upload-time = "2024-03-01T18:36:18.57Z" },
+]
+
+[[package]]
 name = "python-discovery"
 version = "1.5.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1105,6 +1171,15 @@ wheels = [
 ]
 
 [[package]]
+name = "six"
+version = "1.17.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
+]
+
+[[package]]
 name = "sortedcontainers"
 version = "2.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1151,6 +1226,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b5/b4/205b0d5241d934e8add0c38aa924c4f9fb7330834ff11e5444db964ec3f9/starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b", size = 2716969, upload-time = "2026-08-08T18:27:57.512Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/cb/6a6a47d5b464bd08695d254f3da6e7986cc70c9fa5d778eda57538edfe56/starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c", size = 75969, upload-time = "2026-08-08T18:27:56.196Z" },
+]
+
+[[package]]
+name = "strawberry-graphql"
+version = "0.324.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cross-web" },
+    { name = "graphql-core" },
+    { name = "packaging" },
+    { name = "python-dateutil" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6b/f9/7e121f55c93864cbedf2bbcf8920e2456da3adf05d9f3eef101db6633fec/strawberry_graphql-0.324.0.tar.gz", hash = "sha256:4eb6decf0c33524374f24e07ff6d1915da26655a49fa6f656544c293404e2d35", size = 235911, upload-time = "2026-08-10T15:05:44.494Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bc/56/52b78a3e8de057aadc42f61c82727a914fbb95accc6aae1b5ff0d54e43c9/strawberry_graphql-0.324.0-py3-none-any.whl", hash = "sha256:08c8b3256a1c909c7721f3c1d8e161ac40505ca14991c39d8492898b17e77b6d", size = 338683, upload-time = "2026-08-10T15:05:42.564Z" },
 ]
 
 [[package]]
