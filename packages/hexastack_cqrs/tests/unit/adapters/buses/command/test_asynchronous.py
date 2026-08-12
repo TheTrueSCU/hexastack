@@ -1,6 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import patch
 
+import pytest
 from hexastack_core.domain import Command
+from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_cqrs.adapters.buses.command.asynchronous import (
     HueyCommandBus,
     NativeAsyncCommandBus,
@@ -23,6 +26,16 @@ def test_huey_command_bus():
 
     assert task is not None
     assert task() == "sent to user@example.com"
+
+
+def test_huey_command_bus_missing_dependency():
+    registry = HandlerRegistry()
+    huey = MemoryHuey()
+    with (
+        patch("importlib.util.find_spec", return_value=None),
+        pytest.raises(MissingDependencyError, match="huey is required"),
+    ):
+        HueyCommandBus(huey=huey, handler_registry=registry)
 
 
 def test_native_async_command_bus():

@@ -1,6 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import patch
 
+import pytest
 from hexastack_core.domain import Event
+from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_cqrs.adapters.buses.event.asynchronous import (
     HueyEventBus,
     NativeAsyncEventBus,
@@ -23,6 +26,15 @@ def test_huey_event_bus():
     assert len(tasks) == 1
     assert tasks[0]() is None
     assert received == ["ord-123"]
+
+
+def test_huey_event_bus_missing_dependency():
+    huey = MemoryHuey()
+    with (
+        patch("importlib.util.find_spec", return_value=None),
+        pytest.raises(MissingDependencyError, match="huey is required"),
+    ):
+        HueyEventBus(huey=huey)
 
 
 def test_native_async_event_bus():

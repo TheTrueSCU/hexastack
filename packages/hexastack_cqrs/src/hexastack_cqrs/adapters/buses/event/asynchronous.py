@@ -1,12 +1,16 @@
+import importlib.util
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from hexastack_core.domain import Event, Generic
-from huey import Huey
+from hexastack_core.domain.exceptions import MissingDependencyError
 
 from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
 from hexastack_cqrs.ports.buses import EventBusPort
+
+if TYPE_CHECKING:
+    from huey import Huey
 
 
 class HueyEventBus(EventBusPort):
@@ -15,11 +19,12 @@ class HueyEventBus(EventBusPort):
     Notes/Architectural Intent:
         Dispatches domain events to background worker processes via Huey tasks,
         executing each subscriber independently and asynchronously across worker threads/processes.
+        Requires hexastack-cqrs[huey].
     """
 
     def __init__(
         self,
-        huey: Huey,
+        huey: "Huey",
         middleware: list[GenericMiddleware] | None = None,
     ) -> None:
         """Initialize Huey event bus with Huey instance and optional middleware.
@@ -27,7 +32,16 @@ class HueyEventBus(EventBusPort):
         Args:
             huey: Initialized Huey task queue instance.
             middleware: Optional ordered list of GenericMiddleware interceptors.
+
+        Raises:
+            MissingDependencyError: If huey package is not installed.
         """
+        if importlib.util.find_spec("huey") is None:
+            raise MissingDependencyError(
+                "huey is required to use HueyEventBus. "
+                "Install via 'pip install hexastack-cqrs[huey]'."
+            )
+
         self._huey = huey
         self._middleware = list(middleware) if middleware is not None else []
         self._subscribers: dict[type[Event], list[Callable[[Any], None]]] = {}
@@ -210,3 +224,9 @@ class NativeAsyncEventBus(EventBusPort):
         if event_cls not in self._subscribers:
             self._subscribers[event_cls] = []
         self._subscribers[event_cls].append(handler)
+
+
+__all__ = [
+    "HueyEventBus",
+    "NativeAsyncEventBus",
+]

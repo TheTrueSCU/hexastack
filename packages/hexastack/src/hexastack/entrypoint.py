@@ -1,0 +1,28 @@
+import sys
+
+from hexastack_core.infra.bootstrap import bootstrap
+
+
+def main() -> None:
+    """CLI script entrypoint executing the Hexastack diagnostic and inspection application."""
+    import hexastack.adapters.cli
+    import hexastack.application.diagnostics
+    from hexastack.adapters.cli import add_serve_command
+
+    result = bootstrap(
+        packages_to_scan=[
+            hexastack.application.diagnostics,
+            hexastack.adapters.cli,
+        ],
+    )
+    cli_app = result.get("cli_app")
+    if cli_app is not None:
+        add_serve_command(cli_app)
+        cli_app()
+    else:
+        sys.stderr.write("Error: hexastack-cli is required to run the CLI entrypoint.\n")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

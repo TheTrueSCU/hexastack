@@ -1,7 +1,7 @@
 [project]
 name = "hexastack-cqrs"
 version = "0.1.0"
-description = "Add your description here"
+description = "CQRS commands, queries, events, buses, and execution pipeline for Hexastack"
 readme = "README.md"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
@@ -9,8 +9,12 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "hexastack-core",
+    "tenacity>=9.0.0",
+]
+
+[project.optional-dependencies]
+huey = [
     "huey>=3.3.4",
-    "tenacity>=9.1.4",
 ]
 
 [project.entry-points."hexastack.bootstrappers"]

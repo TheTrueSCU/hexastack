@@ -1,13 +1,17 @@
+import importlib.util
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from hexastack_core.domain import Command, Generic
-from huey import Huey
+from hexastack_core.domain.exceptions import MissingDependencyError
 
 from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
 from hexastack_cqrs.ports.buses import CommandBusPort
+
+if TYPE_CHECKING:
+    from huey import Huey
 
 
 class HueyCommandBus(CommandBusPort):
@@ -16,11 +20,12 @@ class HueyCommandBus(CommandBusPort):
     Notes/Architectural Intent:
         Delegates command execution to background worker processes via Huey,
         enabling distributed, durable asynchronous background processing.
+        Requires hexastack-cqrs[huey].
     """
 
     def __init__(
         self,
-        huey: Huey,
+        huey: "Huey",
         handler_registry: HandlerRegistry,
         middleware: list[GenericMiddleware] | None = None,
     ) -> None:
@@ -30,7 +35,16 @@ class HueyCommandBus(CommandBusPort):
             huey: Initialized Huey task queue instance.
             handler_registry: HandlerRegistry containing registered command handlers.
             middleware: Optional ordered list of GenericMiddleware interceptors.
+
+        Raises:
+            MissingDependencyError: If huey package is not installed.
         """
+        if importlib.util.find_spec("huey") is None:
+            raise MissingDependencyError(
+                "huey is required to use HueyCommandBus. "
+                "Install via 'pip install hexastack-cqrs[huey]'."
+            )
+
         self._huey = huey
         self._registry = handler_registry
         self._middleware = list(middleware) if middleware is not None else []
@@ -110,3 +124,9 @@ class NativeAsyncCommandBus(CommandBusPort):
             return pipeline(command)
 
         return self._executor.submit(_run)
+
+
+__all__ = [
+    "HueyCommandBus",
+    "NativeAsyncCommandBus",
+]
