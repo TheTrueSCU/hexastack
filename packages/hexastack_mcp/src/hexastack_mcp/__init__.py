@@ -1,4 +1,4 @@
-from mcp.server import MCPServer
+from mcp.server.fastmcp import FastMCP as McpServer
 
 from hexastack_mcp.adapters.fastapi import (
     create_mcp_sse_app,
@@ -19,7 +19,6 @@ from hexastack_mcp.domain.metadata import (
     McpToolMetadata,
 )
 from hexastack_mcp.infra.autodiscovery import (
-    autodiscover_mcp_elements,
     create_mcp_visitor,
 )
 from hexastack_mcp.infra.bootstrap import (
@@ -40,17 +39,16 @@ from hexastack_mcp.infra.registries.server import McpServerRegistry
 
 __all__ = [
     "HexastackMcpConfig",
-    "MCPServer",
     "McpBootstrapResult",
     "McpBootstrapper",
     "McpError",
     "McpPromptMetadata",
     "McpResourceMetadata",
+    "McpServer",
     "McpServerRegistry",
     "McpToolMetadata",
     "ResourceNotFoundError",
     "ToolExecutionError",
-    "autodiscover_mcp_elements",
     "create_mcp_sse_app",
     "create_mcp_visitor",
     "get_mcp_registry",

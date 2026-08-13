@@ -1,26 +1,26 @@
 import asyncio
 
-from mcp.server import MCPServer
+from mcp.server.fastmcp import FastMCP as McpServer
 
 
-async def run_stdio_async(server: MCPServer) -> None:
-    """Run the MCP server over standard I/O asynchronously.
+async def run_stdio_async(server: McpServer) -> None:
+    """Asynchronously execute the MCP stdio communication loop.
 
     Args:
-        server: Configured MCPServer instance.
+        server: Configured McpServer instance.
     """
     await server.run_stdio_async()
 
 
-def run_stdio_server(server: MCPServer) -> None:
-    """Run the MCP server synchronously over standard I/O (blocking main thread).
+def run_stdio_server(server: McpServer) -> None:
+    """Synchronously execute the MCP stdio communication loop via asyncio.run().
 
     Notes/Architectural Intent:
-        Entrypoint for Claude Desktop, Cursor, Antigravity sidecar processes,
-        and standalone CLI `hexastack mcp` commands.
+        Standard entrypoint for CLI stdio execution when orchestrated by
+        Claude Desktop, Cursor, or external LLM tool executors.
 
     Args:
-        server: Configured MCPServer instance.
+        server: Configured McpServer instance.
     """
     asyncio.run(run_stdio_async(server))
 

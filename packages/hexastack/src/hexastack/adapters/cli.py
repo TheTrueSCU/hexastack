@@ -261,12 +261,12 @@ def add_mcp_commands(app: typer.Typer) -> None:
     def mcp_run() -> None:
         from hexastack_core.infra.bootstrap import bootstrap
         from hexastack_mcp.adapters.stdio import run_stdio_server
-        from mcp.server import MCPServer
+        from mcp.server.fastmcp import FastMCP as McpServer
 
         import hexastack.application.diagnostics
 
         runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
-        server = runtime.container.resolve(MCPServer)
+        server = runtime.container.resolve(McpServer)
         run_stdio_server(server)
 
 

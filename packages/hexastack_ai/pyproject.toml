@@ -1,7 +1,7 @@
 [project]
-name = "hexastack-cli"
+name = "hexastack-ai"
 version = "0.1.0"
-description = "Hexastack CLI presentation adapter with Typer and Rich"
+description = "AI engine, LLM provider integration (LiteLLM, Instructor, PydanticAI), and CQRS agent reflection for Hexastack"
 readme = "README.md"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
@@ -10,12 +10,14 @@ requires-python = ">=3.13"
 dependencies = [
     "hexastack-core",
     "hexastack-cqrs",
-    "rich>=13.8.0",
-    "typer>=0.27.1",
+    "instructor>=1.7.0",
+    "litellm>=1.50.0",
+    "pydantic>=2.10.0",
+    "pydantic-ai>=0.0.24",
 ]
 
 [project.entry-points."hexastack.bootstrappers"]
-cli = "hexastack_cli.infra.bootstrap:CliBootstrapper"
+ai = "hexastack_ai.infra.bootstrap:AiBootstrapper"
 
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]

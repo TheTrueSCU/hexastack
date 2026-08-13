@@ -14,6 +14,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ai = [
+    "hexastack-ai",
+]
 cli = [
     "hexastack-cli",
 ]
@@ -40,6 +43,7 @@ web = [
     "uvicorn[standard]>=0.30.0",
 ]
 all = [
+    "hexastack-ai",
     "hexastack-cli",
     "hexastack-db",
     "hexastack-fastapi",
@@ -57,6 +61,7 @@ requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
 
 [tool.uv.sources]
+hexastack-ai = { workspace = true }
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 hexastack-logging = { workspace = true }

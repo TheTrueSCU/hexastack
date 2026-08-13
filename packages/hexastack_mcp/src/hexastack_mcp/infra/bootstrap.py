@@ -1,7 +1,9 @@
 import importlib.util
 from dataclasses import dataclass
 
-from hexastack_core.infra.bootstrap import BootstrapContext
+from hexastack_core.infra.bootstrap import (
+    BootstrapContext,
+)
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_mcp.infra.autodiscovery import create_mcp_visitor
@@ -11,7 +13,7 @@ from hexastack_mcp.infra.config import (
 )
 from hexastack_mcp.infra.decorators import get_mcp_registry
 from hexastack_mcp.infra.registries.server import McpServerRegistry
-from mcp.server import MCPServer
+from mcp.server.fastmcp import FastMCP as McpServer
 from mcp.server.transport_security import TransportSecuritySettings
 
 
@@ -20,7 +22,7 @@ class McpBootstrapResult:
     """Dataclass holding initialized MCP server and configuration."""
 
     config: HexastackMcpConfig
-    server: MCPServer
+    server: McpServer
     registry: McpServerRegistry
 
 
@@ -30,7 +32,7 @@ class McpBootstrapper(BootstrapperPort):
     Notes/Architectural Intent:
         Implements BootstrapperPort with order=40 (executing after CQRS order=20
         and FastAPI order=30), registering the autodiscovery visitor, assembling
-        the MCPServer instance with CQRS tool wrappers, and mounting SSE endpoints
+        the McpServer instance with CQRS tool wrappers, and mounting SSE endpoints
         onto FastAPI when present.
     """
 
@@ -38,7 +40,7 @@ class McpBootstrapper(BootstrapperPort):
     order: int = 40
 
     def configure(self, context: BootstrapContext) -> None:
-        """Phase 2: Register visitor, assemble MCPServer, and mount SSE endpoints.
+        """Phase 2: Register visitor, assemble McpServer, and mount SSE endpoints.
 
         Args:
             context: BootstrapContext containing DI container, config, and properties.
@@ -54,11 +56,11 @@ class McpBootstrapper(BootstrapperPort):
         visitor = create_mcp_visitor(registry)
         context.register_visitor(visitor)
 
-        # 1. Build MCPServer instance from registry and container
+        # 1. Build McpServer instance from registry and container
         server = registry.build_server(config=cfg, container=context.container)
 
         # 2. Register Server and Registry into DI container
-        context.container.add_instance(server, declared_class=MCPServer)
+        context.container.add_instance(server, declared_class=McpServer)
         context.container.add_instance(registry)
 
         # 3. Mount onto FastAPI app if available and configured

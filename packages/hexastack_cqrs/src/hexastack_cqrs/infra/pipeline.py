@@ -174,3 +174,49 @@ class ExecutionPipeline:
         raise UnregisteredMessageError(
             f"No Command or Query registered with name '{name}'"
         )
+
+
+def create_pipeline(
+    handler_registry: HandlerRegistry | None = None,
+    command_registry: CommandRegistry | None = None,
+    query_registry: QueryRegistry | None = None,
+    presenter_registry: PresenterRegistry | None = None,
+    exception_registry: ExceptionRegistry | None = None,
+    command_bus: CommandBusPort | None = None,
+    query_bus: QueryBusPort | None = None,
+    event_bus: EventBusPort | None = None,
+) -> ExecutionPipeline:
+    """Factory function creating an ExecutionPipeline with default registries and buses.
+
+    Args:
+        handler_registry: Optional HandlerRegistry (defaults to empty registry).
+        command_registry: Optional CommandRegistry.
+        query_registry: Optional QueryRegistry.
+        presenter_registry: Optional PresenterRegistry.
+        exception_registry: Optional ExceptionRegistry.
+        command_bus: Optional custom CommandBusPort.
+        query_bus: Optional custom QueryBusPort.
+        event_bus: Optional custom EventBusPort.
+
+    Returns:
+        Configured ExecutionPipeline instance.
+    """
+    return ExecutionPipeline(
+        handler_registry=handler_registry or HandlerRegistry(),
+        command_registry=command_registry,
+        query_registry=query_registry,
+        presenter_registry=presenter_registry,
+        exception_registry=exception_registry,
+        command_bus=command_bus,
+        query_bus=query_bus,
+        event_bus=event_bus,
+    )
+
+
+__all__ = [
+    "AmbiguousMessageError",
+    "ExecutionPipeline",
+    "PipelineError",
+    "UnregisteredMessageError",
+    "create_pipeline",
+]

@@ -13,7 +13,7 @@ from hexastack_mcp.infra.decorators import (
     mcp_resource,
     mcp_tool,
 )
-from mcp.types import CallToolResult, TextContent
+from mcp.types import TextContent
 
 
 @dataclass(frozen=True)
@@ -49,7 +49,7 @@ async def test_mcp_server_registry_tools_execution():
     class VersionQry(GetServerVersionQuery):
         pass
 
-    @mcp_tool(name="echo_tool")
+    @mcp_tool(name="registry_echo_tool")
     def echo(msg: str) -> str:
         return f"ECHO: {msg}"
 
@@ -71,25 +71,26 @@ async def test_mcp_server_registry_tools_execution():
     tool_names = [t.name for t in tools]
     assert "calc_tax" in tool_names
     assert "get_version" in tool_names
-    assert "echo_tool" in tool_names
+    assert "registry_echo_tool" in tool_names
 
     # 2. Call command tool
     tax_res = await server.call_tool("calc_tax", {"amount": 100.0, "rate": 0.2})
-    assert isinstance(tax_res, CallToolResult)
-    tax_item = tax_res.content[0]
+    assert isinstance(tax_res, list) and len(tax_res) > 0
+    tax_item = tax_res[0]
     assert isinstance(tax_item, TextContent)
     assert json.loads(tax_item.text) == {"tax": 20.0}
 
     # 3. Call query tool
     ver_res = await server.call_tool("get_version", {"component": "database"})
-    assert isinstance(ver_res, CallToolResult)
-    content_item = ver_res.content[0]
+    assert isinstance(ver_res, list) and len(ver_res) > 0
+    content_item = ver_res[0]
     assert isinstance(content_item, TextContent)
     assert content_item.text == "database-v2.0"
 
     # 4. Call function tool
-    echo_res = await server.call_tool("echo_tool", {"msg": "hello AI"})
-    assert isinstance(echo_res, CallToolResult)
-    echo_item = echo_res.content[0]
+    echo_raw = await server.call_tool("registry_echo_tool", {"msg": "hello AI"})
+    echo_res = echo_raw[0] if isinstance(echo_raw, tuple) else echo_raw
+    assert isinstance(echo_res, list) and len(echo_res) > 0
+    echo_item = echo_res[0]
     assert isinstance(echo_item, TextContent)
     assert echo_item.text == "ECHO: hello AI"

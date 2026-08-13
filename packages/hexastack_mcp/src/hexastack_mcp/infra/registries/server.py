@@ -18,7 +18,7 @@ from hexastack_mcp.domain.metadata import (
     McpToolMetadata,
 )
 from hexastack_mcp.infra.config import HexastackMcpConfig
-from mcp.server import MCPServer
+from mcp.server.fastmcp import FastMCP as McpServer
 from rodi import Container
 
 
@@ -26,8 +26,8 @@ class McpServerRegistry:
     """Registry maintaining registered MCP tools, resources, and prompt templates.
 
     Notes/Architectural Intent:
-        Compiles declarative tool and resource definitions into an official Anthropic
-        MCPServer instance, binding CQRS dispatchers from the rodi DI Container.
+        Compiles declarative tool and resource definitions into an McpServer
+        (FastMCP) instance, binding CQRS dispatchers from the rodi DI Container.
     """
 
     def __init__(self) -> None:
@@ -63,6 +63,18 @@ class McpServerRegistry:
         if meta not in self._prompts:
             self._prompts.append(meta)
 
+    @property
+    def tools(self) -> list[McpToolMetadata]:
+        return list(self._tools)
+
+    @property
+    def resources(self) -> list[McpResourceMetadata]:
+        return list(self._resources)
+
+    @property
+    def prompts(self) -> list[McpPromptMetadata]:
+        return list(self._prompts)
+
     def _create_cqrs_tool_wrapper(
         self,
         target_cls: type[Any],
@@ -71,7 +83,7 @@ class McpServerRegistry:
     ) -> Callable[..., Any]:
         """Synthesize a typed callable from a Command or Query class for MCP schema generation."""
         # 1. Extract parameter definitions
-        params = inspect_model_parameters(target_cls)
+        parameters = inspect_model_parameters(target_cls)
 
         async def dynamic_mcp_tool(**kwargs: Any) -> Any:
             try:
@@ -86,19 +98,18 @@ class McpServerRegistry:
                 if inspect.isawaitable(result):
                     result = await result
                 return result
-            except Exception as e:
+            except Exception as exc:
                 raise ToolExecutionError(
-                    f"Error executing {target_cls.__name__}: {e}"
-                ) from e
+                    f"Execution of MCP tool '{target_cls.__name__}' failed: {exc}"
+                ) from exc
 
+        # Set dynamic signature & annotations
         setattr(  # noqa: B010
             dynamic_mcp_tool,
             "__signature__",
-            inspect.Signature(
-                parameters=params,
-                return_annotation=Any,
-            ),
+            inspect.Signature(parameters=parameters),
         )
+        dynamic_mcp_tool.__annotations__ = {p.name: p.annotation for p in parameters}
         dynamic_mcp_tool.__name__ = target_cls.__name__
         dynamic_mcp_tool.__doc__ = target_cls.__doc__
         return dynamic_mcp_tool
@@ -107,19 +118,18 @@ class McpServerRegistry:
         self,
         config: HexastackMcpConfig,
         container: Container,
-    ) -> MCPServer:
-        """Construct and populate an MCPServer instance from registered elements.
+    ) -> McpServer:
+        """Construct and populate an McpServer instance from registered elements.
 
         Args:
             config: HexastackMcpConfig options.
             container: Active rodi DI container for dependency resolution.
 
         Returns:
-            Configured MCPServer instance.
+            Configured McpServer instance.
         """
-        server = MCPServer(
+        server = McpServer(
             name=config.server_name,
-            version=config.server_version,
             instructions=config.instructions,
         )
 
@@ -133,38 +143,50 @@ class McpServerRegistry:
         def get_system_info_resource() -> str:
             return json.dumps(
                 {
-                    "python_version": sys.version.split()[0],
                     "platform": platform.platform(),
+                    "python_version": sys.version,
                     "server_name": config.server_name,
-                    "server_version": config.server_version,
-                }
+                    "tools_count": len(self._tools),
+                    "resources_count": len(self._resources),
+                    "prompts_count": len(self._prompts),
+                },
+                indent=2,
             )
 
         @server.resource(
-            uri="hexastack://schema",
-            name="system_schema",
-            description="List of all exposed MCP tools, resources, and prompt templates.",
+            uri="hexastack://registry",
+            name="registry_manifest",
+            description="Manifest of all registered tools, resources, and prompt templates in Hexastack.",
             mime_type="application/json",
         )
-        def get_system_schema_resource() -> str:
+        def get_registry_manifest_resource() -> str:
             return json.dumps(
                 {
                     "tools": [
-                        {"name": t.name, "description": t.description, "kind": t.kind}
+                        {
+                            "name": t.name,
+                            "description": t.description,
+                            "kind": t.kind,
+                        }
                         for t in self._tools
                     ],
                     "resources": [
-                        {"uri": r.uri, "name": r.name, "description": r.description}
+                        {
+                            "uri": r.uri,
+                            "name": r.name,
+                            "description": r.description,
+                        }
                         for r in self._resources
                     ],
                     "prompts": [
                         {"name": p.name, "description": p.description}
                         for p in self._prompts
                     ],
-                }
+                },
+                indent=2,
             )
 
-        # 2. Register tools
+        # 2. Register Tools
         for tool_meta in self._tools:
             if inspect.isclass(tool_meta.target):
                 tool_fn = self._create_cqrs_tool_wrapper(
@@ -184,7 +206,7 @@ class McpServerRegistry:
                     description=tool_meta.description or tool_meta.target.__doc__,
                 )
 
-        # 3. Register custom resources
+        # 3. Register Resources
         for res_meta in self._resources:
             if res_meta.handler is not None:
                 server.resource(
@@ -194,7 +216,7 @@ class McpServerRegistry:
                     mime_type=res_meta.mime_type,
                 )(res_meta.handler)
 
-        # 4. Register prompts
+        # 4. Register Prompts
         for prompt_meta in self._prompts:
             if prompt_meta.handler is not None:
                 server.prompt(
@@ -203,12 +225,6 @@ class McpServerRegistry:
                 )(prompt_meta.handler)
 
         return server
-
-    def clear(self) -> None:
-        """Clear all registered elements (for test isolation)."""
-        self._tools.clear()
-        self._resources.clear()
-        self._prompts.clear()
 
 
 __all__ = [

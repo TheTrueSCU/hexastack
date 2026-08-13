@@ -73,6 +73,7 @@ graph TD
     CQRS["hexastack-cqrs (Buses & Pipelines)"]
     Logging["hexastack-logging (Telemetry)"]
     DB["hexastack-db (Persistence & Migrations)"]
+    AI["hexastack-ai (LiteLLM, Instructor & PydanticAI)"]
     FastAPI["hexastack-fastapi (REST API)"]
     GraphQL["hexastack-graphql (Strawberry GraphQL)"]
     MCP["hexastack-mcp (Model Context Protocol)"]
@@ -83,6 +84,7 @@ graph TD
     Umbrella --> CQRS
     Umbrella --> Logging
     Umbrella -. optional .-> DB
+    Umbrella -. optional .-> AI
     Umbrella -. optional .-> FastAPI
     Umbrella -. optional .-> GraphQL
     Umbrella -. optional .-> MCP
@@ -92,6 +94,8 @@ graph TD
     CQRS --> Core
     Logging --> Core
     DB --> Core
+    AI --> Core
+    AI --> CQRS
     FastAPI --> Core
     FastAPI --> CQRS
     GraphQL --> Core
@@ -111,7 +115,8 @@ graph TD
 | [`hexastack-core`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core) | Core domain abstractions, ports, DI container (`rodi`), config and type registries, bootstrap engine | `pip install hexastack-core` | *(Included by default)* |
 | [`hexastack-cqrs`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cqrs) | Synchronous & asynchronous command, query, and event buses with extensible middleware pipelines | `pip install hexastack-cqrs` | *(Included by default)* |
 | [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
-| [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
+| [`hexastack-ai`](file:///home/rjdw/Projects/hexastack/packages/hexastack_ai) | Agnostic AI engine (LiteLLM, Instructor, PydanticAI) and CQRS agent tool reflection | `pip install hexastack-ai` | `hexastack[ai]` |
+| [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, pgvector, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
 | [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
 | [`hexastack-graphql`](file:///home/rjdw/Projects/hexastack/packages/hexastack_graphql) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
 | [`hexastack-mcp`](file:///home/rjdw/Projects/hexastack/packages/hexastack_mcp) | Model Context Protocol adapter, AI agent CQRS tools, resources, prompts, and SSE transport | `pip install hexastack-mcp[fastapi]` | `hexastack[mcp]` |

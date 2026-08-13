@@ -6,7 +6,7 @@ from hexastack_mcp.infra.bootstrap import (
 from hexastack_mcp.infra.decorators import (
     mcp_tool,
 )
-from mcp.server import MCPServer
+from mcp.server.fastmcp import FastMCP as McpServer
 
 
 def test_mcp_bootstrapper_registration():
@@ -16,8 +16,8 @@ def test_mcp_bootstrapper_registration():
 
     runtime = bootstrap(packages_to_scan=[__name__])
 
-    # Verify MCPServer in DI container
-    server = runtime.container.resolve(MCPServer)
+    # Verify McpServer in DI container
+    server = runtime.container.resolve(McpServer)
     assert server is not None
     assert server.name == "Hexastack MCP Server"
 

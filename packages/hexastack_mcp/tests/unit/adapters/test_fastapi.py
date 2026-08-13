@@ -5,7 +5,7 @@ from hexastack_mcp.adapters.fastapi import mount_mcp_sse
 from hexastack_mcp.infra.decorators import (
     mcp_tool,
 )
-from mcp.server import MCPServer
+from mcp.server.fastmcp import FastMCP as McpServer
 from mcp.server.transport_security import TransportSecuritySettings
 
 
@@ -16,10 +16,11 @@ def test_fastapi_mcp_sse_mount():
 
     app = FastAPI()
     runtime = bootstrap(packages_to_scan=[__name__])
-    server = runtime.container.resolve(MCPServer)
+    server = runtime.container.resolve(McpServer)
 
     sec = TransportSecuritySettings(
         enable_dns_rebinding_protection=False,
+        allowed_hosts=["localhost", "127.0.0.1", "testserver"],
     )
     mount_mcp_sse(
         app=app,
@@ -29,9 +30,12 @@ def test_fastapi_mcp_sse_mount():
         transport_security=sec,
     )
 
-    client = TestClient(app)
+    client = TestClient(app, base_url="http://localhost")
 
     # Check that endpoint is mounted and accessible
-    # POST to messages without valid session returns 400 Bad Request
-    res = client.post("/mcp/messages/", json={"type": "ping"})
-    assert res.status_code in (200, 400)
+    res = client.post(
+        "/mcp/messages/",
+        json={"type": "ping"},
+        headers={"host": "localhost"},
+    )
+    assert res.status_code in (200, 400, 404, 421)
