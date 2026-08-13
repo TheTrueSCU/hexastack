@@ -3,6 +3,7 @@ from typing import Any
 
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_core.ports.ai import VectorStorePort
 from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from sqlalchemy import Engine
@@ -38,6 +39,7 @@ class DatabaseBootstrapResult:
     engine: Engine | AsyncEngine
     session_factory: sessionmaker[Session] | async_sessionmaker[AsyncSession]
     uow: SqlAlchemyUnitOfWork | AsyncSqlAlchemyUnitOfWork
+    vector_store: Any = None
 
 
 class DatabaseBootstrapper(BootstrapperPort):
@@ -45,12 +47,13 @@ class DatabaseBootstrapper(BootstrapperPort):
 
     Notes/Architectural Intent:
         Implements BootstrapperPort with order=15 (executing before CQRS order=20),
-        registering database configuration and injecting UnitOfWorkPort into DI.
-        When auto_create_tables=True, runs create_all() on all metadata objects
-        registered via register_metadata().
+        registering database configuration under 'db' ([hexastack.db]) and injecting
+        UnitOfWorkPort into DI. When auto_create_tables=True, runs create_all() on all
+        metadata objects registered via register_metadata().
+        When vector.enabled=True, initializes and binds PgVectorStoreAdapter.
     """
 
-    name: str = "database"
+    name: str = "db"
     order: int = 15
 
     def configure(self, context: BootstrapContext) -> None:
@@ -58,21 +61,19 @@ class DatabaseBootstrapper(BootstrapperPort):
 
         Args:
             context: BootstrapContext containing DI container and config.
-
-        Returns:
-            None.
-
-        Raises:
-            None.
         """
         di = context.container
 
         # 1. Read Database Configuration
-        db_config = context.get_config("database", HexastackDatabaseConfig)
+        if HexastackDatabaseConfig in di:
+            db_config = di.resolve(HexastackDatabaseConfig)
+        else:
+            db_config = context.get_config("db", HexastackDatabaseConfig)
 
         engine: Engine | AsyncEngine
         session_factory: Any
         uow: SqlAlchemyUnitOfWork | AsyncSqlAlchemyUnitOfWork
+        vector_store: Any = None
 
         # 2. Build Engine & Session Factory based on async_mode
         if db_config.async_mode:
@@ -87,6 +88,20 @@ class DatabaseBootstrapper(BootstrapperPort):
             engine = async_engine
             session_factory = async_factory
             uow = async_uow
+
+            if db_config.vector.enabled:
+                from hexastack_db.adapters.vector import (
+                    AsyncPgVectorStoreAdapter,
+                )
+
+                async_vector_store = AsyncPgVectorStoreAdapter(
+                    session_factory=async_factory,
+                    config=db_config.vector,
+                )
+                di.add_instance(
+                    async_vector_store, declared_class=AsyncPgVectorStoreAdapter
+                )
+                vector_store = async_vector_store
         else:
             sync_engine = create_db_engine(db_config)
             sync_factory = create_session_factory(sync_engine)
@@ -101,13 +116,26 @@ class DatabaseBootstrapper(BootstrapperPort):
             session_factory = sync_factory
             uow = sync_uow
 
+            if db_config.vector.enabled:
+                from hexastack_db.adapters.vector import (
+                    PgVectorStoreAdapter,
+                )
+
+                sync_vector_store = PgVectorStoreAdapter(
+                    session_factory=sync_factory,
+                    config=db_config.vector,
+                )
+                if db_config.auto_create_tables:
+                    sync_vector_store.create_table()
+                di.add_instance(sync_vector_store, declared_class=VectorStorePort)
+                di.add_instance(sync_vector_store, declared_class=PgVectorStoreAdapter)
+                vector_store = sync_vector_store
+
         # 3. Run create_all on registered metadata if configured
         if db_config.auto_create_tables:
             registered = get_registered_metadata()
             if registered:
                 if db_config.async_mode:
-                    # Async engines require a sync-compatible connection for DDL;
-                    # use the sync URL (strip async driver prefix) for create_all.
                     sync_url = (
                         str(engine.url)
                         .replace("+aiosqlite", "")
@@ -131,23 +159,20 @@ class DatabaseBootstrapper(BootstrapperPort):
             engine=engine,
             session_factory=session_factory,
             uow=uow,
+            vector_store=vector_store,
         )
         context.properties["database_result"] = db_result
         context.properties["db_engine"] = engine
         context.properties["db_session_factory"] = session_factory
         context.properties["db_uow"] = uow
+        if vector_store is not None:
+            context.properties["db_vector_store"] = vector_store
 
     def register_config(self, registry: ConfigRegistry) -> None:
-        """Phase 1: Register database configuration schema under 'database'.
+        """Phase 1: Register database configuration schema under 'db'.
 
         Args:
             registry: Target ConfigRegistry instance.
-
-        Returns:
-            None.
-
-        Raises:
-            None.
         """
         register_database_config(registry)
 

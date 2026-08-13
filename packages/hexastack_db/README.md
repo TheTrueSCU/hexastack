@@ -92,8 +92,9 @@ graph TD
 ### Optional Integrations (Extras)
 - `[sqlite]`: Installs `aiosqlite>=0.20.0` for async SQLite support.
 - `[postgresql]`: Installs `asyncpg>=0.30.0` and `psycopg[binary]>=3.2.0`.
+- `[pgvector]`: Installs `pgvector>=0.3.0` and PostgreSQL drivers for VectorStorePort support.
 - `[migrations]`: Installs `alembic>=1.13.0` for migration commands and autogeneration.
-- `[all]`: Installs all drivers and Alembic.
+- `[all]`: Installs all drivers, pgvector, and Alembic.
 
 ---
 
@@ -106,6 +107,9 @@ pip install "hexastack-db[sqlite]"
 # Standalone with PostgreSQL and Alembic migrations
 pip install "hexastack-db[postgresql,migrations]"
 
+# With PostgreSQL vector search (pgvector)
+pip install "hexastack-db[pgvector]"
+
 # Via umbrella package
 pip install "hexastack[db]"
 ```
@@ -115,7 +119,8 @@ pip install "hexastack[db]"
 ## 5. Configuration Reference
 
 ```toml
-[hexastack.database]
+[hexastack.db]
+# Global Settings
 url = "sqlite:///app.db" # "postgresql+asyncpg://user:pass@localhost:5432/dbname"
 async_mode = false # Set to true for async engine & sessions
 auto_create_tables = false # Runs create_all() on registered metadata at bootstrap
@@ -124,6 +129,29 @@ pool_size = 5
 max_overflow = 10
 pool_timeout = 30
 pool_recycle = 1800
+
+# SQLite-Specific Dialect Settings
+[hexastack.db.sqlite]
+foreign_keys = true # PRAGMA foreign_keys = ON
+journal_mode = "WAL" # PRAGMA journal_mode = WAL
+busy_timeout_ms = 5000 # PRAGMA busy_timeout = 5000
+synchronous = "NORMAL"
+
+# PostgreSQL-Specific Dialect Settings
+[hexastack.db.postgres]
+search_path = "public"
+ssl_mode = "require"
+server_side_cursors = false
+
+# PostgreSQL pgvector Configuration
+[hexastack.db.vector]
+enabled = false # Auto-binds VectorStorePort in DI container
+table_name = "hexastack_vectors"
+dimension = 1536
+distance_strategy = "cosine" # "cosine", "l2", "inner_product"
+index_type = "hnsw" # "hnsw", "ivfflat", "none"
+m = 16
+ef_construction = 64
 ```
 
 ---
@@ -150,7 +178,7 @@ register_metadata(HexastackBase.metadata)
 # 2. Bootstrap with auto-table creation
 runtime = bootstrap(
     config_overrides={
-        "database": {
+        "db": {
             "url": "sqlite:///:memory:",
             "auto_create_tables": True,
         }

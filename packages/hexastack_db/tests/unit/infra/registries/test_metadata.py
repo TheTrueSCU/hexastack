@@ -31,13 +31,13 @@ def _bootstrap_with_url(url: str, auto_create_tables: bool, tmp_path):
 
     Notes/Architectural Intent:
         ConfigRegistry reads package sections under the [hexastack] table,
-        so [database] must be nested as [hexastack.database].
+        so [db] must be nested as [hexastack.db].
     """
     from hexastack_core.infra.bootstrap import bootstrap
 
     config_file = tmp_path / "hexastack.toml"
     config_file.write_text(
-        f'[hexastack.database]\nurl = "{url}"\nauto_create_tables = {str(auto_create_tables).lower()}\n'
+        f'[hexastack.db]\nurl = "{url}"\nauto_create_tables = {str(auto_create_tables).lower()}\n'
     )
     return bootstrap(
         config_path=str(config_file),

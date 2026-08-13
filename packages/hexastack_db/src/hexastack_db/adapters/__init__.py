@@ -6,10 +6,18 @@ from hexastack_db.adapters.unit_of_work import (
     AsyncSqlAlchemyUnitOfWork,
     SqlAlchemyUnitOfWork,
 )
+from hexastack_db.adapters.vector import (
+    AsyncPgVectorStoreAdapter,
+    PgVectorStoreAdapter,
+    create_vector_table,
+)
 
 __all__ = [
+    "AsyncPgVectorStoreAdapter",
     "AsyncSqlAlchemyRepository",
     "AsyncSqlAlchemyUnitOfWork",
+    "PgVectorStoreAdapter",
     "SqlAlchemyRepository",
     "SqlAlchemyUnitOfWork",
+    "create_vector_table",
 ]

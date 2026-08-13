@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -10,7 +10,24 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool, StaticPool
 
-from hexastack_db.infra.config import HexastackDatabaseConfig
+from hexastack_db.infra.config import HexastackDatabaseConfig, SqliteDialectConfig
+
+
+def _setup_sqlite_pragmas(engine: Engine, sqlite_cfg: SqliteDialectConfig) -> None:
+    """Register connect event listener configuring SQLite PRAGMAs."""
+
+    @event.listens_for(engine, "connect")
+    def on_connect(dbapi_connection: Any, connection_record: Any) -> None:
+        cursor = dbapi_connection.cursor()
+        if sqlite_cfg.foreign_keys:
+            cursor.execute("PRAGMA foreign_keys=ON")
+        if sqlite_cfg.busy_timeout_ms > 0:
+            cursor.execute(f"PRAGMA busy_timeout={sqlite_cfg.busy_timeout_ms}")
+        if sqlite_cfg.journal_mode:
+            cursor.execute(f"PRAGMA journal_mode={sqlite_cfg.journal_mode}")
+        if sqlite_cfg.synchronous:
+            cursor.execute(f"PRAGMA synchronous={sqlite_cfg.synchronous}")
+        cursor.close()
 
 
 def create_db_engine(config: HexastackDatabaseConfig) -> Engine:
@@ -18,16 +35,13 @@ def create_db_engine(config: HexastackDatabaseConfig) -> Engine:
 
     Notes/Architectural Intent:
         Optimizes connection pooling for SQLite (StaticPool/NullPool for memory/file)
-        and standard QueuePool for PostgreSQL/MySQL.
+        and standard QueuePool for PostgreSQL/MySQL. Attaches dialect-specific PRAGMAs.
 
     Args:
         config: HexastackDatabaseConfig instance.
 
     Returns:
         Configured SQLAlchemy Engine.
-
-    Raises:
-        None.
     """
     kwargs: dict[str, Any] = {"echo": config.echo}
 
@@ -44,7 +58,12 @@ def create_db_engine(config: HexastackDatabaseConfig) -> Engine:
         kwargs["pool_timeout"] = config.pool_timeout
         kwargs["pool_recycle"] = config.pool_recycle
 
-    return create_engine(config.url, **kwargs)
+    engine = create_engine(config.url, **kwargs)
+
+    if config.is_sqlite:
+        _setup_sqlite_pragmas(engine, config.sqlite)
+
+    return engine
 
 
 def create_async_db_engine(config: HexastackDatabaseConfig) -> AsyncEngine:
@@ -58,9 +77,6 @@ def create_async_db_engine(config: HexastackDatabaseConfig) -> AsyncEngine:
 
     Returns:
         Configured SQLAlchemy AsyncEngine.
-
-    Raises:
-        None.
     """
     url = config.url
     if url.startswith("sqlite://") and not url.startswith("sqlite+aiosqlite://"):
@@ -83,7 +99,12 @@ def create_async_db_engine(config: HexastackDatabaseConfig) -> AsyncEngine:
         kwargs["pool_timeout"] = config.pool_timeout
         kwargs["pool_recycle"] = config.pool_recycle
 
-    return create_async_engine(url, **kwargs)
+    async_engine = create_async_engine(url, **kwargs)
+
+    if "sqlite" in url:
+        _setup_sqlite_pragmas(async_engine.sync_engine, config.sqlite)
+
+    return async_engine
 
 
 def create_session_factory(engine: Engine) -> sessionmaker[Session]:
