@@ -1,0 +1,355 @@
+[importlinter]
+root_packages =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_core
+    hexastack_cqrs
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_logging
+    hexastack_mcp
+    hexastack_otel
+include_type_checking = False
+
+# ----------------------------------------------------------------------
+# 1. AI SUBSYSTEM INDEPENDENCE CONTRACT
+# AI package must not depend on unrelated presentation drivers.
+# ----------------------------------------------------------------------
+[importlinter:contract:ai-independence]
+name = AI Subsystem Independence
+type = forbidden
+source_modules =
+    hexastack_ai
+forbidden_modules =
+    hexastack
+    hexastack_cli
+    hexastack_graphql
+    hexastack_grpc
+
+# ----------------------------------------------------------------------
+# 2. AUTH SUBSYSTEM INDEPENDENCE CONTRACT
+# Auth only depends on Core and CQRS.
+# ----------------------------------------------------------------------
+[importlinter:contract:auth-independence]
+name = Auth Subsystem Independence
+type = forbidden
+source_modules =
+    hexastack_auth
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_cli
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_mcp
+    hexastack_otel
+
+# ----------------------------------------------------------------------
+# 3. CLI PRESENTATION INDEPENDENCE CONTRACT
+# CLI must not depend on network server drivers.
+# ----------------------------------------------------------------------
+[importlinter:contract:cli-independence]
+name = CLI Presentation Independence
+type = forbidden
+source_modules =
+    hexastack_cli
+forbidden_modules =
+    hexastack
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_mcp
+
+# ----------------------------------------------------------------------
+# 4. CORE KERNEL INDEPENDENCE CONTRACT
+# Core must never import any other Hexastack package.
+# ----------------------------------------------------------------------
+[importlinter:contract:core-independence]
+name = Core Kernel Independence
+type = forbidden
+source_modules =
+    hexastack_core
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_cqrs
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_logging
+    hexastack_mcp
+    hexastack_otel
+
+# ----------------------------------------------------------------------
+# 5. CQRS BUSES INDEPENDENCE CONTRACT
+# CQRS bus layer must never depend on outer adapters or specialized packages.
+# ----------------------------------------------------------------------
+[importlinter:contract:cqrs-independence]
+name = CQRS Kernel Independence
+type = forbidden
+source_modules =
+    hexastack_cqrs
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_mcp
+    hexastack_otel
+
+# ----------------------------------------------------------------------
+# 6. DB PERSISTENCE INDEPENDENCE CONTRACT
+# DB must never depend on presentation layers or specialized services.
+# ----------------------------------------------------------------------
+[importlinter:contract:db-independence]
+name = DB Persistence Independence
+type = forbidden
+source_modules =
+    hexastack_db
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_events
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_mcp
+    hexastack_otel
+
+# ----------------------------------------------------------------------
+# 7. DOMAIN LAYER PURITY CONTRACT
+# Domain modules must never import ports, infra, or adapters.
+# ----------------------------------------------------------------------
+[importlinter:contract:domain-purity]
+name = Domain Layer Purity
+type = forbidden
+source_modules =
+    hexastack_ai.domain
+    hexastack_auth.domain
+    hexastack_core.domain
+    hexastack_cqrs.domain
+    hexastack_db.domain
+    hexastack_events.domain
+    hexastack_graphql.domain
+    hexastack_grpc.domain
+    hexastack_mcp.domain
+    hexastack_otel.domain
+forbidden_modules =
+    hexastack_ai.adapters
+    hexastack_ai.infra
+    hexastack_auth.adapters
+    hexastack_auth.infra
+    hexastack_auth.ports
+    hexastack_cli.adapters
+    hexastack_cli.infra
+    hexastack_core.adapters
+    hexastack_core.infra
+    hexastack_core.ports
+    hexastack_cqrs.adapters
+    hexastack_cqrs.infra
+    hexastack_cqrs.ports
+    hexastack_db.adapters
+    hexastack_db.infra
+    hexastack_events.adapters
+    hexastack_events.infra
+    hexastack_events.ports
+    hexastack_fastapi.adapters
+    hexastack_fastapi.infra
+    hexastack_graphql.adapters
+    hexastack_graphql.infra
+    hexastack_grpc.adapters
+    hexastack_grpc.infra
+    hexastack_logging.adapters
+    hexastack_logging.infra
+    hexastack_mcp.adapters
+    hexastack_mcp.infra
+    hexastack_otel.adapters
+    hexastack_otel.infra
+    hexastack_otel.ports
+
+# ----------------------------------------------------------------------
+# 8. EVENTS OUTBOX INDEPENDENCE CONTRACT
+# Events must never depend on presentation layers.
+# ----------------------------------------------------------------------
+[importlinter:contract:events-independence]
+name = Events Outbox Independence
+type = forbidden
+source_modules =
+    hexastack_events
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_db
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_mcp
+    hexastack_otel
+
+# ----------------------------------------------------------------------
+# 9. FASTAPI PRESENTATION INDEPENDENCE CONTRACT
+# FastAPI must not depend on alternative presentation drivers.
+# ----------------------------------------------------------------------
+[importlinter:contract:fastapi-independence]
+name = FastAPI Presentation Independence
+type = forbidden
+source_modules =
+    hexastack_fastapi
+forbidden_modules =
+    hexastack
+    hexastack_cli
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_mcp
+
+# ----------------------------------------------------------------------
+# 10. GRAPHQL PRESENTATION INDEPENDENCE CONTRACT
+# GraphQL must not depend on alternative presentation drivers (allows FastAPI via hexastack-graphql[fastapi]).
+# ----------------------------------------------------------------------
+[importlinter:contract:graphql-independence]
+name = GraphQL Presentation Independence
+type = forbidden
+source_modules =
+    hexastack_graphql
+forbidden_modules =
+    hexastack
+    hexastack_cli
+    hexastack_grpc
+    hexastack_mcp
+
+# ----------------------------------------------------------------------
+# 11. GRPC PRESENTATION INDEPENDENCE CONTRACT
+# gRPC must not depend on alternative presentation drivers.
+# ----------------------------------------------------------------------
+[importlinter:contract:grpc-independence]
+name = gRPC Presentation Independence
+type = forbidden
+source_modules =
+    hexastack_grpc
+forbidden_modules =
+    hexastack
+    hexastack_cli
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_mcp
+
+# ----------------------------------------------------------------------
+# 12. LOGGING SUBSYSTEM INDEPENDENCE CONTRACT
+# Logging only depends on Core.
+# ----------------------------------------------------------------------
+[importlinter:contract:logging-independence]
+name = Logging Subsystem Independence
+type = forbidden
+source_modules =
+    hexastack_logging
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_cqrs
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_mcp
+    hexastack_otel
+
+# ----------------------------------------------------------------------
+# 13. MCP PRESENTATION INDEPENDENCE CONTRACT
+# MCP must not depend on alternative presentation drivers (allows FastAPI via hexastack-mcp[fastapi]).
+# ----------------------------------------------------------------------
+[importlinter:contract:mcp-independence]
+name = MCP Presentation Independence
+type = forbidden
+source_modules =
+    hexastack_mcp
+forbidden_modules =
+    hexastack
+    hexastack_cli
+    hexastack_graphql
+    hexastack_grpc
+
+# ----------------------------------------------------------------------
+# 14. OPENTELEMETRY SUBSYSTEM INDEPENDENCE CONTRACT
+# OTel only depends on Core and CQRS.
+# ----------------------------------------------------------------------
+[importlinter:contract:otel-independence]
+name = OTel Subsystem Independence
+type = forbidden
+source_modules =
+    hexastack_otel
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_mcp
+
+# ----------------------------------------------------------------------
+# 15. PORTS LAYER PURITY CONTRACT
+# Port interfaces must never import concrete infra or adapters.
+# ----------------------------------------------------------------------
+[importlinter:contract:ports-purity]
+name = Ports Layer Purity
+type = forbidden
+source_modules =
+    hexastack_auth.ports
+    hexastack_core.ports
+    hexastack_cqrs.ports
+    hexastack_events.ports
+    hexastack_otel.ports
+forbidden_modules =
+    hexastack_ai.adapters
+    hexastack_ai.infra
+    hexastack_auth.adapters
+    hexastack_auth.infra
+    hexastack_cli.adapters
+    hexastack_cli.infra
+    hexastack_core.adapters
+    hexastack_core.infra
+    hexastack_cqrs.adapters
+    hexastack_cqrs.infra
+    hexastack_db.adapters
+    hexastack_db.infra
+    hexastack_events.adapters
+    hexastack_events.infra
+    hexastack_fastapi.adapters
+    hexastack_fastapi.infra
+    hexastack_graphql.adapters
+    hexastack_graphql.infra
+    hexastack_grpc.adapters
+    hexastack_grpc.infra
+    hexastack_logging.adapters
+    hexastack_logging.infra
+    hexastack_mcp.adapters
+    hexastack_mcp.infra
+    hexastack_otel.adapters
+    hexastack_otel.infra

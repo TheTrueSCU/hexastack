@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 import grpc
+
 from hexastack_grpc.infra.config import HexastackGrpcConfig
 
 

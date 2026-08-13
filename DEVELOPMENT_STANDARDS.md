@@ -10,6 +10,7 @@ To balance development speed with code reliability, we employ a tiered testing a
 *   **Location:** `tests/unit/`, `tests/integration/`
 *   **Responsibility:** Validate core business logic and "golden path" scenarios.
 *   **Execution:** Run on every commit via local development and the `check` job in CI.
+*   **Parallelization & Randomization:** Tests run concurrently across CPU cores via `pytest-xdist` (`-n auto`) and with randomized test execution order via `pytest-randomly` to ensure zero hidden test state dependencies or test pollution.
 
 ### Property-Based Fuzzing (Robustness Lane)
 *   **Location:** `tests/properties/`
@@ -26,11 +27,12 @@ The CI pipeline enforces quality through a multi-stage dependency chain.
 ```yaml
 jobs:
   check:
-    # Runs static analysis, formatting, and unit/integration tests.
+    # Executes pre-commit run --all-files (DRY quality checks: ruff, ty, import-linter, etc.)
+    # and runs unit/integration tests with pytest-xdist and pytest-randomly.
     # Must pass before any other jobs trigger.
 
   hypothesis:
-    # Runs property-based tests.
+    # Runs property-based fuzzing tests with hypothesis.
     needs: check
     if: github.event_name == 'pull_request'
     # Executes only during PR review to save CI resources.
@@ -45,6 +47,7 @@ We use pre-commit to ensure code quality **before** it hits the repository.
 *   **Standard Hooks:** Trailing whitespace, end-of-file fixes, YAML validation, large file checks.
 *   **Linting & Formatting:** `ruff` (with `--fix`) and `ruff-format`.
 *   **Type Safety:** `ty check` (using `language: system` to leverage uv environments).
+*   **Hexagonal Architecture Enforcement:** `import-linter` (`lint-imports`) enforcing strict domain/ports purity and inter-package independence.
 
 ---
 

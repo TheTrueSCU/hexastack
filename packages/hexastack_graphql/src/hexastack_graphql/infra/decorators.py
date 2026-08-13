@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import Any, cast
 
 import strawberry
+
 from hexastack_graphql.infra.autodiscovery import (
     _GRAPHQL_FIELD_ATTR,
     _GRAPHQL_TYPE_ATTR,

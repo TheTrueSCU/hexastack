@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
-from rodi import Container
 from strawberry.fastapi.context import BaseContext
 
 
@@ -17,9 +15,9 @@ class GraphQLContext(BaseContext):
         FastAPI router integration.
     """
 
-    container: Container | None = None
-    command_bus: CommandBusPort | None = None
-    query_bus: QueryBusPort | None = None
+    container: Any | None = None
+    command_bus: Any | None = None
+    query_bus: Any | None = None
     request: Any | None = None
     properties: dict[str, Any] = field(default_factory=dict)
 

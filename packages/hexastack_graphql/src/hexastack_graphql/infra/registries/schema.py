@@ -1,9 +1,10 @@
 from typing import Any
 
 import strawberry
+from strawberry.types import Info
+
 from hexastack_graphql.domain.context import GraphQLContext
 from hexastack_graphql.domain.exceptions import SchemaBuildingError
-from strawberry.types import Info
 
 
 class GraphQLSchemaRegistry:

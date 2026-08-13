@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    name: Lint & Unit/Integration Tests
+    name: Pre-Commit & Unit/Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,14 +26,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-packages --all-extras --all-groups
 
-      - name: Run Ruff Linter
-        run: uv run ruff check .
-
-      - name: Run Ruff Format Check
-        run: uv run ruff format --check .
-
-      - name: Run Type Check (ty)
-        run: uv run ty check
+      - name: Run Pre-Commit Quality Checks
+        run: uv run pre-commit run --all-files
 
       - name: Run Unit & Integration Tests
         run: uv run pytest packages/ --ignore-glob="packages/*/tests/properties/*"

@@ -1,45 +1,6 @@
-from hexastack_fastapi.adapters import (
-    CqrsRouter,
-    create_fastapi_app,
-    create_health_router,
-    get_container,
-    get_pipeline,
-)
-from hexastack_fastapi.infra import (
-    CorrelationHttpMiddleware,
-    CorsConfig,
-    FastApiBootstrapper,
-    HealthConfig,
-    HexastackFastApiConfig,
-    RequestLoggingConfig,
-    RequestLoggingHttpMiddleware,
-    RouteMetadata,
-    api_command,
-    api_query,
-    autodiscover_routes,
-    create_route_visitor,
-    register_exception_handlers,
-    register_fastapi_config,
-)
+from hexastack_fastapi import adapters, infra
 
 __all__ = [
-    "CorrelationHttpMiddleware",
-    "CorsConfig",
-    "CqrsRouter",
-    "FastApiBootstrapper",
-    "HealthConfig",
-    "HexastackFastApiConfig",
-    "RequestLoggingConfig",
-    "RequestLoggingHttpMiddleware",
-    "RouteMetadata",
-    "api_command",
-    "api_query",
-    "autodiscover_routes",
-    "create_fastapi_app",
-    "create_health_router",
-    "create_route_visitor",
-    "get_container",
-    "get_pipeline",
-    "register_exception_handlers",
-    "register_fastapi_config",
+    "adapters",
+    "infra",
 ]

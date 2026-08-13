@@ -1,7 +1,4 @@
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
-
-if TYPE_CHECKING:
-    from hexastack_core.infra.registries.config import ConfigRegistry
+from typing import Any, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -31,7 +28,7 @@ class BootstrapperPort(Protocol):
         """
         ...
 
-    def register_config(self, registry: "ConfigRegistry") -> None:
+    def register_config(self, registry: Any) -> None:
         """Phase 1: Register configuration section schemas with ConfigRegistry.
 
         Args:
@@ -44,3 +41,8 @@ class BootstrapperPort(Protocol):
             None.
         """
         ...
+
+
+__all__ = [
+    "BootstrapperPort",
+]

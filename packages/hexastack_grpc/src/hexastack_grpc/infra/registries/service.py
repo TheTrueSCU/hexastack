@@ -4,9 +4,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import grpc
+from rodi import Container
+
 from hexastack_grpc.domain.exceptions import ServiceRegistrationError
 from hexastack_grpc.infra.config import HexastackGrpcConfig
-from rodi import Container
 
 
 @dataclass(frozen=True)

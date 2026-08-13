@@ -11,6 +11,9 @@ from hexastack_cqrs.ports.buses import (
     CommandBusPort,
     QueryBusPort,
 )
+from mcp.server.fastmcp import FastMCP as McpServer
+from rodi import Container
+
 from hexastack_mcp.domain.exceptions import ToolExecutionError
 from hexastack_mcp.domain.metadata import (
     McpPromptMetadata,
@@ -18,8 +21,6 @@ from hexastack_mcp.domain.metadata import (
     McpToolMetadata,
 )
 from hexastack_mcp.infra.config import HexastackMcpConfig
-from mcp.server.fastmcp import FastMCP as McpServer
-from rodi import Container
 
 
 class McpServerRegistry:

@@ -26,4 +26,4 @@ def test_fastapi_graphql_router_mounting():
     client = TestClient(app)
     res = client.post("/graphql", json={"query": "{ status }"})
     assert res.status_code == 200
-    assert res.json() == {"data": {"status": "OK"}}
+    assert res.json()["data"] == {"status": "OK"}

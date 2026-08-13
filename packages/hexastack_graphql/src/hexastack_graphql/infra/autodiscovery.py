@@ -7,6 +7,7 @@ from hexastack_core.infra.autodiscovery import (
     DiscoveryVisitor,
     scan_modules,
 )
+
 from hexastack_graphql.infra.registries.schema import GraphQLSchemaRegistry
 
 _GRAPHQL_TYPE_ATTR = "__hexastack_graphql_type__"
