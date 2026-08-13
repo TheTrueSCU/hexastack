@@ -29,6 +29,9 @@ db = [
 sql = [
     "hexastack-db",
 ]
+events = [
+    "hexastack-events",
+]
 fastapi = [
     "hexastack-fastapi",
 ]
@@ -41,6 +44,9 @@ grpc = [
 mcp = [
     "hexastack-mcp",
 ]
+otel = [
+    "hexastack-otel",
+]
 web = [
     "hexastack-fastapi",
     "uvicorn[standard]>=0.30.0",
@@ -50,10 +56,12 @@ all = [
     "hexastack-auth",
     "hexastack-cli",
     "hexastack-db",
+    "hexastack-events",
     "hexastack-fastapi",
     "hexastack-graphql",
     "hexastack-grpc",
     "hexastack-mcp",
+    "hexastack-otel",
     "uvicorn[standard]>=0.30.0",
 ]
 
@@ -70,9 +78,11 @@ hexastack-auth = { workspace = true }
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 hexastack-logging = { workspace = true }
+hexastack-events = { workspace = true }
 hexastack-fastapi = { workspace = true }
 hexastack-cli = { workspace = true }
 hexastack-db = { workspace = true }
 hexastack-graphql = { workspace = true }
 hexastack-grpc = { workspace = true }
 hexastack-mcp = { workspace = true }
+hexastack-otel = { workspace = true }

@@ -22,9 +22,12 @@ graph TD
         GRPC["hexastack-grpc (gRPC / Protobuf)"]
     end
 
-    subgraph CQRSExecution ["Application / CQRS Pipeline"]
+    subgraph CQRSExecution ["Application & CQRS Pipelines"]
         BUS["hexastack-cqrs (Command, Query & Event Buses)"]
-        MW["Middleware (Correlation, Timing, Logging, Retry, UnitOfWork)"]
+        AUTH["hexastack-auth (RBAC & @authorize Middleware)"]
+        EVENTS["hexastack-events (CloudEvents & Transactional Outbox)"]
+        AI["hexastack-ai (LiteLLM, Instructor & PydanticAI)"]
+        MW["Middleware (Correlation, Auth, Tracing, Retry, UnitOfWork)"]
     end
 
     subgraph DomainKernel ["Domain Kernel & Ports"]
@@ -34,6 +37,7 @@ graph TD
     subgraph DrivenAdapters ["Driven Adapters (Secondary / Outbound)"]
         DB["hexastack-db (SQLAlchemy Repositories, Unit of Work, Alembic)"]
         LOG["hexastack-logging (Loguru, Rich, Structlog, Sanitization)"]
+        OTEL["hexastack-otel (OpenTelemetry Tracing & OTLP)"]
     end
 
     CLI --> BUS
@@ -42,9 +46,13 @@ graph TD
     MCP --> BUS
     GRPC --> BUS
     BUS --> MW
+    AUTH --> MW
+    EVENTS --> BUS
+    AI --> BUS
     MW --> CORE
     CORE -.-> DB
     CORE -.-> LOG
+    CORE -.-> OTEL
 ```
 
 ### Core Tenets
@@ -71,8 +79,10 @@ graph TD
 
     Core["hexastack-core (Kernel)"]
     CQRS["hexastack-cqrs (Buses & Pipelines)"]
+    Events["hexastack-events (CloudEvents & Outbox)"]
     Logging["hexastack-logging (Telemetry)"]
     Auth["hexastack-auth (Security & RBAC)"]
+    Otel["hexastack-otel (OpenTelemetry Tracing)"]
     DB["hexastack-db (Persistence & Migrations)"]
     AI["hexastack-ai (LiteLLM, Instructor & PydanticAI)"]
     FastAPI["hexastack-fastapi (REST API)"]
@@ -84,7 +94,9 @@ graph TD
     Umbrella --> Core
     Umbrella --> CQRS
     Umbrella --> Logging
+    Umbrella -. optional .-> Events
     Umbrella -. optional .-> Auth
+    Umbrella -. optional .-> Otel
     Umbrella -. optional .-> DB
     Umbrella -. optional .-> AI
     Umbrella -. optional .-> FastAPI
@@ -94,9 +106,13 @@ graph TD
     Umbrella -. optional .-> CLI
 
     CQRS --> Core
+    Events --> Core
+    Events --> CQRS
     Logging --> Core
     Auth --> Core
     Auth --> CQRS
+    Otel --> Core
+    Otel --> CQRS
     DB --> Core
     AI --> Core
     AI --> CQRS
@@ -118,8 +134,10 @@ graph TD
 |---|---|---|---|
 | [`hexastack-core`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core) | Core domain abstractions, ports, DI container (`rodi`), config and type registries, bootstrap engine | `pip install hexastack-core` | *(Included by default)* |
 | [`hexastack-cqrs`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cqrs) | Synchronous & asynchronous command, query, and event buses with extensible middleware pipelines | `pip install hexastack-cqrs` | *(Included by default)* |
+| [`hexastack-events`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), distributed event buses | `pip install hexastack-events` | `hexastack[events]` |
 | [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
 | [`hexastack-auth`](file:///home/rjdw/Projects/hexastack/packages/hexastack_auth) | Security, RBAC, JWT tokens, PBKDF2 password hashing, and `@authorize` CQRS pipeline middleware | `pip install hexastack-auth` | `hexastack[auth]` |
+| [`hexastack-otel`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel) | OpenTelemetry distributed tracing, OTLP gRPC/HTTP export, and CQRS telemetry middleware | `pip install hexastack-otel` | `hexastack[otel]` |
 | [`hexastack-ai`](file:///home/rjdw/Projects/hexastack/packages/hexastack_ai) | Agnostic AI engine (LiteLLM, Instructor, PydanticAI) and CQRS agent tool reflection | `pip install hexastack-ai` | `hexastack[ai]` |
 | [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, pgvector, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
 | [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |

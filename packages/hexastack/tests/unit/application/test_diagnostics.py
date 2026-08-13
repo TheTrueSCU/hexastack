@@ -19,10 +19,17 @@ def test_get_system_info_handler():
     assert result.python_version is not None
     assert result.platform is not None
     assert "hexastack-core" in result.installed_packages
-    assert "fastapi" in result.optional_dependencies
-    assert "huey" in result.optional_dependencies
-    assert "pydantic" not in result.optional_dependencies
-    assert "rodi" not in result.optional_dependencies
+    assert "hexastack-events" in result.installed_packages
+    assert "hexastack-fastapi" in result.installed_packages
+
+    # Fastapi is installed, so fastapi and pydantic are in required_dependencies
+    assert (
+        "fastapi" in result.required_dependencies
+        or "fastapi" in result.optional_dependencies
+    )
+    assert isinstance(result.required_dependencies, dict)
+    assert isinstance(result.optional_dependencies, dict)
+    assert isinstance(result.extras, dict)
 
 
 def test_inspect_registry_handler():

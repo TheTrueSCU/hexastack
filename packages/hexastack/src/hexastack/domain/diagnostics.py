@@ -1,21 +1,25 @@
 from hexastack_core.domain import Command, Generic, Query
+from pydantic import Field
 
 
 class SystemInfoDTO(Generic):
     """Data transfer object describing installed Hexastack runtime environment.
 
     Notes/Architectural Intent:
-        Carries versioning, installed packages, and optional dependency statuses.
+        Carries versioning, installed packages, required dependencies, optional dependencies,
+        and scoped extras dynamically classified based on currently installed packages.
     """
 
     python_version: str
     platform: str
     installed_packages: dict[str, str]
-    optional_dependencies: dict[str, bool]
+    required_dependencies: dict[str, bool] = Field(default_factory=dict)
+    optional_dependencies: dict[str, bool] = Field(default_factory=dict)
+    extras: dict[str, bool] = Field(default_factory=dict)
 
 
 class GetSystemInfoQuery(Query[SystemInfoDTO]):
-    """Query requesting system environment diagnostics and optional dependency statuses.
+    """Query requesting system environment diagnostics and dependency classification.
 
     Notes/Architectural Intent:
         Diagnostic query resolved by GetSystemInfoHandler.

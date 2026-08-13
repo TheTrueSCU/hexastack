@@ -1,0 +1,34 @@
+[project]
+name = "hexastack-events"
+version = "0.1.0"
+description = "CloudEvents serialization, Transactional Outbox pattern, and distributed event streaming for Hexastack"
+readme = "README.md"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "cloudevents>=1.11.0",
+    "hexastack-core",
+    "hexastack-cqrs",
+    "pydantic>=2.10.0",
+]
+
+[project.optional-dependencies]
+huey = [
+    "huey>=3.3.4",
+]
+sql = [
+    "sqlalchemy>=2.0.0",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+events = "hexastack_events.infra.bootstrap:EventsBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }

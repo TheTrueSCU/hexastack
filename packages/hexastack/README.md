@@ -35,6 +35,10 @@ graph TD
     end
 
     subgraph ScopedExtras ["Optional Scoped Extras"]
+        AUTH["hexastack-auth (hexastack[auth])"]
+        OTEL["hexastack-otel (hexastack[otel])"]
+        EVENTS["hexastack-events (hexastack[events])"]
+        AI["hexastack-ai (hexastack[ai])"]
         CLI["hexastack-cli (hexastack[cli])"]
         FASTAPI["hexastack-fastapi (hexastack[fastapi])"]
         GRAPHQL["hexastack-graphql (hexastack[graphql])"]
@@ -62,6 +66,10 @@ graph TD
 - `hexastack-logging`: Structured logging and telemetry.
 
 ### Optional Integrations (Extras)
+- `[auth]`: Installs `hexastack-auth` for security, RBAC, JWT, PBKDF2, and `@authorize` middleware.
+- `[otel]`: Installs `hexastack-otel` for OpenTelemetry distributed tracing and OTLP export.
+- `[events]`: Installs `hexastack-events` for CloudEvents 1.0, Transactional Outbox, and streaming buses.
+- `[ai]`: Installs `hexastack-ai` for LiteLLM, Instructor, PydanticAI, and reflective agent tools.
 - `[cli]`: Installs `hexastack-cli` for interactive CLI commands.
 - `[db]` / `[sql]`: Installs `hexastack-db` for persistence and Alembic migrations.
 - `[fastapi]`: Installs `hexastack-fastapi`.
@@ -78,6 +86,18 @@ graph TD
 ```bash
 # Minimal installation
 pip install hexastack
+
+# Security & RBAC
+pip install "hexastack[auth]"
+
+# OpenTelemetry Tracing
+pip install "hexastack[otel]"
+
+# CloudEvents & Transactional Outbox
+pip install "hexastack[events]"
+
+# AI Integration (LiteLLM, Instructor, PydanticAI)
+pip install "hexastack[ai]"
 
 # CLI support
 pip install "hexastack[cli]"
