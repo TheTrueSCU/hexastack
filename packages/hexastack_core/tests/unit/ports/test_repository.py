@@ -1,5 +1,5 @@
 from hexastack_core.adapters.repository import InMemoryRepository
-from hexastack_core.ports.repository import Repository
+from hexastack_core.ports.repository import RepositoryPort
 
 
 class UserEntity:
@@ -8,9 +8,11 @@ class UserEntity:
         self.name = name
 
 
-def test_repository_port_contract(in_memory_repo: InMemoryRepository[UserEntity, str]):
-    # Verify InMemoryRepository satisfies Repository port interface
-    repo: Repository[UserEntity, str] = in_memory_repo
+def test_repository_port_contract(
+    in_memory_repo: InMemoryRepository[UserEntity, str],
+):
+    # Verify InMemoryRepository satisfies RepositoryPort interface
+    repo: RepositoryPort[UserEntity, str] = in_memory_repo
     user = UserEntity(id="u1", name="Alice")
 
     repo.add(user)

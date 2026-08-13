@@ -16,8 +16,8 @@ from hexastack_core.infra.decorators import (
     exception_handler,
 )
 from hexastack_core.ports.logging import LoggingPort
-from hexastack_core.ports.presenter import Presenter
-from hexastack_core.ports.repository import Repository
+from hexastack_core.ports.presenter import PresenterPort
+from hexastack_core.ports.repository import RepositoryPort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from hexastack_cqrs.infra.decorators import (
     command_handler,
@@ -49,10 +49,10 @@ __all__ = [
     "LoggingPort",
     "PingDemoCommand",
     "PingDemoDTO",
-    "Presenter",
+    "PresenterPort",
     "Query",
     "RegistryInfoDTO",
-    "Repository",
+    "RepositoryPort",
     "Result",
     "SystemInfoDTO",
     "UnitOfWorkPort",

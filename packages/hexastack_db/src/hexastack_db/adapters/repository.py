@@ -1,7 +1,10 @@
 from collections.abc import Sequence
 from typing import Any
 
-from hexastack_core.ports.repository import Repository
+from hexastack_core.ports.repository import (
+    AsyncRepositoryPort,
+    RepositoryPort,
+)
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +16,7 @@ from hexastack_db.domain.exceptions import (
 )
 
 
-class SqlAlchemyRepository[T, ID](Repository[T, ID]):
+class SqlAlchemyRepository[T, ID](RepositoryPort[T, ID]):
     """SQLAlchemy implementation of the generic Repository port.
 
     Notes/Architectural Intent:
@@ -209,7 +212,7 @@ class SqlAlchemyRepository[T, ID](Repository[T, ID]):
             raise DatabaseError(str(exc)) from exc
 
 
-class AsyncSqlAlchemyRepository[T, ID]:
+class AsyncSqlAlchemyRepository[T, ID](AsyncRepositoryPort[T, ID]):
     """Asynchronous SQLAlchemy repository implementation.
 
     Notes/Architectural Intent:
@@ -404,6 +407,11 @@ class AsyncSqlAlchemyRepository[T, ID]:
             raise UniqueConstraintViolationError(str(exc.orig or exc)) from exc
         except Exception as exc:
             raise DatabaseError(str(exc)) from exc
+
+    # Aliases satisfying AsyncRepositoryPort interface
+    add_async = add
+    get_by_id_async = get_by_id
+    remove_async = remove
 
 
 __all__ = [

@@ -4,14 +4,14 @@ import sys
 from typing import Any
 
 from hexastack_core.domain import Generic
-from hexastack_core.ports.presenter import Presenter
+from hexastack_core.ports.presenter import PresenterPort
 from pydantic import BaseModel
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 
-class RichTerminalPresenter(Presenter):
+class RichTerminalPresenter(PresenterPort):
     """Terminal presenter formatting domain models into stylized Rich panels, JSON, or plain text.
 
     Notes/Architectural Intent:

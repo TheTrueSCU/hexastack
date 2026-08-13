@@ -1,15 +1,43 @@
+from hexastack_core.adapters.ai import (
+    InMemoryLlmProvider,
+    InMemoryVectorStore,
+    LlmCallRecord,
+)
+from hexastack_core.adapters.cache import (
+    AsyncInMemoryCache,
+    InMemoryCache,
+)
+from hexastack_core.adapters.clock import (
+    FrozenClock,
+    InMemoryClock,
+)
 from hexastack_core.adapters.logging import (
     InMemoryLogger,
     LogEntry,
     StandardLogger,
 )
-from hexastack_core.adapters.repository import InMemoryRepository
-from hexastack_core.adapters.unit_of_work import InMemoryUnitOfWork
+from hexastack_core.adapters.repository import (
+    AsyncInMemoryRepository,
+    InMemoryRepository,
+)
+from hexastack_core.adapters.unit_of_work import (
+    AsyncInMemoryUnitOfWork,
+    InMemoryUnitOfWork,
+)
 
 __all__ = [
+    "AsyncInMemoryCache",
+    "AsyncInMemoryRepository",
+    "AsyncInMemoryUnitOfWork",
+    "FrozenClock",
+    "InMemoryCache",
+    "InMemoryClock",
+    "InMemoryLlmProvider",
     "InMemoryLogger",
     "InMemoryRepository",
     "InMemoryUnitOfWork",
+    "InMemoryVectorStore",
+    "LlmCallRecord",
     "LogEntry",
     "StandardLogger",
 ]

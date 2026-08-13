@@ -1,9 +1,12 @@
 from collections.abc import Callable
 
-from hexastack_core.ports.repository import Repository
+from hexastack_core.ports.repository import (
+    AsyncRepositoryPort,
+    RepositoryPort,
+)
 
 
-class InMemoryRepository[E, ID](Repository[E, ID]):
+class InMemoryRepository[E, ID](RepositoryPort[E, ID]):
     """Generic in-memory repository adapter storing entities in a dictionary.
 
     Notes/Architectural Intent:
@@ -93,3 +96,47 @@ class InMemoryRepository[E, ID](Repository[E, ID]):
             None.
         """
         self._store.pop(entity_id, None)
+
+
+class AsyncInMemoryRepository[E, ID](AsyncRepositoryPort[E, ID]):
+    """Generic asynchronous in-memory repository adapter.
+
+    Notes/Architectural Intent:
+        Implements AsyncRepositoryPort[E, ID] for asynchronous workflows (FastAPI,
+        gRPC, async CQRS) without external database dependencies.
+    """
+
+    def __init__(
+        self,
+        id_getter: Callable[[E], ID] | None = None,
+        id_attr: str = "id",
+    ) -> None:
+        self._sync_repo = InMemoryRepository[E, ID](
+            id_getter=id_getter, id_attr=id_attr
+        )
+
+    async def add_async(self, entity: E) -> None:
+        """Asynchronously add or update an entity."""
+        self._sync_repo.add(entity)
+
+    async def get_by_id_async(self, entity_id: ID) -> E | None:
+        """Asynchronously retrieve an entity by ID."""
+        return self._sync_repo.get_by_id(entity_id)
+
+    async def all_async(self) -> list[E]:
+        """Asynchronously retrieve all entities."""
+        return self._sync_repo.all()
+
+    async def remove_async(self, entity_id: ID) -> None:
+        """Asynchronously remove an entity by ID."""
+        self._sync_repo.remove(entity_id)
+
+    def clear(self) -> None:
+        """Clear all stored entities."""
+        self._sync_repo.clear()
+
+
+__all__ = [
+    "AsyncInMemoryRepository",
+    "InMemoryRepository",
+]

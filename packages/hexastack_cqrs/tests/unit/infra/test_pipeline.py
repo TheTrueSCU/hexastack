@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra import ExceptionRegistry
-from hexastack_core.ports import Presenter
+from hexastack_core.ports.presenter import PresenterPort
 from hexastack_cqrs.adapters.buses import SynchronousEventBus
 from hexastack_cqrs.infra.pipeline import (
     AmbiguousMessageError,
@@ -37,7 +37,7 @@ class UserDTO(Generic):
     name: str
 
 
-class JsonUserPresenter(Presenter):
+class JsonUserPresenter(PresenterPort):
     def present(self, instance: Generic) -> Any | None:
         if isinstance(instance, UserDTO):
             return {"id": instance.user_id, "fullName": instance.name}

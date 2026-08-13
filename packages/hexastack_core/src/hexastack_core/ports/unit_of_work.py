@@ -14,7 +14,7 @@ class UnitOfWorkPort(ABC):
         layer without importing port infrastructure.
     """
 
-    def __init__(self, reraise: bool = False):
+    def __init__(self, reraise: bool = False) -> None:
         """Initialize UnitOfWorkPort with reraise option.
 
         Args:
@@ -25,34 +25,16 @@ class UnitOfWorkPort(ABC):
 
     @abstractmethod
     def commit(self) -> None:
-        """Commit all pending transactional changes.
-
-        Returns:
-            None.
-
-        Raises:
-            UnitOfWorkError: If commit fails.
-        """
+        """Commit all pending transactional changes."""
         ...
 
     @abstractmethod
     def rollback(self) -> None:
-        """Roll back all pending transactional changes.
-
-        Returns:
-            None.
-
-        Raises:
-            UnitOfWorkError: If rollback fails.
-        """
+        """Roll back all pending transactional changes."""
         ...
 
     def __enter__(self) -> Self:
-        """Enter the transactional context manager.
-
-        Returns:
-            Self: The UnitOfWorkPort instance.
-        """
+        """Enter the transactional context manager."""
         return self
 
     def __exit__(
@@ -61,19 +43,7 @@ class UnitOfWorkPort(ABC):
         exc: BaseException | None,
         trace: TracebackType | None,
     ) -> None:
-        """Exit the transactional context manager, committing on success or rolling back on exception.
-
-        Args:
-            exc_type: Exception type if an exception occurred, else None.
-            exc: Exception instance if an exception occurred, else None.
-            trace: Traceback object if an exception occurred, else None.
-
-        Returns:
-            None.
-
-        Raises:
-            UnitOfWorkError: If an exception occurred and self._reraise is True.
-        """
+        """Exit the transactional context manager, committing on success or rolling back on exception."""
         if exc_type is None:
             self.commit()
         else:
@@ -81,3 +51,43 @@ class UnitOfWorkPort(ABC):
 
             if self._reraise:
                 raise UnitOfWorkError() from exc
+
+
+class AsyncUnitOfWorkPort(ABC):
+    """Abstract port interface defining asynchronous Unit of Work transactional boundaries."""
+
+    def __init__(self, reraise: bool = False) -> None:
+        self._reraise = reraise
+
+    @abstractmethod
+    async def commit_async(self) -> None:
+        """Asynchronously commit all pending transactional changes."""
+        ...
+
+    @abstractmethod
+    async def rollback_async(self) -> None:
+        """Asynchronously roll back all pending transactional changes."""
+        ...
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        trace: TracebackType | None,
+    ) -> None:
+        if exc_type is None:
+            await self.commit_async()
+        else:
+            await self.rollback_async()
+
+            if self._reraise:
+                raise UnitOfWorkError() from exc
+
+
+__all__ = [
+    "AsyncUnitOfWorkPort",
+    "UnitOfWorkPort",
+]

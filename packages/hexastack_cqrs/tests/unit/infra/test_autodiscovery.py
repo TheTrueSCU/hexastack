@@ -3,7 +3,7 @@ from typing import Any
 
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra import ConfigRegistry, ExceptionRegistry
-from hexastack_core.ports import Presenter
+from hexastack_core.ports.presenter import PresenterPort
 from hexastack_cqrs.infra.autodiscovery import (
     autodiscover_cqrs,
 )
@@ -63,7 +63,7 @@ def test_autodiscover_cqrs_module():
         events_received.append(evt.order_id)
 
     @presenter(OrderDTO, "json")
-    class OrderJsonPresenter(Presenter):
+    class OrderJsonPresenter(PresenterPort):
         def present(self, instance: Generic) -> Any | None:
             if isinstance(instance, OrderDTO):
                 return {"id": instance.order_id, "type": "order"}

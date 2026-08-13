@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from hexastack_core.domain import Command, Generic, Query
-from hexastack_core.ports.presenter import Presenter
+from hexastack_core.ports.presenter import PresenterPort
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,
 )
@@ -50,7 +50,7 @@ def test_cqrs_router_command_and_query():
     )
 
     # Presenter
-    class UserJsonPresenter(Presenter):
+    class UserJsonPresenter(PresenterPort):
         def present(self, instance: Generic) -> Any:
             if isinstance(instance, UserDTO):
                 return {"id": instance.user_id, "name": instance.username}

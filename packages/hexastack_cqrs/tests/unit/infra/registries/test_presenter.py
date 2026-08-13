@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 from hexastack_core.domain import Generic
-from hexastack_core.ports import Presenter
+from hexastack_core.ports.presenter import PresenterPort
 from hexastack_cqrs.infra.registries.presenter import (
     PresenterRegistry,
     PresenterRegistryError,
@@ -13,7 +13,7 @@ class SampleDTO(Generic):
     name: str
 
 
-class JsonPresenter(Presenter):
+class JsonPresenter(PresenterPort):
     def present(self, instance: Generic) -> Any | None:
         if isinstance(instance, SampleDTO):
             return {"name": instance.name, "format": "json"}

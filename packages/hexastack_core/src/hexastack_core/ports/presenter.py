@@ -4,7 +4,7 @@ from typing import Any
 from hexastack_core.domain import Generic
 
 
-class Presenter(ABC):
+class PresenterPort(ABC):
     """Abstract base class for output representation presenters.
 
     Notes/Architectural Intent:
@@ -13,15 +13,10 @@ class Presenter(ABC):
 
     @abstractmethod
     def present(self, instance: Generic) -> Any | None:
-        """Format a generic domain instance into presenter output.
-
-        Args:
-            instance: The generic domain object instance to format.
-
-        Returns:
-            The presented view object or formatted data, or None.
-
-        Raises:
-            PresenterRegistryError: If formatting fails.
-        """
+        """Format a generic domain instance into presenter output."""
         ...
+
+
+__all__ = [
+    "PresenterPort",
+]
