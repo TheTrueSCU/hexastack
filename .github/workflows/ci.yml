@@ -36,7 +36,7 @@ jobs:
         run: uv run ty check
 
       - name: Run Unit & Integration Tests
-        run: uv run pytest packages/ --ignore-glob="packages/*/tests/hypothesis/*"
+        run: uv run pytest packages/ --ignore-glob="packages/*/tests/properties/*"
 
   hypothesis:
     name: Property-Based Fuzzing
@@ -60,4 +60,4 @@ jobs:
         run: uv sync --all-packages --all-extras --all-groups
 
       - name: Run Property-Based Fuzzing
-        run: uv run pytest packages/*/tests/hypothesis
+        run: uv run pytest packages/*/tests/properties

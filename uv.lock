@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "hexastack",
     "hexastack-ai",
+    "hexastack-auth",
     "hexastack-cli",
     "hexastack-core",
     "hexastack-cqrs",
@@ -1117,6 +1118,7 @@ ai = [
 ]
 all = [
     { name = "hexastack-ai" },
+    { name = "hexastack-auth" },
     { name = "hexastack-cli" },
     { name = "hexastack-db" },
     { name = "hexastack-fastapi" },
@@ -1124,6 +1126,9 @@ all = [
     { name = "hexastack-grpc" },
     { name = "hexastack-mcp" },
     { name = "uvicorn", extra = ["standard"] },
+]
+auth = [
+    { name = "hexastack-auth" },
 ]
 cli = [
     { name = "hexastack-cli" },
@@ -1155,6 +1160,8 @@ web = [
 requires-dist = [
     { name = "hexastack-ai", marker = "extra == 'ai'", editable = "packages/hexastack_ai" },
     { name = "hexastack-ai", marker = "extra == 'all'", editable = "packages/hexastack_ai" },
+    { name = "hexastack-auth", marker = "extra == 'all'", editable = "packages/hexastack_auth" },
+    { name = "hexastack-auth", marker = "extra == 'auth'", editable = "packages/hexastack_auth" },
     { name = "hexastack-cli", marker = "extra == 'all'", editable = "packages/hexastack_cli" },
     { name = "hexastack-cli", marker = "extra == 'cli'", editable = "packages/hexastack_cli" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
@@ -1175,7 +1182,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "cli", "db", "sql", "fastapi", "graphql", "grpc", "mcp", "web", "all"]
+provides-extras = ["ai", "auth", "cli", "db", "sql", "fastapi", "graphql", "grpc", "mcp", "web", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -1198,6 +1205,25 @@ requires-dist = [
     { name = "litellm", specifier = ">=1.50.0" },
     { name = "pydantic", specifier = ">=2.10.0" },
     { name = "pydantic-ai", specifier = ">=0.0.24" },
+]
+
+[[package]]
+name = "hexastack-auth"
+version = "0.1.0"
+source = { editable = "packages/hexastack_auth" }
+dependencies = [
+    { name = "hexastack-core" },
+    { name = "hexastack-cqrs" },
+    { name = "pydantic" },
+    { name = "pyjwt" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "hexastack-core", editable = "packages/hexastack_core" },
+    { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "pydantic", specifier = ">=2.10.0" },
+    { name = "pyjwt", specifier = ">=2.8.0" },
 ]
 
 [[package]]

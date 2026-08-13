@@ -1,0 +1,26 @@
+[project]
+name = "hexastack-auth"
+version = "0.1.0"
+description = "Authentication, authorization, RBAC, JWT token services, and @authorize CQRS pipeline security for Hexastack"
+readme = "README.md"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "hexastack-core",
+    "hexastack-cqrs",
+    "pydantic>=2.10.0",
+    "pyjwt>=2.8.0",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+auth = "hexastack_auth.infra.bootstrap:AuthBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }

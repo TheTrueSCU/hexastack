@@ -17,6 +17,9 @@ dependencies = [
 ai = [
     "hexastack-ai",
 ]
+auth = [
+    "hexastack-auth",
+]
 cli = [
     "hexastack-cli",
 ]
@@ -44,6 +47,7 @@ web = [
 ]
 all = [
     "hexastack-ai",
+    "hexastack-auth",
     "hexastack-cli",
     "hexastack-db",
     "hexastack-fastapi",
@@ -62,6 +66,7 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 hexastack-ai = { workspace = true }
+hexastack-auth = { workspace = true }
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 hexastack-logging = { workspace = true }
