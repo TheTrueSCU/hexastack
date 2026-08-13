@@ -1,10 +1,22 @@
+from dataclasses import dataclass, field
+
 import pytest
 from hexastack_auth.domain.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
 )
-from hexastack_auth.infra.decorators import authorize, requires_role
-from hexastack_auth.infra.middleware import AuthorizationMiddleware
+from hexastack_auth.domain.models import Identity
+from hexastack_auth.infra.decorators import (
+    AuthMetadata,
+    authorize,
+    requires_permission,
+    requires_role,
+)
+from hexastack_auth.infra.middleware import (
+    AuthorizationMiddleware,
+    _resolve_effective_identity,
+    evaluate_authorization,
+)
 from hexastack_core.domain import Command
 from hexastack_core.utils.context import UserContext, set_user_context
 from hexastack_cqrs.adapters.buses import SynchronousCommandBus
@@ -24,6 +36,11 @@ class AuthenticatedOnlyCommand(Command):
 @requires_role("admin")
 class AdminOnlyCommand(Command):
     target_id: str
+
+
+@requires_permission("invoices:write")
+class WriteInvoiceCommand(Command):
+    inv_id: str
 
 
 def test_authorization_middleware_with_anonymous_user():
@@ -77,3 +94,74 @@ def test_authorization_middleware_with_user_context():
     set_user_context(UserContext(user_id="admin1", roles=["admin", "member"]))
     res = pipeline.execute(AdminOnlyCommand(target_id="res-123"))
     assert res == "deleted res-123"
+
+
+def test_evaluate_authorization_permissions_and_all_matching():
+    # Test match_all_roles
+    meta_roles = AuthMetadata(roles=("admin", "auditor"), match_all_roles=True)
+    ident_missing_role = Identity(user_id="u1", roles=frozenset(["admin"]))
+    with pytest.raises(InsufficientPermissionsError):
+        evaluate_authorization(meta_roles, ident_missing_role)
+
+    ident_has_both = Identity(user_id="u1", roles=frozenset(["admin", "auditor"]))
+    evaluate_authorization(meta_roles, ident_has_both)
+
+    # Test permissions match_all_permissions
+    meta_perms_all = AuthMetadata(
+        permissions=("read", "write"), match_all_permissions=True
+    )
+    ident_perm_missing = Identity(user_id="u2", permissions=frozenset(["read"]))
+    with pytest.raises(InsufficientPermissionsError):
+        evaluate_authorization(meta_perms_all, ident_perm_missing)
+
+    ident_perm_both = Identity(user_id="u2", permissions=frozenset(["read", "write"]))
+    evaluate_authorization(meta_perms_all, ident_perm_both)
+
+    # Test permissions match_any_permission
+    meta_perms_any = AuthMetadata(
+        permissions=("read", "write"), match_all_permissions=False
+    )
+    with pytest.raises(InsufficientPermissionsError):
+        evaluate_authorization(
+            meta_perms_any, Identity(user_id="u3", permissions=frozenset(["delete"]))
+        )
+
+    evaluate_authorization(
+        meta_perms_any, Identity(user_id="u3", permissions=frozenset(["read"]))
+    )
+
+
+def test_resolve_effective_identity_duck_typing():
+    @dataclass
+    class CustomUser:
+        user_id: str = "duck_user"
+        roles: list[str] = field(default_factory=lambda: ["duck_role"])
+        permissions: list[str] = field(default_factory=lambda: ["duck_perm"])
+        tenant_id: str = "tenant_duck"
+        is_authenticated: bool = True
+
+    resolved = _resolve_effective_identity(CustomUser())
+    assert resolved.user_id == "duck_user"
+    assert "duck_role" in resolved.roles
+    assert "duck_perm" in resolved.permissions
+    assert resolved.tenant_id == "tenant_duck"
+    assert resolved.is_authenticated is True
+
+
+def test_authorization_middleware_disabled():
+    middleware = AuthorizationMiddleware(enabled=False)
+    cmd = AuthenticatedOnlyCommand(data="bypass")
+    res = middleware(cmd, lambda c: "bypassed")
+    assert res == "bypassed"
+
+
+@pytest.mark.anyio
+async def test_authorization_middleware_async():
+    middleware = AuthorizationMiddleware()
+    cmd = PublicCommand(message="async-msg")
+
+    async def _async_handler(c):
+        return f"async {c.message}"
+
+    res = await middleware(cmd, _async_handler)
+    assert res == "async async-msg"

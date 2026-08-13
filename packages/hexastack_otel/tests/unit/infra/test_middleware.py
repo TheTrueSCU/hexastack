@@ -1,15 +1,9 @@
 import pytest
-from hexastack_core.domain import Command, Query
+from hexastack_core.domain import Command, Event, Query
 from hexastack_core.utils.context import (
     UserContext,
     correlation_scope,
     set_user_context,
-)
-from hexastack_cqrs.adapters.buses import SynchronousCommandBus
-from hexastack_cqrs.infra.pipeline import create_pipeline
-from hexastack_cqrs.infra.registries import (
-    CommandRegistry,
-    HandlerRegistry,
 )
 from hexastack_otel.adapters.tracing import InMemoryTracingAdapter
 from hexastack_otel.infra.middleware import TracingMiddleware
@@ -24,26 +18,18 @@ class GetInvoiceQuery(Query):
     invoice_id: str
 
 
+class InvoiceCreatedEvent(Event):
+    invoice_id: str
+
+
 def test_tracing_middleware_with_command():
     tracer = InMemoryTracingAdapter()
     middleware = TracingMiddleware(tracer=tracer)
 
-    handler_reg = HandlerRegistry()
-    command_reg = CommandRegistry()
-    command_reg.register(CreateInvoiceCommand)
-
-    handler_reg.register(CreateInvoiceCommand, lambda cmd: f"created {cmd.invoice_id}")
-
-    command_bus = SynchronousCommandBus(handler_reg, middleware=[middleware])
-    pipeline = create_pipeline(
-        handler_registry=handler_reg,
-        command_registry=command_reg,
-        command_bus=command_bus,
-    )
-
     with correlation_scope("corr-999"):
         set_user_context(UserContext(user_id="usr_abc", tenant_id="tenant_xyz"))
-        res = pipeline.execute(CreateInvoiceCommand(invoice_id="inv-1", amount=99.0))
+        cmd = CreateInvoiceCommand(invoice_id="inv-1", amount=99.0)
+        res = middleware(cmd, lambda c: f"created {c.invoice_id}")
         assert res == "created inv-1"
 
     assert len(tracer.finished_spans) == 1
@@ -61,24 +47,12 @@ def test_tracing_middleware_records_exceptions():
     tracer = InMemoryTracingAdapter()
     middleware = TracingMiddleware(tracer=tracer)
 
-    handler_reg = HandlerRegistry()
-    command_reg = CommandRegistry()
-    command_reg.register(CreateInvoiceCommand)
-
     def _failing_handler(cmd: CreateInvoiceCommand):
         raise ValueError("Invalid tax calculation")
 
-    handler_reg.register(CreateInvoiceCommand, _failing_handler)
-
-    command_bus = SynchronousCommandBus(handler_reg, middleware=[middleware])
-    pipeline = create_pipeline(
-        handler_registry=handler_reg,
-        command_registry=command_reg,
-        command_bus=command_bus,
-    )
-
+    cmd = CreateInvoiceCommand(invoice_id="inv-2", amount=-1.0)
     with pytest.raises(ValueError, match="Invalid tax calculation"):
-        pipeline.execute(CreateInvoiceCommand(invoice_id="inv-2", amount=-1.0))
+        middleware(cmd, _failing_handler)
 
     assert len(tracer.finished_spans) == 1
     span = tracer.finished_spans[0]
@@ -87,3 +61,61 @@ def test_tracing_middleware_records_exceptions():
         span.status_description is not None
         and "Invalid tax calculation" in span.status_description
     )
+
+
+def test_tracing_middleware_disabled():
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer, enabled=False)
+
+    res = middleware(
+        CreateInvoiceCommand(invoice_id="inv-3", amount=10.0), lambda cmd: "done"
+    )
+    assert res == "done"
+    assert len(tracer.finished_spans) == 0
+
+
+@pytest.mark.anyio
+async def test_tracing_middleware_async_handler():
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer)
+
+    async def _async_call(cmd):
+        return f"async {cmd.invoice_id}"
+
+    cmd = CreateInvoiceCommand(invoice_id="inv-4", amount=20.0)
+    coro = middleware(cmd, _async_call)
+    res = await coro
+    assert res == "async inv-4"
+    assert len(tracer.finished_spans) == 1
+    assert tracer.finished_spans[0].name == "cqrs.CreateInvoiceCommand"
+
+
+@pytest.mark.anyio
+async def test_tracing_middleware_async_handler_exception():
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer)
+
+    async def _async_failing_call(cmd):
+        raise RuntimeError("Async boom")
+
+    cmd = CreateInvoiceCommand(invoice_id="inv-5", amount=30.0)
+    coro = middleware(cmd, _async_failing_call)
+    with pytest.raises(RuntimeError, match="Async boom"):
+        await coro
+
+    assert len(tracer.finished_spans) == 1
+    span = tracer.finished_spans[0]
+    assert span.status == "ERROR"
+
+
+def test_tracing_middleware_event_and_query_types():
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer)
+
+    # Query message type
+    middleware(GetInvoiceQuery(invoice_id="q1"), lambda q: "q_res")
+    assert tracer.finished_spans[-1].attributes["message.type"] == "query"
+
+    # Event message type
+    middleware(InvoiceCreatedEvent(invoice_id="e1"), lambda e: "e_res")
+    assert tracer.finished_spans[-1].attributes["message.type"] == "event"

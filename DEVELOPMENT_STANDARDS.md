@@ -10,6 +10,7 @@ To balance development speed with code reliability, we employ a tiered testing a
 *   **Location:** `tests/unit/`, `tests/integration/`
 *   **Responsibility:** Validate core business logic and "golden path" scenarios.
 *   **Execution:** Run on every commit via local development and the `check` job in CI.
+*   **Code Coverage Gate:** Enforces `>=90%` statement coverage gate across production packages (`--cov-fail-under=90`).
 *   **Parallelization & Randomization:** Tests run concurrently across CPU cores via `pytest-xdist` (`-n auto`) and with randomized test execution order via `pytest-randomly` to ensure zero hidden test state dependencies or test pollution.
 
 ### Property-Based Fuzzing (Robustness Lane)
@@ -17,6 +18,11 @@ To balance development speed with code reliability, we employ a tiered testing a
 *   **Dependency:** `hypothesis`
 *   **Responsibility:** Discover edge-case failures through stress-testing complex structures.
 *   **Execution:** Runs only during the Pull Request process (`hypothesis` job in CI) to maintain CI speed for main.
+
+### Mutation Testing (Deep Quality Lane)
+*   **Dependency:** `mutmut<3` (v2.x AST engine).
+*   **Configuration:** `mutmut_config.py` filters non-logical boilerplate, type annotations, and logging to prevent false positives.
+*   **Execution:** On-demand or scheduled via `scripts/run_mutation_tests.py --package <name>`.
 
 ---
 

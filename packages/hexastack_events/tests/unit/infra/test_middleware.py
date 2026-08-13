@@ -1,3 +1,4 @@
+import pytest
 from hexastack_core.domain import Command, Event
 from hexastack_core.utils.context import (
     UserContext,
@@ -60,3 +61,39 @@ def test_outbox_capture_middleware():
     assert rec.correlation_id == "corr-order-99"
     assert rec.tenant_id == "tenant_omega"
     assert rec.status == OutboxStatus.PENDING
+
+
+def test_outbox_capture_middleware_direct_event_instance():
+    storage = InMemoryOutboxStorage()
+    middleware = OutboxCaptureMiddleware(storage=storage, source="test-source")
+
+    ev = OrderCreatedDomainEvent(order_id="direct-1")
+    res = middleware(ev, lambda e: "handled")
+    assert res == "handled"
+    assert len(storage.get_all()) == 1
+    assert storage.get_all()[0].payload["order_id"] == "direct-1"
+
+
+def test_outbox_capture_middleware_disabled():
+    storage = InMemoryOutboxStorage()
+    middleware = OutboxCaptureMiddleware(storage=storage, enabled=False)
+
+    ev = OrderCreatedDomainEvent(order_id="disabled-1")
+    res = middleware(ev, lambda e: "handled")
+    assert res == "handled"
+    assert len(storage.get_all()) == 0
+
+
+@pytest.mark.anyio
+async def test_outbox_capture_middleware_async_handler():
+    storage = InMemoryOutboxStorage()
+    middleware = OutboxCaptureMiddleware(storage=storage, source="async-source")
+
+    async def _async_handler(cmd):
+        return OrderCreatedDomainEvent(order_id=cmd.order_id)
+
+    cmd = CreateOrderCommand(order_id="async-99")
+    res = await middleware(cmd, _async_handler)
+    assert isinstance(res, OrderCreatedDomainEvent)
+    assert len(storage.get_all()) == 1
+    assert storage.get_all()[0].payload["order_id"] == "async-99"
