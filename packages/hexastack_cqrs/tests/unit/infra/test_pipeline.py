@@ -10,6 +10,7 @@ from hexastack_cqrs.infra.pipeline import (
     ExecutionPipeline,
     PipelineError,
     UnregisteredMessageError,
+    create_pipeline,
 )
 from hexastack_cqrs.infra.registries import (
     CommandRegistry,
@@ -37,6 +38,10 @@ class UserDTO(Generic):
     name: str
 
 
+class CustomGenericMessage(Generic):
+    payload_val: int
+
+
 class JsonUserPresenter(PresenterPort):
     def present(self, instance: Generic) -> Any | None:
         if isinstance(instance, UserDTO):
@@ -60,30 +65,37 @@ def test_pipeline_execute_command():
 
 def test_pipeline_execute_query():
     handler_reg = HandlerRegistry()
-    handler_reg.register(
-        GetUser, lambda qry: UserDTO(user_id=qry.user_id, name="FoundUser")
-    )
+    handler_reg.register(GetUser, lambda qry: {"id": qry.user_id, "status": "active"})
 
     pipeline = ExecutionPipeline(handler_registry=handler_reg)
     result = pipeline.execute(GetUser(user_id="u2"))
 
-    assert isinstance(result, UserDTO)
-    assert result.user_id == "u2"
+    assert result == {"id": "u2", "status": "active"}
 
 
 def test_pipeline_execute_event():
     event_bus = SynchronousEventBus()
-    pipeline = ExecutionPipeline(
-        handler_registry=HandlerRegistry(),
-        event_bus=event_bus,
-    )
-    event_logs: list[str] = []
+    received = []
+    event_bus.subscribe(UserCreated, lambda evt: received.append(evt.user_id))
 
-    event_bus.subscribe(UserCreated, lambda evt: event_logs.append(evt.user_id))
-    result = pipeline.execute(UserCreated(user_id="u-evt"))
+    pipeline = ExecutionPipeline(
+        handler_registry=HandlerRegistry(), event_bus=event_bus
+    )
+    result = pipeline.execute(UserCreated(user_id="u3"))
 
     assert result is None
-    assert event_logs == ["u-evt"]
+    assert received == ["u3"]
+
+
+def test_pipeline_execute_generic_fallback():
+    handler_reg = HandlerRegistry()
+    handler_reg.register(
+        CustomGenericMessage, lambda msg: f"processed:{msg.payload_val}"
+    )
+
+    pipeline = ExecutionPipeline(handler_registry=handler_reg)
+    result = pipeline.execute(CustomGenericMessage(payload_val=42))
+    assert result == "processed:42"
 
 
 def test_pipeline_execute_with_presenter():
@@ -92,30 +104,30 @@ def test_pipeline_execute_with_presenter():
         CreateUser, lambda cmd: UserDTO(user_id=cmd.user_id, name=cmd.name)
     )
 
-    presenter_reg = PresenterRegistry()
-    presenter_reg.register(UserDTO, "json", JsonUserPresenter())
+    pres_reg = PresenterRegistry()
+    pres_reg.register(UserDTO, "json", JsonUserPresenter())
 
     pipeline = ExecutionPipeline(
         handler_registry=handler_reg,
-        presenter_registry=presenter_reg,
+        presenter_registry=pres_reg,
     )
 
     presented = pipeline.execute(
-        CreateUser(user_id="u3", name="Charlie"), output_format="json"
+        CreateUser(user_id="u1", name="Alice"), output_format="json"
     )
-    assert presented == {"id": "u3", "fullName": "Charlie"}
+    assert presented == {"id": "u1", "fullName": "Alice"}
 
 
-def test_pipeline_exception_handling():
+def test_pipeline_execute_with_exception_registry():
     handler_reg = HandlerRegistry()
 
-    def failing_handler(cmd: CreateUser) -> None:
+    def _failing_handler(cmd):
         raise ValueError("Invalid user state")
 
-    handler_reg.register(CreateUser, failing_handler)
+    handler_reg.register(CreateUser, _failing_handler)
 
     exc_reg = ExceptionRegistry()
-    exc_reg.register(ValueError, lambda exc: {"error": str(exc), "status": 400})
+    exc_reg.register(ValueError, lambda err: {"error": str(err), "status": 400})
 
     pipeline = ExecutionPipeline(
         handler_registry=handler_reg,
@@ -126,12 +138,15 @@ def test_pipeline_exception_handling():
     assert error_response == {"error": "Invalid user state", "status": 400}
 
 
-def test_pipeline_execute_by_name():
+def test_pipeline_execute_by_name_and_create_pipeline():
     cmd_reg = CommandRegistry()
     cmd_reg.register(CreateUser)
 
     query_reg = QueryRegistry()
     query_reg.register(GetUser)
+
+    pres_reg = PresenterRegistry()
+    pres_reg.register(UserDTO, "json", JsonUserPresenter())
 
     handler_reg = HandlerRegistry()
     handler_reg.register(
@@ -141,15 +156,19 @@ def test_pipeline_execute_by_name():
         GetUser, lambda qry: UserDTO(user_id=qry.user_id, name="Found")
     )
 
-    pipeline = ExecutionPipeline(
+    pipeline = create_pipeline(
         handler_registry=handler_reg,
         command_registry=cmd_reg,
         query_registry=query_reg,
+        presenter_registry=pres_reg,
     )
 
-    cmd_res = pipeline.execute_by_name("CreateUser", {"user_id": "u5", "name": "Eve"})
-    assert isinstance(cmd_res, UserDTO)
-    assert cmd_res.user_id == "u5"
+    cmd_res = pipeline.execute_by_name(
+        "CreateUser",
+        {"user_id": "u5", "name": "Eve"},
+        output_format="json",
+    )
+    assert cmd_res == {"id": "u5", "fullName": "Eve"}
 
     qry_res = pipeline.execute_by_name("GetUser", {"user_id": "u5"})
     assert isinstance(qry_res, UserDTO)

@@ -15,6 +15,11 @@ class OrderPlacedEvent(Event):
     order_id: str
 
 
+@dataclass(frozen=True)
+class PaymentReceivedEvent(Event):
+    pass
+
+
 def test_recording_event_bus_journal_and_assertions():
     bus = RecordingEventBus()
     dispatched_events: list[Event] = []
@@ -36,20 +41,18 @@ def test_recording_event_bus_journal_and_assertions():
     assert bus.published_events == [e1, e2, e3]
     assert bus.has_published(UserCreatedEvent) is True
     assert bus.has_published(OrderPlacedEvent) is True
+    assert bus.has_published(PaymentReceivedEvent) is False
 
     # Test get_published
     user_events = bus.get_published(UserCreatedEvent)
     assert user_events == [e1, e3]
 
-    # Test assert_published
+    # Test assert_published with and without count
+    bus.assert_published(UserCreatedEvent)
     bus.assert_published(UserCreatedEvent, count=2)
     bus.assert_published(OrderPlacedEvent, count=1)
 
     # Test failure case
-    @dataclass(frozen=True)
-    class PaymentReceivedEvent(Event):
-        pass
-
     with pytest.raises(
         AssertionError, match="Expected event of type PaymentReceivedEvent"
     ):
@@ -61,11 +64,27 @@ def test_recording_event_bus_journal_and_assertions():
     ):
         bus.assert_published(UserCreatedEvent, count=3)
 
-    # Clear recorded
+
+def test_recording_event_bus_clearing():
+    bus = RecordingEventBus()
+    received: list[Event] = []
+    bus.subscribe(UserCreatedEvent, lambda e: received.append(e))
+
+    bus.publish(UserCreatedEvent(user_id="u-10"))
+    assert len(bus.published_events) == 1
+    assert len(received) == 1
+
+    # clear_recorded removes journal entries but keeps subscription
     bus.clear_recorded()
     assert len(bus.published_events) == 0
-    assert len(bus.handlers(UserCreatedEvent)) == 1
 
-    # Full clear
+    bus.publish(UserCreatedEvent(user_id="u-20"))
+    assert len(bus.published_events) == 1
+    assert len(received) == 2
+
+    # clear removes both journal and subscription
     bus.clear()
-    assert len(bus.handlers(UserCreatedEvent)) == 0
+    assert len(bus.published_events) == 0
+    bus.publish(UserCreatedEvent(user_id="u-30"))
+    assert len(bus.published_events) == 1
+    assert len(received) == 2  # not dispatched to handler

@@ -38,7 +38,7 @@ class DatabaseBootstrapResult:
     config: HexastackDatabaseConfig
     engine: Engine | AsyncEngine
     session_factory: sessionmaker[Session] | async_sessionmaker[AsyncSession]
-    uow: SqlAlchemyUnitOfWork | AsyncSqlAlchemyUnitOfWork
+    uow: SqlAlchemyUnitOfWork | AsyncSqlAlchemyUnitOfWork | UnitOfWorkPort
     vector_store: Any = None
 
 
@@ -72,7 +72,7 @@ class DatabaseBootstrapper(BootstrapperPort):
 
         engine: Engine | AsyncEngine
         session_factory: Any
-        uow: SqlAlchemyUnitOfWork | AsyncSqlAlchemyUnitOfWork
+        uow: SqlAlchemyUnitOfWork | AsyncSqlAlchemyUnitOfWork | UnitOfWorkPort
         vector_store: Any = None
 
         # 2. Build Engine & Session Factory based on async_mode
@@ -81,9 +81,10 @@ class DatabaseBootstrapper(BootstrapperPort):
             async_factory = create_async_session_factory(async_engine)
             async_uow = AsyncSqlAlchemyUnitOfWork(session_factory=async_factory)
 
-            di.add_instance(async_engine, declared_class=AsyncEngine)
-            di.add_instance(async_factory)
-            di.add_instance(async_uow, declared_class=AsyncSqlAlchemyUnitOfWork)
+            if AsyncEngine not in di:
+                di.add_instance(async_engine, declared_class=AsyncEngine)
+            if AsyncSqlAlchemyUnitOfWork not in di:
+                di.add_instance(async_uow, declared_class=AsyncSqlAlchemyUnitOfWork)
 
             engine = async_engine
             session_factory = async_factory
@@ -98,23 +99,26 @@ class DatabaseBootstrapper(BootstrapperPort):
                     session_factory=async_factory,
                     config=db_config.vector,
                 )
-                di.add_instance(
-                    async_vector_store, declared_class=AsyncPgVectorStoreAdapter
-                )
+                if AsyncPgVectorStoreAdapter not in di:
+                    di.add_instance(
+                        async_vector_store, declared_class=AsyncPgVectorStoreAdapter
+                    )
                 vector_store = async_vector_store
         else:
             sync_engine = create_db_engine(db_config)
             sync_factory = create_session_factory(sync_engine)
             sync_uow = SqlAlchemyUnitOfWork(session_factory=sync_factory)
 
-            di.add_instance(sync_engine, declared_class=Engine)
-            di.add_instance(sync_factory)
-            di.add_instance(sync_uow, declared_class=UnitOfWorkPort)
-            di.add_instance(sync_uow, declared_class=SqlAlchemyUnitOfWork)
+            if Engine not in di:
+                di.add_instance(sync_engine, declared_class=Engine)
+            if UnitOfWorkPort not in di:
+                di.add_instance(sync_uow, declared_class=UnitOfWorkPort)
+            if SqlAlchemyUnitOfWork not in di:
+                di.add_instance(sync_uow, declared_class=SqlAlchemyUnitOfWork)
 
             engine = sync_engine
             session_factory = sync_factory
-            uow = sync_uow
+            uow = di.resolve(UnitOfWorkPort) if UnitOfWorkPort in di else sync_uow
 
             if db_config.vector.enabled:
                 from hexastack_db.adapters.vector import (

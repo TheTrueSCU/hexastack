@@ -108,16 +108,15 @@ class ExecutionPipeline:
             Exception: Propagates unhandled exceptions if unmapped by exception registry.
         """
         try:
-            match instance:
-                case Command():
-                    raw_result = self._command_bus.dispatch(instance)
-                case Query():
-                    raw_result = self._query_bus.dispatch(instance)
-                case Event():
-                    self._event_bus.publish(instance)
-                    raw_result = None
-                case _:
-                    raw_result = self._handler_registry.handle(instance, reraise=True)
+            if isinstance(instance, Command):
+                raw_result = self._command_bus.dispatch(instance)
+            elif isinstance(instance, Query):
+                raw_result = self._query_bus.dispatch(instance)
+            elif isinstance(instance, Event):
+                self._event_bus.publish(instance)
+                raw_result = None
+            else:
+                raw_result = self._handler_registry.handle(instance, reraise=True)
 
             if output_format is not None and isinstance(raw_result, Generic):
                 presented = self._presenter_registry.present(

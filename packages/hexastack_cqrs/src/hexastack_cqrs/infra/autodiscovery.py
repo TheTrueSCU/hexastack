@@ -60,47 +60,44 @@ def create_cqrs_visitor(
         if not (inspect.isfunction(obj) or inspect.isclass(obj)):
             return
 
-        match getattr(obj, "__hexastack_handler__", None):
-            case HandlerMetadata(kind="command", target_cls=target_cls):
-                handler_fn = _resolve_callable(obj, container)
-                pipeline._handler_registry.register(target_cls, handler_fn)
-                pipeline._command_registry.register(target_cls)
-            case HandlerMetadata(kind="query", target_cls=target_cls):
-                handler_fn = _resolve_callable(obj, container)
-                pipeline._handler_registry.register(target_cls, handler_fn)
-                pipeline._query_registry.register(target_cls)
-            case HandlerMetadata(kind="event", target_cls=target_cls):
-                handler_fn = _resolve_callable(obj, container)
+        meta = getattr(obj, "__hexastack_handler__", None)
+        if isinstance(meta, HandlerMetadata):
+            handler_fn = _resolve_callable(obj, container)
+            if meta.kind == "command":
+                pipeline._handler_registry.register(meta.target_cls, handler_fn)
+                pipeline._command_registry.register(meta.target_cls)
+            elif meta.kind == "query":
+                pipeline._handler_registry.register(meta.target_cls, handler_fn)
+                pipeline._query_registry.register(meta.target_cls)
+            elif meta.kind == "event":
                 event_bus: Any = pipeline._event_bus
                 if hasattr(event_bus, "subscribe"):
-                    event_bus.subscribe(target_cls, handler_fn)
-            case PresenterMetadata(target_cls=target_cls, output_format=output_format):
-                presenter_inst: PresenterPort
-                if inspect.isclass(obj) and container is not None:
-                    if obj not in container:
-                        container.register(obj)
-                    presenter_inst = cast(PresenterPort, container.resolve(obj))
-                elif inspect.isclass(obj):
-                    presenter_inst = cast(PresenterPort, obj())
-                else:
-                    presenter_inst = cast(PresenterPort, obj)
+                    event_bus.subscribe(meta.target_cls, handler_fn)
+        elif isinstance(meta, PresenterMetadata):
+            presenter_inst: PresenterPort
+            if inspect.isclass(obj) and container is not None:
+                if obj not in container:
+                    container.register(obj)
+                presenter_inst = cast(PresenterPort, container.resolve(obj))
+            elif inspect.isclass(obj):
+                presenter_inst = cast(PresenterPort, obj())
+            else:
+                presenter_inst = cast(PresenterPort, obj)
 
-                pipeline._presenter_registry.register(
-                    target_cls, output_format, presenter_inst
-                )
-            case ExceptionMetadata(target_cls=target_cls):
-                if pipeline._exception_registry is not None:
-                    handler_fn = _resolve_callable(obj, container)
-                    pipeline._exception_registry.register(target_cls, handler_fn)
-            case ConfigMetadata(section_name=section_name):
-                if (
-                    config_registry is not None
-                    and inspect.isclass(obj)
-                    and issubclass(obj, BaseModel)
-                ):
-                    config_registry.register_config_section(section_name, obj)
-            case _:
-                pass
+            pipeline._presenter_registry.register(
+                meta.target_cls, meta.output_format, presenter_inst
+            )
+        elif isinstance(meta, ExceptionMetadata):
+            if pipeline._exception_registry is not None:
+                handler_fn = _resolve_callable(obj, container)
+                pipeline._exception_registry.register(meta.target_cls, handler_fn)
+        elif isinstance(meta, ConfigMetadata):
+            if (
+                config_registry is not None
+                and inspect.isclass(obj)
+                and issubclass(obj, BaseModel)
+            ):
+                config_registry.register_config_section(meta.section_name, obj)
 
     return visitor
 

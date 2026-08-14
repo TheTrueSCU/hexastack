@@ -33,11 +33,13 @@ class LoggingBootstrapper(BootstrapperPort):
         Raises:
             None.
         """
-        cfg = context.get_config("logging", HexastackLoggingConfig)
-
-        logger = StructuredLogger(config=cfg)
-        context.container.add_instance(logger, declared_class=LoggingPort)
-        context.properties["logger"] = logger
+        if LoggingPort not in context.container:
+            cfg = context.get_config("logging", HexastackLoggingConfig)
+            logger = StructuredLogger(config=cfg)
+            context.container.add_instance(logger, declared_class=LoggingPort)
+            context.properties["logger"] = logger
+        else:
+            context.properties["logger"] = context.container.resolve(LoggingPort)
 
     def register_config(self, registry: ConfigRegistry) -> None:
         """Phase 1: Register logging configuration schema under 'logging'.
