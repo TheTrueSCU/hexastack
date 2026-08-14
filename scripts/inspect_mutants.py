@@ -14,9 +14,10 @@ import argparse
 import re
 import sqlite3
 import sys
-from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+from _common import get_repo_root
+
+ROOT_DIR = get_repo_root()
 CACHE_FILE = ROOT_DIR / ".mutmut-cache"
 
 

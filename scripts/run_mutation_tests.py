@@ -16,25 +16,10 @@ Usage:
 import argparse
 import subprocess
 import sys
-from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+from _common import VALID_PACKAGES, get_repo_root
 
-VALID_PACKAGES = [
-    "core",
-    "cqrs",
-    "events",
-    "auth",
-    "otel",
-    "db",
-    "logging",
-    "fastapi",
-    "graphql",
-    "grpc",
-    "mcp",
-    "cli",
-    "ai",
-]
+ROOT_DIR = get_repo_root()
 
 
 def run_command(cmd: list[str]) -> int:
