@@ -12,6 +12,10 @@ class ItemRestockedEvent(Event):
     quantity: int
 
 
+class OtherEvent(Event):
+    info: str
+
+
 def test_in_memory_distributed_event_bus():
     bus = InMemoryDistributedEventBus()
     received: list[Any] = []
@@ -25,6 +29,11 @@ def test_in_memory_distributed_event_bus():
     assert len(received) == 1
     assert received[0].item_id == "item-77"
 
+    # Publishing event without subscriber
+    bus.publish(OtherEvent(info="no-sub"))
+    assert len(bus.published_events) == 2
+    assert len(received) == 1
+
     envelope = CloudEventEnvelope(
         id="ce-2",
         source="warehouse-svc",
@@ -35,3 +44,21 @@ def test_in_memory_distributed_event_bus():
     bus.publish_envelope(envelope)
     assert len(bus.published_envelopes) == 1
     assert len(received) == 2
+    assert received[1].id == "ce-2"
+
+    # Envelope without subscriber
+    other_envelope = CloudEventEnvelope(
+        id="ce-other",
+        source="warehouse-svc",
+        type="UnsubscribedType",
+        time="2026-08-13T08:00:00Z",
+        data={},
+    )
+    bus.publish_envelope(other_envelope)
+    assert len(bus.published_envelopes) == 2
+    assert len(received) == 2
+
+    # Clear
+    bus.clear()
+    assert len(bus.published_events) == 0
+    assert len(bus.published_envelopes) == 0

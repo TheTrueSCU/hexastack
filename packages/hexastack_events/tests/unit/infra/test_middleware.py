@@ -25,6 +25,13 @@ class OrderCreatedDomainEvent(Event):
     status: str = "CONFIRMED"
 
 
+def test_outbox_capture_middleware_defaults():
+    storage = InMemoryOutboxStorage()
+    middleware = OutboxCaptureMiddleware(storage=storage)
+    assert middleware._source == "hexastack"
+    assert middleware._enabled is True
+
+
 def test_outbox_capture_middleware():
     storage = InMemoryOutboxStorage()
     middleware = OutboxCaptureMiddleware(storage=storage, source="order-service")
@@ -97,3 +104,11 @@ async def test_outbox_capture_middleware_async_handler():
     assert isinstance(res, OrderCreatedDomainEvent)
     assert len(storage.get_all()) == 1
     assert storage.get_all()[0].payload["order_id"] == "async-99"
+
+    # Async handler returning non-event
+    async def _async_string_handler(c):
+        return "not-an-event"
+
+    res2 = await middleware(cmd, _async_string_handler)
+    assert res2 == "not-an-event"
+    assert len(storage.get_all()) == 1

@@ -15,6 +15,23 @@ def test_events_config_defaults():
     assert cfg.enabled is True
 
 
+def test_events_config_custom_values():
+    cfg = HexastackEventsConfig(
+        source="custom-service",
+        relay_mode="huey",
+        poll_interval_seconds=0.5,
+        batch_size=100,
+        max_retries=10,
+        enabled=False,
+    )
+    assert cfg.source == "custom-service"
+    assert cfg.relay_mode == "huey"
+    assert cfg.poll_interval_seconds == 0.5
+    assert cfg.batch_size == 100
+    assert cfg.max_retries == 10
+    assert cfg.enabled is False
+
+
 def test_register_events_config():
     reg = ConfigRegistry()
     register_events_config(reg)
