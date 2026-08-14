@@ -6,7 +6,6 @@ from hexastack_core.infra.autodiscovery import (
     DiscoveryVisitor,
     scan_modules,
 )
-
 from hexastack_mcp.domain.metadata import (
     McpPromptMetadata,
     McpResourceMetadata,

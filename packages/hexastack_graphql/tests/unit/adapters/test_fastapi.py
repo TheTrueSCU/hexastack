@@ -1,12 +1,13 @@
 import strawberry
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from strawberry import Schema
+
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_graphql.adapters.fastapi import create_graphql_router
 from hexastack_graphql.infra.decorators import (
     graphql_query_type,
 )
-from strawberry import Schema
 
 
 def test_fastapi_graphql_router_mounting():

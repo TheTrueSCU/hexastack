@@ -50,7 +50,7 @@ class ConfigRegistry(GenericTypeRegistry[BaseModel]):
         """
         file_path = Path(raw_file_path)
 
-        with open(file_path, "rb") as f:
+        with file_path.open("rb") as f:
             raw_data = tomllib.load(f)
 
         core_data = raw_data.get("hexastack", {})

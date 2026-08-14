@@ -1,5 +1,6 @@
-import hexastack as hs
 import pytest
+
+import hexastack as hs
 
 
 def test_guaranteed_packages_present():

@@ -1,6 +1,7 @@
 import types
 
 import strawberry
+
 from hexastack_graphql.infra.autodiscovery import (
     autodiscover_graphql_schema,
 )

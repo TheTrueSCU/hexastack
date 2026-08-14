@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_auth.ports.security import SecurityPort
 
 

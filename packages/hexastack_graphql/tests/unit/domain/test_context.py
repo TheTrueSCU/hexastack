@@ -1,5 +1,6 @@
-from hexastack_graphql.domain.context import GraphQLContext
 from rodi import Container
+
+from hexastack_graphql.domain.context import GraphQLContext
 
 
 def test_graphql_context_creation():

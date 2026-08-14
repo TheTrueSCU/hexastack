@@ -1,5 +1,6 @@
-from hexastack_core.infra import ConfigRegistry
 from pydantic import BaseModel, Field
+
+from hexastack_core.infra import ConfigRegistry
 
 
 class CorrelationMiddlewareConfig(BaseModel):

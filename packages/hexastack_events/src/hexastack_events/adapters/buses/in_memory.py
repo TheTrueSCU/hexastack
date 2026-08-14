@@ -3,7 +3,6 @@ from collections.abc import Callable
 from typing import Any
 
 from hexastack_core.domain import Event
-
 from hexastack_events.domain.models import CloudEventEnvelope
 from hexastack_events.ports.buses import DistributedEventBusPort
 

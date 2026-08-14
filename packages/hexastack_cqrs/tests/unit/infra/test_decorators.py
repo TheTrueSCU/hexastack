@@ -1,5 +1,7 @@
 from typing import Any
 
+from pydantic import BaseModel
+
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_cqrs.infra.decorators import (
     ConfigMetadata,
@@ -13,7 +15,6 @@ from hexastack_cqrs.infra.decorators import (
     presenter,
     query_handler,
 )
-from pydantic import BaseModel
 
 
 class SampleCommand(Command):

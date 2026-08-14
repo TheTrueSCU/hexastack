@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 import pytest
+
 from hexastack_core.infra import ExceptionRegistry
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline, create_pipeline
 from hexastack_cqrs.infra.registries import (

@@ -1,6 +1,8 @@
 import json
 
 import typer
+from typer.testing import CliRunner
+
 from hexastack_cli.adapters.routing import (
     register_cqrs_command,
     register_cqrs_query,
@@ -24,7 +26,6 @@ from hexastack_cqrs.infra.registries.command import CommandRegistry
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
 from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 from hexastack_cqrs.infra.registries.query import QueryRegistry
-from typer.testing import CliRunner
 
 
 class AddNumbersCommand(Command):

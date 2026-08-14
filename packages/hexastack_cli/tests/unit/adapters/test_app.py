@@ -1,10 +1,11 @@
 import typer
+from rodi import Container
+from typer.testing import CliRunner
+
 from hexastack_cli.adapters.app import create_cli_app
 from hexastack_cli.adapters.presenter import RichTerminalPresenter
 from hexastack_cli.infra.config import HexastackCliConfig
 from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
-from rodi import Container
-from typer.testing import CliRunner
 
 
 def test_create_cli_app_defaults():

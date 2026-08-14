@@ -4,7 +4,6 @@ from typing import Any, cast
 
 from hexastack_core.domain import Event
 from hexastack_cqrs.ports.buses import EventBusPort
-
 from hexastack_events.domain.models import CloudEventEnvelope
 from hexastack_events.ports.buses import DistributedEventBusPort
 from hexastack_events.ports.outbox import (
@@ -65,7 +64,7 @@ class AsyncioOutboxRelay(OutboxRelayPort):
                 if isinstance(self._bus, DistributedEventBusPort):
                     self._bus.publish_envelope(envelope)
                 else:
-                    self._bus.publish(cast(Event, envelope))
+                    self._bus.publish(cast("Event", envelope))
 
                 self._storage.mark_published(record.id)
                 published_count += 1

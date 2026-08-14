@@ -1,8 +1,9 @@
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
 from hexastack_auth.adapters.jwt import JwtSecurityAdapter
 from hexastack_auth.adapters.password import Pbkdf2PasswordHasher
 from hexastack_auth.domain.models import Identity
-from hypothesis import given, settings
-from hypothesis import strategies as st
 
 
 @settings(max_examples=50)

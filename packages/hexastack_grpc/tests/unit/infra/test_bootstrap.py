@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import grpc
+
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_grpc.infra.decorators import grpc_service
 

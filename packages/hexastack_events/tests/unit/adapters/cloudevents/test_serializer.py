@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 import pytest
+
 from hexastack_core.domain import Event
 from hexastack_core.utils.context import (
     UserContext,

@@ -4,7 +4,6 @@ from typing import Any, cast
 
 from hexastack_core.domain import Generic
 from hexastack_core.ports.logging import LoggingPort
-
 from hexastack_cqrs.infra.config import LoggingMiddlewareConfig
 
 
@@ -83,7 +82,7 @@ class LoggingMiddleware:
                     )
                     raise
 
-            return cast(R, _async_wrapped())
+            return cast("R", _async_wrapped())
 
         self._logger.debug(
             f"Successfully completed {message_name}",

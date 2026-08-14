@@ -2,7 +2,6 @@ import logging
 from logging.handlers import QueueListener
 
 from hexastack_core.ports.logging import Extras, LoggingPort
-
 from hexastack_logging.infra.config import (
     HexastackLoggingConfig,
     configure_logging,

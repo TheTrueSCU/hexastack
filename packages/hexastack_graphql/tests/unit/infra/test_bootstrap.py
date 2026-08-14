@@ -1,4 +1,5 @@
 import strawberry
+
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_graphql.infra.bootstrap import (
     GraphQLBootstrapper,

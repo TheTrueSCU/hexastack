@@ -2,6 +2,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import grpc
+
 from hexastack_core.domain.exceptions import NotFoundError, ValidationError
 from hexastack_core.utils.context import get_correlation_id
 from hexastack_grpc.infra.interceptors.correlation import (

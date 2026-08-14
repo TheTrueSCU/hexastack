@@ -9,10 +9,10 @@ from logging.handlers import (
 from pathlib import Path
 from typing import Literal
 
-from hexastack_core.infra.decorators import config_section
-from hexastack_core.infra.registries.config import ConfigRegistry
 from pydantic import BaseModel, Field
 
+from hexastack_core.infra.decorators import config_section
+from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_logging.infra.filters import (
     CorrelationIdFilter,
     SanitizerFilter,

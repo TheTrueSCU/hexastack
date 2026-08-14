@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_core.ports.presenter import PresenterPort
 from hexastack_cqrs.adapters.buses.command.synchronous import (

@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import strawberry
+
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
-
 from hexastack_graphql.infra.autodiscovery import create_graphql_visitor
 from hexastack_graphql.infra.config import (
     HexastackGraphQLConfig,

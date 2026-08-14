@@ -1,10 +1,11 @@
+from pydantic import BaseModel
+
 from hexastack_core.infra.decorators import (
     ConfigMetadata,
     ExceptionMetadata,
     config_section,
     exception_handler,
 )
-from pydantic import BaseModel
 
 
 class SampleCustomError(Exception):

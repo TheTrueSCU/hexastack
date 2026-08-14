@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+
 from hexastack_core.domain import HexastackError
 from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.utils.context import get_correlation_id

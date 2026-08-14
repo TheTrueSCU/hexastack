@@ -1,6 +1,8 @@
 import types
 from typing import Any
 
+from rodi import Container
+
 from hexastack_core.adapters.logging import InMemoryLogger
 from hexastack_core.adapters.unit_of_work.in_memory import InMemoryUnitOfWork
 from hexastack_core.domain import Command, Generic
@@ -37,7 +39,6 @@ from hexastack_cqrs.ports.buses import (
     QueryBusPort,
 )
 from hexastack_logging.infra.bootstrap import LoggingBootstrapper
-from rodi import Container
 
 
 class CreateAccount(Command):

@@ -5,7 +5,6 @@ from typing import Any, cast
 
 from hexastack_core.domain import Generic
 from hexastack_core.ports.logging import LoggingPort
-
 from hexastack_cqrs.infra.config import TimingMiddlewareConfig
 
 
@@ -85,7 +84,7 @@ class TimingMiddleware:
                     duration = time.perf_counter() - start_time
                     self._log_duration(message_name, duration)
 
-            return cast(R, _async_wrapped())
+            return cast("R", _async_wrapped())
 
         duration = time.perf_counter() - start_time
         self._log_duration(message_name, duration)

@@ -3,6 +3,9 @@ from collections.abc import Callable, Sequence
 from types import ModuleType
 from typing import Any, cast
 
+from pydantic import BaseModel
+from rodi import Container
+
 from hexastack_core.infra.autodiscovery import (
     DiscoveryVisitor,
     scan_modules,
@@ -10,9 +13,6 @@ from hexastack_core.infra.autodiscovery import (
 from hexastack_core.infra.decorators import ConfigMetadata, ExceptionMetadata
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.presenter import PresenterPort
-from pydantic import BaseModel
-from rodi import Container
-
 from hexastack_cqrs.infra.decorators import HandlerMetadata, PresenterMetadata
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
@@ -26,10 +26,10 @@ def _resolve_callable(
             if obj not in container:
                 container.register(obj)
             return lambda *args, **kwargs: cast(
-                Callable[..., Any], container.resolve(obj)
+                "Callable[..., Any]", container.resolve(obj)
             )(*args, **kwargs)
-        return cast(Callable[..., Any], obj())
-    return cast(Callable[..., Any], obj)
+        return cast("Callable[..., Any]", obj())
+    return cast("Callable[..., Any]", obj)
 
 
 def create_cqrs_visitor(
@@ -78,11 +78,11 @@ def create_cqrs_visitor(
             if inspect.isclass(obj) and container is not None:
                 if obj not in container:
                     container.register(obj)
-                presenter_inst = cast(PresenterPort, container.resolve(obj))
+                presenter_inst = cast("PresenterPort", container.resolve(obj))
             elif inspect.isclass(obj):
-                presenter_inst = cast(PresenterPort, obj())
+                presenter_inst = cast("PresenterPort", obj())
             else:
-                presenter_inst = cast(PresenterPort, obj)
+                presenter_inst = cast("PresenterPort", obj)
 
             pipeline._presenter_registry.register(
                 meta.target_cls, meta.output_format, presenter_inst

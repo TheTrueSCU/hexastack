@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import pytest
+
 from hexastack_core.domain import Event
 from hexastack_cqrs.adapters.buses.event.recording import RecordingEventBus
 

@@ -2,6 +2,8 @@ import json
 from dataclasses import dataclass
 
 import pytest
+from mcp.types import TextContent
+
 from hexastack_core.domain.command import Command
 from hexastack_core.domain.query import Query
 from hexastack_core.infra.bootstrap import bootstrap
@@ -13,7 +15,6 @@ from hexastack_mcp.infra.decorators import (
     mcp_resource,
     mcp_tool,
 )
-from mcp.types import TextContent
 
 
 @dataclass(frozen=True)

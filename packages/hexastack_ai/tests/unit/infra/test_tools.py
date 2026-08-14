@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_ai.infra.tools import create_cqrs_agent, create_tool_for_message
 from hexastack_core.domain import Command, Query
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline, create_pipeline

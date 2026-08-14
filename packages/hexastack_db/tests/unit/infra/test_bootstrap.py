@@ -1,3 +1,7 @@
+from rodi import Container
+from sqlalchemy import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_core.ports.ai import VectorStorePort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
@@ -14,9 +18,6 @@ from hexastack_db.infra.bootstrap import (
     DatabaseBootstrapResult,
 )
 from hexastack_db.infra.config import HexastackDatabaseConfig, PgVectorConfig
-from rodi import Container
-from sqlalchemy import Engine
-from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 def test_database_bootstrapper_order():

@@ -1,3 +1,5 @@
+from rodi import Container
+
 from hexastack_auth.adapters.in_memory import (
     InMemoryPasswordHasher,
     InMemorySecurityService,
@@ -11,7 +13,6 @@ from hexastack_auth.ports.password import PasswordHasherPort
 from hexastack_auth.ports.security import SecurityPort
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
-from rodi import Container
 
 
 def test_auth_bootstrapper_properties():

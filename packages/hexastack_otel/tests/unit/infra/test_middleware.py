@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_core.domain import Command, Event, Query
 from hexastack_core.utils.context import (
     UserContext,

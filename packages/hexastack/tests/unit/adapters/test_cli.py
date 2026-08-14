@@ -1,11 +1,12 @@
 from unittest.mock import patch
 
+import typer
+from typer.testing import CliRunner
+
 import hexastack.adapters.cli
 import hexastack.application.diagnostics
-import typer
 from hexastack.adapters.cli import add_serve_command
 from hexastack_core.infra.bootstrap import bootstrap
-from typer.testing import CliRunner
 
 
 def test_cli_diagnostics_integration():

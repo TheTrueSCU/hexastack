@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from rodi import Container
+
 from hexastack_fastapi.adapters.health import create_health_router
 from hexastack_fastapi.infra.config import HealthConfig
 from hexastack_fastapi.infra.middleware.correlation import (
     CorrelationHttpMiddleware,
 )
-from rodi import Container
 
 
 def test_health_and_readiness_endpoints_healthy():

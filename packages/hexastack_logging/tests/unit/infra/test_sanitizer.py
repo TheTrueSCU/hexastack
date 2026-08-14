@@ -1,5 +1,6 @@
-from hexastack_logging.infra.sanitizer import Sanitizer
 from pydantic import BaseModel
+
+from hexastack_logging.infra.sanitizer import Sanitizer
 
 
 class UserModel(BaseModel):

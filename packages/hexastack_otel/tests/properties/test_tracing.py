@@ -1,9 +1,10 @@
+from hypothesis import given
+from hypothesis import strategies as st
+
 from hexastack_otel.adapters.tracing import (
     InMemoryTracingAdapter,
     OtelTracingAdapter,
 )
-from hypothesis import given
-from hypothesis import strategies as st
 
 # W3C TraceContext requires non-zero 128-bit trace ID and 64-bit span ID
 trace_id_strategy = st.integers(min_value=1, max_value=2**128 - 1).map(

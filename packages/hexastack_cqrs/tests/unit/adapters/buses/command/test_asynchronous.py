@@ -2,6 +2,8 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 import pytest
+from huey import MemoryHuey
+
 from hexastack_core.domain import Command
 from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_cqrs.adapters.buses.command.asynchronous import (
@@ -9,7 +11,6 @@ from hexastack_cqrs.adapters.buses.command.asynchronous import (
     NativeAsyncCommandBus,
 )
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
-from huey import MemoryHuey
 
 
 class SendEmail(Command):

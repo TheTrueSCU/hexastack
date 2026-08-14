@@ -1,7 +1,7 @@
-from hexastack_core.domain.command import Command
-from hexastack_core.domain.query import Query
 from strawberry.types import Info
 
+from hexastack_core.domain.command import Command
+from hexastack_core.domain.query import Query
 from hexastack_graphql.domain.context import GraphQLContext
 from hexastack_graphql.domain.exceptions import GraphQLError
 

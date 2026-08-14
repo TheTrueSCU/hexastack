@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import jwt
 import pytest
+
 from hexastack_auth.adapters.jwt import JwtSecurityAdapter
 from hexastack_auth.domain.exceptions import (
     InvalidTokenError,

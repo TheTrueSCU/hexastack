@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import Any
 
 import grpc
+
 from hexastack_core.domain.exceptions import HexastackError
 
 

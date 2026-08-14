@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import pytest
+
 from hexastack_core.adapters.repository import AsyncInMemoryRepository
 
 

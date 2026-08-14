@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 
 import pytest
+
 from hexastack_core.testing import isolate_registries
 from hexastack_graphql.infra.decorators import get_schema_registry
 

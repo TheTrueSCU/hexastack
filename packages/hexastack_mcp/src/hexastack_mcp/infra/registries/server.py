@@ -5,15 +5,15 @@ import sys
 from collections.abc import Callable
 from typing import Any
 
+from mcp.server.fastmcp import FastMCP as McpServer
+from rodi import Container
+
 from hexastack_core.domain.command import Command
 from hexastack_core.utils.inspection import inspect_model_parameters
 from hexastack_cqrs.ports.buses import (
     CommandBusPort,
     QueryBusPort,
 )
-from mcp.server.fastmcp import FastMCP as McpServer
-from rodi import Container
-
 from hexastack_mcp.domain.exceptions import ToolExecutionError
 from hexastack_mcp.domain.metadata import (
     McpPromptMetadata,

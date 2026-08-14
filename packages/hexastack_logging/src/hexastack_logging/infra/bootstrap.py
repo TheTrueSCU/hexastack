@@ -2,7 +2,6 @@ from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_core.ports.logging import LoggingPort
-
 from hexastack_logging.adapters.logger.structured import StructuredLogger
 from hexastack_logging.infra.config import (
     HexastackLoggingConfig,

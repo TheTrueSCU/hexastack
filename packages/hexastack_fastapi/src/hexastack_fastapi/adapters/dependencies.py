@@ -1,7 +1,8 @@
 from fastapi import Request
+from rodi import Container
+
 from hexastack_core.domain.exceptions import DependencyResolutionError
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
-from rodi import Container
 
 
 def get_container(request: Request) -> Container:
@@ -48,8 +49,7 @@ def get_pipeline(request: Request) -> ExecutionPipeline:
 
     container = getattr(request.app.state, "container", None)
     if isinstance(container, Container) and ExecutionPipeline in container:
-        resolved = container.resolve(ExecutionPipeline)
-        return resolved
+        return container.resolve(ExecutionPipeline)
 
     raise DependencyResolutionError(
         "ExecutionPipeline is not available on request.app.state.pipeline or container."

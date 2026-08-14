@@ -12,6 +12,7 @@ members = [
 [dependency-groups]
 dev = [
     "alembic>=1.19.1",
+    "complexipy>=7.0.1",
     "httpx>=0.27.0",
     "hypothesis>=6.100.0",
     "import-linter>=2.13",
@@ -25,25 +26,98 @@ dev = [
     "ty>=0.0.69",
 ]
 
-[tool.pytest.ini_options]
-addopts = "-n auto --import-mode=importlib --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
+[tool.complexipy]
+max_complexity_allowed = 25
 
 [tool.coverage.run]
 branch = false
 source = ["packages/"]
 omit = [
-    "*/tests/*",
     "*/__pycache__/*",
     "*/testing/*",
+    "*/tests/*",
 ]
 
 [tool.coverage.report]
 fail_under = 90
 show_missing = true
 exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
     "@abstractmethod",
+    "if TYPE_CHECKING:",
+    "pragma: no cover",
     "raise NotImplementedError",
     "return NotImplemented",
 ]
+
+[tool.pytest.ini_options]
+addopts = "-n auto --import-mode=importlib --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
+
+[tool.ruff.lint]
+select = [
+    "ARG",  # flake8-unused-arguments
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "D",    # pydocstyle
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "FAST", # FastAPI lint
+    "I",    # isort
+    "LOG",  # flake8-logging
+    "PTH",  # flake8-use-pathlib
+    "RET",  # flake8-return
+    "S",    # flake8-bandit (Security-specific linting)
+    "SIM",  # flake8-simplify
+    "T20",  # flake8-print
+    "TCH",  # flake8-type-checking
+    "TID",  # flake8-tidy-imports
+    "UP",   # pyupgrade
+    "W",    # pycodestyle warnings
+]
+ignore = [
+    "ARG001", # Unused function argument (framework interfaces, visitors, listeners)
+    "ARG002", # Unused method argument (framework interfaces and resolvers)
+    "D100",   # Missing docstring in public module
+    "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
+    "D104",   # Missing docstring in public package (__init__.py)
+    "D105",   # Missing docstring in magic method
+    "D107",   # Missing docstring in __init__ (documented at class level in Google style)
+    "E501",   # Line too long (handled automatically by ruff-format)
+    "E731",   # Do not assign a lambda expression (standard in middleware pipeline chaining)
+    "S104",   # Possible binding to all interfaces (standard for containerized servers)
+    "S106",   # Possible hardcoded password argument (mock/dev defaults)
+    "S108",   # Probable insecure usage of temp directory (fine in tests/mock settings)
+    "S110",   # try-except-pass detected (intentional silent fallback blocks)
+    "S603",   # Subprocess call with dynamic inputs (already verified safe with shell=False)
+    "S607",   # Starting process with partial path (required for portable git CLI execution)
+    "TC001",  # Move application import into type-checking block (breaks Pydantic runtime introspection)
+    "TC002",  # Move third-party import into type-checking block (breaks FastAPI/Strawberry reflection)
+    "TC003",  # Move standard library import into type-checking block (breaks runtime reflection)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Alphabetized per-file ignore mappings
+"**/hexastack_cli/**/*.py" = ["T201"]
+"**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
+"scripts/**/*.py" = ["D", "E501", "S603", "T201", "T203"]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "hexastack",
+    "hexastack_ai",
+    "hexastack_auth",
+    "hexastack_cli",
+    "hexastack_core",
+    "hexastack_cqrs",
+    "hexastack_db",
+    "hexastack_events",
+    "hexastack_fastapi",
+    "hexastack_graphql",
+    "hexastack_grpc",
+    "hexastack_logging",
+    "hexastack_mcp",
+    "hexastack_otel",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

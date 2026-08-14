@@ -2,7 +2,6 @@ from typing import Any
 
 from hexastack_core.domain import Command, Event, Generic, HexastackError, Query
 from hexastack_core.infra import ExceptionRegistry
-
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,
 )

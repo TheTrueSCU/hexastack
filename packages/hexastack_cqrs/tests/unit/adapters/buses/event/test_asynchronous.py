@@ -2,13 +2,14 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 import pytest
+from huey import MemoryHuey
+
 from hexastack_core.domain import Event
 from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_cqrs.adapters.buses.event.asynchronous import (
     HueyEventBus,
     NativeAsyncEventBus,
 )
-from huey import MemoryHuey
 
 
 class OrderCreated(Event):

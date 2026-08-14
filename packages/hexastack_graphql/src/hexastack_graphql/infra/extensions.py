@@ -1,7 +1,8 @@
 from typing import Any
 
-from hexastack_core.utils.context import get_correlation_id
 from strawberry.extensions import SchemaExtension
+
+from hexastack_core.utils.context import get_correlation_id
 
 
 class CorrelationExtension(SchemaExtension):

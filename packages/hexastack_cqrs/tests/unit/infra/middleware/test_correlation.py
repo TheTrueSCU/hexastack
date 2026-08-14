@@ -1,6 +1,7 @@
 import asyncio
 
 import pytest
+
 from hexastack_core.domain import Command
 from hexastack_core.utils.context import (
     correlation_id_ctx,

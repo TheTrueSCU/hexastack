@@ -1,14 +1,15 @@
 from datetime import UTC, datetime
 
 import pytest
+from sqlalchemy import DateTime, Integer, String, Text, create_engine
+from sqlalchemy.orm import sessionmaker
+
 from hexastack_events.adapters.outbox.sqlalchemy import (
     Base,
     OutboxEventBaseModel,
     SqlAlchemyOutboxStorage,
 )
 from hexastack_events.domain.models import OutboxRecord, OutboxStatus
-from sqlalchemy import DateTime, Integer, String, Text, create_engine
-from sqlalchemy.orm import sessionmaker
 
 
 @pytest.fixture

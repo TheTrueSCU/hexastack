@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_core.adapters.logging import InMemoryLogger
 from hexastack_core.domain import Command, HexastackError
 from hexastack_cqrs.infra.config import RetryMiddlewareConfig

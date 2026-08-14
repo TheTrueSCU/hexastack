@@ -2,6 +2,8 @@ import types
 from typing import Any, cast
 
 import typer
+from typer.testing import CliRunner
+
 from hexastack_cli.infra.bootstrap import CliBootstrapper
 from hexastack_cli.infra.config import HexastackCliConfig
 from hexastack_cli.infra.decorators import cli_command
@@ -11,7 +13,6 @@ from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_cqrs.infra.bootstrap import CqrsBootstrapper
 from hexastack_cqrs.infra.decorators import command_handler
 from hexastack_logging.infra.bootstrap import LoggingBootstrapper
-from typer.testing import CliRunner
 
 
 @cli_command("ping", help="Ping system")
@@ -40,8 +41,8 @@ def test_cli_bootstrapper_registration():
 
 def test_meta_bootstrap_with_cli_and_autodiscovery():
     mod = types.ModuleType("sample_ping_mod")
-    cast(Any, mod).PingCmd = PingCmd
-    cast(Any, mod).PingHandler = PingHandler
+    cast("Any", mod).PingCmd = PingCmd
+    cast("Any", mod).PingHandler = PingHandler
 
     result = bootstrap(
         bootstrappers=[

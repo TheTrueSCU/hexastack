@@ -2,6 +2,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import grpc
+
 from hexastack_grpc.infra.config import HexastackGrpcConfig
 from hexastack_grpc.infra.decorators import (
     get_grpc_registry,

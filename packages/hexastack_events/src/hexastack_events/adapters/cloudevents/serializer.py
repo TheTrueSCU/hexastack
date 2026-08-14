@@ -4,9 +4,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 from cloudevents.v1.http import CloudEvent, from_dict, from_json
+
 from hexastack_core.domain import Event
 from hexastack_core.utils.context import get_correlation_id, get_user_context
-
 from hexastack_events.domain.exceptions import EventSerializationError
 from hexastack_events.domain.models import CloudEventEnvelope
 

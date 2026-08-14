@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 
 import pytest
+
 from hexastack_core.testing import isolate_registries
 from hexastack_db.infra.registries.metadata import clear_metadata_registry
 

@@ -1,3 +1,5 @@
+from mcp.server.fastmcp import FastMCP as McpServer
+
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_mcp.infra.bootstrap import (
     HexastackMcpConfig,
@@ -6,7 +8,6 @@ from hexastack_mcp.infra.bootstrap import (
 from hexastack_mcp.infra.decorators import (
     mcp_tool,
 )
-from mcp.server.fastmcp import FastMCP as McpServer
 
 
 def test_mcp_bootstrapper_registration():

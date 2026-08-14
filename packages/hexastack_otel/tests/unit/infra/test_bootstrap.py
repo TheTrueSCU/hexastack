@@ -1,3 +1,5 @@
+from rodi import Container
+
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_otel.adapters.tracing import (
@@ -8,7 +10,6 @@ from hexastack_otel.infra.bootstrap import OtelBootstrapper
 from hexastack_otel.infra.config import HexastackOtelConfig
 from hexastack_otel.infra.middleware import TracingMiddleware
 from hexastack_otel.ports.tracing import TracingPort
-from rodi import Container
 
 
 def test_otel_bootstrapper_configuration_memory():

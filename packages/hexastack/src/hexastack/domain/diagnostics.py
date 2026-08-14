@@ -1,5 +1,6 @@
-from hexastack_core.domain import Command, Generic, Query
 from pydantic import Field
+
+from hexastack_core.domain import Command, Generic, Query
 
 
 class SystemInfoDTO(Generic):

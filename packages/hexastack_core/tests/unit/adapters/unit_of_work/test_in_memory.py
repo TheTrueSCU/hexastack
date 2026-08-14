@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_core.adapters.unit_of_work import InMemoryUnitOfWork
 from hexastack_core.domain import UnitOfWorkError
 

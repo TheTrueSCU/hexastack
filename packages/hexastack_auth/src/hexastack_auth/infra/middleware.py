@@ -2,15 +2,14 @@ import inspect
 from collections.abc import Callable
 from typing import Any, cast
 
-from hexastack_core.domain import Generic
-from hexastack_core.utils.context import UserContext, get_user_context
-
 from hexastack_auth.domain.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
 )
 from hexastack_auth.domain.models import AnonymousIdentity, Identity
 from hexastack_auth.infra.decorators import AuthMetadata, get_auth_metadata
+from hexastack_core.domain import Generic
+from hexastack_core.utils.context import UserContext, get_user_context
 
 
 def _resolve_effective_identity(identity: Any | None) -> Identity:
@@ -146,7 +145,7 @@ class AuthorizationMiddleware:
             async def _async_wrap() -> Any:
                 return await result
 
-            return cast(R, _async_wrap())
+            return cast("R", _async_wrap())
         return result
 
 

@@ -1,7 +1,8 @@
-from hexastack_core.domain import Event
-from hexastack_events.adapters.cloudevents import from_cloudevent, to_cloudevent
 from hypothesis import given
 from hypothesis import strategies as st
+
+from hexastack_core.domain import Event
+from hexastack_events.adapters.cloudevents import from_cloudevent, to_cloudevent
 
 
 class FuzzOrderEvent(Event):

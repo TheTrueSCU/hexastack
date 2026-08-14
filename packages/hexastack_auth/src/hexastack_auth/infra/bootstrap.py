@@ -1,7 +1,3 @@
-from hexastack_core.infra.bootstrap import BootstrapContext
-from hexastack_core.infra.registries.config import ConfigRegistry
-from hexastack_core.ports.bootstrap import BootstrapperPort
-
 from hexastack_auth.adapters.in_memory import (
     InMemoryPasswordHasher,
     InMemorySecurityService,
@@ -12,6 +8,9 @@ from hexastack_auth.infra.config import HexastackAuthConfig, register_auth_confi
 from hexastack_auth.infra.middleware import AuthorizationMiddleware
 from hexastack_auth.ports.password import PasswordHasherPort
 from hexastack_auth.ports.security import SecurityPort
+from hexastack_core.infra.bootstrap import BootstrapContext
+from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_core.ports.bootstrap import BootstrapperPort
 
 
 class AuthBootstrapper(BootstrapperPort):

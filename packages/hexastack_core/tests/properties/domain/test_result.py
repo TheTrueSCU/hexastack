@@ -1,6 +1,7 @@
-from hexastack_core.domain import Result
 from hypothesis import given
 from hypothesis import strategies as st
+
+from hexastack_core.domain import Result
 
 
 @given(st.text(), st.text())

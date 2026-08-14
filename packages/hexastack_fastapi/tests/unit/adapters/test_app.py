@@ -1,4 +1,6 @@
 from fastapi.testclient import TestClient
+from rodi import Container
+
 from hexastack_core.adapters.logging.in_memory import InMemoryLogger
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_fastapi.adapters.app import create_fastapi_app
@@ -6,7 +8,6 @@ from hexastack_fastapi.infra.config import (
     CorsConfig,
     HexastackFastApiConfig,
 )
-from rodi import Container
 
 
 def test_create_fastapi_app_defaults():

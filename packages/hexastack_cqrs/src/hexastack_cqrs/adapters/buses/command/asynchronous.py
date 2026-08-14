@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any
 
 from hexastack_core.domain import Command, Generic
 from hexastack_core.domain.exceptions import MissingDependencyError
-
 from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
 from hexastack_cqrs.ports.buses import CommandBusPort

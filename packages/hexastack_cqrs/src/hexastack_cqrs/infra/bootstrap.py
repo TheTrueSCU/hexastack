@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 
+from rodi import Container
+
 from hexastack_core.adapters.logging import StandardLogger
 from hexastack_core.infra.bootstrap import (
     BootstrapContext,
@@ -16,8 +18,6 @@ from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
-from rodi import Container
-
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,
 )

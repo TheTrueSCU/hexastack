@@ -1,15 +1,16 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from hexastack_fastapi.adapters.db_session import (
-    AsyncDbSessionMiddleware,
-    DbSessionMiddleware,
-    add_db_session_middleware,
-)
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
+
+from hexastack_fastapi.adapters.db_session import (
+    AsyncDbSessionMiddleware,
+    DbSessionMiddleware,
+    add_db_session_middleware,
+)
 
 
 def _sync_factory():

@@ -1,10 +1,11 @@
 import pytest
+from pydantic import BaseModel
+
 from hexastack_core.infra.config import (
     HexastackConfig,
     HexastackConfigError,
     HexastackCoreConfig,
 )
-from pydantic import BaseModel
 
 
 class CustomSection(BaseModel):

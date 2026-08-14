@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from hexastack_core.domain import HexastackError
 from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_fastapi.infra.exception_handlers import (

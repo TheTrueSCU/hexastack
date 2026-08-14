@@ -1,5 +1,6 @@
-from hexastack_core.ports.ai import LlmProviderPort, Metadata, VectorStorePort
 from pydantic import BaseModel
+
+from hexastack_core.ports.ai import LlmProviderPort, Metadata, VectorStorePort
 
 
 class DummySchema(BaseModel):

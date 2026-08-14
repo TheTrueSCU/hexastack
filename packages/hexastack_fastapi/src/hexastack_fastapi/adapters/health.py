@@ -3,9 +3,9 @@ from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from hexastack_core.utils.context import get_correlation_id
 from rodi import Container
 
+from hexastack_core.utils.context import get_correlation_id
 from hexastack_fastapi.infra.config import HealthConfig
 
 

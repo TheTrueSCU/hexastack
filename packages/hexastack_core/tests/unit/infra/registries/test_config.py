@@ -1,8 +1,9 @@
 import tempfile
 from pathlib import Path
 
-from hexastack_core.infra.registries.config import ConfigRegistry
 from pydantic import BaseModel
+
+from hexastack_core.infra.registries.config import ConfigRegistry
 
 
 class CustomSection(BaseModel):

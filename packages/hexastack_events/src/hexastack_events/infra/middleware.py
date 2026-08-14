@@ -6,7 +6,6 @@ from typing import Any, cast
 
 from hexastack_core.domain import Event, Generic
 from hexastack_core.utils.context import get_correlation_id, get_user_context
-
 from hexastack_events.domain.models import OutboxRecord
 from hexastack_events.ports.outbox import OutboxStoragePort
 
@@ -72,7 +71,7 @@ class OutboxCaptureMiddleware:
                     self._stage_event(res)
                 return res
 
-            return cast(R, _async_wrap())
+            return cast("R", _async_wrap())
 
         if self._enabled and isinstance(result, Event):
             self._stage_event(result)

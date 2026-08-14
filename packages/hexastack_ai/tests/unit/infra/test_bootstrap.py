@@ -1,3 +1,5 @@
+from rodi import Container
+
 from hexastack_ai.adapters.litellm import LiteLlmAdapter
 from hexastack_ai.infra.bootstrap import (
     AiBootstrapper,
@@ -7,7 +9,6 @@ from hexastack_ai.infra.config import HexastackAiConfig
 from hexastack_core.adapters.ai import InMemoryLlmProvider
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_core.ports.ai import LlmProviderPort
-from rodi import Container
 
 
 def test_ai_bootstrapper_default_memory():

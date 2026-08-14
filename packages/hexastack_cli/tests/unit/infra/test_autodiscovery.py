@@ -1,6 +1,8 @@
 import types
 from typing import Any, cast
 
+from typer.testing import CliRunner
+
 from hexastack_cli.adapters.app import create_cli_app
 from hexastack_cli.infra.autodiscovery import (
     autodiscover_cli_commands,
@@ -21,7 +23,6 @@ from hexastack_cqrs.infra.registries.command import CommandRegistry
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
 from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 from hexastack_cqrs.infra.registries.query import QueryRegistry
-from typer.testing import CliRunner
 
 
 @cli_group("user", help="User account administration")
@@ -85,10 +86,10 @@ def test_autodiscover_cli_commands_nested_subgroups_and_aliases():
 
     app = create_cli_app()
     mod = types.ModuleType("sample_nested_cli_module")
-    cast(Any, mod).UserGroupConfig = UserGroupConfig
-    cast(Any, mod).CreateUserCommand = CreateUserCommand
-    cast(Any, mod).GetUserQuery = GetUserQuery
-    cast(Any, mod).SetBioCommand = SetBioCommand
+    cast("Any", mod).UserGroupConfig = UserGroupConfig
+    cast("Any", mod).CreateUserCommand = CreateUserCommand
+    cast("Any", mod).GetUserQuery = GetUserQuery
+    cast("Any", mod).SetBioCommand = SetBioCommand
 
     autodiscover_cli_commands(app, [mod], pipeline=pipeline)
 

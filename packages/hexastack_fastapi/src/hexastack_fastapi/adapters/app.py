@@ -2,11 +2,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from rodi import Container
+
 from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
-from rodi import Container
-
 from hexastack_fastapi.adapters.health import create_health_router
 from hexastack_fastapi.infra.config import HexastackFastApiConfig
 from hexastack_fastapi.infra.exception_handlers import (

@@ -4,7 +4,6 @@ from hexastack_core.utils.context import (
     get_correlation_id,
     get_user_context,
 )
-
 from hexastack_logging.infra.sanitizer import Sanitizer
 
 

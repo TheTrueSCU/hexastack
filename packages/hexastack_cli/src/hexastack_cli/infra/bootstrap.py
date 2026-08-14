@@ -1,13 +1,13 @@
 import typer
-from hexastack_core.infra.bootstrap import BootstrapContext
-from hexastack_core.infra.registries.config import ConfigRegistry
-from hexastack_core.ports.bootstrap import BootstrapperPort
-from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
 from hexastack_cli.infra.config import (
     HexastackCliConfig,
     register_cli_config,
 )
+from hexastack_core.infra.bootstrap import BootstrapContext
+from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
 
 class CliBootstrapper(BootstrapperPort):

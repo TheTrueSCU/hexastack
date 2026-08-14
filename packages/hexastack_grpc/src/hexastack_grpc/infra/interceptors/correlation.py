@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import Any
 
 import grpc
+
 from hexastack_core.utils.context import (
     correlation_scope,
     new_correlation_id,

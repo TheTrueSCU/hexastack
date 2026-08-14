@@ -1,6 +1,7 @@
 import importlib.util
 
 import pytest
+
 from hexastack_core.domain.exceptions import (
     HexastackError,
     MissingDependencyError,

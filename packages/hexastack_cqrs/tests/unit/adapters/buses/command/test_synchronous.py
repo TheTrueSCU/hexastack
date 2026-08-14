@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 import pytest
+
 from hexastack_core.domain import Command, Generic
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,

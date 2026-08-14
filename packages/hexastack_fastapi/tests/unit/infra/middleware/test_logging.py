@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
+from rodi import Container
+
 from hexastack_core.adapters.logging.in_memory import InMemoryLogger
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_fastapi.infra.config import (
@@ -10,7 +12,6 @@ from hexastack_fastapi.infra.config import (
 from hexastack_fastapi.infra.middleware.logging import (
     RequestLoggingHttpMiddleware,
 )
-from rodi import Container
 
 
 def test_request_logging_middleware_success():

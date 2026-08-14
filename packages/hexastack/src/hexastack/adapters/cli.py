@@ -3,6 +3,12 @@ import os
 from pathlib import Path
 
 import typer
+
+from hexastack.domain.diagnostics import (
+    GetSystemInfoQuery,
+    InspectRegistryQuery,
+    PingDemoCommand,
+)
 from hexastack_cli.infra.decorators import (
     cli_command,
     cli_group,
@@ -10,20 +16,18 @@ from hexastack_cli.infra.decorators import (
 )
 from hexastack_core.domain.exceptions import MissingDependencyError
 
-from hexastack.domain.diagnostics import (
-    GetSystemInfoQuery,
-    InspectRegistryQuery,
-    PingDemoCommand,
-)
-
 
 @cli_group("inspect", help="Introspect registered CQRS handlers, routes, and config")
 class InspectGroupDocs:
+    """CLI group documentation container for inspect commands."""
+
     pass
 
 
 @cli_group("demo", help="Interactive demonstration commands")
 class DemoGroupDocs:
+    """CLI group documentation container for demo commands."""
+
     pass
 
 
@@ -139,7 +143,7 @@ def add_db_commands(app: typer.Typer) -> None:
             typer.echo(f"Initialized migrations directory: {Path(directory).resolve()}")
         except FileExistsError as e:
             typer.echo(f"Error: {e}", err=True)
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
     @db_app.command(name="upgrade", help="Upgrade the database to a revision.")
     def db_upgrade(
@@ -259,11 +263,11 @@ def add_mcp_commands(app: typer.Typer) -> None:
         help="Launch the MCP server in stdio mode (for Claude, Cursor, Antigravity).",
     )
     def mcp_run() -> None:
-        from hexastack_core.infra.bootstrap import bootstrap
-        from hexastack_mcp.adapters.stdio import run_stdio_server
         from mcp.server.fastmcp import FastMCP as McpServer
 
         import hexastack.application.diagnostics
+        from hexastack_core.infra.bootstrap import bootstrap
+        from hexastack_mcp.adapters.stdio import run_stdio_server
 
         runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
         server = runtime.container.resolve(McpServer)
@@ -291,10 +295,10 @@ def add_grpc_commands(app: typer.Typer) -> None:
         port: int = typer.Option(50051, "--port", "-p", help="Bind port."),
     ) -> None:
         import grpc
-        from hexastack_core.infra.bootstrap import bootstrap
-        from hexastack_grpc.adapters.server import run_grpc_server
 
         import hexastack.application.diagnostics
+        from hexastack_core.infra.bootstrap import bootstrap
+        from hexastack_grpc.adapters.server import run_grpc_server
 
         runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
         server = runtime.container.resolve(grpc.Server)

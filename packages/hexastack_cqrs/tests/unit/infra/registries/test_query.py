@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_core.domain import Query
 from hexastack_cqrs.infra.registries import QueryRegistry, QueryRegistryError
 

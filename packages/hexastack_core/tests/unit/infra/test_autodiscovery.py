@@ -15,8 +15,8 @@ def test_scan_modules_invokes_visitors():
     def sample_func():
         pass
 
-    cast(Any, mod).SampleClass = SampleClass
-    cast(Any, mod).sample_func = sample_func
+    cast("Any", mod).SampleClass = SampleClass
+    cast("Any", mod).sample_func = sample_func
 
     discovered_members: list[Any] = []
 

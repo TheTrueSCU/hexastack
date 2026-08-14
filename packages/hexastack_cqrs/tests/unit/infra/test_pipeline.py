@@ -1,6 +1,7 @@
 from typing import Any
 
 import pytest
+
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra import ExceptionRegistry
 from hexastack_core.ports.presenter import PresenterPort

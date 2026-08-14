@@ -1,6 +1,7 @@
 from typing import Any
 
 import pytest
+
 from hexastack_core.infra.registries.exception import (
     ExceptionRegistry,
     ExceptionRegistryError,

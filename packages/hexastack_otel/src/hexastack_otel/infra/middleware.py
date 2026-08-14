@@ -4,7 +4,6 @@ from typing import Any, cast
 
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_core.utils.context import get_correlation_id, get_user_context
-
 from hexastack_otel.ports.tracing import TracingPort
 
 
@@ -90,7 +89,7 @@ class TracingMiddleware:
                         span.record_exception(exc)
                         raise
 
-                return cast(R, _async_wrap())
+                return cast("R", _async_wrap())
 
             return result
 

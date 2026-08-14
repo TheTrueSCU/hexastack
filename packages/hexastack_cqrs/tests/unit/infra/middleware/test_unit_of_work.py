@@ -1,6 +1,7 @@
 import asyncio
 
 import pytest
+
 from hexastack_core.adapters.unit_of_work import InMemoryUnitOfWork
 from hexastack_core.domain import Command
 from hexastack_cqrs.infra.middleware.unit_of_work import UnitOfWorkMiddleware

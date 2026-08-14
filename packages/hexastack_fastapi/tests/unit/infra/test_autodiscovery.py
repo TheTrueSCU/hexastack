@@ -3,6 +3,7 @@ from typing import Any, cast
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,
@@ -57,8 +58,8 @@ def test_route_autodiscovery_and_execution():
     app.state.pipeline = pipeline
 
     dummy_module = types.ModuleType("dummy_fastapi_endpoints")
-    cast(Any, dummy_module).AutoCreate = AutoCreate
-    cast(Any, dummy_module).AutoGet = AutoGet
+    cast("Any", dummy_module).AutoCreate = AutoCreate
+    cast("Any", dummy_module).AutoGet = AutoGet
 
     autodiscover_routes(app, packages_to_scan=[dummy_module])
 

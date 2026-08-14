@@ -54,6 +54,6 @@ class CorrelationMiddleware:
             async def _async_wrapped() -> Any:
                 return await result
 
-            return cast(R, _async_wrapped())
+            return cast("R", _async_wrapped())
 
         return result

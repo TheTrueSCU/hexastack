@@ -1,10 +1,10 @@
 from fastapi import FastAPI
+
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
-
 from hexastack_fastapi.infra.config import (
     HexastackFastApiConfig,
     register_fastapi_config,

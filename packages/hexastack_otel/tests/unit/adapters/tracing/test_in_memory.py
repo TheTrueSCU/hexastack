@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_otel.adapters.tracing.in_memory import InMemoryTracingAdapter
 
 

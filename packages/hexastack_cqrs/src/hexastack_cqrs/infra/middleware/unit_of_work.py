@@ -69,7 +69,7 @@ class UnitOfWorkMiddleware:
                     uow.__exit__(type(async_exc), async_exc, async_exc.__traceback__)
                     raise
 
-            return cast(R, _async_wrapped())
+            return cast("R", _async_wrapped())
 
         uow.__exit__(None, None, None)
         return result

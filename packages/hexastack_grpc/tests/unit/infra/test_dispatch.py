@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import pytest
+
 from hexastack_core.domain.command import Command
 from hexastack_core.domain.query import Query
 from hexastack_core.infra.bootstrap import bootstrap

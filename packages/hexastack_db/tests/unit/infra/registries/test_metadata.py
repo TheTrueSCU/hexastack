@@ -1,11 +1,12 @@
+from sqlalchemy import text
+from sqlalchemy.orm import Mapped, mapped_column
+
 from hexastack_db.infra.bootstrap import DatabaseBootstrapper
 from hexastack_db.infra.mixins import HexastackBase, UuidPrimaryKeyMixin
 from hexastack_db.infra.registries.metadata import (
     get_registered_metadata,
     register_metadata,
 )
-from sqlalchemy import text
-from sqlalchemy.orm import Mapped, mapped_column
 
 
 class ProductRecord(UuidPrimaryKeyMixin, HexastackBase):

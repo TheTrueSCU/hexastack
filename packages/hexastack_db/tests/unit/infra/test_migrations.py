@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_db.infra.config import HexastackDatabaseConfig
 from hexastack_db.infra.migrations import (

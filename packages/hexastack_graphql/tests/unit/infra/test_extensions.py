@@ -1,4 +1,5 @@
 import strawberry
+
 from hexastack_core.utils.context import (
     correlation_id_ctx,
     set_correlation_id,

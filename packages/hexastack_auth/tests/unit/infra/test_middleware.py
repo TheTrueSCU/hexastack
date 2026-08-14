@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 import pytest
+
 from hexastack_auth.domain.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,

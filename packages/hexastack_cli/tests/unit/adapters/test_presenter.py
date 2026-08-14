@@ -1,9 +1,10 @@
 import json
 from io import StringIO
 
+from rich.console import Console
+
 from hexastack_cli.adapters.presenter import RichTerminalPresenter
 from hexastack_core.domain import Generic
-from rich.console import Console
 
 
 class SampleOutput(Generic):

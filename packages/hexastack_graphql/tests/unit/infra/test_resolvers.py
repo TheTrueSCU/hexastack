@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
 import strawberry
+from strawberry.types import Info
+
 from hexastack_core.domain.command import Command
 from hexastack_core.domain.query import Query
 from hexastack_core.infra.bootstrap import bootstrap
@@ -16,7 +18,6 @@ from hexastack_graphql.infra.resolvers import (
     dispatch_command,
     dispatch_query,
 )
-from strawberry.types import Info
 
 
 @dataclass(frozen=True)

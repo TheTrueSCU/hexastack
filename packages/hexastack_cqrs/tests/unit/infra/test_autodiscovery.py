@@ -1,6 +1,8 @@
 import types
 from typing import Any
 
+from pydantic import BaseModel
+
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra import ConfigRegistry, ExceptionRegistry
 from hexastack_core.ports.presenter import PresenterPort
@@ -17,7 +19,6 @@ from hexastack_cqrs.infra.decorators import (
 )
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
-from pydantic import BaseModel
 
 
 class CreateOrder(Command):

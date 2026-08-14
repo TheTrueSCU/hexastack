@@ -3,6 +3,8 @@ from typing import Annotated
 import pytest
 from fastapi import Depends, FastAPI, Request
 from fastapi.testclient import TestClient
+from rodi import Container
+
 from hexastack_core.domain.exceptions import DependencyResolutionError
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,
@@ -22,7 +24,6 @@ from hexastack_fastapi.adapters.dependencies import (
     get_container,
     get_pipeline,
 )
-from rodi import Container
 
 
 def test_get_container_and_pipeline_success():

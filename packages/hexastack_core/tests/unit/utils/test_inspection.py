@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 
+from pydantic import BaseModel
+
 from hexastack_core.utils.inspection import (
     extract_dto_fields,
     inspect_model_parameters,
 )
-from pydantic import BaseModel
 
 
 @dataclass

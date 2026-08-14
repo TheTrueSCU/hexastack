@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_auth.adapters.password import Pbkdf2PasswordHasher
 from hexastack_auth.domain.exceptions import PasswordHashError
 

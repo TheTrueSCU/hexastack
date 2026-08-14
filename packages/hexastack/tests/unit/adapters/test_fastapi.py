@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+
 from hexastack.adapters.fastapi import create_demo_app
 
 

@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_events.ports.outbox import (
     OutboxRelayPort,
     OutboxStoragePort,

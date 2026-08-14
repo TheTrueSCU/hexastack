@@ -1,16 +1,15 @@
 import sys
 from typing import Any
 
-from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_fastapi.infra.decorators import (
-    api_command,
-    api_query,
-)
-
 from hexastack.domain.diagnostics import (
     GetSystemInfoQuery,
     InspectRegistryQuery,
     PingDemoCommand,
+)
+from hexastack_core.infra.bootstrap import bootstrap
+from hexastack_fastapi.infra.decorators import (
+    api_command,
+    api_query,
 )
 
 # Decorate domain models with REST endpoints

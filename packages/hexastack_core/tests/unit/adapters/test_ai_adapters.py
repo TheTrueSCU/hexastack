@@ -1,9 +1,10 @@
 import pytest
+from pydantic import BaseModel
+
 from hexastack_core.adapters.ai import (
     InMemoryLlmProvider,
     InMemoryVectorStore,
 )
-from pydantic import BaseModel
 
 
 class SummarizeOutput(BaseModel):

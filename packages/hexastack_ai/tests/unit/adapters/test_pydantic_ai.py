@@ -1,9 +1,10 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from pydantic_ai import Agent
+
 from hexastack_ai.adapters.pydantic_ai import PydanticAiAgentAdapter
 from hexastack_ai.domain.exceptions import AgentExecutionError
-from pydantic_ai import Agent
 
 
 @pytest.mark.anyio

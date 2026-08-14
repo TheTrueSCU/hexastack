@@ -6,14 +6,6 @@ import sys
 import tomllib
 from pathlib import Path
 
-from hexastack_core.infra.registries.config import ConfigRegistry
-from hexastack_core.utils.context import get_correlation_id
-from hexastack_cqrs.infra.decorators import (
-    command_handler,
-    query_handler,
-)
-from hexastack_cqrs.infra.registries.handler import HandlerRegistry
-
 from hexastack.domain.diagnostics import (
     GetSystemInfoQuery,
     InspectRegistryQuery,
@@ -22,6 +14,13 @@ from hexastack.domain.diagnostics import (
     RegistryInfoDTO,
     SystemInfoDTO,
 )
+from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_core.utils.context import get_correlation_id
+from hexastack_cqrs.infra.decorators import (
+    command_handler,
+    query_handler,
+)
+from hexastack_cqrs.infra.registries.handler import HandlerRegistry
 
 _DEFAULT_KNOWN_PACKAGES = [
     "hexastack",
@@ -97,7 +96,7 @@ def _parse_pyproject_metadata() -> tuple[list[str], dict[str, list[str]]]:
     pyproject_path = _find_pyproject_toml()
     if pyproject_path is not None:
         try:
-            with open(pyproject_path, "rb") as f:
+            with Path(pyproject_path).open("rb") as f:
                 data = tomllib.load(f)
 
             tool_uv = data.get("tool", {}).get("uv", {})

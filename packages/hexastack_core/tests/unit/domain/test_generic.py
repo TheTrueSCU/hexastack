@@ -1,6 +1,7 @@
 import pytest
-from hexastack_core.domain.generic import Generic
 from pydantic import ValidationError
+
+from hexastack_core.domain.generic import Generic
 
 
 class SampleGeneric(Generic):

@@ -3,12 +3,13 @@ import os
 import sys
 from typing import Any
 
-from hexastack_core.domain import Generic
-from hexastack_core.ports.presenter import PresenterPort
 from pydantic import BaseModel
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+from hexastack_core.domain import Generic
+from hexastack_core.ports.presenter import PresenterPort
 
 
 class RichTerminalPresenter(PresenterPort):
@@ -54,11 +55,7 @@ class RichTerminalPresenter(PresenterPort):
         Raises:
             None.
         """
-        data: Any
-        if isinstance(instance, BaseModel):
-            data = instance.model_dump()
-        else:
-            data = instance
+        data = instance.model_dump() if isinstance(instance, BaseModel) else instance
 
         mode = (format_mode or "table").lower()
 

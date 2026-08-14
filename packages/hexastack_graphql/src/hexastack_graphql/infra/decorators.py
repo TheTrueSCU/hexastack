@@ -40,8 +40,8 @@ def graphql_query_type[T: type[Any]](cls: T) -> T:
     if not hasattr(cls, "__strawberry_definition__"):
         wrapped = strawberry.type(cls)
     setattr(wrapped, _GRAPHQL_TYPE_ATTR, GraphQLTypeMetadata(kind="query"))
-    _default_registry.register_query_type(cast(type[Any], wrapped))
-    return cast(T, wrapped)
+    _default_registry.register_query_type(cast("type[Any]", wrapped))
+    return cast("T", wrapped)
 
 
 def graphql_mutation_type[T: type[Any]](cls: T) -> T:
@@ -61,8 +61,8 @@ def graphql_mutation_type[T: type[Any]](cls: T) -> T:
     if not hasattr(cls, "__strawberry_definition__"):
         wrapped = strawberry.type(cls)
     setattr(wrapped, _GRAPHQL_TYPE_ATTR, GraphQLTypeMetadata(kind="mutation"))
-    _default_registry.register_mutation_type(cast(type[Any], wrapped))
-    return cast(T, wrapped)
+    _default_registry.register_mutation_type(cast("type[Any]", wrapped))
+    return cast("T", wrapped)
 
 
 def graphql_query(

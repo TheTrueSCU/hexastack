@@ -1,4 +1,9 @@
 import pytest
+from sqlalchemy import MetaData, create_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
 from hexastack_db.adapters.vector import (
     AsyncPgVectorStoreAdapter,
     PgVectorStoreAdapter,
@@ -6,10 +11,6 @@ from hexastack_db.adapters.vector import (
     create_vector_table,
 )
 from hexastack_db.infra.config import PgVectorConfig
-from sqlalchemy import MetaData, create_engine
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 
 def test_cosine_similarity_math():

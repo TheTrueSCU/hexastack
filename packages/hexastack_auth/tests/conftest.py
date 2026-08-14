@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_auth.adapters.in_memory import (
     InMemoryPasswordHasher,
     InMemorySecurityService,

@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_otel.ports.tracing import SpanPort, TracingPort
 
 

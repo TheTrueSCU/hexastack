@@ -1,11 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
 
-from hexastack_core.infra.bootstrap import BootstrapContext
-from hexastack_core.infra.registries.config import ConfigRegistry
-from hexastack_core.ports.ai import VectorStorePort
-from hexastack_core.ports.bootstrap import BootstrapperPort
-from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -14,6 +9,11 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import Session, sessionmaker
 
+from hexastack_core.infra.bootstrap import BootstrapContext
+from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_core.ports.ai import VectorStorePort
+from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from hexastack_db.adapters.unit_of_work import (
     AsyncSqlAlchemyUnitOfWork,
     SqlAlchemyUnitOfWork,
@@ -152,8 +152,7 @@ class DatabaseBootstrapper(BootstrapperPort):
                     for metadata in registered:
                         metadata.create_all(_sync)
                     _sync.dispose()
-                else:
-                    assert isinstance(engine, Engine)
+                elif isinstance(engine, Engine):
                     for metadata in registered:
                         metadata.create_all(engine)
 

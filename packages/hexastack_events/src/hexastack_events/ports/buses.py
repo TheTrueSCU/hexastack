@@ -4,7 +4,6 @@ from typing import Any
 
 from hexastack_core.domain import Event
 from hexastack_cqrs.ports.buses import EventBusPort
-
 from hexastack_events.domain.models import CloudEventEnvelope
 
 

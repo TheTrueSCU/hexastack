@@ -1,13 +1,16 @@
 import asyncio
 import inspect
 import json
-import os
 import re
 import sys
 from collections.abc import Callable, Sequence
+from pathlib import Path
 from typing import Any, cast
 
 import typer
+from rich.console import Console
+
+from hexastack_cli.adapters.presenter import RichTerminalPresenter
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_core.utils.context import (
     UserContext,
@@ -15,9 +18,6 @@ from hexastack_core.utils.context import (
     set_user_context,
 )
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
-from rich.console import Console
-
-from hexastack_cli.adapters.presenter import RichTerminalPresenter
 
 
 def _to_kebab_case(name: str) -> str:
@@ -71,8 +71,8 @@ def _build_dynamic_cli_runner(
             if input_payload:
                 if input_payload == "-":
                     raw_json = sys.stdin.read()
-                elif os.path.isfile(input_payload):
-                    with open(input_payload, encoding="utf-8") as f:
+                elif Path(input_payload).is_file():
+                    with Path(input_payload).open(encoding="utf-8") as f:
                         raw_json = f.read()
                 else:
                     raw_json = input_payload
@@ -252,7 +252,7 @@ def _build_dynamic_cli_runner(
 
     all_params = pos_params + opt_params + control_params
     sig = inspect.Signature(parameters=all_params)
-    cast(Any, runner).__signature__ = sig
+    cast("Any", runner).__signature__ = sig
     return runner
 
 

@@ -1,4 +1,5 @@
 import strawberry
+
 from hexastack_graphql.infra.decorators import (
     get_schema_registry,
     graphql_mutation_type,

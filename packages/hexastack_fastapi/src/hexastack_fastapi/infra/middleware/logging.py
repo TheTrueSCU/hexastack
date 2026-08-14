@@ -1,10 +1,10 @@
 import time
 
-from hexastack_core.adapters.logging.standard import StandardLogger
-from hexastack_core.ports.logging import LoggingPort
 from rodi import Container
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from hexastack_core.adapters.logging.standard import StandardLogger
+from hexastack_core.ports.logging import LoggingPort
 from hexastack_fastapi.infra.config import HexastackFastApiConfig
 
 

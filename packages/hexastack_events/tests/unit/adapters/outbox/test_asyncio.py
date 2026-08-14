@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import anyio
 import pytest
+
 from hexastack_cqrs.ports.buses import EventBusPort
 from hexastack_events.adapters.buses.in_memory import (
     InMemoryDistributedEventBus,

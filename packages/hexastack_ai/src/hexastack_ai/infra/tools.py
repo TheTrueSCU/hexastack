@@ -2,11 +2,12 @@ import inspect
 from collections.abc import Sequence
 from typing import Any
 
-from hexastack_core.domain import Command, Generic, Query
-from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_core import PydanticUndefined
+
+from hexastack_core.domain import Command, Generic, Query
+from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
 
 def create_tool_for_message(

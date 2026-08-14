@@ -5,12 +5,6 @@ from types import ModuleType
 from typing import Any
 
 import typer
-from hexastack_core.domain import Command, Query
-from hexastack_core.infra.autodiscovery import (
-    DiscoveryVisitor,
-    scan_modules,
-)
-from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from rich.console import Console
 
 from hexastack_cli.adapters.routing import (
@@ -24,6 +18,12 @@ from hexastack_cli.infra.decorators import (
     CliMetadata,
     GroupMetadata,
 )
+from hexastack_core.domain import Command, Query
+from hexastack_core.infra.autodiscovery import (
+    DiscoveryVisitor,
+    scan_modules,
+)
+from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
 
 def _normalize_group_path(group: str | Sequence[str] | None) -> list[str]:

@@ -1,11 +1,12 @@
 import inspect
 from typing import Any
 
+from rodi import Container
+
 from hexastack_core.domain.command import Command
 from hexastack_core.domain.query import Query
 from hexastack_core.utils.inspection import extract_dto_fields
 from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
-from rodi import Container
 
 
 def dispatch_rpc_command[C: Command, R](

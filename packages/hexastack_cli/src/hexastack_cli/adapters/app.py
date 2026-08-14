@@ -1,12 +1,12 @@
 import typer
-from hexastack_core.domain import Generic
-from hexastack_cqrs.infra.pipeline import ExecutionPipeline
-from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 from rich.console import Console
 from rodi import Container
 
 from hexastack_cli.adapters.presenter import RichTerminalPresenter
 from hexastack_cli.infra.config import HexastackCliConfig
+from hexastack_core.domain import Generic
+from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 
 
 def create_cli_app(

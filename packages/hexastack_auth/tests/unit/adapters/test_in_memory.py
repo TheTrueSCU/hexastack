@@ -2,6 +2,7 @@ import time
 from datetime import timedelta
 
 import pytest
+
 from hexastack_auth.adapters.in_memory import (
     InMemoryPasswordHasher,
     InMemorySecurityService,

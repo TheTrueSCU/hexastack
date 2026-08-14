@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 
+from hexastack_ai.infra.config import HexastackAiConfig, register_ai_config
 from hexastack_core.adapters.ai import InMemoryLlmProvider
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.ai import LlmProviderPort
 from hexastack_core.ports.bootstrap import BootstrapperPort
-
-from hexastack_ai.infra.config import HexastackAiConfig, register_ai_config
 
 
 @dataclass(frozen=True)

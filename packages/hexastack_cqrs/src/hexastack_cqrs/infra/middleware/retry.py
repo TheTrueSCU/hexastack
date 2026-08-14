@@ -1,7 +1,5 @@
 from collections.abc import Callable
 
-from hexastack_core.domain import Generic, HexastackError
-from hexastack_core.ports.logging import LoggingPort
 from tenacity import (
     RetryCallState,
     retry,
@@ -10,6 +8,8 @@ from tenacity import (
     stop_after_attempt,
 )
 
+from hexastack_core.domain import Generic, HexastackError
+from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.config import RetryMiddlewareConfig
 
 

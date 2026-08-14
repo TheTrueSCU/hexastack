@@ -1,10 +1,11 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pydantic import BaseModel
+
 from hexastack_ai.adapters.litellm import LiteLlmAdapter
 from hexastack_ai.domain.exceptions import LlmProviderError
 from hexastack_ai.infra.config import HexastackAiConfig
-from pydantic import BaseModel
 
 
 class SummarySchema(BaseModel):

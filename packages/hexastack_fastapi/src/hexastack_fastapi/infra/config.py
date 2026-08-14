@@ -1,6 +1,7 @@
+from pydantic import BaseModel, Field
+
 from hexastack_core.infra.decorators import config_section
 from hexastack_core.infra.registries.config import ConfigRegistry
-from pydantic import BaseModel, Field
 
 
 class CorsConfig(BaseModel):

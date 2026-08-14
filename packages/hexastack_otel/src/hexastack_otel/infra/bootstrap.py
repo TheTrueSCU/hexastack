@@ -1,8 +1,8 @@
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SpanExporter
+
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SpanExporter
-
 from hexastack_otel.adapters.tracing.in_memory import InMemoryTracingAdapter
 from hexastack_otel.adapters.tracing.otel import OtelTracingAdapter
 from hexastack_otel.infra.config import HexastackOtelConfig, register_otel_config

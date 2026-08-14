@@ -1,9 +1,10 @@
-from hexastack_db.adapters.repository import SqlAlchemyRepository
 from hypothesis import given
 from hypothesis import strategies as st
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
+
+from hexastack_db.adapters.repository import SqlAlchemyRepository
 
 
 class Base(DeclarativeBase):

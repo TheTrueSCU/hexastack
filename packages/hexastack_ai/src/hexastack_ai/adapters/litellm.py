@@ -1,6 +1,5 @@
 from typing import Any
 
-from hexastack_core.ports.ai import LlmProviderPort
 from pydantic import BaseModel
 
 from hexastack_ai.domain.exceptions import (
@@ -8,6 +7,7 @@ from hexastack_ai.domain.exceptions import (
     StructuredOutputParsingError,
 )
 from hexastack_ai.infra.config import HexastackAiConfig
+from hexastack_core.ports.ai import LlmProviderPort
 
 
 class LiteLlmAdapter(LlmProviderPort):
@@ -155,8 +155,7 @@ class LiteLlmAdapter(LlmProviderPort):
             kwargs["api_base"] = self._config.litellm.api_base
 
         try:
-            result = client.chat.completions.create(**kwargs)
-            return result
+            return client.chat.completions.create(**kwargs)
         except instructor.exceptions.InstructorRetryException as exc:
             raise StructuredOutputParsingError(
                 f"Failed to generate structured {response_schema.__name__}: {exc}"
@@ -191,8 +190,7 @@ class LiteLlmAdapter(LlmProviderPort):
 
         try:
             raw_result: Any = client.chat.completions.create(**kwargs)
-            result = await raw_result
-            return result
+            return await raw_result
         except instructor.exceptions.InstructorRetryException as exc:
             raise StructuredOutputParsingError(
                 f"Failed to generate structured {response_schema.__name__}: {exc}"

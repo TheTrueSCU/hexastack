@@ -1,3 +1,7 @@
+from sqlalchemy import Engine, text
+from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.pool import NullPool, StaticPool
+
 from hexastack_db.infra.config import (
     HexastackDatabaseConfig,
     SqliteDialectConfig,
@@ -8,9 +12,6 @@ from hexastack_db.infra.engine import (
     create_db_engine,
     create_session_factory,
 )
-from sqlalchemy import Engine, text
-from sqlalchemy.ext.asyncio import AsyncEngine
-from sqlalchemy.pool import NullPool, StaticPool
 
 
 def test_create_sync_engine_and_factory_memory():

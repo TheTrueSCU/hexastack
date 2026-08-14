@@ -1,11 +1,11 @@
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class OutboxStatus(str, Enum):
+class OutboxStatus(StrEnum):
     """Lifecycle status of an outbox event record."""
 
     PENDING = "PENDING"

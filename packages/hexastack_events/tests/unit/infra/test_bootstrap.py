@@ -1,3 +1,5 @@
+from rodi import Container
+
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_events.adapters.buses.in_memory import (
@@ -14,7 +16,6 @@ from hexastack_events.ports.outbox import (
     OutboxRelayPort,
     OutboxStoragePort,
 )
-from rodi import Container
 
 
 def test_events_bootstrapper_attributes():

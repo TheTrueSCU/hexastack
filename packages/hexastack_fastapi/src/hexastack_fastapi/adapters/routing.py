@@ -4,9 +4,9 @@ from enum import Enum
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends
+
 from hexastack_core.domain import Command, Query
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
-
 from hexastack_fastapi.adapters.dependencies import get_pipeline
 
 
@@ -35,7 +35,7 @@ def _create_command_endpoint(
             default=Depends(get_pipeline),
         ),
     ]
-    cast(Any, endpoint).__signature__ = sig.replace(parameters=params)
+    cast("Any", endpoint).__signature__ = sig.replace(parameters=params)
     return endpoint
 
 
@@ -66,7 +66,7 @@ def _create_query_endpoint(
                 default=Depends(get_pipeline),
             ),
         ]
-        cast(Any, get_endpoint).__signature__ = sig.replace(parameters=params)
+        cast("Any", get_endpoint).__signature__ = sig.replace(parameters=params)
         return get_endpoint
 
     async def post_endpoint(
@@ -89,7 +89,7 @@ def _create_query_endpoint(
             default=Depends(get_pipeline),
         ),
     ]
-    cast(Any, post_endpoint).__signature__ = sig.replace(parameters=params)
+    cast("Any", post_endpoint).__signature__ = sig.replace(parameters=params)
     return post_endpoint
 
 

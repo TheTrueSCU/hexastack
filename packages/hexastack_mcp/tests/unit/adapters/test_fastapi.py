@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from mcp.server.fastmcp import FastMCP as McpServer
+from mcp.server.transport_security import TransportSecuritySettings
+
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_mcp.adapters.fastapi import mount_mcp_sse
 from hexastack_mcp.infra.decorators import (
     mcp_tool,
 )
-from mcp.server.fastmcp import FastMCP as McpServer
-from mcp.server.transport_security import TransportSecuritySettings
 
 
 def test_fastapi_mcp_sse_mount():

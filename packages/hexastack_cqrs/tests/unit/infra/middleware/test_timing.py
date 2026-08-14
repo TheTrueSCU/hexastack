@@ -2,6 +2,7 @@ import asyncio
 import time
 
 import pytest
+
 from hexastack_core.adapters.logging import InMemoryLogger
 from hexastack_core.domain import Command
 from hexastack_cqrs.infra.config import TimingMiddlewareConfig

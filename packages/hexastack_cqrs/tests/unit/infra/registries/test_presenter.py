@@ -1,6 +1,7 @@
 from typing import Any
 
 import pytest
+
 from hexastack_core.domain import Generic
 from hexastack_core.ports.presenter import PresenterPort
 from hexastack_cqrs.infra.registries.presenter import (

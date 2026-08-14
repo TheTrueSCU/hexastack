@@ -4,12 +4,12 @@ from types import ModuleType
 from typing import Any
 
 from fastapi import FastAPI
+
 from hexastack_core.domain import Command, Query
 from hexastack_core.infra.autodiscovery import (
     DiscoveryVisitor,
     scan_modules,
 )
-
 from hexastack_fastapi.adapters.routing import CqrsRouter
 from hexastack_fastapi.infra.decorators import (
     _ROUTE_METADATA_ATTR,

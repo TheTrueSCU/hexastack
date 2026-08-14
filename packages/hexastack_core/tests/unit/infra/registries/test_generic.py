@@ -1,4 +1,5 @@
 import pytest
+
 from hexastack_core.domain import Command
 from hexastack_core.infra import (
     GenericHandlerRegistry,

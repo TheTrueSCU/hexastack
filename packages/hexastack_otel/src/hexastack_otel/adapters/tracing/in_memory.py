@@ -96,13 +96,12 @@ class InMemoryTracingAdapter(TracingPort):
             span_id=uuid.uuid4().hex[:16],
         )
 
-        span = InMemorySpan(
+        return InMemorySpan(
             name=name,
             attributes=attributes,
             context=span_ctx,
             parent_context=parent,
         )
-        return span
 
     @contextmanager
     def trace_scope(

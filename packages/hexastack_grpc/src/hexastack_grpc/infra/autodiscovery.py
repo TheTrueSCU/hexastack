@@ -6,7 +6,6 @@ from hexastack_core.infra.autodiscovery import (
     DiscoveryVisitor,
     scan_modules,
 )
-
 from hexastack_grpc.infra.decorators import _GRPC_SERVICE_ATTR
 from hexastack_grpc.infra.registries.service import (
     GrpcServiceRegistration,

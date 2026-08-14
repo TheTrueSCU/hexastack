@@ -1,7 +1,6 @@
 from typing import TypeVar
 
 from hexastack_core.domain import Event
-
 from hexastack_cqrs.adapters.buses.event.synchronous import SynchronousEventBus
 from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
 

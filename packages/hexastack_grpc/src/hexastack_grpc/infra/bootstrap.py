@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
 import grpc
+
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
-
 from hexastack_grpc.infra.autodiscovery import create_grpc_visitor
 from hexastack_grpc.infra.config import (
     HexastackGrpcConfig,

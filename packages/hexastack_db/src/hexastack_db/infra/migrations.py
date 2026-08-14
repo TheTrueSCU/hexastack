@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from hexastack_core.domain.exceptions import MissingDependencyError
-
 from hexastack_db.infra.config import HexastackDatabaseConfig
 
 if TYPE_CHECKING:

@@ -1,8 +1,8 @@
+import contextlib
+from collections.abc import Callable
 from types import TracebackType
 from typing import Self
 
-from hexastack_core.domain.exceptions import UnitOfWorkError
-from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -10,6 +10,11 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import Session, sessionmaker
 
+from hexastack_core.domain.exceptions import UnitOfWorkError
+from hexastack_core.ports.unit_of_work import (
+    AsyncUnitOfWorkPort,
+    UnitOfWorkPort,
+)
 from hexastack_db.domain.exceptions import DatabaseError
 
 
@@ -68,10 +73,8 @@ class SqlAlchemyUnitOfWork(UnitOfWorkPort):
     def rollback(self) -> None:
         """Roll back all pending database changes in active session."""
         if self._session is not None:
-            try:
+            with contextlib.suppress(SQLAlchemyError):
                 self._session.rollback()
-            except SQLAlchemyError:
-                pass
 
     def __enter__(self) -> Self:
         """Enter transactional scope and acquire fresh database Session."""
@@ -93,26 +96,23 @@ class SqlAlchemyUnitOfWork(UnitOfWorkPort):
                 self._session = None
 
 
-class AsyncSqlAlchemyUnitOfWork:
-    """Asynchronous SQLAlchemy Unit of Work implementation for non-blocking workflows.
+class AsyncSqlAlchemyUnitOfWork(AsyncUnitOfWorkPort):
+    """Asynchronous SQLAlchemy Unit of Work implementation.
 
     Notes/Architectural Intent:
-        Manages async transaction lifecycle over AsyncSession and async_sessionmaker.
+        Wraps an asynchronous session and guarantees rollback on error
+        and session closure when exiting async context blocks.
     """
 
     def __init__(
         self,
-        session_factory: async_sessionmaker[AsyncSession],
+        session_factory: (
+            async_sessionmaker[AsyncSession] | Callable[[], AsyncSession]
+        ),
         reraise: bool = False,
     ) -> None:
-        """Initialize async Unit of Work with async_sessionmaker factory.
-
-        Args:
-            session_factory: Configured async_sessionmaker.
-            reraise: If True, wraps exceptions in UnitOfWorkError.
-        """
+        super().__init__(reraise=reraise)
         self._session_factory = session_factory
-        self._reraise = reraise
         self._session: AsyncSession | None = None
 
     @property
@@ -147,10 +147,16 @@ class AsyncSqlAlchemyUnitOfWork:
     async def rollback(self) -> None:
         """Roll back all pending database changes asynchronously."""
         if self._session is not None:
-            try:
+            with contextlib.suppress(SQLAlchemyError):
                 await self._session.rollback()
-            except SQLAlchemyError:
-                pass
+
+    async def commit_async(self) -> None:
+        """Asynchronously commit all pending transactional changes."""
+        await self.commit()
+
+    async def rollback_async(self) -> None:
+        """Asynchronously roll back all pending transactional changes."""
+        await self.rollback()
 
     async def __aenter__(self) -> Self:
         """Enter asynchronous transactional scope and acquire fresh AsyncSession."""
@@ -165,12 +171,7 @@ class AsyncSqlAlchemyUnitOfWork:
     ) -> None:
         """Exit asynchronous transactional scope, commit or rollback, and close session."""
         try:
-            if exc_type is None:
-                await self.commit()
-            else:
-                await self.rollback()
-                if self._reraise:
-                    raise UnitOfWorkError() from exc
+            await super().__aexit__(exc_type, exc, trace)
         finally:
             if self._session is not None:
                 await self._session.close()

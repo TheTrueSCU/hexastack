@@ -1,7 +1,6 @@
 import json
 import math
 
-from hexastack_core.ports.ai import Metadata, VectorStorePort
 from sqlalchemy import (
     Column,
     MetaData,
@@ -16,6 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
+from hexastack_core.ports.ai import Metadata, VectorStorePort
 from hexastack_db.infra.config import PgVectorConfig
 
 

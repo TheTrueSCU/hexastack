@@ -2,6 +2,11 @@ import time
 from datetime import datetime
 
 import pytest
+from sqlalchemy import DateTime, String, create_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
+from sqlalchemy.pool import StaticPool
+
 from hexastack_db.adapters.repository import (
     AsyncSqlAlchemyRepository,
     SqlAlchemyRepository,
@@ -11,10 +16,6 @@ from hexastack_db.infra.mixins import (
     TimestampMixin,
     UuidPrimaryKeyMixin,
 )
-from sqlalchemy import DateTime, String, create_engine
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
-from sqlalchemy.pool import StaticPool
 
 
 class ArticleRecord(UuidPrimaryKeyMixin, TimestampMixin, HexastackBase):

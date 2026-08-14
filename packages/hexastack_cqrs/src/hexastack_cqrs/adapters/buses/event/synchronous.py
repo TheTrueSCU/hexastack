@@ -2,7 +2,6 @@ from collections.abc import Callable
 from typing import Any
 
 from hexastack_core.domain import Event, Generic
-
 from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
 from hexastack_cqrs.ports.buses import EventBusPort
 

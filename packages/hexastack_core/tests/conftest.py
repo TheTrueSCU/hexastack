@@ -2,6 +2,7 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
+
 from hexastack_core.adapters.ai import InMemoryLlmProvider, InMemoryVectorStore
 from hexastack_core.adapters.cache import AsyncInMemoryCache, InMemoryCache
 from hexastack_core.adapters.clock import FrozenClock, InMemoryClock
