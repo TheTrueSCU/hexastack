@@ -112,6 +112,11 @@ class AuthorizationMiddleware:
         """
         self._enabled = enabled
 
+    @property
+    def enabled(self) -> bool:
+        """Whether authorization checks are actively enforced."""
+        return self._enabled
+
     def __call__[G: Generic, R](
         self,
         instance: G,

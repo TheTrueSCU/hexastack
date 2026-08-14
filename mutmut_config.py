@@ -30,11 +30,7 @@ def pre_mutation(context: Any) -> None:
         return
 
     # 3. Skip type annotations, TYPE_CHECKING blocks, and import statements
-    if (
-        line.startswith("if TYPE_CHECKING:")
-        or line.startswith("from ")
-        or line.startswith("import ")
-    ):
+    if line.startswith(("if TYPE_CHECKING:", "from ", "import ")):
         context.skip = True
         return
 
@@ -57,7 +53,7 @@ def pre_mutation(context: Any) -> None:
         return
 
     # 6. Skip docstring blocks and pure comments
-    if line.startswith('"""') or line.startswith("'''") or line.startswith("#"):
+    if line.startswith(('"""', "'''", "#")):
         context.skip = True
         return
 

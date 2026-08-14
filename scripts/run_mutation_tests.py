@@ -1,10 +1,15 @@
-#!/usr/bin/env python3
 """Mutation testing runner script for Hexastack packages using mutmut v2.
 
 Usage:
+    # Run a single package
     uv run python scripts/run_mutation_tests.py --package auth
     uv run python scripts/run_mutation_tests.py --package cqrs
     uv run python scripts/run_mutation_tests.py --package core
+
+    # Run all packages sequentially
+    uv run python scripts/run_mutation_tests.py --all
+
+    # Inspect a specific surviving mutant diff
     uv run python scripts/run_mutation_tests.py --show 1
 """
 
@@ -16,26 +21,26 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
 VALID_PACKAGES = [
-    "ai",
-    "auth",
-    "cli",
     "core",
     "cqrs",
-    "db",
     "events",
+    "auth",
+    "otel",
+    "db",
+    "logging",
     "fastapi",
     "graphql",
     "grpc",
-    "logging",
     "mcp",
-    "otel",
+    "cli",
+    "ai",
 ]
 
 
 def run_command(cmd: list[str]) -> int:
     """Execute a shell command from project root directory."""
     print(f"Executing: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=ROOT_DIR)
+    result = subprocess.run(cmd, cwd=ROOT_DIR, check=False)
     return result.returncode
 
 
@@ -48,17 +53,19 @@ def run_mutation_test(package: str, path: str | None = None) -> int:
         )
         return 1
 
-    pkg_dir = ROOT_DIR / f"packages/hexastack_{pkg_clean}"
-    if not pkg_dir.exists():
-        pkg_dir = ROOT_DIR / "packages/hexastack"
+    pkg_dir = f"packages/hexastack_{pkg_clean}"
+    if not (ROOT_DIR / pkg_dir).exists():
+        pkg_dir = "packages/hexastack"
 
-    src_path = path or str(pkg_dir / f"src/hexastack_{pkg_clean}")
-    tests_path = str(pkg_dir / "tests/unit")
+    src_path = path or f"{pkg_dir}/src/hexastack_{pkg_clean}"
+    tests_path = f"{pkg_dir}/tests/unit"
+    pytest_bin = str(ROOT_DIR / ".venv/bin/pytest")
 
     print("\n========================================================")
     print(f" Starting Mutation Testing: hexastack-{pkg_clean}")
     print(f" Source:    {src_path}")
     print(f" Tests Dir: {tests_path}")
+    print(f" Pytest:    {pytest_bin}")
     print("========================================================\n")
 
     cmd = [
@@ -68,7 +75,7 @@ def run_mutation_test(package: str, path: str | None = None) -> int:
         "run",
         f"--paths-to-mutate={src_path}",
         f"--tests-dir={tests_path}",
-        f"--runner=pytest {tests_path} -x -q --no-cov",
+        f'--runner={pytest_bin} {tests_path} -n 0 -x -q --no-cov -o addopts=""',
     ]
 
     code = run_command(cmd)
@@ -76,6 +83,32 @@ def run_mutation_test(package: str, path: str | None = None) -> int:
     print("\n--- Mutmut Results ---")
     run_command(["uv", "run", "mutmut", "results"])
     return code
+
+
+def run_all_mutation_tests() -> int:
+    """Run mutmut sequentially across all Hexastack packages."""
+    print("\n========================================================")
+    print(f" Running Mutation Testing Across All {len(VALID_PACKAGES)} Packages")
+    print("========================================================\n")
+
+    results: dict[str, int] = {}
+    for pkg in VALID_PACKAGES:
+        print(f"\n>>> Running mutmut for hexastack-{pkg}...")
+        code = run_mutation_test(pkg)
+        results[pkg] = code
+
+    print("\n========================================================")
+    print(" Mutation Testing Batch Summary")
+    print("========================================================")
+    for pkg, code in results.items():
+        status = (
+            "PASSED (0 surviving mutants)"
+            if code == 0
+            else f"SURVIVORS (exit code {code})"
+        )
+        print(f"  hexastack-{pkg:<10}: {status}")
+
+    return 0 if all(c == 0 for c in results.values()) else 1
 
 
 def show_mutant(mutant_id: str) -> int:
@@ -91,8 +124,13 @@ def main() -> None:
     parser.add_argument(
         "-p",
         "--package",
-        default="auth",
-        help="Target package to mutate (default: auth).",
+        default=None,
+        help="Target package to mutate (e.g. core, cqrs, auth).",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run mutation testing sequentially across all packages.",
     )
     parser.add_argument(
         "--path",
@@ -110,7 +148,11 @@ def main() -> None:
     if args.show:
         sys.exit(show_mutant(args.show))
 
-    sys.exit(run_mutation_test(args.package, args.path))
+    if args.all or args.package == "all":
+        sys.exit(run_all_mutation_tests())
+
+    pkg = args.package or "core"
+    sys.exit(run_mutation_test(pkg, args.path))
 
 
 if __name__ == "__main__":
