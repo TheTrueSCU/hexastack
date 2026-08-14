@@ -120,9 +120,7 @@ def main() -> int:
 
     current_content = read_current_importlinter(IMPORTLINTER_FILE)
     if not current_content:
-        print(
-            f"Error: Could not read {IMPORTLINTER_FILE.name}", file=sys.stderr
-        )
+        print(f"Error: Could not read {IMPORTLINTER_FILE.name}", file=sys.stderr)
         return 1
 
     is_valid, missing = validate_root_packages(discovered, current_content)

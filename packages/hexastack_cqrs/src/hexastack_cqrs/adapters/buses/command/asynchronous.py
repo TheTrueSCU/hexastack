@@ -75,7 +75,7 @@ class HueyCommandBus(CommandBusPort):
         return self._task_fn(command)
 
 
-class NativeAsyncCommandBus(CommandBusPort):
+class AsyncNativeCommandBus(CommandBusPort):
     """Asynchronous in-process CommandBus using thread pool execution.
 
     Notes/Architectural Intent:
@@ -127,5 +127,5 @@ class NativeAsyncCommandBus(CommandBusPort):
 
 __all__ = [
     "HueyCommandBus",
-    "NativeAsyncCommandBus",
+    "AsyncNativeCommandBus",
 ]

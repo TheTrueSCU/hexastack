@@ -1,6 +1,6 @@
 from hexastack_cqrs.adapters.buses.event.asynchronous import (
+    AsyncNativeEventBus,
     HueyEventBus,
-    NativeAsyncEventBus,
 )
 from hexastack_cqrs.adapters.buses.event.recording import (
     RecordingEventBus,
@@ -11,7 +11,7 @@ from hexastack_cqrs.adapters.buses.event.synchronous import (
 
 __all__ = [
     "HueyEventBus",
-    "NativeAsyncEventBus",
+    "AsyncNativeEventBus",
     "RecordingEventBus",
     "SynchronousEventBus",
 ]

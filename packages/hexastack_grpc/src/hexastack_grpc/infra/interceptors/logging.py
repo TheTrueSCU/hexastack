@@ -5,10 +5,12 @@ from typing import Any
 
 import grpc
 
+from hexastack_grpc.infra.interceptors.generic import GenericServerInterceptor
+
 logger = logging.getLogger("hexastack.grpc")
 
 
-class LoggingServerInterceptor(grpc.ServerInterceptor):
+class LoggingServerInterceptor(GenericServerInterceptor):
     """Synchronous gRPC Server Interceptor for structured RPC logging.
 
     Notes/Architectural Intent:
@@ -16,71 +18,43 @@ class LoggingServerInterceptor(grpc.ServerInterceptor):
         and logging structured error details.
     """
 
-    def intercept_service(
+    def _handle_unary(
         self,
-        continuation: Callable[[grpc.HandlerCallDetails], grpc.RpcMethodHandler],
+        request: Any,
+        context: grpc.ServicerContext,
+        unary_fn: Callable[[Any, grpc.ServicerContext], Any],
         handler_call_details: grpc.HandlerCallDetails,
-    ) -> grpc.RpcMethodHandler:
-        handler: Any = continuation(handler_call_details)
-        if handler is None:
-            return handler
-
+    ) -> Any:
+        """Log the RPC call start, completion, and any errors."""
         method = handler_call_details.method
-        unary_fn = getattr(handler, "unary_unary", None)
-
-        if unary_fn is not None:
-
-            def unary_wrapper(request: Any, context: grpc.ServicerContext) -> Any:
-                logger.info("Handling gRPC call: %s", method)
-                try:
-                    res = unary_fn(request, context)
-                    logger.info("Completed gRPC call: %s", method)
-                    return res
-                except Exception as e:
-                    logger.error("Failed gRPC call %s: %s", method, e)
-                    raise
-
-            return grpc.unary_unary_rpc_method_handler(
-                unary_wrapper,
-                request_deserializer=getattr(handler, "request_deserializer", None),
-                response_serializer=getattr(handler, "response_serializer", None),
-            )
-
-        return handler
+        logger.info("Handling gRPC call: %s", method)
+        try:
+            res = unary_fn(request, context)
+            logger.info("Completed gRPC call: %s", method)
+            return res
+        except Exception as e:
+            logger.error("Failed gRPC call %s: %s", method, e)
+            raise
 
 
-class TimingServerInterceptor(grpc.ServerInterceptor):
+class TimingServerInterceptor(GenericServerInterceptor):
     """Synchronous gRPC Server Interceptor for measuring RPC execution latency."""
 
-    def intercept_service(
+    def _handle_unary(
         self,
-        continuation: Callable[[grpc.HandlerCallDetails], grpc.RpcMethodHandler],
+        request: Any,
+        context: grpc.ServicerContext,
+        unary_fn: Callable[[Any, grpc.ServicerContext], Any],
         handler_call_details: grpc.HandlerCallDetails,
-    ) -> grpc.RpcMethodHandler:
-        handler: Any = continuation(handler_call_details)
-        if handler is None:
-            return handler
-
+    ) -> Any:
+        """Measure and log the elapsed time of the unary RPC call."""
         method = handler_call_details.method
-        unary_fn = getattr(handler, "unary_unary", None)
-
-        if unary_fn is not None:
-
-            def unary_wrapper(request: Any, context: grpc.ServicerContext) -> Any:
-                start = time.perf_counter()
-                try:
-                    return unary_fn(request, context)
-                finally:
-                    duration_ms = (time.perf_counter() - start) * 1000
-                    logger.debug("RPC %s executed in %.2fms", method, duration_ms)
-
-            return grpc.unary_unary_rpc_method_handler(
-                unary_wrapper,
-                request_deserializer=getattr(handler, "request_deserializer", None),
-                response_serializer=getattr(handler, "response_serializer", None),
-            )
-
-        return handler
+        start = time.perf_counter()
+        try:
+            return unary_fn(request, context)
+        finally:
+            duration_ms = (time.perf_counter() - start) * 1000
+            logger.debug("RPC %s executed in %.2fms", method, duration_ms)
 
 
 __all__ = [

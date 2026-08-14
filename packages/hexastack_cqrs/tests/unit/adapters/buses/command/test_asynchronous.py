@@ -7,8 +7,8 @@ from huey import MemoryHuey
 from hexastack_core.domain import Command
 from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_cqrs.adapters.buses.command.asynchronous import (
+    AsyncNativeCommandBus,
     HueyCommandBus,
-    NativeAsyncCommandBus,
 )
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
 
@@ -52,7 +52,7 @@ def test_native_async_command_bus_default_executor():
     registry = HandlerRegistry()
     registry.register(SendEmail, lambda cmd: f"sent to {cmd.recipient}")
 
-    bus = NativeAsyncCommandBus(handler_registry=registry)
+    bus = AsyncNativeCommandBus(handler_registry=registry)
     future = bus.dispatch(SendEmail(recipient="default_async@example.com"))
     result = future.result(timeout=2.0)
     assert result == "sent to default_async@example.com"
@@ -70,7 +70,7 @@ def test_native_async_command_bus_with_middleware():
         return next_call(instance)
 
     executor = ThreadPoolExecutor(max_workers=2)
-    bus = NativeAsyncCommandBus(
+    bus = AsyncNativeCommandBus(
         handler_registry=registry, middleware=[mw], executor=executor
     )
 

@@ -52,9 +52,7 @@ def get_repo_root(start_path: Path | None = None) -> Path:
         current = current.parent
 
     for candidate in [current, *current.parents]:
-        if (candidate / ".git").exists() or (
-            candidate / "pyproject.toml"
-        ).is_file():
+        if (candidate / ".git").exists() or (candidate / "pyproject.toml").is_file():
             return candidate
 
     raise RuntimeError(

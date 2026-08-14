@@ -124,7 +124,7 @@ class HueyEventBus(EventBusPort):
         self._subscribers[event_cls].append(handler)
 
 
-class NativeAsyncEventBus(EventBusPort):
+class AsyncNativeEventBus(EventBusPort):
     """Asynchronous in-process EventBus using thread pool execution.
 
     Notes/Architectural Intent:
@@ -227,5 +227,5 @@ class NativeAsyncEventBus(EventBusPort):
 
 __all__ = [
     "HueyEventBus",
-    "NativeAsyncEventBus",
+    "AsyncNativeEventBus",
 ]

@@ -7,8 +7,8 @@ from huey import MemoryHuey
 from hexastack_core.domain import Event
 from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_cqrs.adapters.buses.event.asynchronous import (
+    AsyncNativeEventBus,
     HueyEventBus,
-    NativeAsyncEventBus,
 )
 
 
@@ -50,7 +50,7 @@ def test_huey_event_bus_missing_dependency():
 
 
 def test_native_async_event_bus_default_executor_and_clear():
-    bus = NativeAsyncEventBus()
+    bus = AsyncNativeEventBus()
     received: list[str] = []
 
     bus.subscribe(OrderCreated, lambda evt: received.append(evt.order_id))
@@ -73,7 +73,7 @@ def test_native_async_event_bus_with_middleware():
         mw_log.append("async_mw")
         return next_call(instance)
 
-    bus = NativeAsyncEventBus(middleware=[mw], executor=executor)
+    bus = AsyncNativeEventBus(middleware=[mw], executor=executor)
     received: list[str] = []
 
     bus.subscribe(OrderCreated, lambda evt: received.append(evt.order_id))

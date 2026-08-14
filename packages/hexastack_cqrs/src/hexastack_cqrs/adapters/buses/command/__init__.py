@@ -1,6 +1,6 @@
 from hexastack_cqrs.adapters.buses.command.asynchronous import (
+    AsyncNativeCommandBus,
     HueyCommandBus,
-    NativeAsyncCommandBus,
 )
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,
@@ -8,6 +8,6 @@ from hexastack_cqrs.adapters.buses.command.synchronous import (
 
 __all__ = [
     "HueyCommandBus",
-    "NativeAsyncCommandBus",
+    "AsyncNativeCommandBus",
     "SynchronousCommandBus",
 ]

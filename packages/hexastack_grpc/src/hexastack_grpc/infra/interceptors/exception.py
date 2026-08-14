@@ -4,6 +4,10 @@ from typing import Any
 import grpc
 
 from hexastack_core.domain.exceptions import HexastackError
+from hexastack_grpc.infra.interceptors.generic import (
+    AsyncGenericServerInterceptor,
+    GenericServerInterceptor,
+)
 
 
 def _map_exception_to_status_code(exc: Exception) -> tuple[grpc.StatusCode, str]:
@@ -27,7 +31,7 @@ def _map_exception_to_status_code(exc: Exception) -> tuple[grpc.StatusCode, str]
     return grpc.StatusCode.UNKNOWN, msg
 
 
-class ExceptionServerInterceptor(grpc.ServerInterceptor):
+class ExceptionServerInterceptor(GenericServerInterceptor):
     """Synchronous gRPC Server Interceptor mapping domain exceptions to gRPC status codes.
 
     Notes/Architectural Intent:
@@ -35,65 +39,37 @@ class ExceptionServerInterceptor(grpc.ServerInterceptor):
         call with appropriate native gRPC StatusCodes (NOT_FOUND, INVALID_ARGUMENT, etc.).
     """
 
-    def intercept_service(
+    def _handle_unary(
         self,
-        continuation: Callable[[grpc.HandlerCallDetails], grpc.RpcMethodHandler],
-        handler_call_details: grpc.HandlerCallDetails,
-    ) -> grpc.RpcMethodHandler:
-        handler: Any = continuation(handler_call_details)
-        if handler is None:
-            return handler
-
-        unary_fn = getattr(handler, "unary_unary", None)
-        if unary_fn is not None:
-
-            def unary_wrapper(request: Any, context: grpc.ServicerContext) -> Any:
-                try:
-                    return unary_fn(request, context)
-                except Exception as exc:  # noqa: BLE001
-                    status_code, details = _map_exception_to_status_code(exc)
-                    context.abort(status_code, details)
-
-            return grpc.unary_unary_rpc_method_handler(
-                unary_wrapper,
-                request_deserializer=getattr(handler, "request_deserializer", None),
-                response_serializer=getattr(handler, "response_serializer", None),
-            )
-
-        return handler
-
-
-class AsyncExceptionServerInterceptor(grpc.aio.ServerInterceptor):
-    """Asynchronous gRPC Server Interceptor mapping domain exceptions to gRPC status codes."""
-
-    async def intercept_service(
-        self,
-        continuation: Callable[[grpc.HandlerCallDetails], Any],
+        request: Any,
+        context: grpc.ServicerContext,
+        unary_fn: Callable[[Any, grpc.ServicerContext], Any],
         handler_call_details: grpc.HandlerCallDetails,
     ) -> Any:
-        handler: Any = await continuation(handler_call_details)
-        if handler is None:
-            return handler
+        """Invoke the unary handler, aborting the RPC on any domain exception."""
+        try:
+            return unary_fn(request, context)
+        except Exception as exc:  # noqa: BLE001
+            status_code, details = _map_exception_to_status_code(exc)
+            context.abort(status_code, details)
 
-        unary_fn = getattr(handler, "unary_unary", None)
-        if unary_fn is not None:
 
-            async def async_unary_wrapper(
-                request: Any, context: grpc.aio.ServicerContext
-            ) -> Any:
-                try:
-                    return await unary_fn(request, context)
-                except Exception as exc:  # noqa: BLE001
-                    status_code, details = _map_exception_to_status_code(exc)
-                    await context.abort(status_code, details)
+class AsyncExceptionServerInterceptor(AsyncGenericServerInterceptor):
+    """Asynchronous gRPC Server Interceptor mapping domain exceptions to gRPC status codes."""
 
-            return grpc.unary_unary_rpc_method_handler(
-                async_unary_wrapper,
-                request_deserializer=getattr(handler, "request_deserializer", None),
-                response_serializer=getattr(handler, "response_serializer", None),
-            )
-
-        return handler
+    async def _handle_unary_async(
+        self,
+        request: Any,
+        context: grpc.aio.ServicerContext,
+        unary_fn: Callable[[Any, grpc.aio.ServicerContext], Any],
+        handler_call_details: grpc.HandlerCallDetails,
+    ) -> Any:
+        """Invoke the async unary handler, aborting the RPC on any domain exception."""
+        try:
+            return await unary_fn(request, context)
+        except Exception as exc:  # noqa: BLE001
+            status_code, details = _map_exception_to_status_code(exc)
+            await context.abort(status_code, details)
 
 
 __all__ = [

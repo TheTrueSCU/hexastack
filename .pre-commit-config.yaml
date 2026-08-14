@@ -39,6 +39,11 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: cpd
+        name: cpd (copy-paste detector)
+        entry: cpd packages/ --threshold 5 --min-tokens 50 --ignore "**/tests/**,**/testing/**" --no-tips
+        language: system
+        pass_filenames: false
       - id: import-linter
         name: import-linter
         entry: uv run lint-imports

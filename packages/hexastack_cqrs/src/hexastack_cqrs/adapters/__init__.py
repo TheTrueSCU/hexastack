@@ -1,8 +1,8 @@
 from hexastack_cqrs.adapters.buses import (
+    AsyncNativeCommandBus,
+    AsyncNativeEventBus,
     HueyCommandBus,
     HueyEventBus,
-    NativeAsyncCommandBus,
-    NativeAsyncEventBus,
     SynchronousCommandBus,
     SynchronousEventBus,
     SynchronousQueryBus,
@@ -11,8 +11,8 @@ from hexastack_cqrs.adapters.buses import (
 __all__ = [
     "HueyCommandBus",
     "HueyEventBus",
-    "NativeAsyncCommandBus",
-    "NativeAsyncEventBus",
+    "AsyncNativeCommandBus",
+    "AsyncNativeEventBus",
     "SynchronousCommandBus",
     "SynchronousEventBus",
     "SynchronousQueryBus",
