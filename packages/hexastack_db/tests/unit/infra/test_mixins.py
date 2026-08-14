@@ -11,7 +11,7 @@ from hexastack_db.infra.mixins import (
     TimestampMixin,
     UuidPrimaryKeyMixin,
 )
-from sqlalchemy import String, create_engine
+from sqlalchemy import DateTime, String, create_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -30,6 +30,24 @@ def _sync_engine():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+
+
+def test_mixin_column_definitions():
+    tbl = ArticleRecord.__table__
+    id_col = tbl.c.id
+    assert isinstance(id_col.type, String)
+    assert id_col.type.length == 36
+    assert id_col.primary_key is True
+
+    created_col = tbl.c.created_at
+    assert isinstance(created_col.type, DateTime)
+    assert created_col.type.timezone is True
+    assert created_col.nullable is False
+
+    updated_col = tbl.c.updated_at
+    assert isinstance(updated_col.type, DateTime)
+    assert updated_col.type.timezone is True
+    assert updated_col.nullable is False
 
 
 def test_uuid_primary_key_mixin_generates_unique_ids():
@@ -91,7 +109,7 @@ def test_timestamp_mixin_updated_at_refreshed_on_update():
     repo.update(article)
     session.commit()
 
-    refetched = repo.get_by_id(article.id)
+    refetched = repo.get(article.id)
     assert refetched is not None
     # created_at must not change
     assert refetched.created_at == article.created_at
@@ -125,7 +143,7 @@ async def test_mixin_async_repository():
         assert isinstance(a.created_at, datetime)
         assert isinstance(a.updated_at, datetime)
 
-        fetched = await repo.get_by_id(a.id)
+        fetched = await repo.get(a.id)
         assert fetched is not None
         assert fetched.title == "Async UUID Mixin Test"
 

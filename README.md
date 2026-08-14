@@ -247,18 +247,60 @@ print(query_bus.dispatch(GetUserQuery(user_id="u-123")))
 
 ---
 
-## 6. Monorepo Development
+## 6. Monorepo Development & Quality Gates
+
+Hexastack maintains a tiered quality hierarchy enforcing static typing, architectural boundary rules, property-based invariants, and mutation testing:
+
+### Fast Quality Checks & Linters
 
 ```bash
 # Install all dependencies with uv
 uv sync --all-extras
 
-# Run full test suite with Hypothesis property testing
+# Run full pre-commit pipeline (Ruff, Ty, Import-Linter 15/15 contracts)
+uv run pre-commit run --all-files
+
+# Run full test suite with statement coverage (>90% gate)
 uv run pytest
 
-# Run linting and formatting checks
-uv run ruff check .
-
-# Run static type checking
+# Run static type checking with Ty
 uv run ty check
+
+# Validate hexagonal architecture import boundaries
+uv run import-linter
+```
+
+### Mutation Testing (`mutmut`)
+
+Hexastack uses `mutmut` to ensure high test efficacy and verify that tests fail when code is mutated.
+
+#### 1. Mutation Test Runner (`scripts/run_mutation_tests.py`)
+
+Run mutations across a specific subsystem or the whole monorepo:
+
+```bash
+# Run mutation tests against a specific package (e.g. db, auth, cqrs, core)
+uv run python scripts/run_mutation_tests.py --package db
+uv run python scripts/run_mutation_tests.py --package auth
+
+# Run mutation tests against all packages sequentially
+uv run python scripts/run_mutation_tests.py --all
+
+# Inspect the diff of a specific surviving mutant by ID
+uv run python scripts/run_mutation_tests.py --show 42
+```
+
+#### 2. Mutation Cache Inspector (`scripts/inspect_mutants.py`)
+
+Analyze `.mutmut-cache` to identify remaining surviving mutants, hotspot files, and line-level details:
+
+```bash
+# Display high-level survivor counts grouped by package and top files
+uv run python scripts/inspect_mutants.py --summary
+
+# Inspect surviving mutants in a specific package
+uv run python scripts/inspect_mutants.py --package db --limit 25
+
+# Inspect surviving mutants matching a specific filename
+uv run python scripts/inspect_mutants.py --file engine.py
 ```

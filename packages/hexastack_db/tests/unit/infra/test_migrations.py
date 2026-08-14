@@ -7,10 +7,14 @@ from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_db.infra.config import HexastackDatabaseConfig
 from hexastack_db.infra.migrations import (
     _env_py_template,
+    _require_alembic,
     get_alembic_config,
     init_migrations,
     run_current,
+    run_downgrade,
     run_history,
+    run_revision,
+    run_upgrade,
     stamp,
 )
 
@@ -32,6 +36,14 @@ def _make_config(tmp_path: Path):
     return cfg, migrations_dir, db_url
 
 
+def test_require_alembic_missing():
+    with (
+        patch("importlib.util.find_spec", return_value=None),
+        pytest.raises(MissingDependencyError, match="alembic is required"),
+    ):
+        _require_alembic()
+
+
 def test_env_py_template_contains_url():
     tmpl = _env_py_template("sqlite:///demo.db")
     assert "sqlite:///demo.db" in tmpl
@@ -46,47 +58,67 @@ def test_get_alembic_config_sets_script_location(tmp_path: Path):
     assert cfg.get_main_option("sqlalchemy.url") == db_url
 
 
-def test_init_migrations_creates_directory(tmp_path: Path):
+def test_init_migrations_creates_directory_and_templates(tmp_path: Path):
     migrations_dir = tmp_path / "alembic_migrations"
-    db_config = HexastackDatabaseConfig(url="sqlite:///hexastack.db")
+    db_config = HexastackDatabaseConfig(url="sqlite:///custom_app.db")
 
     init_migrations(migrations_dir=migrations_dir, db_config=db_config)
 
     assert migrations_dir.exists()
     assert (migrations_dir / "env.py").exists()
     assert (migrations_dir / "versions").exists()
+    assert (migrations_dir / "README").exists()
+    assert (migrations_dir / "script.py.mako").exists()
+
+    readme_content = (migrations_dir / "README").read_text()
+    assert "Hexastack DB Migrations" in readme_content
+
+    mako_content = (migrations_dir / "script.py.mako").read_text()
+    assert "${message}" in mako_content
+    assert "${up_revision}" in mako_content
+    assert "def upgrade()" in mako_content
+    assert "def downgrade()" in mako_content
+
+    env_content = (migrations_dir / "env.py").read_text()
+    assert "sqlite:///custom_app.db" in env_content
+
+    # Directory already exists raises FileExistsError
+    with pytest.raises(FileExistsError, match="already exists"):
+        init_migrations(migrations_dir=migrations_dir, db_config=db_config)
+
+
+def test_init_migrations_default_config(tmp_path: Path):
+    migrations_dir = tmp_path / "default_migrations"
+    init_migrations(migrations_dir=migrations_dir, db_config=None)
     env_content = (migrations_dir / "env.py").read_text()
     assert "sqlite:///hexastack.db" in env_content
 
 
-def test_init_migrations_raises_if_dir_exists(tmp_path: Path):
-    migrations_dir = tmp_path / "already_exists"
-    migrations_dir.mkdir()
-    with pytest.raises(FileExistsError):
-        init_migrations(migrations_dir=migrations_dir)
+def test_migration_commands_dispatch(tmp_path: Path):
+    cfg, _, _ = _make_config(tmp_path)
 
+    with patch("alembic.command.upgrade") as mock_upgrade:
+        run_upgrade(cfg, revision="head")
+        mock_upgrade.assert_called_once_with(cfg, "head")
 
-def test_missing_alembic_raises_missing_dependency():
-    """All migration helpers raise MissingDependencyError if alembic absent."""
-    with (
-        patch("importlib.util.find_spec", return_value=None),
-        pytest.raises(MissingDependencyError),
-    ):
-        get_alembic_config("/tmp/migrations")
+    with patch("alembic.command.downgrade") as mock_downgrade:
+        run_downgrade(cfg, revision="-1")
+        mock_downgrade.assert_called_once_with(cfg, "-1")
 
+    with patch("alembic.command.revision") as mock_revision:
+        run_revision(cfg, message="initial_schema", autogenerate=True)
+        mock_revision.assert_called_once_with(
+            cfg, message="initial_schema", autogenerate=True
+        )
 
-def test_full_migration_lifecycle(tmp_path: Path):
-    """Init → stamp head → current → history (no revision files needed)."""
-    migrations_dir = tmp_path / "migrations"
-    db_path = tmp_path / "lifecycle.db"
-    db_url = f"sqlite:///{db_path}"
+    with patch("alembic.command.stamp") as mock_stamp:
+        stamp(cfg, revision="head")
+        mock_stamp.assert_called_once_with(cfg, "head")
 
-    db_config = HexastackDatabaseConfig(url=db_url)
-    init_migrations(migrations_dir=migrations_dir, db_config=db_config)
+    with patch("alembic.command.current") as mock_current:
+        run_current(cfg)
+        mock_current.assert_called_once_with(cfg)
 
-    cfg = get_alembic_config(migrations_dir=migrations_dir, db_url=db_url)
-
-    # stamp and current should complete without error on a fresh DB
-    stamp(cfg, "head")
-    run_current(cfg)
-    run_history(cfg)
+    with patch("alembic.command.history") as mock_history:
+        run_history(cfg)
+        mock_history.assert_called_once_with(cfg)

@@ -6,7 +6,13 @@ from hexastack_db.adapters.repository import (
 from hexastack_db.domain.exceptions import UniqueConstraintViolationError
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    Session,
+    mapped_column,
+    sessionmaker,
+)
 from sqlalchemy.pool import StaticPool
 
 
@@ -53,14 +59,19 @@ def test_sqlalchemy_repository_sync():
     fetched = repo.get(user1.id)
     assert fetched is not None
     assert fetched.username == "alice"
+    assert repo.get(99999) is None
 
-    # 4. List with filter
-    results = repo.list(limit=2)
-    assert len(results) == 2
+    # 4. List with offset and limit
+    results = repo.list(offset=1, limit=1)
+    assert len(results) == 1
 
     filtered = repo.list(username="bob")
     assert len(filtered) == 1
     assert filtered[0].email == "bob@example.com"
+
+    # Count with filters
+    assert repo.count(username="bob") == 1
+    assert repo.count(username="missing") == 0
 
     # 5. Update
     user1.email = "alice_updated@example.com"
@@ -110,28 +121,32 @@ async def test_async_sqlalchemy_repository():
         )
         assert await repo.count() == 3
 
-        # 3. Get & List
-        got = await repo.get(user1.id)
-        assert got is not None
-        assert got.username == "dave"
+        # 3. Get
+        fetched = await repo.get(user1.id)
+        assert fetched is not None
+        assert fetched.username == "dave"
+        assert await repo.get(99999) is None
 
-        listed = await repo.list(username="eve")
-        assert len(listed) == 1
-        assert listed[0].email == "eve@example.com"
+        # 4. List with offset and limit
+        results = await repo.list(offset=1, limit=1)
+        assert len(results) == 1
 
-        # 4. Update
-        user1.email = "dave_new@example.com"
+        # Count with filter
+        assert await repo.count(username="eve") == 1
+        assert await repo.count(username="none") == 0
+
+        # 5. Update
+        user1.email = "dave_updated@example.com"
         await repo.update(user1)
         refetched = await repo.get(user1.id)
         assert refetched is not None
-        assert refetched.email == "dave_new@example.com"
+        assert refetched.email == "dave_updated@example.com"
 
-        # 5. Delete
+        # 6. Delete
         assert await repo.delete(user1.id) is True
+        assert await repo.delete(999999) is False
         assert await repo.count() == 2
 
-        # 6. Unique constraint error
+        # 7. Unique constraint error
         with pytest.raises(UniqueConstraintViolationError):
-            await repo.add(UserRecord(username="eve", email="dup@example.com"))
-
-    await async_engine.dispose()
+            await repo.add(UserRecord(username="eve", email="duplicate@example.com"))
