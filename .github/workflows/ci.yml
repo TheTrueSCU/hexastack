@@ -34,8 +34,11 @@ jobs:
 
       - name: Run Copy-Paste Detection
         run: |
-          cpd packages/ --threshold 5 --min-tokens 50 \
-            --ignore "**/tests/**,**/testing/**" --no-tips
+          cpd --input packages/
+              --threshold 5 \
+              --min-tokens 50 \
+              --ignore "**/tests/**,**/testing/**" \
+              --no-tips
 
       - name: Run Unit & Integration Tests
         run: uv run pytest packages/ --ignore-glob="packages/*/tests/properties/*"
