@@ -26,19 +26,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-packages --all-extras --all-groups
 
-      - name: Run Pre-Commit Quality Checks
-        run: SKIP=cpd uv run pre-commit run --all-files
-
       - name: Install Copy-Paste Detection
-        run: cargo install cpd --locked
+        run: cargo install jscpd --locked
 
-      - name: Run Copy-Paste Detection
-        run: |
-          cpd --input packages/
-              --threshold 5 \
-              --min-tokens 50 \
-              --ignore "**/tests/**,**/testing/**" \
-              --no-tips
+      - name: Run Pre-Commit Quality Checks
+        run: uv run pre-commit run --all-files
 
       - name: Run Unit & Integration Tests
         run: uv run pytest packages/ --ignore-glob="packages/*/tests/properties/*"
