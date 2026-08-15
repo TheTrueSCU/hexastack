@@ -26,11 +26,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-packages --all-extras --all-groups
 
-      - name: Install cpd (Rust copy-paste detector)
-        run: curl -fsSL https://jscpd.dev/install.sh | bash
-
       - name: Run Pre-Commit Quality Checks
         run: SKIP=cpd uv run pre-commit run --all-files
+
+      - name: Install Copy-Paste Detection
+        run: cargo install cpd --locked
 
       - name: Run Copy-Paste Detection
         run: |
