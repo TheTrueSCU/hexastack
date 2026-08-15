@@ -1,3 +1,5 @@
+import pytest
+from inline_snapshot import snapshot
 from pydantic import BaseModel
 
 from hexastack_logging.infra.sanitizer import Sanitizer
@@ -9,6 +11,7 @@ class UserModel(BaseModel):
     token: str
 
 
+@pytest.mark.snapshot
 def test_sanitizer_nested_dict():
     sanitizer = Sanitizer(
         masked_keys=["password", "secret", "cvv"],
@@ -26,24 +29,28 @@ def test_sanitizer_nested_dict():
         }
     }
 
-    sanitized = sanitizer.sanitize_dict(data)
+    assert sanitizer.sanitize_dict(data) == snapshot(
+        {
+            "user": {
+                "name": "Alice",
+                "PASSWORD": "[REDACTED]",
+                "metadata": {
+                    "secrets": [{"secret": "[REDACTED]"}, {"public_id": "999"}],
+                    "cvv": "[REDACTED]",
+                },
+            }
+        }
+    )
 
-    assert sanitized["user"]["name"] == "Alice"
-    assert sanitized["user"]["PASSWORD"] == "[REDACTED]"
-    assert sanitized["user"]["metadata"]["secrets"][0]["secret"] == "[REDACTED]"
-    assert sanitized["user"]["metadata"]["secrets"][1]["public_id"] == "999"
-    assert sanitized["user"]["metadata"]["cvv"] == "[REDACTED]"
 
-
+@pytest.mark.snapshot
 def test_sanitizer_pydantic_model():
     sanitizer = Sanitizer()
     user = UserModel(username="bob", password="supersecretpassword", token="tok123")
 
-    sanitized = sanitizer.sanitize(user)
-
-    assert sanitized["username"] == "bob"
-    assert sanitized["password"] == "***REDACTED***"
-    assert sanitized["token"] == "***REDACTED***"
+    assert sanitizer.sanitize(user) == snapshot(
+        {"username": "bob", "password": "***REDACTED***", "token": "***REDACTED***"}
+    )
 
 
 def test_sanitizer_string_patterns():

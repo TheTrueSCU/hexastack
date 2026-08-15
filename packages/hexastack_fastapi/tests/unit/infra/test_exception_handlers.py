@@ -1,5 +1,7 @@
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from inline_snapshot import snapshot
 
 from hexastack_core.domain import HexastackError
 from hexastack_core.infra.registries.exception import ExceptionRegistry
@@ -23,6 +25,7 @@ class CustomMappedError(HexastackError):
     pass
 
 
+@pytest.mark.snapshot
 def test_exception_handler_status_codes():
     app = FastAPI()
     app.add_middleware(CorrelationHttpMiddleware)
@@ -38,22 +41,24 @@ def test_exception_handler_status_codes():
 
     client = TestClient(app)
 
-    # 1. 404 test
     res404 = client.get("/not-found")
     assert res404.status_code == 404
-    data404 = res404.json()
-    assert data404["error"] == "User 123 does not exist"
-    assert data404["error_type"] == "UserNotFoundError"
-    assert data404["correlation_id"] is not None
+    body404 = res404.json()
+    assert body404["correlation_id"]  # dynamic — just assert truthy
+    assert {k: v for k, v in body404.items() if k != "correlation_id"} == snapshot(
+        {"error": "User 123 does not exist", "error_type": "UserNotFoundError"}
+    )
 
-    # 2. 409 test
     res409 = client.get("/conflict")
     assert res409.status_code == 409
-    data409 = res409.json()
-    assert data409["error"] == "Email already in use"
-    assert data409["error_type"] == "DuplicateEmailConflictError"
+    body409 = res409.json()
+    assert body409["correlation_id"]
+    assert {k: v for k, v in body409.items() if k != "correlation_id"} == snapshot(
+        {"error": "Email already in use", "error_type": "DuplicateEmailConflictError"}
+    )
 
 
+@pytest.mark.snapshot
 def test_exception_handler_with_registry():
     app = FastAPI()
     app.add_middleware(CorrelationHttpMiddleware)
@@ -71,4 +76,4 @@ def test_exception_handler_with_registry():
     client = TestClient(app)
     res = client.get("/custom")
     assert res.status_code == 418
-    assert res.json() == {"custom_reason": "I am a teapot"}
+    assert res.json() == snapshot({"custom_reason": "I am a teapot"})

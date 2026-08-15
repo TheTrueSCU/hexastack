@@ -1,6 +1,10 @@
+import pytest
+from inline_snapshot import snapshot
+
 from hexastack_core.adapters.logging import InMemoryLogger
 
 
+@pytest.mark.snapshot
 def test_in_memory_logger_capture_and_filter():
     logger = InMemoryLogger()
     logger.info("Service boot", extra={"env": "test"})
@@ -9,21 +13,43 @@ def test_in_memory_logger_capture_and_filter():
     logger.error("DB connection dropped", exc=RuntimeError("disconnected"))
 
     entries = logger.all()
-    assert len(entries) == 4
 
-    assert entries[0].level == "info"
-    assert entries[0].message == "Service boot"
-    assert entries[0].extra == {"env": "test"}
-
-    assert entries[1].level == "debug"
-    assert entries[1].message == "Debugging query"
-
-    assert entries[2].level == "warning"
-    assert entries[2].message == "Low memory warning"
-
-    assert entries[3].level == "error"
-    assert entries[3].message == "DB connection dropped"
-    assert isinstance(entries[3].exc, RuntimeError)
+    assert [
+        {
+            "level": e.level,
+            "message": e.message,
+            "extra": e.extra,
+            "exc": type(e.exc).__name__ if e.exc else None,
+        }
+        for e in entries
+    ] == snapshot(
+        [
+            {
+                "level": "info",
+                "message": "Service boot",
+                "extra": {"env": "test"},
+                "exc": None,
+            },
+            {
+                "level": "debug",
+                "message": "Debugging query",
+                "extra": {"query_id": "q1"},
+                "exc": None,
+            },
+            {
+                "level": "warning",
+                "message": "Low memory warning",
+                "extra": None,
+                "exc": None,
+            },
+            {
+                "level": "error",
+                "message": "DB connection dropped",
+                "extra": None,
+                "exc": "RuntimeError",
+            },
+        ]
+    )
 
     # Filter by level
     errors = logger.entries_by_level("error")

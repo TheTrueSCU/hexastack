@@ -69,6 +69,7 @@ def run_snapshot_update(package: str, mode: str) -> int:
         "--no-cov",
         "-p",
         "no:xdist",  # Disable parallel execution — required for inline-snapshot writes
+        "--override-ini=addopts=--import-mode=importlib",  # Strip -n auto from pyproject addopts
         f"--inline-snapshot={mode}",
     ]
 
@@ -76,6 +77,17 @@ def run_snapshot_update(package: str, mode: str) -> int:
     print(f"  → Command: {' '.join(cmd)}\n")
 
     result = subprocess.run(cmd, cwd=ROOT_DIR)
+
+    # inline-snapshot exits with code 1 on first `create` run due to expected
+    # teardown warnings ("your snapshot is missing one value"). The snapshots
+    # ARE written. A subsequent normal pytest run will pass cleanly.
+    if mode == "create" and result.returncode == 1:
+        print(
+            "\n  ℹ️  Exit code 1 is expected on first 'create' run.\n"
+            "     Snapshots have been written. Run normal pytest to verify.\n"
+        )
+        return 0
+
     return result.returncode
 
 

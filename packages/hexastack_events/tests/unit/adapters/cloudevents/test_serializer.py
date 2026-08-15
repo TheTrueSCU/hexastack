@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 import pytest
+from inline_snapshot import snapshot
 
 from hexastack_core.domain import Event
 from hexastack_core.utils.context import (
@@ -18,6 +19,9 @@ from hexastack_events.adapters.cloudevents.serializer import (
 )
 from hexastack_events.domain.exceptions import EventSerializationError
 
+_FIXED_TIME = datetime(2026, 8, 14, 12, 0, 0, tzinfo=UTC)
+_FIXED_ID = "fixed-event-id"
+
 
 class InvoicePaidEvent(Event):
     invoice_id: str
@@ -25,37 +29,98 @@ class InvoicePaidEvent(Event):
     currency: str = "USD"
 
 
+@pytest.mark.snapshot
 def test_cloudevent_serializer_defaults():
+    """Snapshot the full CloudEvent dict shape produced by to_cloudevent defaults.
+
+    Notes/Architectural Intent:
+        Pins event_id and time so the dict is fully deterministic and the
+        snapshot is stable across runs.
+    """
     correlation_id_ctx.set("")
     set_user_context(None)
 
     event = InvoicePaidEvent(invoice_id="inv-default", amount=100.0)
-    fixed_time = datetime(2026, 8, 14, 12, 0, 0, tzinfo=UTC)
-
-    # Defaults check (no context, no custom source/id/type)
     ce = to_cloudevent(
         event,
-        event_id="fixed-event-id",
-        time=fixed_time,
+        event_id=_FIXED_ID,
+        time=_FIXED_TIME,
         extensions={"custom_ext": "value_123"},
     )
-    assert ce["id"] == "fixed-event-id"
-    assert ce["source"] == "hexastack"
-    assert ce["type"] == "InvoicePaidEvent"
-    assert ce["specversion"] == "1.0"
-    assert ce["datacontenttype"] == "application/json"
-    assert ce["time"] == "2026-08-14T12:00:00+00:00"
-    assert ce["custom_ext"] == "value_123"
-    assert "correlationid" not in ce.get_attributes()
-    assert "tenantid" not in ce.get_attributes()
 
-    # to_envelope defaults
+    assert cloudevent_to_dict(ce) == snapshot(
+        {
+            "id": "fixed-event-id",
+            "source": "hexastack",
+            "type": "InvoicePaidEvent",
+            "specversion": "1.0",
+            "time": "2026-08-14T12:00:00+00:00",
+            "datacontenttype": "application/json",
+            "custom_ext": "value_123",
+            "data": {"invoice_id": "inv-default", "amount": 100.0, "currency": "USD"},
+        }
+    )
+
+
+@pytest.mark.snapshot
+def test_cloudevent_serializer_with_context():
+    """Snapshot the CloudEvent dict when correlation and tenant context are active.
+
+    Notes/Architectural Intent:
+        Pins event_id and time for determinism. The correlation, tenant, and
+        data payload fields are the meaningful assertions here.
+    """
+    event = InvoicePaidEvent(invoice_id="inv-888", amount=2500.0)
+
+    with correlation_scope("corr-invoice-1"):
+        set_user_context(UserContext(user_id="usr_1", tenant_id="tenant_corp"))
+        ce = to_cloudevent(
+            event,
+            event_id=_FIXED_ID,
+            time=_FIXED_TIME,
+            source="https://hexastack.io/billing",
+            event_type="io.hexastack.billing.invoice_paid",
+        )
+
+        assert cloudevent_to_dict(ce) == snapshot(
+            {
+                "id": "fixed-event-id",
+                "source": "https://hexastack.io/billing",
+                "type": "io.hexastack.billing.invoice_paid",
+                "specversion": "1.0",
+                "time": "2026-08-14T12:00:00+00:00",
+                "datacontenttype": "application/json",
+                "correlationid": "corr-invoice-1",
+                "tenantid": "tenant_corp",
+                "data": {"invoice_id": "inv-888", "amount": 2500.0, "currency": "USD"},
+            }
+        )
+
+
+@pytest.mark.snapshot
+def test_to_envelope_shape():
+    """Snapshot the static Envelope fields produced from an InvoicePaidEvent."""
+    correlation_id_ctx.set("")
+    set_user_context(None)
+
+    event = InvoicePaidEvent(invoice_id="inv-env-1", amount=75.0)
     envelope = to_envelope(event)
-    assert envelope.source == "hexastack"
-    assert envelope.type == "InvoicePaidEvent"
-    assert envelope.specversion == "1.0"
-    assert envelope.datacontenttype == "application/json"
-    assert envelope.data["invoice_id"] == "inv-default"
+
+    assert {
+        "source": envelope.source,
+        "type": envelope.type,
+        "specversion": envelope.specversion,
+        "datacontenttype": envelope.datacontenttype,
+        "data": envelope.data,
+    } == snapshot(
+        {
+            "source": "hexastack",
+            "type": "InvoicePaidEvent",
+            "specversion": "1.0",
+            "datacontenttype": "application/json",
+            "data": {"invoice_id": "inv-env-1", "amount": 75.0, "currency": "USD"},
+        }
+    )
 
 
 def test_cloudevent_serializer_roundtrip():

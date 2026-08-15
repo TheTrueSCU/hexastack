@@ -1,4 +1,5 @@
 import pytest
+from inline_snapshot import snapshot
 
 from hexastack_core.adapters.logging import InMemoryLogger
 from hexastack_core.domain import Command
@@ -10,6 +11,7 @@ class _DummyCommand(Command):
     name: str
 
 
+@pytest.mark.snapshot
 def test_logging_middleware_successful_execution():
     logger = InMemoryLogger()
     config = LoggingMiddlewareConfig(enable=True, log_payload=True)
@@ -22,15 +24,29 @@ def test_logging_middleware_successful_execution():
     result = middleware(cmd, handler)
 
     assert result == "processed test-command"
-    assert len(logger.entries) == 2
-    assert logger.entries[0].level == "info"
-    assert "Processing _DummyCommand" in logger.entries[0].message
-    assert logger.entries[0].extra is not None
-    assert logger.entries[0].extra["payload"] == {"name": "test-command"}
-    assert logger.entries[1].level == "debug"
-    assert "Successfully completed _DummyCommand" in logger.entries[1].message
+    assert [
+        {"level": e.level, "message": e.message, "extra": e.extra}
+        for e in logger.entries
+    ] == snapshot(
+        [
+            {
+                "level": "info",
+                "message": "Processing _DummyCommand",
+                "extra": {
+                    "message_type": "_DummyCommand",
+                    "payload": {"name": "test-command"},
+                },
+            },
+            {
+                "level": "debug",
+                "message": "Successfully completed _DummyCommand",
+                "extra": {"message_type": "_DummyCommand"},
+            },
+        ]
+    )
 
 
+@pytest.mark.snapshot
 def test_logging_middleware_error_execution():
     logger = InMemoryLogger()
     middleware = LoggingMiddleware(logger=logger)
@@ -42,10 +58,17 @@ def test_logging_middleware_error_execution():
     with pytest.raises(ValueError, match="handling failed"):
         middleware(cmd, failing_handler)
 
-    assert len(logger.entries) == 2
-    assert logger.entries[0].level == "info"
-    assert logger.entries[1].level == "error"
-    assert "Failed processing _DummyCommand" in logger.entries[1].message
+    assert [
+        {"level": e.level, "message": e.message} for e in logger.entries
+    ] == snapshot(
+        [
+            {"level": "info", "message": "Processing _DummyCommand"},
+            {
+                "level": "error",
+                "message": "Failed processing _DummyCommand: handling failed",
+            },
+        ]
+    )
 
 
 def test_logging_middleware_disabled():

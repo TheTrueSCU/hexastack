@@ -1,6 +1,8 @@
+import pytest
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
+from inline_snapshot import snapshot
 from rodi import Container
 
 from hexastack_core.adapters.logging.in_memory import InMemoryLogger
@@ -14,6 +16,7 @@ from hexastack_fastapi.infra.middleware.logging import (
 )
 
 
+@pytest.mark.snapshot
 def test_request_logging_middleware_success():
     logger = InMemoryLogger()
     container = Container()
@@ -43,23 +46,31 @@ def test_request_logging_middleware_success():
 
     client = TestClient(app)
 
-    # 1. Access non-excluded path
     res = client.get("/items")
     assert res.status_code == 200
     assert len(logger.entries) == 1
     entry = logger.entries[0]
-    assert entry.level.lower() == "info"
-    assert "GET /items HTTP/1.1 -> 200" in entry.message
-    assert entry.extra is not None
-    assert entry.extra["http_status"] == 200
-    assert "duration_ms" in entry.extra
 
-    # 2. Access excluded path
+    assert {
+        "level": entry.level,
+        "message_contains": "GET /items HTTP/1.1 -> 200" in entry.message,
+        "http_status": entry.extra["http_status"] if entry.extra else None,
+        "has_duration_ms": "duration_ms" in (entry.extra or {}),
+    } == snapshot(
+        {
+            "level": "info",
+            "message_contains": True,
+            "http_status": 200,
+            "has_duration_ms": True,
+        }
+    )  # duration_ms is dynamic — tested via has_duration_ms flag
+
+    # Excluded path generates no log
     client.get("/health")
-    # Still only 1 log entry
     assert len(logger.entries) == 1
 
 
+@pytest.mark.snapshot
 def test_request_logging_middleware_error_status():
     logger = InMemoryLogger()
     container = Container()
@@ -82,9 +93,8 @@ def test_request_logging_middleware_error_status():
     client = TestClient(app)
 
     client.get("/client-err")
-    assert len(logger.entries) == 1
-    assert logger.entries[0].level.lower() == "warning"
-
     client.get("/server-err")
-    assert len(logger.entries) == 2
-    assert logger.entries[1].level.lower() == "error"
+
+    assert [{"level": e.level} for e in logger.entries] == snapshot(
+        [{"level": "warning"}, {"level": "error"}]
+    )
