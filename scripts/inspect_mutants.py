@@ -15,7 +15,7 @@ import re
 import sqlite3
 import sys
 
-from scripts._common import get_repo_root
+from _common import get_repo_root
 
 ROOT_DIR = get_repo_root()
 CACHE_FILE = ROOT_DIR / ".mutmut-cache"

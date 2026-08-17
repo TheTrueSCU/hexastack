@@ -4,7 +4,11 @@
 import re
 from pathlib import Path
 
-from _common import LAYER_RESTRICTIONS, get_package_directories, get_present_layers
+from _common import (
+    LAYER_RESTRICTIONS,
+    get_package_directories,
+    get_present_layers,
+)
 
 
 def build_import_linter_toml(pkg_name: str, present_layers: set[str]) -> str:

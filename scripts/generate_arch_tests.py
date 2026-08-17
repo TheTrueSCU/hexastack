@@ -4,7 +4,11 @@
 import textwrap
 from pathlib import Path
 
-from _common import LAYER_RESTRICTIONS, get_package_directories, get_present_layers
+from _common import (
+    LAYER_RESTRICTIONS,
+    get_package_directories,
+    get_present_layers,
+)
 
 
 def generate_tests_for_package(pkg_path: Path) -> None:

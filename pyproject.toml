@@ -107,7 +107,6 @@ ignore = [
 "**/hexastack_cli/**/*.py" = ["T201"]
 "**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
 "scripts/**/*.py" = ["D", "E501", "S603", "T201", "T203"]
-"*.py" = ["T201"] # tmp before reorg
 
 [tool.ruff.lint.isort]
 known-first-party = [
@@ -129,3 +128,6 @@ known-first-party = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ty.environment]
+extra-paths = ["scripts"]

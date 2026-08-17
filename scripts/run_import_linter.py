@@ -6,9 +6,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from _common import get_package_directories
+from _common import get_package_directories, get_packages_directory
 
-PACKAGES_DIR = Path("packages")
+PACKAGES_DIR = get_packages_directory()
 
 
 def find_packages_to_lint(changed_files: list[str]) -> list[Path]:
