@@ -18,15 +18,15 @@ graph TD
         CLI["hexastack-cli (Typer + Rich)"]
         REST["hexastack-fastapi (FastAPI)"]
         GQL["hexastack-graphql (Strawberry GraphQL)"]
-        MCP["hexastack-mcp (Model Context Protocol)"]
         GRPC["hexastack-grpc (gRPC / Protobuf)"]
+        MCP["hexastack-mcp (Model Context Protocol)"]
     end
 
     subgraph CQRSExecution ["Application & CQRS Pipelines"]
-        BUS["hexastack-cqrs (Command, Query & Event Buses)"]
-        AUTH["hexastack-auth (RBAC & @authorize Middleware)"]
-        EVENTS["hexastack-events (CloudEvents & Transactional Outbox)"]
         AI["hexastack-ai (LiteLLM, Instructor & PydanticAI)"]
+        AUTH["hexastack-auth (RBAC & @authorize Middleware)"]
+        BUS["hexastack-cqrs (Command, Query & Event Buses)"]
+        EVENTS["hexastack-events (CloudEvents & Transactional Outbox)"]
         MW["Middleware (Correlation, Auth, Tracing, Retry, UnitOfWork)"]
     end
 
@@ -77,19 +77,19 @@ graph TD
 graph TD
     Umbrella["hexastack (Umbrella & Diagnostics CLI)"]
 
+    AI["hexastack-ai (LiteLLM, Instructor & PydanticAI)"]
+    Auth["hexastack-auth (Security & RBAC)"]
+    CLI["hexastack-cli (Typer CLI)"]
     Core["hexastack-core (Kernel)"]
     CQRS["hexastack-cqrs (Buses & Pipelines)"]
-    Events["hexastack-events (CloudEvents & Outbox)"]
-    Logging["hexastack-logging (Telemetry)"]
-    Auth["hexastack-auth (Security & RBAC)"]
-    Otel["hexastack-otel (OpenTelemetry Tracing)"]
     DB["hexastack-db (Persistence & Migrations)"]
-    AI["hexastack-ai (LiteLLM, Instructor & PydanticAI)"]
+    Events["hexastack-events (CloudEvents & Outbox)"]
     FastAPI["hexastack-fastapi (REST API)"]
     GraphQL["hexastack-graphql (Strawberry GraphQL)"]
-    MCP["hexastack-mcp (Model Context Protocol)"]
     GRPC["hexastack-grpc (gRPC / Protobuf)"]
-    CLI["hexastack-cli (Typer CLI)"]
+    Logging["hexastack-logging (Telemetry)"]
+    MCP["hexastack-mcp (Model Context Protocol)"]
+    Otel["hexastack-otel (OpenTelemetry Tracing)"]
 
     Umbrella --> Core
     Umbrella --> CQRS
@@ -132,20 +132,20 @@ graph TD
 
 | Package | Description | Standalone Install | Scoped Umbrella Extra |
 |---|---|---|---|
+| [`hexastack`](file:///home/rjdw/Projects/hexastack/packages/hexastack) | Umbrella distribution package and diagnostic demo CLI application | `pip install hexastack` | `hexastack[all]` |
+| [`hexastack-ai`](file:///home/rjdw/Projects/hexastack/packages/hexastack_ai) | Agnostic AI engine (LiteLLM, Instructor, PydanticAI) and CQRS agent tool reflection | `pip install hexastack-ai` | `hexastack[ai]` |
+| [`hexastack-auth`](file:///home/rjdw/Projects/hexastack/packages/hexastack_auth) | Security, RBAC, JWT tokens, PBKDF2 password hashing, and `@authorize` CQRS pipeline middleware | `pip install hexastack-auth` | `hexastack[auth]` |
+| [`hexastack-cli`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cli) | CLI presentation layer with nested commands, command aliases, and Rich formatted output | `pip install hexastack-cli` | `hexastack[cli]` |
 | [`hexastack-core`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core) | Core domain abstractions, ports, DI container (`rodi`), config and type registries, bootstrap engine | `pip install hexastack-core` | *(Included by default)* |
 | [`hexastack-cqrs`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cqrs) | Synchronous & asynchronous command, query, and event buses with extensible middleware pipelines | `pip install hexastack-cqrs` | *(Included by default)* |
-| [`hexastack-events`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), distributed event buses | `pip install hexastack-events` | `hexastack[events]` |
-| [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
-| [`hexastack-auth`](file:///home/rjdw/Projects/hexastack/packages/hexastack_auth) | Security, RBAC, JWT tokens, PBKDF2 password hashing, and `@authorize` CQRS pipeline middleware | `pip install hexastack-auth` | `hexastack[auth]` |
-| [`hexastack-otel`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel) | OpenTelemetry distributed tracing, OTLP gRPC/HTTP export, and CQRS telemetry middleware | `pip install hexastack-otel` | `hexastack[otel]` |
-| [`hexastack-ai`](file:///home/rjdw/Projects/hexastack/packages/hexastack_ai) | Agnostic AI engine (LiteLLM, Instructor, PydanticAI) and CQRS agent tool reflection | `pip install hexastack-ai` | `hexastack[ai]` |
 | [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, pgvector, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
+| [`hexastack-events`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), distributed event buses | `pip install hexastack-events` | `hexastack[events]` |
 | [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
 | [`hexastack-graphql`](file:///home/rjdw/Projects/hexastack/packages/hexastack_graphql) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
-| [`hexastack-mcp`](file:///home/rjdw/Projects/hexastack/packages/hexastack_mcp) | Model Context Protocol adapter, AI agent CQRS tools, resources, prompts, and SSE transport | `pip install hexastack-mcp[fastapi]` | `hexastack[mcp]` |
 | [`hexastack-grpc`](file:///home/rjdw/Projects/hexastack/packages/hexastack_grpc) | High-performance gRPC presentation adapter, interceptors (correlation, logging, timing) | `pip install hexastack-grpc[reflection]` | `hexastack[grpc]` |
-| [`hexastack-cli`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cli) | CLI presentation layer with nested commands, command aliases, and Rich formatted output | `pip install hexastack-cli` | `hexastack[cli]` |
-| [`hexastack`](file:///home/rjdw/Projects/hexastack/packages/hexastack) | Umbrella distribution package and diagnostic demo CLI application | `pip install hexastack` | `hexastack[all]` |
+| [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
+| [`hexastack-mcp`](file:///home/rjdw/Projects/hexastack/packages/hexastack_mcp) | Model Context Protocol adapter, AI agent CQRS tools, resources, prompts, and SSE transport | `pip install hexastack-mcp[fastapi]` | `hexastack[mcp]` |
+| [`hexastack-otel`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel) | OpenTelemetry distributed tracing, OTLP gRPC/HTTP export, and CQRS telemetry middleware | `pip install hexastack-otel` | `hexastack[otel]` |
 
 ---
 
@@ -155,19 +155,20 @@ Every package in the monorepo adheres to a standardized architectural layout:
 
 ```
 packages/hexastack_<name>/
+├── pyproject.toml      # Packaging metadata, entry points, and scoped extras
+├── README.md           # Package-specific documentation and relationship mapping
 ├── src/hexastack_<name>/
-│   ├── domain/        # Pure domain models, value objects, exceptions (no I/O)
-│   ├── ports/         # Abstract protocols / ABCs defining interface boundaries
-│   ├── adapters/      # Concrete driver implementations (SQLAlchemy, FastAPI, Typer)
-│   ├── infra/         # Bootstrappers, config schemas, middleware, registries, decorators
-│   │   └── registries/# Specialized type, schema, and metadata registries
-│   ├── application/   # (Optional) Built-in handlers, services, and diagnostic queries
-│   └── __init__.py    # Explicit public API export surface
-├── tests/
-│   ├── unit/          # Fast, isolated unit test suite
-│   └── properties/    # Property-based invariant fuzzing (e.g. CRUD repository contracts)
-├── pyproject.toml     # Packaging metadata, entry points, and scoped extras
-└── README.md          # Package-specific documentation and relationship mapping
+│   ├── __init__.py     # Explicit public API export surface
+│   ├── adapters/       # Concrete driver implementations (SQLAlchemy, FastAPI, Typer)
+│   ├── application/    # (Optional) Built-in handlers, services, and diagnostic queries
+│   ├── domain/         # Pure domain models, value objects, exceptions (no I/O)
+│   ├── infra/          # Bootstrappers, config schemas, middleware, registries, decorators
+│   │   └── registries/ # Specialized type, schema, and metadata registries
+│   └── ports/          # Abstract protocols / ABCs defining interface boundaries
+└── tests/
+    ├── architecture/   # pytest-archon test(s) to enforce architectual boundaries
+    ├── properties/     # Property-based invariant fuzzing (e.g. CRUD repository contracts)
+    └── unit/           # Fast, isolated unit test suite
 ```
 
 ---
