@@ -44,12 +44,18 @@ repos:
         entry: cpd packages/ --threshold 5 --min-tokens 50 --ignore "**/tests/**,**/testing/**" --no-tips
         language: system
         pass_filenames: false
-      - id: import-linter
-        name: import-linter
+      - id: import-linter-root
+        name: import-linter (package boundaries)
         entry: uv run lint-imports
         language: system
         types: [python]
         pass_filenames: false
+      - id: import-linter-packages
+        name: import-linter (hexagonal boundaries)
+        entry: uv run python run_import_linter.py
+        language: system
+        files: ^packages/.*(\.py|pyproject\.toml)$
+        pass_filenames: true
       - id: ty-check
         name: ty check
         entry: uv run ty check

@@ -24,3 +24,35 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_auth"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_auth"]
+layers = [
+    "adapters",
+    "ports",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_auth.domain"]
+forbidden_modules = [
+    "hexastack_auth.ports",
+    "hexastack_auth.adapters",
+    "hexastack_auth.infra",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for ports"
+type = "forbidden"
+source_modules = ["hexastack_auth.ports"]
+forbidden_modules = [
+    "hexastack_auth.adapters",
+    "hexastack_auth.infra",
+]

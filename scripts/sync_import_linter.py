@@ -13,7 +13,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from _common import get_repo_root
+from scripts._common import get_repo_root
 
 ROOT_DIR = get_repo_root()
 PACKAGES_DIR = ROOT_DIR / "packages"

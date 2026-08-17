@@ -15,3 +15,65 @@ dependencies = [
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.importlinter]
+root_packages = ["hexastack_core"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_core"]
+layers = [
+    "adapters",
+    "ports",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_core.domain"]
+forbidden_modules = [
+    "hexastack_core.ports",
+    "hexastack_core.adapters",
+    "hexastack_core.infra",
+    "hexastack_core.testing",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for ports"
+type = "forbidden"
+source_modules = ["hexastack_core.ports"]
+forbidden_modules = [
+    "hexastack_core.adapters",
+    "hexastack_core.infra",
+    "hexastack_core.testing",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for adapters"
+type = "forbidden"
+source_modules = ["hexastack_core.adapters"]
+forbidden_modules = [
+    "hexastack_core.testing",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for infra"
+type = "forbidden"
+source_modules = ["hexastack_core.infra"]
+forbidden_modules = [
+    "hexastack_core.testing",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for utils"
+type = "forbidden"
+source_modules = ["hexastack_core.utils"]
+forbidden_modules = [
+    "hexastack_core.domain",
+    "hexastack_core.ports",
+    "hexastack_core.adapters",
+    "hexastack_core.infra",
+    "hexastack_core.testing",
+]

@@ -26,3 +26,24 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_ai"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_ai"]
+layers = [
+    "adapters",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_ai.domain"]
+forbidden_modules = [
+    "hexastack_ai.adapters",
+    "hexastack_ai.infra",
+]

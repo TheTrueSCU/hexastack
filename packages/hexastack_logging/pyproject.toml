@@ -30,3 +30,6 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 hexastack-core = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_logging"]

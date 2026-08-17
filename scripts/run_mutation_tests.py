@@ -17,7 +17,7 @@ import argparse
 import subprocess
 import sys
 
-from _common import VALID_PACKAGES, get_repo_root
+from scripts._common import VALID_PACKAGES, get_repo_root
 
 ROOT_DIR = get_repo_root()
 

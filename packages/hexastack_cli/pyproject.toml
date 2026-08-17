@@ -24,3 +24,6 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_cli"]

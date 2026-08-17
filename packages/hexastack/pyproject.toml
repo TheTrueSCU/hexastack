@@ -86,3 +86,15 @@ hexastack-graphql = { workspace = true }
 hexastack-grpc = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack"]
+layers = [
+    "adapters",
+    "domain",
+]

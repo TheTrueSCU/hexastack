@@ -31,3 +31,35 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_otel"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_otel"]
+layers = [
+    "adapters",
+    "ports",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_otel.domain"]
+forbidden_modules = [
+    "hexastack_otel.ports",
+    "hexastack_otel.adapters",
+    "hexastack_otel.infra",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for ports"
+type = "forbidden"
+source_modules = ["hexastack_otel.ports"]
+forbidden_modules = [
+    "hexastack_otel.adapters",
+    "hexastack_otel.infra",
+]

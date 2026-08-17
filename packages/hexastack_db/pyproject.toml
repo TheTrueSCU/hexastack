@@ -45,3 +45,24 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 hexastack-core = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_db"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_db"]
+layers = [
+    "adapters",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_db.domain"]
+forbidden_modules = [
+    "hexastack_db.adapters",
+    "hexastack_db.infra",
+]

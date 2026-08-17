@@ -1711,7 +1711,9 @@ dev = [
     { name = "inline-snapshot" },
     { name = "mutmut" },
     { name = "pre-commit" },
+    { name = "pydeps" },
     { name = "pytest" },
+    { name = "pytest-archon" },
     { name = "pytest-cov" },
     { name = "pytest-randomly" },
     { name = "pytest-xdist" },
@@ -1732,7 +1734,9 @@ dev = [
     { name = "inline-snapshot", specifier = ">=0.35.4" },
     { name = "mutmut", specifier = "<3" },
     { name = "pre-commit", specifier = ">=3.8.0" },
+    { name = "pydeps", specifier = ">=3.0.7" },
     { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-archon", specifier = ">=0.0.7" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
     { name = "pytest-randomly", specifier = ">=4.1.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
@@ -3133,6 +3137,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pydeps"
+version = "3.0.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "stdlib-list" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7d/5e/1e4dc6069a2768a73b33f0dc2d5c1b5e1d264b0016ee931c23628324b052/pydeps-3.0.7.tar.gz", hash = "sha256:69903a434bb0b9d8ba179545159d067ac6281a63229191b3fd1327e3e6c145da", size = 55664, upload-time = "2026-08-03T11:56:24.027Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/63/31/9a72d5de5042c8ca740a00a350c8780f307a40168aa3baf94521e11da0e7/pydeps-3.0.7-py3-none-any.whl", hash = "sha256:39e8a484788a054defaefba7f127f975389de0c609dbfb66014203a65ba86d16", size = 48467, upload-time = "2026-08-03T11:56:22.765Z" },
+]
+
+[[package]]
 name = "pygments"
 version = "2.20.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3178,6 +3194,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e4/47/b9efed96c114afcfa3c9d3fe98a76a1d14c74a9e266d397cf6eb64be5e01/pytest-9.1.1.tar.gz", hash = "sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313", size = 1636369, upload-time = "2026-06-19T10:58:32.857Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/24/25/1de2678b631f5a49215c6c96fff41ba892b0a34df68d6d80292b1b48aa7f/pytest-9.1.1-py3-none-any.whl", hash = "sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c", size = 386536, upload-time = "2026-06-19T10:58:31.347Z" },
+]
+
+[[package]]
+name = "pytest-archon"
+version = "0.0.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/42/da/8132aa99cee223c7c5b330ffb4bd8094343239774f917e71a21f74d52009/pytest_archon-0.0.7.tar.gz", hash = "sha256:6a1e814c84adbea4afc188369733ec898f2525cc401f3ca965498f8b3ee454d5", size = 48359, upload-time = "2025-09-19T20:56:24.784Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/98/81/a46c239c77d4ec4e3450d463517ff63f10c22962c037ca2b4125394cf400/pytest_archon-0.0.7-py3-none-any.whl", hash = "sha256:5aaad17cff853d058ca686dd1da425ce884daf33ae9668011323173631dc4e94", size = 44868, upload-time = "2025-09-19T20:56:23.16Z" },
 ]
 
 [[package]]
@@ -3650,6 +3678,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b5/b4/205b0d5241d934e8add0c38aa924c4f9fb7330834ff11e5444db964ec3f9/starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b", size = 2716969, upload-time = "2026-08-08T18:27:57.512Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/cb/6a6a47d5b464bd08695d254f3da6e7986cc70c9fa5d778eda57538edfe56/starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c", size = 75969, upload-time = "2026-08-08T18:27:56.196Z" },
+]
+
+[[package]]
+name = "stdlib-list"
+version = "0.12.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/25/f1540879c8815387980e56f973e54605bd924612399ace31487f7444171c/stdlib_list-0.12.0.tar.gz", hash = "sha256:517824f27ee89e591d8ae7c1dd9ff34f672eae50ee886ea31bb8816d77535675", size = 60923, upload-time = "2025-10-24T19:21:22.849Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3b/3d/2970b27a11ae17fb2d353e7a179763a2fe6f37d6d2a9f4d40104a2f132e9/stdlib_list-0.12.0-py3-none-any.whl", hash = "sha256:df2d11e97f53812a1756fb5510393a11e3b389ebd9239dc831c7f349957f62f2", size = 87615, upload-time = "2025-10-24T19:21:20.619Z" },
 ]
 
 [[package]]
