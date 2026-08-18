@@ -1,12 +1,9 @@
-#!/usr/bin/env python3
-"""Runner script for import-linter across packages in the monorepo."""
-
 import argparse
 import subprocess
 import sys
 from pathlib import Path
 
-from _common import get_package_directories, get_packages_directory
+from scripts._common import get_package_directories, get_packages_directory
 
 PACKAGES_DIR = get_packages_directory()
 

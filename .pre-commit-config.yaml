@@ -52,7 +52,7 @@ repos:
         pass_filenames: false
       - id: import-linter-packages
         name: import-linter (hexagonal boundaries)
-        entry: uv run python scripts/run_import_linter.py
+        entry: uv run import-linter-run
         language: system
         files: ^packages/.*(\.py|pyproject\.toml)$
         pass_filenames: true

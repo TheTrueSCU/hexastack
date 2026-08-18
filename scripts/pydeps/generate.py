@@ -1,10 +1,14 @@
-#!/usr/bin/env python3
 """Programmatically generate architecture diagrams using pydeps."""
 
 from pathlib import Path
 
-from _common import get_package_directories, get_packages_directory, get_repo_root
 from pydeps.pydeps import pydeps
+
+from scripts._common import (
+    get_package_directories,
+    get_packages_directory,
+    get_repo_root,
+)
 
 
 def generate_package_diagram(pkg_path: Path) -> None:

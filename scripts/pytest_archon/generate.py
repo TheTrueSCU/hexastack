@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 """Generate pytest-archon boundary tests for packages in Hexagonal Architecture."""
 
 import textwrap
 from pathlib import Path
 
-from _common import (
+from scripts._common import (
     LAYER_RESTRICTIONS,
     get_package_directories,
     get_present_layers,

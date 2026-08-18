@@ -4,6 +4,20 @@ version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = []
 
+[project.scripts]
+import-linter-generate = "scripts.import_linter.generate:main"
+import-linter-run = "scripts.import_linter.run:main"
+inline-snapshot-update = "scripts.inline_snapshot.update:main"
+mutmut-inspect = "scripts.mutmut.inspect:main"
+mutmut-run = "scripts.mutmut.run:main"
+pydeps-generate = "scripts.pydeps.generate:main"
+pytest-archon-generate = "scripts.pytest_archon.generate:main"
+rope-run = "scripts.rope.run:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [tool.uv.workspace]
 members = [
     "packages/*",
@@ -26,6 +40,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "pytest-randomly>=4.1.0",
     "pytest-xdist>=3.8.0",
+    "rope>=1.14.0",
     "ruff>=0.16.2",
     "ty>=0.0.69",
 ]
@@ -53,11 +68,14 @@ exclude_lines = [
     "return NotImplemented",
 ]
 
-[tool.pytest.ini_options]
-addopts = "-n auto --import-mode=importlib --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
+[tool.hatch.build.targets.wheel]
+packages = ["scripts"]
 
 [tool.inline-snapshot]
 format-command = "uv run ruff format --stdin-filename {filename} -"
+
+[tool.pytest.ini_options]
+addopts = "-n auto --import-mode=importlib --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
 
 [tool.ruff.lint]
 select = [
@@ -124,10 +142,8 @@ known-first-party = [
     "hexastack_logging",
     "hexastack_mcp",
     "hexastack_otel",
+    "scripts",
 ]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
-
-[tool.ty.environment]
-extra-paths = ["scripts"]

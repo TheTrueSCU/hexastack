@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
 """Generate [tool.importlinter] contracts in each package's pyproject.toml."""
 
 import re
 from pathlib import Path
 
-from _common import (
+from scripts._common import (
     LAYER_RESTRICTIONS,
     get_package_directories,
     get_present_layers,
