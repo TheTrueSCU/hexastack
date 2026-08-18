@@ -54,6 +54,11 @@ def get_package_directories(repo_root: Path | None = None) -> list[Path]:
     return sorted(p for p in packages_dir.iterdir() if p.is_dir())
 
 
+def get_package_directory(package: str, repo_root: Path | None = None) -> Path:
+    """Return full path for a package."""
+    return get_packages_directory(repo_root) / f"hexastack_{package}"
+
+
 def get_packages_directory(repo_root: Path | None = None) -> Path:
     """Return full path for PACKAGES_DIR."""
     if repo_root is None:
