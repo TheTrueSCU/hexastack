@@ -20,27 +20,16 @@ class Identity:
     claims: dict[str, Any] = field(default_factory=dict)
     is_authenticated: bool = True
 
-    def has_role(self, role: str) -> bool:
-        """Check if the identity holds a specific role.
+    def has_all_permissions(self, permissions: Collection[str]) -> bool:
+        """Check if the identity holds every permission in the given collection.
 
         Args:
-            role: The role name to verify.
+            permissions: Collection of required permission strings.
 
         Returns:
-            True if the role is present in this identity's roles.
+            True if all required permissions are held.
         """
-        return role in self.roles
-
-    def has_permission(self, permission: str) -> bool:
-        """Check if the identity holds a specific permission.
-
-        Args:
-            permission: The permission string to verify.
-
-        Returns:
-            True if the permission is present in this identity's permissions.
-        """
-        return permission in self.permissions
+        return set(permissions).issubset(self.permissions)
 
     def has_all_roles(self, roles: Collection[str]) -> bool:
         """Check if the identity holds every role in the given collection.
@@ -53,6 +42,17 @@ class Identity:
         """
         return set(roles).issubset(self.roles)
 
+    def has_any_permission(self, permissions: Collection[str]) -> bool:
+        """Check if the identity holds at least one permission in the given collection.
+
+        Args:
+            permissions: Collection of permission strings.
+
+        Returns:
+            True if at least one permission is held.
+        """
+        return bool(set(permissions).intersection(self.permissions))
+
     def has_any_role(self, roles: Collection[str]) -> bool:
         """Check if the identity holds at least one role in the given collection.
 
@@ -64,27 +64,27 @@ class Identity:
         """
         return bool(set(roles).intersection(self.roles))
 
-    def has_all_permissions(self, permissions: Collection[str]) -> bool:
-        """Check if the identity holds every permission in the given collection.
+    def has_permission(self, permission: str) -> bool:
+        """Check if the identity holds a specific permission.
 
         Args:
-            permissions: Collection of required permission strings.
+            permission: The permission string to verify.
 
         Returns:
-            True if all required permissions are held.
+            True if the permission is present in this identity's permissions.
         """
-        return set(permissions).issubset(self.permissions)
+        return permission in self.permissions
 
-    def has_any_permission(self, permissions: Collection[str]) -> bool:
-        """Check if the identity holds at least one permission in the given collection.
+    def has_role(self, role: str) -> bool:
+        """Check if the identity holds a specific role.
 
         Args:
-            permissions: Collection of permission strings.
+            role: The role name to verify.
 
         Returns:
-            True if at least one permission is held.
+            True if the role is present in this identity's roles.
         """
-        return bool(set(permissions).intersection(self.permissions))
+        return role in self.roles
 
 
 @dataclass(frozen=True)

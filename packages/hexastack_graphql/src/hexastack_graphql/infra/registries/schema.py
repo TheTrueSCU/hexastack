@@ -23,50 +23,6 @@ class GraphQLSchemaRegistry:
         self._mutation_fields: dict[str, Any] = {}
         self._custom_schema: strawberry.Schema | None = None
 
-    def register_query_type(self, cls: type[Any]) -> None:
-        """Register a Strawberry type class containing query fields.
-
-        Args:
-            cls: A class decorated with @strawberry.type.
-        """
-        if cls not in self._query_types:
-            self._query_types.append(cls)
-
-    def register_mutation_type(self, cls: type[Any]) -> None:
-        """Register a Strawberry type class containing mutation fields.
-
-        Args:
-            cls: A class decorated with @strawberry.type.
-        """
-        if cls not in self._mutation_types:
-            self._mutation_types.append(cls)
-
-    def register_query_field(self, name: str, field_def: Any) -> None:
-        """Register an individual query field or resolver function.
-
-        Args:
-            name: Field name.
-            field_def: Strawberry field or resolver function.
-        """
-        self._query_fields[name] = field_def
-
-    def register_mutation_field(self, name: str, field_def: Any) -> None:
-        """Register an individual mutation field or resolver function.
-
-        Args:
-            name: Field name.
-            field_def: Strawberry field or resolver function.
-        """
-        self._mutation_fields[name] = field_def
-
-    def set_custom_schema(self, schema: strawberry.Schema) -> None:
-        """Explicitly override with a pre-constructed Strawberry Schema.
-
-        Args:
-            schema: Pre-configured strawberry.Schema instance.
-        """
-        self._custom_schema = schema
-
     def build_schema(
         self,
         extensions: list[Any] | None = None,
@@ -157,6 +113,50 @@ class GraphQLSchemaRegistry:
         self._query_fields.clear()
         self._mutation_fields.clear()
         self._custom_schema = None
+
+    def register_mutation_field(self, name: str, field_def: Any) -> None:
+        """Register an individual mutation field or resolver function.
+
+        Args:
+            name: Field name.
+            field_def: Strawberry field or resolver function.
+        """
+        self._mutation_fields[name] = field_def
+
+    def register_mutation_type(self, cls: type[Any]) -> None:
+        """Register a Strawberry type class containing mutation fields.
+
+        Args:
+            cls: A class decorated with @strawberry.type.
+        """
+        if cls not in self._mutation_types:
+            self._mutation_types.append(cls)
+
+    def register_query_field(self, name: str, field_def: Any) -> None:
+        """Register an individual query field or resolver function.
+
+        Args:
+            name: Field name.
+            field_def: Strawberry field or resolver function.
+        """
+        self._query_fields[name] = field_def
+
+    def register_query_type(self, cls: type[Any]) -> None:
+        """Register a Strawberry type class containing query fields.
+
+        Args:
+            cls: A class decorated with @strawberry.type.
+        """
+        if cls not in self._query_types:
+            self._query_types.append(cls)
+
+    def set_custom_schema(self, schema: strawberry.Schema) -> None:
+        """Explicitly override with a pre-constructed Strawberry Schema.
+
+        Args:
+            schema: Pre-configured strawberry.Schema instance.
+        """
+        self._custom_schema = schema
 
 
 __all__ = [

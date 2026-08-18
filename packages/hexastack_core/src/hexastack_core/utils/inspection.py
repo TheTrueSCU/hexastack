@@ -4,6 +4,46 @@ from typing import Any
 
 from pydantic import BaseModel
 
+__all__ = [
+    "extract_dto_fields",
+    "inspect_model_parameters",
+]
+
+
+def extract_dto_fields(source: Any, target_cls: type[Any]) -> dict[str, Any]:
+    """Extract matching fields from an arbitrary source object, dictionary, or protobuf message.
+
+    Notes/Architectural Intent:
+        Enables seamless DTO instantiation across transport layers (Protobuf, HTTP request, CLI).
+
+    Args:
+        source: Source data payload (Dict, Protobuf message, or object).
+        target_cls: Target DTO or class to extract fields for.
+
+    Returns:
+        Dictionary of extracted field key-value pairs matching target_cls.
+    """
+    data: dict[str, Any] = {}
+
+    if hasattr(source, "DESCRIPTOR"):
+        # Protobuf Message object
+        for field in source.DESCRIPTOR.fields:
+            data[field.name] = getattr(source, field.name)
+    elif isinstance(source, dict):
+        data = dict(source)
+    else:
+        # Fallback attribute copy
+        if is_dataclass(target_cls):
+            for f in target_cls.__dataclass_fields__:  # type: ignore[attr-defined]
+                if hasattr(source, f):
+                    data[f] = getattr(source, f)
+        elif isinstance(target_cls, type) and issubclass(target_cls, BaseModel):
+            for f in target_cls.model_fields:
+                if hasattr(source, f):
+                    data[f] = getattr(source, f)
+
+    return data
+
 
 def inspect_model_parameters(model_cls: type[Any]) -> list[inspect.Parameter]:
     """Extract inspect.Parameter definitions from dataclasses, Pydantic models, or callables.
@@ -54,44 +94,3 @@ def inspect_model_parameters(model_cls: type[Any]) -> list[inspect.Parameter]:
         params.extend(sig.parameters.values())
 
     return params
-
-
-def extract_dto_fields(source: Any, target_cls: type[Any]) -> dict[str, Any]:
-    """Extract matching fields from an arbitrary source object, dictionary, or protobuf message.
-
-    Notes/Architectural Intent:
-        Enables seamless DTO instantiation across transport layers (Protobuf, HTTP request, CLI).
-
-    Args:
-        source: Source data payload (Dict, Protobuf message, or object).
-        target_cls: Target DTO or class to extract fields for.
-
-    Returns:
-        Dictionary of extracted field key-value pairs matching target_cls.
-    """
-    data: dict[str, Any] = {}
-
-    if hasattr(source, "DESCRIPTOR"):
-        # Protobuf Message object
-        for field in source.DESCRIPTOR.fields:
-            data[field.name] = getattr(source, field.name)
-    elif isinstance(source, dict):
-        data = dict(source)
-    else:
-        # Fallback attribute copy
-        if is_dataclass(target_cls):
-            for f in target_cls.__dataclass_fields__:  # type: ignore[attr-defined]
-                if hasattr(source, f):
-                    data[f] = getattr(source, f)
-        elif isinstance(target_cls, type) and issubclass(target_cls, BaseModel):
-            for f in target_cls.model_fields:
-                if hasattr(source, f):
-                    data[f] = getattr(source, f)
-
-    return data
-
-
-__all__ = [
-    "extract_dto_fields",
-    "inspect_model_parameters",
-]

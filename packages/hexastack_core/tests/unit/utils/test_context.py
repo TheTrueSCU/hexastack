@@ -11,20 +11,6 @@ from hexastack_core.utils.context import (
 )
 
 
-def test_context_vars_and_user_context():
-    correlation_id_ctx.set("req-12345")
-    assert correlation_id_ctx.get() == "req-12345"
-
-    user = UserContext(user_id="u-99", roles=["admin", "user"], tenant_id="tenant-1")
-    user_ctx.set(user)
-
-    retrieved = user_ctx.get()
-    assert retrieved is not None
-    assert retrieved.user_id == "u-99"
-    assert retrieved.roles == ["admin", "user"]
-    assert retrieved.tenant_id == "tenant-1"
-
-
 def test_context_helper_functions():
     # Test set_correlation_id and get_correlation_id
     token = set_correlation_id("test-corr-id")
@@ -43,6 +29,20 @@ def test_context_helper_functions():
     set_user_context(None)
     assert get_user_context() is None
     user_ctx.reset(user_token)
+
+
+def test_context_vars_and_user_context():
+    correlation_id_ctx.set("req-12345")
+    assert correlation_id_ctx.get() == "req-12345"
+
+    user = UserContext(user_id="u-99", roles=["admin", "user"], tenant_id="tenant-1")
+    user_ctx.set(user)
+
+    retrieved = user_ctx.get()
+    assert retrieved is not None
+    assert retrieved.user_id == "u-99"
+    assert retrieved.roles == ["admin", "user"]
+    assert retrieved.tenant_id == "tenant-1"
 
 
 def test_correlation_scope():

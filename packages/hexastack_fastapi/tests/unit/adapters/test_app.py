@@ -26,6 +26,28 @@ def test_create_fastapi_app_defaults():
     assert health_res.status_code == 200
 
 
+def test_create_fastapi_app_lifespan_logger_close():
+    class ClosableLogger(InMemoryLogger):
+        def __init__(self):
+            super().__init__()
+            self.closed = False
+
+        def close(self):
+            self.closed = True
+
+    closable = ClosableLogger()
+    container = Container()
+    container.add_instance(closable, declared_class=LoggingPort)
+
+    app = create_fastapi_app(container=container)
+
+    with TestClient(app):
+        assert closable.closed is False
+
+    # After client exits, lifespan should close logger
+    assert closable.closed is True
+
+
 def test_create_fastapi_app_with_cors():
     cfg = HexastackFastApiConfig(
         title="Custom CORS App",
@@ -47,25 +69,3 @@ def test_create_fastapi_app_with_cors():
     )
     assert res.status_code == 200
     assert res.headers.get("access-control-allow-origin") == "https://myapp.com"
-
-
-def test_create_fastapi_app_lifespan_logger_close():
-    class ClosableLogger(InMemoryLogger):
-        def __init__(self):
-            super().__init__()
-            self.closed = False
-
-        def close(self):
-            self.closed = True
-
-    closable = ClosableLogger()
-    container = Container()
-    container.add_instance(closable, declared_class=LoggingPort)
-
-    app = create_fastapi_app(container=container)
-
-    with TestClient(app):
-        assert closable.closed is False
-
-    # After client exits, lifespan should close logger
-    assert closable.closed is True

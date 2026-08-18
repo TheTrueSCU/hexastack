@@ -16,6 +16,36 @@ from hexastack_fastapi.infra.decorators import (
     RouteMetadata,
 )
 
+__all__ = [
+    "autodiscover_routes",
+    "create_route_visitor",
+]
+
+
+def autodiscover_routes(
+    app: FastAPI,
+    packages_to_scan: Sequence[str | ModuleType],
+    router: CqrsRouter | None = None,
+) -> CqrsRouter:
+    """Automatically discover decorated routes from packages and attach them to a FastAPI application.
+
+    Args:
+        app: Target FastAPI application instance.
+        packages_to_scan: Sequence of package names or module objects to inspect.
+        router: Optional CqrsRouter instance to populate and mount.
+
+    Returns:
+        The mounted CqrsRouter instance.
+
+    Raises:
+        None.
+    """
+    target_router = router or CqrsRouter()
+    visitor = create_route_visitor(target_router)
+    scan_modules(packages_to_scan, [visitor])
+    app.include_router(target_router)
+    return target_router
+
 
 def create_route_visitor(router: CqrsRouter) -> DiscoveryVisitor:
     """Create a DiscoveryVisitor callback for single-pass HTTP route registration.
@@ -69,34 +99,3 @@ def create_route_visitor(router: CqrsRouter) -> DiscoveryVisitor:
             )
 
     return visitor
-
-
-def autodiscover_routes(
-    app: FastAPI,
-    packages_to_scan: Sequence[str | ModuleType],
-    router: CqrsRouter | None = None,
-) -> CqrsRouter:
-    """Automatically discover decorated routes from packages and attach them to a FastAPI application.
-
-    Args:
-        app: Target FastAPI application instance.
-        packages_to_scan: Sequence of package names or module objects to inspect.
-        router: Optional CqrsRouter instance to populate and mount.
-
-    Returns:
-        The mounted CqrsRouter instance.
-
-    Raises:
-        None.
-    """
-    target_router = router or CqrsRouter()
-    visitor = create_route_visitor(target_router)
-    scan_modules(packages_to_scan, [visitor])
-    app.include_router(target_router)
-    return target_router
-
-
-__all__ = [
-    "autodiscover_routes",
-    "create_route_visitor",
-]

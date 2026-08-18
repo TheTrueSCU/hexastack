@@ -13,6 +13,14 @@ from hexastack_fastapi.adapters.db_session import (
 )
 
 
+def _async_factory():
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=StaticPool,
+    )
+    return async_sessionmaker(bind=engine)
+
+
 def _sync_factory():
     engine = create_engine(
         "sqlite:///:memory:",
@@ -22,27 +30,30 @@ def _sync_factory():
     return sessionmaker(bind=engine)
 
 
-def _async_factory():
-    engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        poolclass=StaticPool,
-    )
-    return async_sessionmaker(bind=engine)
-
-
-def test_db_session_middleware_injects_session():
+def test_add_db_session_middleware_async():
     app = FastAPI()
-    factory = _sync_factory()
-    app.add_middleware(DbSessionMiddleware, session_factory=factory)
+    factory = _async_factory()
+    add_db_session_middleware(app, factory, async_mode=True)
 
     @app.get("/check")
     async def check(request: Request):
         return {"has_session": hasattr(request.state, "db_session")}
 
     client = TestClient(app)
-    response = client.get("/check")
-    assert response.status_code == 200
-    assert response.json()["has_session"] is True
+    assert client.get("/check").json()["has_session"] is True
+
+
+def test_add_db_session_middleware_sync():
+    app = FastAPI()
+    factory = _sync_factory()
+    add_db_session_middleware(app, factory, async_mode=False)
+
+    @app.get("/check")
+    async def check(request: Request):
+        return {"has_session": hasattr(request.state, "db_session")}
+
+    client = TestClient(app)
+    assert client.get("/check").json()["has_session"] is True
 
 
 def test_async_db_session_middleware_injects_session():
@@ -60,30 +71,19 @@ def test_async_db_session_middleware_injects_session():
     assert response.json()["has_session"] is True
 
 
-def test_add_db_session_middleware_sync():
+def test_db_session_middleware_injects_session():
     app = FastAPI()
     factory = _sync_factory()
-    add_db_session_middleware(app, factory, async_mode=False)
+    app.add_middleware(DbSessionMiddleware, session_factory=factory)
 
     @app.get("/check")
     async def check(request: Request):
         return {"has_session": hasattr(request.state, "db_session")}
 
     client = TestClient(app)
-    assert client.get("/check").json()["has_session"] is True
-
-
-def test_add_db_session_middleware_async():
-    app = FastAPI()
-    factory = _async_factory()
-    add_db_session_middleware(app, factory, async_mode=True)
-
-    @app.get("/check")
-    async def check(request: Request):
-        return {"has_session": hasattr(request.state, "db_session")}
-
-    client = TestClient(app)
-    assert client.get("/check").json()["has_session"] is True
+    response = client.get("/check")
+    assert response.status_code == 200
+    assert response.json()["has_session"] is True
 
 
 def test_session_closed_after_response():

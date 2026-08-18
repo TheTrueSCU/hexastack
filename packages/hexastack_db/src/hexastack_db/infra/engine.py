@@ -12,6 +12,13 @@ from sqlalchemy.pool import NullPool, StaticPool
 
 from hexastack_db.infra.config import HexastackDatabaseConfig, SqliteDialectConfig
 
+__all__ = [
+    "create_async_db_engine",
+    "create_async_session_factory",
+    "create_db_engine",
+    "create_session_factory",
+]
+
 
 def _setup_sqlite_pragmas(engine: Engine, sqlite_cfg: SqliteDialectConfig) -> None:
     """Register connect event listener configuring SQLite PRAGMAs."""
@@ -28,42 +35,6 @@ def _setup_sqlite_pragmas(engine: Engine, sqlite_cfg: SqliteDialectConfig) -> No
         if sqlite_cfg.synchronous:
             cursor.execute(f"PRAGMA synchronous={sqlite_cfg.synchronous}")
         cursor.close()
-
-
-def create_db_engine(config: HexastackDatabaseConfig) -> Engine:
-    """Create a synchronous SQLAlchemy Engine from configuration.
-
-    Notes/Architectural Intent:
-        Optimizes connection pooling for SQLite (StaticPool/NullPool for memory/file)
-        and standard QueuePool for PostgreSQL/MySQL. Attaches dialect-specific PRAGMAs.
-
-    Args:
-        config: HexastackDatabaseConfig instance.
-
-    Returns:
-        Configured SQLAlchemy Engine.
-    """
-    kwargs: dict[str, Any] = {"echo": config.echo}
-
-    if config.is_sqlite:
-        if ":memory:" in config.url:
-            kwargs["connect_args"] = {"check_same_thread": False}
-            kwargs["poolclass"] = StaticPool
-        else:
-            kwargs["connect_args"] = {"check_same_thread": False}
-            kwargs["poolclass"] = NullPool
-    else:
-        kwargs["pool_size"] = config.pool_size
-        kwargs["max_overflow"] = config.max_overflow
-        kwargs["pool_timeout"] = config.pool_timeout
-        kwargs["pool_recycle"] = config.pool_recycle
-
-    engine = create_engine(config.url, **kwargs)
-
-    if config.is_sqlite:
-        _setup_sqlite_pragmas(engine, config.sqlite)
-
-    return engine
 
 
 def create_async_db_engine(config: HexastackDatabaseConfig) -> AsyncEngine:
@@ -107,18 +78,6 @@ def create_async_db_engine(config: HexastackDatabaseConfig) -> AsyncEngine:
     return async_engine
 
 
-def create_session_factory(engine: Engine) -> sessionmaker[Session]:
-    """Create a thread-safe synchronous SQLAlchemy sessionmaker.
-
-    Args:
-        engine: The target SQLAlchemy Engine.
-
-    Returns:
-        Configured sessionmaker instance producing Sessions.
-    """
-    return sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
-
-
 def create_async_session_factory(
     async_engine: AsyncEngine,
 ) -> async_sessionmaker[AsyncSession]:
@@ -135,9 +94,49 @@ def create_async_session_factory(
     )
 
 
-__all__ = [
-    "create_async_db_engine",
-    "create_async_session_factory",
-    "create_db_engine",
-    "create_session_factory",
-]
+def create_db_engine(config: HexastackDatabaseConfig) -> Engine:
+    """Create a synchronous SQLAlchemy Engine from configuration.
+
+    Notes/Architectural Intent:
+        Optimizes connection pooling for SQLite (StaticPool/NullPool for memory/file)
+        and standard QueuePool for PostgreSQL/MySQL. Attaches dialect-specific PRAGMAs.
+
+    Args:
+        config: HexastackDatabaseConfig instance.
+
+    Returns:
+        Configured SQLAlchemy Engine.
+    """
+    kwargs: dict[str, Any] = {"echo": config.echo}
+
+    if config.is_sqlite:
+        if ":memory:" in config.url:
+            kwargs["connect_args"] = {"check_same_thread": False}
+            kwargs["poolclass"] = StaticPool
+        else:
+            kwargs["connect_args"] = {"check_same_thread": False}
+            kwargs["poolclass"] = NullPool
+    else:
+        kwargs["pool_size"] = config.pool_size
+        kwargs["max_overflow"] = config.max_overflow
+        kwargs["pool_timeout"] = config.pool_timeout
+        kwargs["pool_recycle"] = config.pool_recycle
+
+    engine = create_engine(config.url, **kwargs)
+
+    if config.is_sqlite:
+        _setup_sqlite_pragmas(engine, config.sqlite)
+
+    return engine
+
+
+def create_session_factory(engine: Engine) -> sessionmaker[Session]:
+    """Create a thread-safe synchronous SQLAlchemy sessionmaker.
+
+    Args:
+        engine: The target SQLAlchemy Engine.
+
+    Returns:
+        Configured sessionmaker instance producing Sessions.
+    """
+    return sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)

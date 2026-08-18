@@ -31,10 +31,6 @@ class EventsBootstrapper(BootstrapperPort):
     order: int = 22
     name: str = "events"
 
-    def register_config(self, registry: ConfigRegistry) -> None:
-        """Register the events configuration section in Phase 1."""
-        register_events_config(registry)
-
     def configure(self, context: BootstrapContext) -> None:
         """Configure event streaming and outbox components in Phase 2."""
         di = context.container
@@ -95,6 +91,10 @@ class EventsBootstrapper(BootstrapperPort):
         context.properties["distributed_bus"] = bus
         if relay is not None:
             context.properties["outbox_relay"] = relay
+
+    def register_config(self, registry: ConfigRegistry) -> None:
+        """Register the events configuration section in Phase 1."""
+        register_events_config(registry)
 
 
 __all__ = [

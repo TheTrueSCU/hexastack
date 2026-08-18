@@ -44,6 +44,32 @@ class WriteInvoiceCommand(Command):
     inv_id: str
 
 
+@pytest.mark.anyio
+async def test_authorization_middleware_async():
+    middleware = AuthorizationMiddleware()
+    cmd_pub = PublicCommand(message="async-msg")
+
+    async def _async_handler(c):
+        return f"async {c.message}"
+
+    res = await middleware(cmd_pub, _async_handler)
+    assert res == "async async-msg"
+
+    # Async unauthorized command fails
+    set_user_context(None)
+    cmd_auth = AuthenticatedOnlyCommand(data="async-secret")
+    with pytest.raises(InvalidCredentialsError):
+        await middleware(cmd_auth, _async_handler)
+
+
+def test_authorization_middleware_disabled():
+    middleware = AuthorizationMiddleware(enabled=False)
+    assert middleware.enabled is False
+    cmd = AuthenticatedOnlyCommand(data="bypass")
+    res = middleware(cmd, lambda c: "bypassed")
+    assert res == "bypassed"
+
+
 def test_authorization_middleware_with_anonymous_user():
     handler_reg = HandlerRegistry()
     command_reg = CommandRegistry()
@@ -102,32 +128,6 @@ def test_authorization_middleware_with_user_context():
     assert res == "deleted res-123"
 
 
-def test_evaluate_authorization_roles_all_and_any():
-    # Test match_all_roles = True
-    meta_roles_all = AuthMetadata(roles=("admin", "auditor"), match_all_roles=True)
-    ident_missing_role = Identity(user_id="u1", roles=frozenset(["admin"]))
-    with pytest.raises(
-        InsufficientPermissionsError,
-        match="lacks required roles: \\['admin', 'auditor'\\]",
-    ):
-        evaluate_authorization(meta_roles_all, ident_missing_role)
-
-    ident_has_both = Identity(user_id="u1", roles=frozenset(["admin", "auditor"]))
-    evaluate_authorization(meta_roles_all, ident_has_both)
-
-    # Test match_all_roles = False (any role)
-    meta_roles_any = AuthMetadata(roles=("admin", "auditor"), match_all_roles=False)
-    ident_has_none = Identity(user_id="u1", roles=frozenset(["viewer"]))
-    with pytest.raises(
-        InsufficientPermissionsError,
-        match="lacks any of the required roles: \\['admin', 'auditor'\\]",
-    ):
-        evaluate_authorization(meta_roles_any, ident_has_none)
-
-    ident_has_one = Identity(user_id="u1", roles=frozenset(["viewer", "admin"]))
-    evaluate_authorization(meta_roles_any, ident_has_one)
-
-
 def test_evaluate_authorization_permissions_all_and_any():
     # Test match_all_permissions = True
     meta_perms_all = AuthMetadata(
@@ -159,6 +159,32 @@ def test_evaluate_authorization_permissions_all_and_any():
     evaluate_authorization(
         meta_perms_any, Identity(user_id="u3", permissions=frozenset(["read"]))
     )
+
+
+def test_evaluate_authorization_roles_all_and_any():
+    # Test match_all_roles = True
+    meta_roles_all = AuthMetadata(roles=("admin", "auditor"), match_all_roles=True)
+    ident_missing_role = Identity(user_id="u1", roles=frozenset(["admin"]))
+    with pytest.raises(
+        InsufficientPermissionsError,
+        match="lacks required roles: \\['admin', 'auditor'\\]",
+    ):
+        evaluate_authorization(meta_roles_all, ident_missing_role)
+
+    ident_has_both = Identity(user_id="u1", roles=frozenset(["admin", "auditor"]))
+    evaluate_authorization(meta_roles_all, ident_has_both)
+
+    # Test match_all_roles = False (any role)
+    meta_roles_any = AuthMetadata(roles=("admin", "auditor"), match_all_roles=False)
+    ident_has_none = Identity(user_id="u1", roles=frozenset(["viewer"]))
+    with pytest.raises(
+        InsufficientPermissionsError,
+        match="lacks any of the required roles: \\['admin', 'auditor'\\]",
+    ):
+        evaluate_authorization(meta_roles_any, ident_has_none)
+
+    ident_has_one = Identity(user_id="u1", roles=frozenset(["viewer", "admin"]))
+    evaluate_authorization(meta_roles_any, ident_has_one)
 
 
 def test_resolve_effective_identity_variations():
@@ -195,29 +221,3 @@ def test_resolve_effective_identity_variations():
     assert "duck_perm" in resolved_duck.permissions
     assert resolved_duck.tenant_id == "tenant_duck"
     assert resolved_duck.is_authenticated is True
-
-
-def test_authorization_middleware_disabled():
-    middleware = AuthorizationMiddleware(enabled=False)
-    assert middleware.enabled is False
-    cmd = AuthenticatedOnlyCommand(data="bypass")
-    res = middleware(cmd, lambda c: "bypassed")
-    assert res == "bypassed"
-
-
-@pytest.mark.anyio
-async def test_authorization_middleware_async():
-    middleware = AuthorizationMiddleware()
-    cmd_pub = PublicCommand(message="async-msg")
-
-    async def _async_handler(c):
-        return f"async {c.message}"
-
-    res = await middleware(cmd_pub, _async_handler)
-    assert res == "async async-msg"
-
-    # Async unauthorized command fails
-    set_user_context(None)
-    cmd_auth = AuthenticatedOnlyCommand(data="async-secret")
-    with pytest.raises(InvalidCredentialsError):
-        await middleware(cmd_auth, _async_handler)

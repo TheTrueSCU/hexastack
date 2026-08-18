@@ -19,20 +19,6 @@ class SampleModel(BaseModel):
     active: bool = True
 
 
-def test_inspect_model_parameters():
-    dc_params = inspect_model_parameters(SampleDataclass)
-    assert len(dc_params) == 2
-    assert dc_params[0].name == "id"
-    assert dc_params[1].name == "count"
-    assert dc_params[1].default == 1
-
-    model_params = inspect_model_parameters(SampleModel)
-    assert len(model_params) == 2
-    assert model_params[0].name == "name"
-    assert model_params[1].name == "active"
-    assert model_params[1].default is True
-
-
 def test_extract_dto_fields_from_dict_and_object():
     payload = {"id": "item-1", "count": 5, "extra": "ignored"}
     extracted = extract_dto_fields(payload, SampleDataclass)
@@ -47,3 +33,17 @@ def test_extract_dto_fields_from_dict_and_object():
     extracted_obj = extract_dto_fields(MockObj(), SampleModel)
     assert extracted_obj["name"] == "alice"
     assert extracted_obj["active"] is False
+
+
+def test_inspect_model_parameters():
+    dc_params = inspect_model_parameters(SampleDataclass)
+    assert len(dc_params) == 2
+    assert dc_params[0].name == "id"
+    assert dc_params[1].name == "count"
+    assert dc_params[1].default == 1
+
+    model_params = inspect_model_parameters(SampleModel)
+    assert len(model_params) == 2
+    assert model_params[0].name == "name"
+    assert model_params[1].name == "active"
+    assert model_params[1].default is True

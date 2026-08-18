@@ -126,6 +126,13 @@ class AsyncDbSessionMiddleware(BaseHTTPMiddleware):
         return response
 
 
+__all__ = [
+    "AsyncDbSessionMiddleware",
+    "DbSessionMiddleware",
+    "add_db_session_middleware",
+]
+
+
 def add_db_session_middleware(
     app: Any,
     session_factory: Callable[[], Any],
@@ -151,10 +158,3 @@ def add_db_session_middleware(
         app.add_middleware(AsyncDbSessionMiddleware, session_factory=session_factory)
     else:
         app.add_middleware(DbSessionMiddleware, session_factory=session_factory)
-
-
-__all__ = [
-    "AsyncDbSessionMiddleware",
-    "DbSessionMiddleware",
-    "add_db_session_middleware",
-]

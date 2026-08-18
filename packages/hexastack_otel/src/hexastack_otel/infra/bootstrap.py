@@ -21,14 +21,6 @@ class OtelBootstrapper(BootstrapperPort):
     order: int = 12
     name: str = "otel"
 
-    def register_config(self, registry: ConfigRegistry) -> None:
-        """Register the OpenTelemetry configuration section in Phase 1.
-
-        Args:
-            registry: The active ConfigRegistry instance.
-        """
-        register_otel_config(registry)
-
     def configure(self, context: BootstrapContext) -> None:
         """Assemble TracingPort and TracingMiddleware into the DI container in Phase 2.
 
@@ -89,6 +81,14 @@ class OtelBootstrapper(BootstrapperPort):
         # 5. Store in context properties
         context.properties["tracing_port"] = tracer
         context.properties["otel_config"] = cfg
+
+    def register_config(self, registry: ConfigRegistry) -> None:
+        """Register the OpenTelemetry configuration section in Phase 1.
+
+        Args:
+            registry: The active ConfigRegistry instance.
+        """
+        register_otel_config(registry)
 
 
 __all__ = [

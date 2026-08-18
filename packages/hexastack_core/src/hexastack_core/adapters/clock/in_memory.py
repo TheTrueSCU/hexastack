@@ -39,14 +39,6 @@ class FrozenClock(ClockPort):
             else datetime.now(UTC)
         )
 
-    def now_utc(self) -> datetime:
-        """Return the frozen UTC datetime."""
-        return self._current_time
-
-    def timestamp(self) -> float:
-        """Return the frozen POSIX timestamp."""
-        return self._current_time.timestamp()
-
     def advance(
         self,
         seconds: float = 0,
@@ -69,9 +61,17 @@ class FrozenClock(ClockPort):
         self._current_time += delta
         return self._current_time
 
+    def now_utc(self) -> datetime:
+        """Return the frozen UTC datetime."""
+        return self._current_time
+
     def set_time(self, new_time: datetime) -> None:
         """Set the frozen clock to an explicit datetime."""
         self._current_time = new_time.astimezone(UTC)
+
+    def timestamp(self) -> float:
+        """Return the frozen POSIX timestamp."""
+        return self._current_time.timestamp()
 
 
 __all__ = [

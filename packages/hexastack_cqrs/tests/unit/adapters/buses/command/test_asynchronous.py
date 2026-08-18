@@ -17,6 +17,16 @@ class SendEmail(Command):
     recipient: str
 
 
+def test_huey_command_bus_missing_dependency():
+    registry = HandlerRegistry()
+    huey = MemoryHuey()
+    with (
+        patch("importlib.util.find_spec", return_value=None),
+        pytest.raises(MissingDependencyError, match="huey is required"),
+    ):
+        HueyCommandBus(huey=huey, handler_registry=registry)
+
+
 def test_huey_command_bus_with_middleware():
     huey = MemoryHuey(immediate=True)
     registry = HandlerRegistry()
@@ -36,16 +46,6 @@ def test_huey_command_bus_with_middleware():
     assert task is not None
     assert task() == "sent to user@example.com"
     assert audit_log == ["audit: user@example.com"]
-
-
-def test_huey_command_bus_missing_dependency():
-    registry = HandlerRegistry()
-    huey = MemoryHuey()
-    with (
-        patch("importlib.util.find_spec", return_value=None),
-        pytest.raises(MissingDependencyError, match="huey is required"),
-    ):
-        HueyCommandBus(huey=huey, handler_registry=registry)
 
 
 def test_native_async_command_bus_default_executor():

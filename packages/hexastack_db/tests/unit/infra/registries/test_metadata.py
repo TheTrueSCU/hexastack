@@ -14,19 +14,6 @@ class ProductRecord(UuidPrimaryKeyMixin, HexastackBase):
     name: Mapped[str] = mapped_column()
 
 
-def test_register_metadata_adds_to_registry():
-    assert get_registered_metadata() == []
-    register_metadata(HexastackBase.metadata)
-    assert len(get_registered_metadata()) == 1
-    assert HexastackBase.metadata in get_registered_metadata()
-
-
-def test_register_metadata_deduplicates():
-    register_metadata(HexastackBase.metadata)
-    register_metadata(HexastackBase.metadata)
-    assert len(get_registered_metadata()) == 1
-
-
 def _bootstrap_with_url(url: str, auto_create_tables: bool, tmp_path):
     """Helper: write a TOML config and run bootstrap.
 
@@ -82,3 +69,16 @@ def test_auto_create_tables_false_skips_creation(tmp_path):
         ).fetchall()
         table_names = [r[0] for r in rows]
         assert "test_products_registry" not in table_names
+
+
+def test_register_metadata_adds_to_registry():
+    assert get_registered_metadata() == []
+    register_metadata(HexastackBase.metadata)
+    assert len(get_registered_metadata()) == 1
+    assert HexastackBase.metadata in get_registered_metadata()
+
+
+def test_register_metadata_deduplicates():
+    register_metadata(HexastackBase.metadata)
+    register_metadata(HexastackBase.metadata)
+    assert len(get_registered_metadata()) == 1

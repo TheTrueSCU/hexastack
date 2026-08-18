@@ -1,6 +1,22 @@
 from hexastack_auth.domain.models import AnonymousIdentity, Identity, TokenPayload
 
 
+def test_anonymous_identity():
+    anon = AnonymousIdentity()
+    assert anon.user_id == "anonymous"
+    assert anon.is_authenticated is False
+    assert anon.tenant_id is None
+    assert anon.claims == {}
+    assert len(anon.roles) == 0
+    assert len(anon.permissions) == 0
+    assert anon.has_role("admin") is False
+    assert anon.has_permission("read") is False
+    assert anon.has_any_role(["admin", "guest"]) is False
+    assert anon.has_all_roles(["admin"]) is False
+    assert anon.has_any_permission(["read"]) is False
+    assert anon.has_all_permissions(["read"]) is False
+
+
 def test_identity_default_construction():
     ident = Identity(user_id="usr_default")
     assert ident.user_id == "usr_default"
@@ -62,22 +78,6 @@ def test_identity_methods():
     assert identity.has_any_permission(["execute", "delete"]) is True
     assert identity.has_any_permission(["read"]) is True
     assert identity.has_any_permission(["execute", "audit"]) is False
-
-
-def test_anonymous_identity():
-    anon = AnonymousIdentity()
-    assert anon.user_id == "anonymous"
-    assert anon.is_authenticated is False
-    assert anon.tenant_id is None
-    assert anon.claims == {}
-    assert len(anon.roles) == 0
-    assert len(anon.permissions) == 0
-    assert anon.has_role("admin") is False
-    assert anon.has_permission("read") is False
-    assert anon.has_any_role(["admin", "guest"]) is False
-    assert anon.has_all_roles(["admin"]) is False
-    assert anon.has_any_permission(["read"]) is False
-    assert anon.has_all_permissions(["read"]) is False
 
 
 def test_token_payload():

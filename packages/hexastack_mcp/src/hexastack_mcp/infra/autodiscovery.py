@@ -18,6 +18,29 @@ from hexastack_mcp.infra.decorators import (
 )
 from hexastack_mcp.infra.registries.server import McpServerRegistry
 
+__all__ = [
+    "autodiscover_mcp_elements",
+    "create_mcp_visitor",
+]
+
+
+def autodiscover_mcp_elements(
+    packages_to_scan: Sequence[str | ModuleType],
+    registry: McpServerRegistry,
+) -> McpServerRegistry:
+    """Discover decorated MCP tools, resources, and prompts from packages.
+
+    Args:
+        packages_to_scan: Sequence of package names or module objects to inspect.
+        registry: Target McpServerRegistry instance.
+
+    Returns:
+        The populated McpServerRegistry instance.
+    """
+    visitor = create_mcp_visitor(registry)
+    scan_modules(packages_to_scan, [visitor])
+    return registry
+
 
 def create_mcp_visitor(
     registry: McpServerRegistry,
@@ -50,27 +73,3 @@ def create_mcp_visitor(
             registry.register_prompt(prompt_meta)
 
     return visitor
-
-
-def autodiscover_mcp_elements(
-    packages_to_scan: Sequence[str | ModuleType],
-    registry: McpServerRegistry,
-) -> McpServerRegistry:
-    """Discover decorated MCP tools, resources, and prompts from packages.
-
-    Args:
-        packages_to_scan: Sequence of package names or module objects to inspect.
-        registry: Target McpServerRegistry instance.
-
-    Returns:
-        The populated McpServerRegistry instance.
-    """
-    visitor = create_mcp_visitor(registry)
-    scan_modules(packages_to_scan, [visitor])
-    return registry
-
-
-__all__ = [
-    "autodiscover_mcp_elements",
-    "create_mcp_visitor",
-]

@@ -43,26 +43,6 @@ class MockProtoRequest:
         self.amount = amount
 
 
-def test_dispatch_rpc_helpers():
-    runtime = bootstrap(packages_to_scan=[__name__])
-
-    cmd_req = MockProtoRequest(order_id="ord-100", amount=49.99)
-    cmd_res = dispatch_rpc_command(
-        request=cmd_req,
-        command_cls=CreateOrderCommand,
-        container=runtime.container,
-    )
-    assert cmd_res == "Order ord-100 created for $49.99"
-
-    qry_req = MockProtoRequest(order_id="ord-100")
-    qry_res = dispatch_rpc_query(
-        request=qry_req,
-        query_cls=GetOrderQuery,
-        container=runtime.container,
-    )
-    assert qry_res == {"order_id": "ord-100", "status": "CONFIRMED"}
-
-
 @pytest.mark.anyio
 async def test_dispatch_rpc_async_helpers():
     runtime = bootstrap(packages_to_scan=[__name__])
@@ -82,3 +62,23 @@ async def test_dispatch_rpc_async_helpers():
         container=runtime.container,
     )
     assert qry_res == {"order_id": "ord-async-1", "status": "CONFIRMED"}
+
+
+def test_dispatch_rpc_helpers():
+    runtime = bootstrap(packages_to_scan=[__name__])
+
+    cmd_req = MockProtoRequest(order_id="ord-100", amount=49.99)
+    cmd_res = dispatch_rpc_command(
+        request=cmd_req,
+        command_cls=CreateOrderCommand,
+        container=runtime.container,
+    )
+    assert cmd_res == "Order ord-100 created for $49.99"
+
+    qry_req = MockProtoRequest(order_id="ord-100")
+    qry_res = dispatch_rpc_query(
+        request=qry_req,
+        query_cls=GetOrderQuery,
+        container=runtime.container,
+    )
+    assert qry_res == {"order_id": "ord-100", "status": "CONFIRMED"}

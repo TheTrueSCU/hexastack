@@ -38,6 +38,47 @@ class RichTerminalPresenter(PresenterPort):
             stderr=True, no_color=no_color, highlight=not no_color
         )
 
+    def _present_json(self, data: Any) -> Any:
+        """Render raw, pipe-friendly JSON to stdout."""
+        json_str = json.dumps(data, indent=2, default=str)
+        sys.stdout.write(json_str + "\n")
+        sys.stdout.flush()
+        return data
+
+    def _present_plain(self, data: Any) -> Any:
+        """Render TSV/newline-delimited text to stdout for Unix pipeline processing."""
+        if isinstance(data, dict):
+            for k, v in data.items():
+                sys.stdout.write(f"{k}\t{v}\n")
+        elif isinstance(data, list):
+            for item in data:
+                sys.stdout.write(f"{item}\n")
+        else:
+            sys.stdout.write(f"{data}\n")
+        sys.stdout.flush()
+        return data
+
+    def _present_table(self, instance: Generic, data: Any) -> Any:
+        """Render colorized Rich table/panel to stdout."""
+        if isinstance(data, dict):
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("Field", style="cyan")
+            table.add_column("Value", style="green")
+            for k, v in data.items():
+                val_str = (
+                    json.dumps(v, indent=2) if isinstance(v, dict | list) else str(v)
+                )
+                table.add_row(str(k), val_str)
+            self._console.print(
+                Panel(table, title=type(instance).__name__, border_style="blue")
+            )
+        elif isinstance(data, list):
+            for item in data:
+                self._console.print(f"[cyan]•[/cyan] {item}")
+        else:
+            self._console.print(f"[bold green]{data}[/bold green]")
+        return data
+
     def present(
         self,
         instance: Generic,
@@ -89,47 +130,6 @@ class RichTerminalPresenter(PresenterPort):
             None.
         """
         self._stderr.print_exception(show_locals=False)
-
-    def _present_json(self, data: Any) -> Any:
-        """Render raw, pipe-friendly JSON to stdout."""
-        json_str = json.dumps(data, indent=2, default=str)
-        sys.stdout.write(json_str + "\n")
-        sys.stdout.flush()
-        return data
-
-    def _present_plain(self, data: Any) -> Any:
-        """Render TSV/newline-delimited text to stdout for Unix pipeline processing."""
-        if isinstance(data, dict):
-            for k, v in data.items():
-                sys.stdout.write(f"{k}\t{v}\n")
-        elif isinstance(data, list):
-            for item in data:
-                sys.stdout.write(f"{item}\n")
-        else:
-            sys.stdout.write(f"{data}\n")
-        sys.stdout.flush()
-        return data
-
-    def _present_table(self, instance: Generic, data: Any) -> Any:
-        """Render colorized Rich table/panel to stdout."""
-        if isinstance(data, dict):
-            table = Table(show_header=True, header_style="bold magenta")
-            table.add_column("Field", style="cyan")
-            table.add_column("Value", style="green")
-            for k, v in data.items():
-                val_str = (
-                    json.dumps(v, indent=2) if isinstance(v, dict | list) else str(v)
-                )
-                table.add_row(str(k), val_str)
-            self._console.print(
-                Panel(table, title=type(instance).__name__, border_style="blue")
-            )
-        elif isinstance(data, list):
-            for item in data:
-                self._console.print(f"[cyan]•[/cyan] {item}")
-        else:
-            self._console.print(f"[bold green]{data}[/bold green]")
-        return data
 
 
 __all__ = [

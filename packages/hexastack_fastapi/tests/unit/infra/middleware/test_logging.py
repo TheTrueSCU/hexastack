@@ -52,6 +52,41 @@ def _make_app(
     return TestClient(app)
 
 
+def test_request_logging_middleware_2xx_is_info():
+    logger = InMemoryLogger()
+    _make_app(logger).get("/items")
+    assert logger.entries[0].level.lower() == "info"
+
+
+def test_request_logging_middleware_4xx_is_warning():
+    logger = InMemoryLogger()
+    _make_app(logger).get("/client-err")
+    assert logger.entries[0].level.lower() == "warning"
+    assert logger.entries[0].extra is not None
+    assert logger.entries[0].extra["http_status"] == 404
+
+
+def test_request_logging_middleware_5xx_is_error():
+    logger = InMemoryLogger()
+    _make_app(logger).get("/server-err")
+    assert logger.entries[0].level.lower() == "error"
+    assert logger.entries[0].extra is not None
+    assert logger.entries[0].extra["http_status"] == 500
+
+
+@pytest.mark.snapshot
+def test_request_logging_middleware_error_status():
+    logger = InMemoryLogger()
+    client = _make_app(logger)
+
+    client.get("/client-err")
+    client.get("/server-err")
+
+    assert [{"level": e.level} for e in logger.entries] == snapshot(
+        [{"level": "warning"}, {"level": "error"}]
+    )
+
+
 # ---------------------------------------------------------------------------
 # extra dict field assertions (kills http_status, duration_ms, client_ip mutants)
 # ---------------------------------------------------------------------------
@@ -124,28 +159,6 @@ def test_request_logging_middleware_log_levels():
     )
 
 
-def test_request_logging_middleware_2xx_is_info():
-    logger = InMemoryLogger()
-    _make_app(logger).get("/items")
-    assert logger.entries[0].level.lower() == "info"
-
-
-def test_request_logging_middleware_4xx_is_warning():
-    logger = InMemoryLogger()
-    _make_app(logger).get("/client-err")
-    assert logger.entries[0].level.lower() == "warning"
-    assert logger.entries[0].extra is not None
-    assert logger.entries[0].extra["http_status"] == 404
-
-
-def test_request_logging_middleware_5xx_is_error():
-    logger = InMemoryLogger()
-    _make_app(logger).get("/server-err")
-    assert logger.entries[0].level.lower() == "error"
-    assert logger.entries[0].extra is not None
-    assert logger.entries[0].extra["http_status"] == 500
-
-
 # ---------------------------------------------------------------------------
 # Exclude paths — no log emitted (kills path exclusion mutants)
 # ---------------------------------------------------------------------------
@@ -179,16 +192,3 @@ def test_request_logging_middleware_success():
     # Excluded path generates no log
     client.get("/health")
     assert len(logger.entries) == 1
-
-
-@pytest.mark.snapshot
-def test_request_logging_middleware_error_status():
-    logger = InMemoryLogger()
-    client = _make_app(logger)
-
-    client.get("/client-err")
-    client.get("/server-err")
-
-    assert [{"level": e.level} for e in logger.entries] == snapshot(
-        [{"level": "warning"}, {"level": "error"}]
-    )

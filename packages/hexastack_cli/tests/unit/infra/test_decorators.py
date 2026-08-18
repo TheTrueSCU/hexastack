@@ -35,12 +35,6 @@ class FindUserQuery(Query[str]):
     user_id: str
 
 
-def test_cli_group_decorator():
-    meta: GroupMetadata = getattr(UserGroupConfig, _CLI_GROUP_ATTR)
-    assert meta.name == "users"
-    assert meta.help == "User management commands"
-
-
 def test_cli_command_decorator():
     meta: CliMetadata = getattr(CreateUserCommand, _CLI_METADATA_ATTR)
     assert meta.kind == "command"
@@ -48,6 +42,12 @@ def test_cli_command_decorator():
     assert meta.positional == ("username",)
     assert meta.help == "Create a new user"
     assert meta.group == "users"
+
+
+def test_cli_group_decorator():
+    meta: GroupMetadata = getattr(UserGroupConfig, _CLI_GROUP_ATTR)
+    assert meta.name == "users"
+    assert meta.help == "User management commands"
 
 
 def test_cli_query_decorator():

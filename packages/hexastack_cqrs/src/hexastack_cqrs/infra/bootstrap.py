@@ -225,6 +225,13 @@ class CqrsBootstrapper(BootstrapperPort):
         register_cqrs_config(registry)
 
 
+__all__ = [
+    "CqrsBootstrapResult",
+    "CqrsBootstrapper",
+    "bootstrap_cqrs",
+]
+
+
 def bootstrap_cqrs(
     config_path: str | Path | None = None,
     packages_to_scan: list[str | ModuleType] | None = None,
@@ -258,10 +265,3 @@ def bootstrap_cqrs(
     )
     result: CqrsBootstrapResult = res.get("cqrs_result")
     return result
-
-
-__all__ = [
-    "CqrsBootstrapResult",
-    "CqrsBootstrapper",
-    "bootstrap_cqrs",
-]

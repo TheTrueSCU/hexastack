@@ -27,6 +27,87 @@ class LiteLlmAdapter(LlmProviderPort):
         """
         self._config = config or HexastackAiConfig()
 
+    def generate_structured[T: BaseModel](
+        self, prompt: str, response_schema: type[T]
+    ) -> T:
+        """Generate structured Pydantic output using Instructor over LiteLLM.
+
+        Args:
+            prompt: The user prompt text.
+            response_schema: Target Pydantic model class.
+
+        Returns:
+            Validated instance of response_schema.
+
+        Raises:
+            StructuredOutputParsingError: If schema validation fails.
+            LlmProviderError: If API call fails.
+        """
+        import instructor
+        import litellm
+
+        client = instructor.from_litellm(litellm.completion)
+
+        kwargs: dict[str, Any] = {
+            "model": self._config.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_model": response_schema,
+            "temperature": self._config.temperature,
+            "max_tokens": self._config.max_tokens,
+        }
+        if self._config.api_key:
+            kwargs["api_key"] = self._config.api_key
+        if self._config.litellm.api_base:
+            kwargs["api_base"] = self._config.litellm.api_base
+
+        try:
+            return client.chat.completions.create(**kwargs)
+        except instructor.exceptions.InstructorRetryException as exc:
+            raise StructuredOutputParsingError(
+                f"Failed to generate structured {response_schema.__name__}: {exc}"
+            ) from exc
+        except Exception as exc:
+            raise LlmProviderError(
+                str(exc),
+                provider=self._config.provider,
+                model=self._config.model,
+            ) from exc
+
+    async def generate_structured_async[T: BaseModel](
+        self, prompt: str, response_schema: type[T]
+    ) -> T:
+        """Asynchronously generate structured Pydantic output using Instructor over LiteLLM."""
+        import instructor
+        import litellm
+
+        client = instructor.from_litellm(litellm.acompletion)
+
+        kwargs: dict[str, Any] = {
+            "model": self._config.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_model": response_schema,
+            "temperature": self._config.temperature,
+            "max_tokens": self._config.max_tokens,
+        }
+        if self._config.api_key:
+            kwargs["api_key"] = self._config.api_key
+        if self._config.litellm.api_base:
+            kwargs["api_base"] = self._config.litellm.api_base
+
+        try:
+            raw_result: Any = client.chat.completions.create(**kwargs)
+            return await raw_result
+        except instructor.exceptions.InstructorRetryException as exc:
+            raise StructuredOutputParsingError(
+                f"Failed to generate structured {response_schema.__name__}: {exc}"
+            ) from exc
+        except Exception as exc:
+            raise LlmProviderError(
+                str(exc),
+                provider=self._config.provider,
+                model=self._config.model,
+            ) from exc
+
     def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
         """Generate unstructured text from a prompt via LiteLLM.
 
@@ -114,87 +195,6 @@ class LiteLlmAdapter(LlmProviderPort):
         try:
             response = await litellm.acompletion(**kwargs)
             return response.choices[0].message.content or ""
-        except Exception as exc:
-            raise LlmProviderError(
-                str(exc),
-                provider=self._config.provider,
-                model=self._config.model,
-            ) from exc
-
-    def generate_structured[T: BaseModel](
-        self, prompt: str, response_schema: type[T]
-    ) -> T:
-        """Generate structured Pydantic output using Instructor over LiteLLM.
-
-        Args:
-            prompt: The user prompt text.
-            response_schema: Target Pydantic model class.
-
-        Returns:
-            Validated instance of response_schema.
-
-        Raises:
-            StructuredOutputParsingError: If schema validation fails.
-            LlmProviderError: If API call fails.
-        """
-        import instructor
-        import litellm
-
-        client = instructor.from_litellm(litellm.completion)
-
-        kwargs: dict[str, Any] = {
-            "model": self._config.model,
-            "messages": [{"role": "user", "content": prompt}],
-            "response_model": response_schema,
-            "temperature": self._config.temperature,
-            "max_tokens": self._config.max_tokens,
-        }
-        if self._config.api_key:
-            kwargs["api_key"] = self._config.api_key
-        if self._config.litellm.api_base:
-            kwargs["api_base"] = self._config.litellm.api_base
-
-        try:
-            return client.chat.completions.create(**kwargs)
-        except instructor.exceptions.InstructorRetryException as exc:
-            raise StructuredOutputParsingError(
-                f"Failed to generate structured {response_schema.__name__}: {exc}"
-            ) from exc
-        except Exception as exc:
-            raise LlmProviderError(
-                str(exc),
-                provider=self._config.provider,
-                model=self._config.model,
-            ) from exc
-
-    async def generate_structured_async[T: BaseModel](
-        self, prompt: str, response_schema: type[T]
-    ) -> T:
-        """Asynchronously generate structured Pydantic output using Instructor over LiteLLM."""
-        import instructor
-        import litellm
-
-        client = instructor.from_litellm(litellm.acompletion)
-
-        kwargs: dict[str, Any] = {
-            "model": self._config.model,
-            "messages": [{"role": "user", "content": prompt}],
-            "response_model": response_schema,
-            "temperature": self._config.temperature,
-            "max_tokens": self._config.max_tokens,
-        }
-        if self._config.api_key:
-            kwargs["api_key"] = self._config.api_key
-        if self._config.litellm.api_base:
-            kwargs["api_base"] = self._config.litellm.api_base
-
-        try:
-            raw_result: Any = client.chat.completions.create(**kwargs)
-            return await raw_result
-        except instructor.exceptions.InstructorRetryException as exc:
-            raise StructuredOutputParsingError(
-                f"Failed to generate structured {response_schema.__name__}: {exc}"
-            ) from exc
         except Exception as exc:
             raise LlmProviderError(
                 str(exc),

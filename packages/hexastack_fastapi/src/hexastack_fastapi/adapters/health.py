@@ -8,6 +8,10 @@ from rodi import Container
 from hexastack_core.utils.context import get_correlation_id
 from hexastack_fastapi.infra.config import HealthConfig
 
+__all__ = [
+    "create_health_router",
+]
+
 
 def create_health_router(
     container: Container | None = None,
@@ -56,8 +60,3 @@ def create_health_router(
         return JSONResponse(status_code=status_code, content=payload)
 
     return router
-
-
-__all__ = [
-    "create_health_router",
-]

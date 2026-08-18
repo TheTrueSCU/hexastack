@@ -18,6 +18,14 @@ from hexastack_cqrs.ports.buses import (
 
 
 @pytest.fixture
+def clean_pipeline(
+    create_pipeline_fixture: Callable[..., ExecutionPipeline],
+) -> ExecutionPipeline:
+    """Fixture providing a fresh default ExecutionPipeline instance."""
+    return create_pipeline_fixture()
+
+
+@pytest.fixture
 def create_pipeline_fixture() -> Callable[..., ExecutionPipeline]:
     """Factory fixture to create an ExecutionPipeline with optional custom registries/buses.
 
@@ -47,11 +55,3 @@ def create_pipeline_fixture() -> Callable[..., ExecutionPipeline]:
         )
 
     return _factory
-
-
-@pytest.fixture
-def clean_pipeline(
-    create_pipeline_fixture: Callable[..., ExecutionPipeline],
-) -> ExecutionPipeline:
-    """Fixture providing a fresh default ExecutionPipeline instance."""
-    return create_pipeline_fixture()

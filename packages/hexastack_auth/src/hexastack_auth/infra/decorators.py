@@ -21,6 +21,25 @@ class AuthMetadata:
     match_all_permissions: bool = True
 
 
+__all__ = [
+    "AuthMetadata",
+    "authenticated",
+    "authorize",
+    "get_auth_metadata",
+    "requires_permission",
+    "requires_role",
+]
+
+
+def authenticated[T: Any]() -> Callable[[T], T]:
+    """Convenience decorator requiring an authenticated caller without specific roles.
+
+    Returns:
+        Decorated target with require_authenticated=True.
+    """
+    return authorize(require_authenticated=True)
+
+
 def authorize[T: Any](
     *,
     roles: Sequence[str] = (),
@@ -60,39 +79,6 @@ def authorize[T: Any](
     return decorator
 
 
-def authenticated[T: Any]() -> Callable[[T], T]:
-    """Convenience decorator requiring an authenticated caller without specific roles.
-
-    Returns:
-        Decorated target with require_authenticated=True.
-    """
-    return authorize(require_authenticated=True)
-
-
-def requires_role[T: Any](*roles: str) -> Callable[[T], T]:
-    """Convenience decorator requiring the caller to possess specified roles.
-
-    Args:
-        *roles: One or more required role strings.
-
-    Returns:
-        Decorated target with specified roles.
-    """
-    return authorize(roles=roles, require_authenticated=True)
-
-
-def requires_permission[T: Any](*permissions: str) -> Callable[[T], T]:
-    """Convenience decorator requiring the caller to possess specified permissions.
-
-    Args:
-        *permissions: One or more required permission strings.
-
-    Returns:
-        Decorated target with specified permissions.
-    """
-    return authorize(permissions=permissions, require_authenticated=True)
-
-
 def get_auth_metadata(target: Any) -> AuthMetadata | None:
     """Retrieve attached AuthMetadata from a class, instance, or function.
 
@@ -112,11 +98,25 @@ def get_auth_metadata(target: Any) -> AuthMetadata | None:
     return None
 
 
-__all__ = [
-    "AuthMetadata",
-    "authenticated",
-    "authorize",
-    "get_auth_metadata",
-    "requires_permission",
-    "requires_role",
-]
+def requires_permission[T: Any](*permissions: str) -> Callable[[T], T]:
+    """Convenience decorator requiring the caller to possess specified permissions.
+
+    Args:
+        *permissions: One or more required permission strings.
+
+    Returns:
+        Decorated target with specified permissions.
+    """
+    return authorize(permissions=permissions, require_authenticated=True)
+
+
+def requires_role[T: Any](*roles: str) -> Callable[[T], T]:
+    """Convenience decorator requiring the caller to possess specified roles.
+
+    Args:
+        *roles: One or more required role strings.
+
+    Returns:
+        Decorated target with specified roles.
+    """
+    return authorize(roles=roles, require_authenticated=True)

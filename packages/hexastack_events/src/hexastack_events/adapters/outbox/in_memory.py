@@ -13,12 +13,9 @@ class InMemoryOutboxStorage(OutboxStoragePort):
     def __init__(self) -> None:
         self._records: dict[str, OutboxRecord] = {}
 
-    def save(self, record: OutboxRecord) -> None:
-        self._records[record.id] = record
-
-    def save_all(self, records: list[OutboxRecord]) -> None:
-        for r in records:
-            self._records[r.id] = r
+    def clear(self) -> None:
+        """Clear all stored outbox records."""
+        self._records.clear()
 
     def fetch_pending(self, limit: int = 50) -> list[OutboxRecord]:
         pending = [
@@ -30,21 +27,24 @@ class InMemoryOutboxStorage(OutboxStoragePort):
         pending.sort(key=lambda r: r.created_at)
         return pending[:limit]
 
-    def mark_published(self, record_id: str) -> None:
-        if record_id in self._records:
-            self._records[record_id].mark_published()
+    def get_all(self) -> list[OutboxRecord]:
+        """Return all stored outbox records."""
+        return list(self._records.values())
 
     def mark_failed(self, record_id: str, error_message: str) -> None:
         if record_id in self._records:
             self._records[record_id].mark_failed(error_message)
 
-    def get_all(self) -> list[OutboxRecord]:
-        """Return all stored outbox records."""
-        return list(self._records.values())
+    def mark_published(self, record_id: str) -> None:
+        if record_id in self._records:
+            self._records[record_id].mark_published()
 
-    def clear(self) -> None:
-        """Clear all stored outbox records."""
-        self._records.clear()
+    def save(self, record: OutboxRecord) -> None:
+        self._records[record.id] = record
+
+    def save_all(self, records: list[OutboxRecord]) -> None:
+        for r in records:
+            self._records[r.id] = r
 
 
 __all__ = [

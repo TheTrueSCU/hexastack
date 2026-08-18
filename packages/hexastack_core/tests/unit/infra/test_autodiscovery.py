@@ -6,6 +6,17 @@ from hexastack_core.infra.autodiscovery import (
 )
 
 
+def test_scan_modules_empty_inputs_noop():
+    # Empty visitors
+    scan_modules(["non_existent_package"], [])
+
+    # Empty packages
+    scan_modules([], [lambda m, mod: None])
+
+    # Unimportable package handled gracefully
+    scan_modules(["completely_invalid_package_xyz_123"], [lambda m, mod: None])
+
+
 def test_scan_modules_invokes_visitors():
     mod = ModuleType("dummy_sample_module")
 
@@ -27,14 +38,3 @@ def test_scan_modules_invokes_visitors():
 
     assert SampleClass in discovered_members
     assert sample_func in discovered_members
-
-
-def test_scan_modules_empty_inputs_noop():
-    # Empty visitors
-    scan_modules(["non_existent_package"], [])
-
-    # Empty packages
-    scan_modules([], [lambda m, mod: None])
-
-    # Unimportable package handled gracefully
-    scan_modules(["completely_invalid_package_xyz_123"], [lambda m, mod: None])

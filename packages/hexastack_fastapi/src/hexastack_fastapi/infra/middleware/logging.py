@@ -37,12 +37,6 @@ class RequestLoggingHttpMiddleware:
         self._logger = logger or StandardLogger("hexastack.http")
         self._exclude_paths = set(self._cfg.logging.exclude_paths)
 
-    def _get_logger(self) -> LoggingPort:
-        """Resolve LoggingPort from container if available, else use fallback."""
-        if self._container is not None and LoggingPort in self._container:
-            return self._container.resolve(LoggingPort)
-        return self._logger
-
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Intercept request, measure duration, and log access details."""
         if scope["type"] != "http" or not self._cfg.logging.enable:
@@ -88,6 +82,12 @@ class RequestLoggingHttpMiddleware:
                 log.warning(msg, extra=extra)
             else:
                 log.info(msg, extra=extra)
+
+    def _get_logger(self) -> LoggingPort:
+        """Resolve LoggingPort from container if available, else use fallback."""
+        if self._container is not None and LoggingPort in self._container:
+            return self._container.resolve(LoggingPort)
+        return self._logger
 
 
 __all__ = [

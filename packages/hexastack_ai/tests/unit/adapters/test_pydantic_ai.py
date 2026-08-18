@@ -7,6 +7,16 @@ from hexastack_ai.adapters.pydantic_ai import PydanticAiAgentAdapter
 from hexastack_ai.domain.exceptions import AgentExecutionError
 
 
+def test_pydantic_ai_agent_adapter_error_translation():
+    mock_agent = MagicMock(spec=Agent)
+    mock_agent.run_sync.side_effect = RuntimeError("Turn limit exceeded")
+
+    adapter = PydanticAiAgentAdapter(agent=mock_agent)
+    with pytest.raises(AgentExecutionError) as exc_info:
+        adapter.run_sync("Will fail")
+    assert "Turn limit exceeded" in str(exc_info.value)
+
+
 @pytest.mark.anyio
 async def test_pydantic_ai_agent_adapter_run_async():
     mock_agent = MagicMock(spec=Agent)
@@ -30,13 +40,3 @@ def test_pydantic_ai_agent_adapter_run_sync():
     adapter = PydanticAiAgentAdapter(agent=mock_agent)
     data = adapter.run_sync("Sync prompt")
     assert data == "Sync result"
-
-
-def test_pydantic_ai_agent_adapter_error_translation():
-    mock_agent = MagicMock(spec=Agent)
-    mock_agent.run_sync.side_effect = RuntimeError("Turn limit exceeded")
-
-    adapter = PydanticAiAgentAdapter(agent=mock_agent)
-    with pytest.raises(AgentExecutionError) as exc_info:
-        adapter.run_sync("Will fail")
-    assert "Turn limit exceeded" in str(exc_info.value)

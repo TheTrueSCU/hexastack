@@ -12,22 +12,6 @@ from hexastack_otel.infra.middleware import TracingMiddleware
 from hexastack_otel.ports.tracing import TracingPort
 
 
-def test_otel_bootstrapper_configuration_memory():
-    bootstrapper = OtelBootstrapper()
-    container = Container()
-    config_reg = ConfigRegistry()
-    bootstrapper.register_config(config_reg)
-
-    ctx = BootstrapContext(container=container, config=None, config_registry=config_reg)
-    bootstrapper.configure(ctx)
-
-    tracer = container.resolve(TracingPort)
-    assert isinstance(tracer, InMemoryTracingAdapter)
-
-    middleware = container.resolve(TracingMiddleware)
-    assert isinstance(middleware, TracingMiddleware)
-
-
 def test_otel_bootstrapper_configuration_console():
     bootstrapper = OtelBootstrapper()
     container = Container()
@@ -45,3 +29,19 @@ def test_otel_bootstrapper_configuration_console():
 
     tracer = container.resolve(TracingPort)
     assert isinstance(tracer, OtelTracingAdapter)
+
+
+def test_otel_bootstrapper_configuration_memory():
+    bootstrapper = OtelBootstrapper()
+    container = Container()
+    config_reg = ConfigRegistry()
+    bootstrapper.register_config(config_reg)
+
+    ctx = BootstrapContext(container=container, config=None, config_registry=config_reg)
+    bootstrapper.configure(ctx)
+
+    tracer = container.resolve(TracingPort)
+    assert isinstance(tracer, InMemoryTracingAdapter)
+
+    middleware = container.resolve(TracingMiddleware)
+    assert isinstance(middleware, TracingMiddleware)

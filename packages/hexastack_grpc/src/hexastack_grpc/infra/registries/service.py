@@ -31,27 +31,6 @@ class GrpcServiceRegistry:
         """Initialize empty gRPC registry."""
         self._services: list[GrpcServiceRegistration] = []
 
-    def register_service(
-        self,
-        servicer: Any,
-        add_to_server_fn: Callable[[Any, Any], None],
-        service_names: Sequence[str] = (),
-    ) -> None:
-        """Register a gRPC servicer and its generated add_to_server hook.
-
-        Args:
-            servicer: Servicer instance or class.
-            add_to_server_fn: Generated protobuf hook (e.g. add_GreeterServicer_to_server).
-            service_names: Optional sequence of full service names for reflection.
-        """
-        reg = GrpcServiceRegistration(
-            servicer=servicer,
-            add_to_server_fn=add_to_server_fn,
-            service_names=service_names,
-        )
-        if reg not in self._services:
-            self._services.append(reg)
-
     def build_server(
         self,
         config: HexastackGrpcConfig,
@@ -112,6 +91,27 @@ class GrpcServiceRegistry:
     def clear(self) -> None:
         """Clear all registered services (for test isolation)."""
         self._services.clear()
+
+    def register_service(
+        self,
+        servicer: Any,
+        add_to_server_fn: Callable[[Any, Any], None],
+        service_names: Sequence[str] = (),
+    ) -> None:
+        """Register a gRPC servicer and its generated add_to_server hook.
+
+        Args:
+            servicer: Servicer instance or class.
+            add_to_server_fn: Generated protobuf hook (e.g. add_GreeterServicer_to_server).
+            service_names: Optional sequence of full service names for reflection.
+        """
+        reg = GrpcServiceRegistration(
+            servicer=servicer,
+            add_to_server_fn=add_to_server_fn,
+            service_names=service_names,
+        )
+        if reg not in self._services:
+            self._services.append(reg)
 
 
 __all__ = [

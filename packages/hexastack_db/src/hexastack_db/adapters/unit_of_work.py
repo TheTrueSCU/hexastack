@@ -41,21 +41,24 @@ class SqlAlchemyUnitOfWork(UnitOfWorkPort):
         self._session_factory = session_factory
         self._session: Session | None = None
 
-    @property
-    def session(self) -> Session:
-        """Active SQLAlchemy Session in current transactional scope.
+    def __enter__(self) -> Self:
+        """Enter transactional scope and acquire fresh database Session."""
+        self._session = self._session_factory()
+        return self
 
-        Returns:
-            Current Session.
-
-        Raises:
-            DatabaseError: If accessed outside of transactional context manager.
-        """
-        if self._session is None:
-            raise DatabaseError(
-                "UnitOfWork session is not active. Use within 'with uow:' context."
-            )
-        return self._session
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        trace: TracebackType | None,
+    ) -> None:
+        """Exit transactional scope, commit or rollback, and close session."""
+        try:
+            super().__exit__(exc_type, exc, trace)
+        finally:
+            if self._session is not None:
+                self._session.close()
+                self._session = None
 
     def commit(self) -> None:
         """Commit all pending database changes in active session.
@@ -76,24 +79,21 @@ class SqlAlchemyUnitOfWork(UnitOfWorkPort):
             with contextlib.suppress(SQLAlchemyError):
                 self._session.rollback()
 
-    def __enter__(self) -> Self:
-        """Enter transactional scope and acquire fresh database Session."""
-        self._session = self._session_factory()
-        return self
+    @property
+    def session(self) -> Session:
+        """Active SQLAlchemy Session in current transactional scope.
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        trace: TracebackType | None,
-    ) -> None:
-        """Exit transactional scope, commit or rollback, and close session."""
-        try:
-            super().__exit__(exc_type, exc, trace)
-        finally:
-            if self._session is not None:
-                self._session.close()
-                self._session = None
+        Returns:
+            Current Session.
+
+        Raises:
+            DatabaseError: If accessed outside of transactional context manager.
+        """
+        if self._session is None:
+            raise DatabaseError(
+                "UnitOfWork session is not active. Use within 'with uow:' context."
+            )
+        return self._session
 
 
 class AsyncSqlAlchemyUnitOfWork(AsyncUnitOfWorkPort):
@@ -115,49 +115,6 @@ class AsyncSqlAlchemyUnitOfWork(AsyncUnitOfWorkPort):
         self._session_factory = session_factory
         self._session: AsyncSession | None = None
 
-    @property
-    def session(self) -> AsyncSession:
-        """Active AsyncSession in current transactional scope.
-
-        Returns:
-            Current AsyncSession.
-
-        Raises:
-            DatabaseError: If accessed outside of async transactional context.
-        """
-        if self._session is None:
-            raise DatabaseError(
-                "AsyncUnitOfWork session is not active. Use within 'async with uow:' context."
-            )
-        return self._session
-
-    async def commit(self) -> None:
-        """Commit all pending database changes asynchronously.
-
-        Raises:
-            UnitOfWorkError: If committing transaction fails.
-        """
-        if self._session is not None:
-            try:
-                await self._session.commit()
-            except SQLAlchemyError as exc:
-                await self._session.rollback()
-                raise UnitOfWorkError() from exc
-
-    async def rollback(self) -> None:
-        """Roll back all pending database changes asynchronously."""
-        if self._session is not None:
-            with contextlib.suppress(SQLAlchemyError):
-                await self._session.rollback()
-
-    async def commit_async(self) -> None:
-        """Asynchronously commit all pending transactional changes."""
-        await self.commit()
-
-    async def rollback_async(self) -> None:
-        """Asynchronously roll back all pending transactional changes."""
-        await self.rollback()
-
     async def __aenter__(self) -> Self:
         """Enter asynchronous transactional scope and acquire fresh AsyncSession."""
         self._session = self._session_factory()
@@ -176,6 +133,49 @@ class AsyncSqlAlchemyUnitOfWork(AsyncUnitOfWorkPort):
             if self._session is not None:
                 await self._session.close()
                 self._session = None
+
+    async def commit(self) -> None:
+        """Commit all pending database changes asynchronously.
+
+        Raises:
+            UnitOfWorkError: If committing transaction fails.
+        """
+        if self._session is not None:
+            try:
+                await self._session.commit()
+            except SQLAlchemyError as exc:
+                await self._session.rollback()
+                raise UnitOfWorkError() from exc
+
+    async def commit_async(self) -> None:
+        """Asynchronously commit all pending transactional changes."""
+        await self.commit()
+
+    async def rollback(self) -> None:
+        """Roll back all pending database changes asynchronously."""
+        if self._session is not None:
+            with contextlib.suppress(SQLAlchemyError):
+                await self._session.rollback()
+
+    async def rollback_async(self) -> None:
+        """Asynchronously roll back all pending transactional changes."""
+        await self.rollback()
+
+    @property
+    def session(self) -> AsyncSession:
+        """Active AsyncSession in current transactional scope.
+
+        Returns:
+            Current AsyncSession.
+
+        Raises:
+            DatabaseError: If accessed outside of async transactional context.
+        """
+        if self._session is None:
+            raise DatabaseError(
+                "AsyncUnitOfWork session is not active. Use within 'async with uow:' context."
+            )
+        return self._session
 
 
 __all__ = [

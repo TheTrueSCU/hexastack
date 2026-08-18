@@ -4,6 +4,19 @@ from hexastack_core.adapters.cache import AsyncInMemoryCache, InMemoryCache
 from hexastack_core.adapters.clock import FrozenClock
 
 
+@pytest.mark.anyio
+async def test_async_in_memory_cache():
+    cache = AsyncInMemoryCache()
+    assert await cache.has_async("item") is False
+
+    await cache.set_async("item", 100)
+    assert await cache.get_async("item") == 100
+    assert await cache.has_async("item") is True
+
+    assert await cache.delete_async("item") is True
+    assert await cache.has_async("item") is False
+
+
 def test_in_memory_cache_basic_crud():
     cache = InMemoryCache()
     assert cache.has("user:1") is False
@@ -38,16 +51,3 @@ def test_in_memory_cache_ttl_expiration_with_frozen_clock():
     clock.advance(seconds=31)
     assert cache.get("session:token") is None
     assert cache.has("session:token") is False
-
-
-@pytest.mark.anyio
-async def test_async_in_memory_cache():
-    cache = AsyncInMemoryCache()
-    assert await cache.has_async("item") is False
-
-    await cache.set_async("item", 100)
-    assert await cache.get_async("item") == 100
-    assert await cache.has_async("item") is True
-
-    assert await cache.delete_async("item") is True
-    assert await cache.has_async("item") is False

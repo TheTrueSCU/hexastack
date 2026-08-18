@@ -16,6 +16,15 @@ class OrderCreated(Event):
     order_id: str
 
 
+def test_huey_event_bus_missing_dependency():
+    huey = MemoryHuey()
+    with (
+        patch("importlib.util.find_spec", return_value=None),
+        pytest.raises(MissingDependencyError, match="huey is required"),
+    ):
+        HueyEventBus(huey=huey)
+
+
 def test_huey_event_bus_with_middleware_and_clear():
     huey = MemoryHuey(immediate=True)
     mw_log = []
@@ -38,15 +47,6 @@ def test_huey_event_bus_with_middleware_and_clear():
     # Clear
     bus.clear()
     assert len(bus.handlers(OrderCreated)) == 0
-
-
-def test_huey_event_bus_missing_dependency():
-    huey = MemoryHuey()
-    with (
-        patch("importlib.util.find_spec", return_value=None),
-        pytest.raises(MissingDependencyError, match="huey is required"),
-    ):
-        HueyEventBus(huey=huey)
 
 
 def test_native_async_event_bus_default_executor_and_clear():

@@ -15,32 +15,28 @@ from hexastack_logging.infra.config import (
 )
 
 
-def test_register_logging_config():
-    reg = ConfigRegistry()
-    register_logging_config(reg)
+def test_configure_logging_async_queue_and_structured_logger(tmp_path: Path):
+    log_file = tmp_path / "async_test.log"
 
-    assert "logging" in reg
-    assert reg.get("logging") == HexastackLoggingConfig
-
-
-def test_configure_logging_json():
-    logger = logging.getLogger("test_config_json_logger")
-    cfg = HexastackLoggingConfig(level="DEBUG", format="json")
-    listener = configure_logging(config=cfg, target_logger=logger)
-
-    assert listener is None
-    assert logger.level == logging.DEBUG
-    assert len(logger.handlers) == 1
-    assert logger.handlers[0].formatter.__class__.__name__ == "JsonFormatter"
-
-
-def test_sanitizer_config():
-    cfg = HexastackLoggingConfig.model_validate(
-        {"sanitizer": {"enable": False, "mask_replacement": "[HIDDEN]"}}
+    cfg = HexastackLoggingConfig(
+        level="INFO",
+        queue=AsyncQueueConfig(enable=True, max_size=1000),
+        file=FileLoggingConfig(enable=True, path=str(log_file)),
     )
-    assert cfg.sanitizer.enable is False
-    assert cfg.sanitizer.mask_replacement == "[HIDDEN]"
-    assert isinstance(cfg.sanitizer, SanitizerConfig)
+
+    structured = StructuredLogger(name="test_async_structured", config=cfg)
+    assert structured.listener is not None
+
+    structured.info("Async queue log message")
+    time.sleep(0.05)  # Allow background queue worker to drain
+
+    # Stop background listener cleanly via instance
+    structured.close()
+    assert structured.listener is None
+
+    assert log_file.exists()
+    content = log_file.read_text(encoding="utf-8")
+    assert "Async queue log message" in content
 
 
 def test_configure_logging_file_and_per_module_levels(tmp_path: Path):
@@ -79,25 +75,29 @@ def test_configure_logging_file_and_per_module_levels(tmp_path: Path):
     assert parsed["message"] == "File log test message"
 
 
-def test_configure_logging_async_queue_and_structured_logger(tmp_path: Path):
-    log_file = tmp_path / "async_test.log"
+def test_configure_logging_json():
+    logger = logging.getLogger("test_config_json_logger")
+    cfg = HexastackLoggingConfig(level="DEBUG", format="json")
+    listener = configure_logging(config=cfg, target_logger=logger)
 
-    cfg = HexastackLoggingConfig(
-        level="INFO",
-        queue=AsyncQueueConfig(enable=True, max_size=1000),
-        file=FileLoggingConfig(enable=True, path=str(log_file)),
+    assert listener is None
+    assert logger.level == logging.DEBUG
+    assert len(logger.handlers) == 1
+    assert logger.handlers[0].formatter.__class__.__name__ == "JsonFormatter"
+
+
+def test_register_logging_config():
+    reg = ConfigRegistry()
+    register_logging_config(reg)
+
+    assert "logging" in reg
+    assert reg.get("logging") == HexastackLoggingConfig
+
+
+def test_sanitizer_config():
+    cfg = HexastackLoggingConfig.model_validate(
+        {"sanitizer": {"enable": False, "mask_replacement": "[HIDDEN]"}}
     )
-
-    structured = StructuredLogger(name="test_async_structured", config=cfg)
-    assert structured.listener is not None
-
-    structured.info("Async queue log message")
-    time.sleep(0.05)  # Allow background queue worker to drain
-
-    # Stop background listener cleanly via instance
-    structured.close()
-    assert structured.listener is None
-
-    assert log_file.exists()
-    content = log_file.read_text(encoding="utf-8")
-    assert "Async queue log message" in content
+    assert cfg.sanitizer.enable is False
+    assert cfg.sanitizer.mask_replacement == "[HIDDEN]"
+    assert isinstance(cfg.sanitizer, SanitizerConfig)

@@ -12,6 +12,34 @@ class OutboxStoragePort(ABC):
     """
 
     @abstractmethod
+    def fetch_pending(self, limit: int = 50) -> list[OutboxRecord]:
+        """Fetch pending outbox records ready for relaying.
+
+        Args:
+            limit: Maximum number of records to retrieve.
+
+        Returns:
+            List of pending OutboxRecord instances ordered by creation time.
+        """
+
+    @abstractmethod
+    def mark_failed(self, record_id: str, error_message: str) -> None:
+        """Mark an outbox record as failed with an error message.
+
+        Args:
+            record_id: Unique record ID.
+            error_message: Failure diagnostics.
+        """
+
+    @abstractmethod
+    def mark_published(self, record_id: str) -> None:
+        """Mark an outbox record as successfully delivered.
+
+        Args:
+            record_id: Unique record ID.
+        """
+
+    @abstractmethod
     def save(self, record: OutboxRecord) -> None:
         """Persist a new outbox record.
 
@@ -25,34 +53,6 @@ class OutboxStoragePort(ABC):
 
         Args:
             records: List of OutboxRecord instances.
-        """
-
-    @abstractmethod
-    def fetch_pending(self, limit: int = 50) -> list[OutboxRecord]:
-        """Fetch pending outbox records ready for relaying.
-
-        Args:
-            limit: Maximum number of records to retrieve.
-
-        Returns:
-            List of pending OutboxRecord instances ordered by creation time.
-        """
-
-    @abstractmethod
-    def mark_published(self, record_id: str) -> None:
-        """Mark an outbox record as successfully delivered.
-
-        Args:
-            record_id: Unique record ID.
-        """
-
-    @abstractmethod
-    def mark_failed(self, record_id: str, error_message: str) -> None:
-        """Mark an outbox record as failed with an error message.
-
-        Args:
-            record_id: Unique record ID.
-            error_message: Failure diagnostics.
         """
 
 

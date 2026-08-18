@@ -12,6 +12,66 @@ from hexastack_core.domain import Generic
 from hexastack_core.utils.context import UserContext, get_user_context
 
 
+class AuthorizationMiddleware:
+    """CQRS middleware evaluating declarative @authorize rules on dispatched messages.
+
+    Notes/Architectural Intent:
+        Intercepts Command and Query execution before reaching handlers.
+        Enforces security invariants centrally regardless of driving transport.
+    """
+
+    def __init__(self, enabled: bool = True) -> None:
+        """Initialize authorization middleware.
+
+        Args:
+            enabled: Whether authorization checks are active.
+        """
+        self._enabled = enabled
+
+    def __call__[G: Generic, R](
+        self,
+        instance: G,
+        next_call: Callable[[G], R],
+    ) -> R:
+        """Execute authorization evaluation before dispatching to the next handler.
+
+        Args:
+            instance: The command or query message instance.
+            next_call: The downstream handler or next middleware in chain.
+
+        Returns:
+            The handler return value.
+
+        Raises:
+            InvalidCredentialsError: If caller is not authenticated.
+            InsufficientPermissionsError: If caller lacks roles or permissions.
+        """
+        if self._enabled:
+            meta = get_auth_metadata(instance)
+            if meta is not None:
+                evaluate_authorization(meta)
+
+        result = next_call(instance)
+        if inspect.isawaitable(result):
+
+            async def _async_wrap() -> Any:
+                return await result
+
+            return cast("R", _async_wrap())
+        return result
+
+    @property
+    def enabled(self) -> bool:
+        """Whether authorization checks are actively enforced."""
+        return self._enabled
+
+
+__all__ = [
+    "AuthorizationMiddleware",
+    "evaluate_authorization",
+]
+
+
 def _resolve_effective_identity(identity: Any | None) -> Identity:
     """Normalize UserContext or Identity into an Identity instance."""
     if identity is None:
@@ -93,63 +153,3 @@ def evaluate_authorization(
                 raise InsufficientPermissionsError(
                     f"Identity '{effective_id.user_id}' lacks any of the required permissions: {sorted(metadata.permissions)}"
                 )
-
-
-class AuthorizationMiddleware:
-    """CQRS middleware evaluating declarative @authorize rules on dispatched messages.
-
-    Notes/Architectural Intent:
-        Intercepts Command and Query execution before reaching handlers.
-        Enforces security invariants centrally regardless of driving transport.
-    """
-
-    def __init__(self, enabled: bool = True) -> None:
-        """Initialize authorization middleware.
-
-        Args:
-            enabled: Whether authorization checks are active.
-        """
-        self._enabled = enabled
-
-    @property
-    def enabled(self) -> bool:
-        """Whether authorization checks are actively enforced."""
-        return self._enabled
-
-    def __call__[G: Generic, R](
-        self,
-        instance: G,
-        next_call: Callable[[G], R],
-    ) -> R:
-        """Execute authorization evaluation before dispatching to the next handler.
-
-        Args:
-            instance: The command or query message instance.
-            next_call: The downstream handler or next middleware in chain.
-
-        Returns:
-            The handler return value.
-
-        Raises:
-            InvalidCredentialsError: If caller is not authenticated.
-            InsufficientPermissionsError: If caller lacks roles or permissions.
-        """
-        if self._enabled:
-            meta = get_auth_metadata(instance)
-            if meta is not None:
-                evaluate_authorization(meta)
-
-        result = next_call(instance)
-        if inspect.isawaitable(result):
-
-            async def _async_wrap() -> Any:
-                return await result
-
-            return cast("R", _async_wrap())
-        return result
-
-
-__all__ = [
-    "AuthorizationMiddleware",
-    "evaluate_authorization",
-]

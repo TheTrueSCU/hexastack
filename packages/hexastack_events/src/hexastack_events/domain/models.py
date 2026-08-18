@@ -59,17 +59,17 @@ class OutboxRecord(BaseModel):
         description="Last error message if a delivery attempt failed.",
     )
 
-    def mark_published(self) -> None:
-        """Mark record as successfully published."""
-        self.status = OutboxStatus.PUBLISHED
-        self.published_at = datetime.now(UTC)
-        self.last_error = None
-
     def mark_failed(self, error_message: str) -> None:
         """Increment retry count and mark as failed."""
         self.retry_count += 1
         self.status = OutboxStatus.FAILED
         self.last_error = error_message
+
+    def mark_published(self) -> None:
+        """Mark record as successfully published."""
+        self.status = OutboxStatus.PUBLISHED
+        self.published_at = datetime.now(UTC)
+        self.last_error = None
 
 
 class CloudEventEnvelope(BaseModel):

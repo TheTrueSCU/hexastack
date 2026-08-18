@@ -4,6 +4,11 @@ from rodi import Container
 from hexastack_core.domain.exceptions import DependencyResolutionError
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
+__all__ = [
+    "get_container",
+    "get_pipeline",
+]
+
 
 def get_container(request: Request) -> Container:
     """FastAPI dependency provider resolving the active rodi Container instance.
@@ -54,9 +59,3 @@ def get_pipeline(request: Request) -> ExecutionPipeline:
     raise DependencyResolutionError(
         "ExecutionPipeline is not available on request.app.state.pipeline or container."
     )
-
-
-__all__ = [
-    "get_container",
-    "get_pipeline",
-]

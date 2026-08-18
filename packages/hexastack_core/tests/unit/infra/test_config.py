@@ -28,16 +28,6 @@ def test_hexastack_config_get_section_success():
     assert retrieved.value == 5432
 
 
-def test_hexastack_config_missing_section_raises_error():
-    core = HexastackCoreConfig()
-    config = HexastackConfig(core=core, sections={})
-
-    with pytest.raises(HexastackConfigError) as exc_info:
-        config.get_section("missing", CustomSection)
-
-    assert "Config section 'missing' not registered." in str(exc_info.value)
-
-
 def test_hexastack_config_invalid_type_raises_error():
     core = HexastackCoreConfig()
     custom = CustomSection(key="database", value=5432)
@@ -47,3 +37,13 @@ def test_hexastack_config_invalid_type_raises_error():
         config.get_section("custom", OtherSection)
 
     assert "Section 'custom' is not of type 'OtherSection'" in str(exc_info.value)
+
+
+def test_hexastack_config_missing_section_raises_error():
+    core = HexastackCoreConfig()
+    config = HexastackConfig(core=core, sections={})
+
+    with pytest.raises(HexastackConfigError) as exc_info:
+        config.get_section("missing", CustomSection)
+
+    assert "Config section 'missing' not registered." in str(exc_info.value)

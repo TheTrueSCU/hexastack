@@ -9,40 +9,6 @@ from hexastack_db.infra.config import (
 )
 
 
-def test_database_config_defaults():
-    config = HexastackDatabaseConfig()
-    assert config.url == "sqlite:///hexastack.db"
-    assert config.is_sqlite is True
-    assert config.is_postgres is False
-    assert config.pool_size == 5
-    assert config.max_overflow == 10
-    assert config.pool_timeout == 30
-    assert config.pool_recycle == 1800
-    assert config.auto_create_tables is False
-    assert config.echo is False
-    assert config.async_mode is False
-
-    # Dialect defaults
-    assert config.sqlite.foreign_keys is True
-    assert config.sqlite.journal_mode == "WAL"
-    assert config.sqlite.busy_timeout_ms == 5000
-    assert config.sqlite.synchronous == "NORMAL"
-
-    assert config.postgres.search_path is None
-    assert config.postgres.ssl_mode is None
-    assert config.postgres.server_side_cursors is False
-
-    assert config.vector.enabled is False
-    assert config.vector.table_name == "hexastack_vectors"
-    assert config.vector.dimension == 1536
-    assert config.vector.distance_strategy == "cosine"
-    assert config.vector.index_type == "hnsw"
-    assert config.vector.m == 16
-    assert config.vector.ef_construction == 64
-
-    assert HexastackDbConfig is HexastackDatabaseConfig
-
-
 def test_database_config_custom_dialect_sections():
     config = HexastackDatabaseConfig(
         url="postgresql+asyncpg://user:pass@localhost:5432/mydb",
@@ -100,6 +66,40 @@ def test_database_config_custom_dialect_sections():
     assert config.vector.index_type == "ivfflat"
     assert config.vector.m == 32
     assert config.vector.ef_construction == 128
+
+
+def test_database_config_defaults():
+    config = HexastackDatabaseConfig()
+    assert config.url == "sqlite:///hexastack.db"
+    assert config.is_sqlite is True
+    assert config.is_postgres is False
+    assert config.pool_size == 5
+    assert config.max_overflow == 10
+    assert config.pool_timeout == 30
+    assert config.pool_recycle == 1800
+    assert config.auto_create_tables is False
+    assert config.echo is False
+    assert config.async_mode is False
+
+    # Dialect defaults
+    assert config.sqlite.foreign_keys is True
+    assert config.sqlite.journal_mode == "WAL"
+    assert config.sqlite.busy_timeout_ms == 5000
+    assert config.sqlite.synchronous == "NORMAL"
+
+    assert config.postgres.search_path is None
+    assert config.postgres.ssl_mode is None
+    assert config.postgres.server_side_cursors is False
+
+    assert config.vector.enabled is False
+    assert config.vector.table_name == "hexastack_vectors"
+    assert config.vector.dimension == 1536
+    assert config.vector.distance_strategy == "cosine"
+    assert config.vector.index_type == "hnsw"
+    assert config.vector.m == 16
+    assert config.vector.ef_construction == 64
+
+    assert HexastackDbConfig is HexastackDatabaseConfig
 
 
 def test_register_database_config():

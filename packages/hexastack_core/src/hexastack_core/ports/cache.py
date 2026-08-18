@@ -11,27 +11,8 @@ class CachePort(ABC):
     """
 
     @abstractmethod
-    def get(self, key: str, default: Any = None) -> Any:
-        """Retrieve a cached value by key.
-
-        Args:
-            key: Unique string cache key identifier.
-            default: Fallback value returned if the key does not exist or has expired.
-
-        Returns:
-            The cached value if present and unexpired, otherwise default.
-        """
-        ...
-
-    @abstractmethod
-    def set(self, key: str, value: Any, ttl_seconds: float | None = None) -> None:
-        """Store a key-value pair in cache with optional TTL expiration.
-
-        Args:
-            key: Unique string cache key identifier.
-            value: Value to be stored.
-            ttl_seconds: Optional time-to-live duration in seconds.
-        """
+    def clear(self) -> None:
+        """Clear all entries from the cache."""
         ...
 
     @abstractmethod
@@ -43,6 +24,19 @@ class CachePort(ABC):
 
         Returns:
             True if the key existed and was deleted, False otherwise.
+        """
+        ...
+
+    @abstractmethod
+    def get(self, key: str, default: Any = None) -> Any:
+        """Retrieve a cached value by key.
+
+        Args:
+            key: Unique string cache key identifier.
+            default: Fallback value returned if the key does not exist or has expired.
+
+        Returns:
+            The cached value if present and unexpired, otherwise default.
         """
         ...
 
@@ -59,8 +53,14 @@ class CachePort(ABC):
         ...
 
     @abstractmethod
-    def clear(self) -> None:
-        """Clear all entries from the cache."""
+    def set(self, key: str, value: Any, ttl_seconds: float | None = None) -> None:
+        """Store a key-value pair in cache with optional TTL expiration.
+
+        Args:
+            key: Unique string cache key identifier.
+            value: Value to be stored.
+            ttl_seconds: Optional time-to-live duration in seconds.
+        """
         ...
 
 
@@ -68,15 +68,8 @@ class AsyncCachePort(ABC):
     """Abstract interface defining asynchronous key-value caching operations."""
 
     @abstractmethod
-    async def get_async(self, key: str, default: Any = None) -> Any:
-        """Asynchronously retrieve a cached value by key."""
-        ...
-
-    @abstractmethod
-    async def set_async(
-        self, key: str, value: Any, ttl_seconds: float | None = None
-    ) -> None:
-        """Asynchronously store a key-value pair in cache."""
+    async def clear_async(self) -> None:
+        """Asynchronously clear all entries from the cache."""
         ...
 
     @abstractmethod
@@ -85,13 +78,20 @@ class AsyncCachePort(ABC):
         ...
 
     @abstractmethod
+    async def get_async(self, key: str, default: Any = None) -> Any:
+        """Asynchronously retrieve a cached value by key."""
+        ...
+
+    @abstractmethod
     async def has_async(self, key: str) -> bool:
         """Asynchronously check if a key exists in cache."""
         ...
 
     @abstractmethod
-    async def clear_async(self) -> None:
-        """Asynchronously clear all entries from the cache."""
+    async def set_async(
+        self, key: str, value: Any, ttl_seconds: float | None = None
+    ) -> None:
+        """Asynchronously store a key-value pair in cache."""
         ...
 
 

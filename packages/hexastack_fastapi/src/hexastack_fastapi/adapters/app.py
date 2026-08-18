@@ -19,6 +19,10 @@ from hexastack_fastapi.infra.middleware.logging import (
     RequestLoggingHttpMiddleware,
 )
 
+__all__ = [
+    "create_fastapi_app",
+]
+
 
 def create_fastapi_app(
     config: HexastackFastApiConfig | None = None,
@@ -103,8 +107,3 @@ def create_fastapi_app(
         app.include_router(health_router)
 
     return app
-
-
-__all__ = [
-    "create_fastapi_app",
-]

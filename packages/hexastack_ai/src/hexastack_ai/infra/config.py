@@ -92,15 +92,6 @@ class HexastackAiConfig(BaseModel):
     )
 
 
-def register_ai_config(registry: ConfigRegistry) -> None:
-    """Register AI configuration schema under 'ai' ([hexastack.ai]).
-
-    Args:
-        registry: Target ConfigRegistry instance.
-    """
-    registry.register_config_section("ai", HexastackAiConfig)
-
-
 __all__ = [
     "HexastackAiConfig",
     "LiteLlmDialectConfig",
@@ -108,3 +99,12 @@ __all__ = [
     "PydanticAiDialectConfig",
     "register_ai_config",
 ]
+
+
+def register_ai_config(registry: ConfigRegistry) -> None:
+    """Register AI configuration schema under 'ai' ([hexastack.ai]).
+
+    Args:
+        registry: Target ConfigRegistry instance.
+    """
+    registry.register_config_section("ai", HexastackAiConfig)

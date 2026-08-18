@@ -35,6 +35,14 @@ def test_synchronous_query_bus_dispatch():
     assert result == {"id": "u-1", "name": "Alice"}
 
 
+def test_synchronous_query_bus_unregistered_raises():
+    registry = HandlerRegistry()
+    bus = SynchronousQueryBus(handler_registry=registry)
+
+    with pytest.raises(HandlerRegistryError):
+        bus.dispatch(GetUserProfile(user_id="u-unknown"))
+
+
 def test_synchronous_query_bus_with_middleware():
     registry = HandlerRegistry()
     registry.register(GetUserProfile, lambda q: {"id": q.user_id, "name": "Bob"})
@@ -45,11 +53,3 @@ def test_synchronous_query_bus_with_middleware():
     result = bus.dispatch(GetUserProfile(user_id="u-2"))
     assert result == {"id": "u-2", "name": "Bob"}
     assert mw.called is True
-
-
-def test_synchronous_query_bus_unregistered_raises():
-    registry = HandlerRegistry()
-    bus = SynchronousQueryBus(handler_registry=registry)
-
-    with pytest.raises(HandlerRegistryError):
-        bus.dispatch(GetUserProfile(user_id="u-unknown"))

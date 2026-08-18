@@ -30,33 +30,6 @@ class TracingMiddleware:
         self._tracer = tracer
         self._enabled = enabled
 
-    def _build_attributes(self, instance: Generic) -> dict[str, Any]:
-        """Construct standard telemetry attributes from message context."""
-        msg_name = instance.__class__.__name__
-        msg_type = (
-            "command"
-            if isinstance(instance, Command)
-            else ("query" if isinstance(instance, Query) else "event")
-        )
-
-        attributes: dict[str, Any] = {
-            "message.name": msg_name,
-            "message.type": msg_type,
-        }
-
-        cid = get_correlation_id()
-        if cid:
-            attributes["correlation.id"] = cid
-
-        user_ctx = get_user_context()
-        if user_ctx:
-            if user_ctx.tenant_id:
-                attributes["tenant.id"] = user_ctx.tenant_id
-            if user_ctx.user_id:
-                attributes["user.id"] = user_ctx.user_id
-
-        return attributes
-
     def __call__[G: Generic, R](
         self,
         instance: G,
@@ -92,6 +65,33 @@ class TracingMiddleware:
                 return cast("R", _async_wrap())
 
             return result
+
+    def _build_attributes(self, instance: Generic) -> dict[str, Any]:
+        """Construct standard telemetry attributes from message context."""
+        msg_name = instance.__class__.__name__
+        msg_type = (
+            "command"
+            if isinstance(instance, Command)
+            else ("query" if isinstance(instance, Query) else "event")
+        )
+
+        attributes: dict[str, Any] = {
+            "message.name": msg_name,
+            "message.type": msg_type,
+        }
+
+        cid = get_correlation_id()
+        if cid:
+            attributes["correlation.id"] = cid
+
+        user_ctx = get_user_context()
+        if user_ctx:
+            if user_ctx.tenant_id:
+                attributes["tenant.id"] = user_ctx.tenant_id
+            if user_ctx.user_id:
+                attributes["user.id"] = user_ctx.user_id
+
+        return attributes
 
 
 __all__ = [

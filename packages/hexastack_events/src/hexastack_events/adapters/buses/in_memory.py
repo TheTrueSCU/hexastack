@@ -20,6 +20,11 @@ class InMemoryDistributedEventBus(DistributedEventBusPort):
         self.published_envelopes: list[CloudEventEnvelope] = []
         self._subscribers: dict[str, list[Callable[[Any], Any]]] = defaultdict(list)
 
+    def clear(self) -> None:
+        """Clear recorded events and envelopes."""
+        self.published_events.clear()
+        self.published_envelopes.clear()
+
     def publish(self, event: Event) -> None:
         """Publish a domain event and invoke local subscribers."""
         self.published_events.append(event)
@@ -40,11 +45,6 @@ class InMemoryDistributedEventBus(DistributedEventBusPort):
     ) -> None:
         """Register a subscriber callback for a specific event type."""
         self._subscribers[event_type].append(handler)
-
-    def clear(self) -> None:
-        """Clear recorded events and envelopes."""
-        self.published_events.clear()
-        self.published_envelopes.clear()
 
 
 __all__ = [

@@ -4,23 +4,10 @@ import grpc
 
 from hexastack_grpc.infra.config import HexastackGrpcConfig
 
-
-def run_grpc_server(
-    server: grpc.Server,
-    block: bool = True,
-) -> None:
-    """Start the gRPC server and optionally block the current thread.
-
-    Args:
-        server: Configured grpc.Server instance.
-        block: If True, blocks thread with server.wait_for_termination().
-    """
-    server.start()
-    if block:
-        try:
-            server.wait_for_termination()
-        except KeyboardInterrupt:
-            server.stop(grace=5.0)
+__all__ = [
+    "create_async_grpc_server",
+    "run_grpc_server",
+]
 
 
 def create_async_grpc_server(
@@ -41,7 +28,19 @@ def create_async_grpc_server(
     return server
 
 
-__all__ = [
-    "create_async_grpc_server",
-    "run_grpc_server",
-]
+def run_grpc_server(
+    server: grpc.Server,
+    block: bool = True,
+) -> None:
+    """Start the gRPC server and optionally block the current thread.
+
+    Args:
+        server: Configured grpc.Server instance.
+        block: If True, blocks thread with server.wait_for_termination().
+    """
+    server.start()
+    if block:
+        try:
+            server.wait_for_termination()
+        except KeyboardInterrupt:
+            server.stop(grace=5.0)

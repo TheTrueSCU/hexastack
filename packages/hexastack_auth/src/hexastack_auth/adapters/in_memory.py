@@ -24,6 +24,10 @@ class InMemorySecurityService(SecurityPort):
         self._default_ttl_seconds = default_ttl_seconds
         self._tokens: dict[str, tuple[Identity, float | None]] = {}
 
+    def clear(self) -> None:
+        """Clear all stored tokens."""
+        self._tokens.clear()
+
     def create_token(
         self,
         identity: Identity,
@@ -73,10 +77,6 @@ class InMemorySecurityService(SecurityPort):
             raise TokenExpiredError("In-memory token has expired.")
 
         return identity
-
-    def clear(self) -> None:
-        """Clear all stored tokens."""
-        self._tokens.clear()
 
 
 class InMemoryPasswordHasher(PasswordHasherPort):

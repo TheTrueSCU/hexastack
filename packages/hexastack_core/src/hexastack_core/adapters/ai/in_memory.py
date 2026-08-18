@@ -38,47 +38,22 @@ class InMemoryLlmProvider(LlmProviderPort):
         self._simulated_error: Exception | None = None
         self.history: list[LlmCallRecord] = []
 
-    def set_error(self, error: Exception | None) -> None:
-        """Set a simulated exception to raise on subsequent generation calls."""
-        self._simulated_error = error
-
-    def set_default_text(self, text: str) -> None:
-        """Set the fallback text response."""
-        self._default_text = text
-
-    def set_default_structured(self, model: BaseModel) -> None:
-        """Set the fallback structured model response."""
-        self._default_structured = model
-
-    def add_text_response(self, prompt_substring: str, response: str) -> None:
-        """Map a prompt substring to a specific text response."""
-        self._text_responses[prompt_substring] = response
-
     def add_structured_response(
         self, schema_cls: type[BaseModel], response: BaseModel
     ) -> None:
         """Map a response schema class to a specific model response instance."""
         self._structured_responses[schema_cls] = response
 
-    def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
-        """Generate text from prompt or match configured mock responses."""
-        if self._simulated_error is not None:
-            raise self._simulated_error
+    def add_text_response(self, prompt_substring: str, response: str) -> None:
+        """Map a prompt substring to a specific text response."""
+        self._text_responses[prompt_substring] = response
 
-        # Check explicit prompt substring mappings
-        response_text = self._default_text
-        for sub, resp in self._text_responses.items():
-            if sub in prompt:
-                response_text = resp
-                break
-
-        record = LlmCallRecord(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            response=response_text,
-        )
-        self.history.append(record)
-        return response_text
+    def clear(self) -> None:
+        """Reset all mock history and mappings."""
+        self.history.clear()
+        self._text_responses.clear()
+        self._structured_responses.clear()
+        self._simulated_error = None
 
     def generate_structured(
         self, prompt: str, response_schema: type[BaseModel]
@@ -120,12 +95,37 @@ class InMemoryLlmProvider(LlmProviderPort):
         self.history.append(record)
         return res
 
-    def clear(self) -> None:
-        """Reset all mock history and mappings."""
-        self.history.clear()
-        self._text_responses.clear()
-        self._structured_responses.clear()
-        self._simulated_error = None
+    def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
+        """Generate text from prompt or match configured mock responses."""
+        if self._simulated_error is not None:
+            raise self._simulated_error
+
+        # Check explicit prompt substring mappings
+        response_text = self._default_text
+        for sub, resp in self._text_responses.items():
+            if sub in prompt:
+                response_text = resp
+                break
+
+        record = LlmCallRecord(
+            prompt=prompt,
+            system_prompt=system_prompt,
+            response=response_text,
+        )
+        self.history.append(record)
+        return response_text
+
+    def set_default_structured(self, model: BaseModel) -> None:
+        """Set the fallback structured model response."""
+        self._default_structured = model
+
+    def set_default_text(self, text: str) -> None:
+        """Set the fallback text response."""
+        self._default_text = text
+
+    def set_error(self, error: Exception | None) -> None:
+        """Set a simulated exception to raise on subsequent generation calls."""
+        self._simulated_error = error
 
 
 class InMemoryVectorStore(VectorStorePort):
@@ -140,19 +140,17 @@ class InMemoryVectorStore(VectorStorePort):
         """Initialize empty in-memory vector store."""
         self._vectors: dict[str, tuple[list[float], Metadata]] = {}
 
-    def upsert(
-        self, vector_id: str, embedding: list[float], metadata: Metadata
-    ) -> None:
-        """Store or update vector embedding and metadata."""
-        self._vectors[vector_id] = (list(embedding), dict(metadata))
-
-    def get(self, vector_id: str) -> tuple[list[float], Metadata] | None:
-        """Retrieve stored embedding and metadata for a vector ID."""
-        return self._vectors.get(vector_id)
+    def clear(self) -> None:
+        """Clear all stored vectors."""
+        self._vectors.clear()
 
     def delete(self, vector_id: str) -> bool:
         """Delete a vector by ID."""
         return self._vectors.pop(vector_id, None) is not None
+
+    def get(self, vector_id: str) -> tuple[list[float], Metadata] | None:
+        """Retrieve stored embedding and metadata for a vector ID."""
+        return self._vectors.get(vector_id)
 
     def search(self, query_embedding: list[float], limit: int = 5) -> list[Metadata]:
         """Search for top similar vectors using cosine similarity."""
@@ -179,9 +177,11 @@ class InMemoryVectorStore(VectorStorePort):
         scored.sort(key=lambda item: item[0], reverse=True)
         return [meta for _, meta in scored[:limit]]
 
-    def clear(self) -> None:
-        """Clear all stored vectors."""
-        self._vectors.clear()
+    def upsert(
+        self, vector_id: str, embedding: list[float], metadata: Metadata
+    ) -> None:
+        """Store or update vector embedding and metadata."""
+        self._vectors[vector_id] = (list(embedding), dict(metadata))
 
 
 __all__ = [

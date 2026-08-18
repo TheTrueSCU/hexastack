@@ -42,6 +42,17 @@ class InMemorySpan(SpanPort):
         self.end_time: float | None = None
         self.is_ended: bool = False
 
+    def end(self) -> None:
+        """End the span recording."""
+        if not self.is_ended:
+            self.end_time = time.time()
+            self.is_ended = True
+
+    def record_exception(self, exception: BaseException) -> None:
+        """Record an exception on the in-memory span."""
+        self.exceptions.append(exception)
+        self.set_status("ERROR", str(exception))
+
     def set_attribute(self, key: str, value: Any) -> None:
         """Set a single key-value attribute on the span."""
         self.attributes[key] = value
@@ -50,21 +61,10 @@ class InMemorySpan(SpanPort):
         """Set multiple attributes on the span."""
         self.attributes.update(attributes)
 
-    def record_exception(self, exception: BaseException) -> None:
-        """Record an exception on the in-memory span."""
-        self.exceptions.append(exception)
-        self.set_status("ERROR", str(exception))
-
     def set_status(self, status: str, description: str | None = None) -> None:
         """Set the span status ('OK', 'ERROR', 'UNSET')."""
         self.status = status
         self.status_description = description
-
-    def end(self) -> None:
-        """End the span recording."""
-        if not self.is_ended:
-            self.end_time = time.time()
-            self.is_ended = True
 
 
 class InMemoryTracingAdapter(TracingPort):
@@ -77,6 +77,32 @@ class InMemoryTracingAdapter(TracingPort):
 
     def __init__(self) -> None:
         self.finished_spans: list[InMemorySpan] = []
+
+    def clear(self) -> None:
+        """Clear recorded finished spans."""
+        self.finished_spans.clear()
+
+    def extract_context(self, carrier: dict[str, str]) -> SpanContext | None:
+        traceparent = carrier.get("traceparent") or carrier.get("TRACEPARENT")
+        if not traceparent:
+            return None
+        parts = traceparent.split("-")
+        if len(parts) >= 4:
+            return SpanContext(trace_id=parts[1], span_id=parts[2])
+        return None
+
+    def get_current_span(self) -> InMemorySpan | None:
+        return _current_in_memory_span.get()
+
+    def get_spans_by_name(self, name: str) -> list[InMemorySpan]:
+        """Find recorded spans matching name."""
+        return [s for s in self.finished_spans if s.name == name]
+
+    def inject_context(self, carrier: dict[str, str]) -> None:
+        current = self.get_current_span()
+        if current:
+            ctx = current.context
+            carrier["traceparent"] = f"00-{ctx.trace_id}-{ctx.span_id}-01"
 
     def start_span(
         self,
@@ -121,32 +147,6 @@ class InMemoryTracingAdapter(TracingPort):
             span.end()
             self.finished_spans.append(span)
             _current_in_memory_span.reset(token)
-
-    def get_current_span(self) -> InMemorySpan | None:
-        return _current_in_memory_span.get()
-
-    def inject_context(self, carrier: dict[str, str]) -> None:
-        current = self.get_current_span()
-        if current:
-            ctx = current.context
-            carrier["traceparent"] = f"00-{ctx.trace_id}-{ctx.span_id}-01"
-
-    def extract_context(self, carrier: dict[str, str]) -> SpanContext | None:
-        traceparent = carrier.get("traceparent") or carrier.get("TRACEPARENT")
-        if not traceparent:
-            return None
-        parts = traceparent.split("-")
-        if len(parts) >= 4:
-            return SpanContext(trace_id=parts[1], span_id=parts[2])
-        return None
-
-    def clear(self) -> None:
-        """Clear recorded finished spans."""
-        self.finished_spans.clear()
-
-    def get_spans_by_name(self, name: str) -> list[InMemorySpan]:
-        """Find recorded spans matching name."""
-        return [s for s in self.finished_spans if s.name == name]
 
 
 __all__ = [

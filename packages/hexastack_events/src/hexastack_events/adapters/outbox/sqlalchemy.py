@@ -93,6 +93,54 @@ class SqlAlchemyOutboxStorage(OutboxStoragePort):
             return self._session_or_factory
         return self._session_or_factory()
 
+    def fetch_pending(self, limit: int = 50) -> list[OutboxRecord]:
+        """Fetch pending outbox records ready for relaying."""
+        session = self._get_session()
+        stmt = (
+            select(self._model_cls)
+            .where(
+                self._model_cls.status.in_(
+                    [OutboxStatus.PENDING.value, OutboxStatus.FAILED.value]
+                )
+            )
+            .where(self._model_cls.retry_count < 5)
+            .order_by(self._model_cls.created_at.asc())
+            .limit(limit)
+        )
+        results = session.scalars(stmt).all()
+        return [row.to_domain() for row in results]
+
+    def mark_failed(self, record_id: str, error_message: str) -> None:
+        """Increment retry count and mark as FAILED."""
+        session = self._get_session()
+        stmt = (
+            update(self._model_cls)
+            .where(self._model_cls.id == record_id)
+            .values(
+                status=OutboxStatus.FAILED.value,
+                retry_count=self._model_cls.retry_count + 1,
+                last_error=error_message,
+            )
+        )
+        session.execute(stmt)
+        session.flush()
+
+    def mark_published(self, record_id: str) -> None:
+        """Mark record as PUBLISHED."""
+        session = self._get_session()
+        now = datetime.now(UTC)
+        stmt = (
+            update(self._model_cls)
+            .where(self._model_cls.id == record_id)
+            .values(
+                status=OutboxStatus.PUBLISHED.value,
+                published_at=now,
+                last_error=None,
+            )
+        )
+        session.execute(stmt)
+        session.flush()
+
     def save(self, record: OutboxRecord) -> None:
         """Persist a single outbox record in the database."""
         session = self._get_session()
@@ -132,54 +180,6 @@ class SqlAlchemyOutboxStorage(OutboxStoragePort):
             for r in records
         ]
         session.add_all(rows)
-        session.flush()
-
-    def fetch_pending(self, limit: int = 50) -> list[OutboxRecord]:
-        """Fetch pending outbox records ready for relaying."""
-        session = self._get_session()
-        stmt = (
-            select(self._model_cls)
-            .where(
-                self._model_cls.status.in_(
-                    [OutboxStatus.PENDING.value, OutboxStatus.FAILED.value]
-                )
-            )
-            .where(self._model_cls.retry_count < 5)
-            .order_by(self._model_cls.created_at.asc())
-            .limit(limit)
-        )
-        results = session.scalars(stmt).all()
-        return [row.to_domain() for row in results]
-
-    def mark_published(self, record_id: str) -> None:
-        """Mark record as PUBLISHED."""
-        session = self._get_session()
-        now = datetime.now(UTC)
-        stmt = (
-            update(self._model_cls)
-            .where(self._model_cls.id == record_id)
-            .values(
-                status=OutboxStatus.PUBLISHED.value,
-                published_at=now,
-                last_error=None,
-            )
-        )
-        session.execute(stmt)
-        session.flush()
-
-    def mark_failed(self, record_id: str, error_message: str) -> None:
-        """Increment retry count and mark as FAILED."""
-        session = self._get_session()
-        stmt = (
-            update(self._model_cls)
-            .where(self._model_cls.id == record_id)
-            .values(
-                status=OutboxStatus.FAILED.value,
-                retry_count=self._model_cls.retry_count + 1,
-                last_error=error_message,
-            )
-        )
-        session.execute(stmt)
         session.flush()
 
 

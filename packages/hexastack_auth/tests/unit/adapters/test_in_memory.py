@@ -14,10 +14,13 @@ from hexastack_auth.domain.exceptions import (
 from hexastack_auth.domain.models import Identity
 
 
-def test_in_memory_security_service_default_constructor():
-    svc = InMemorySecurityService()
-    assert svc._default_ttl_seconds == 3600
-    assert svc._tokens == {}
+def test_in_memory_password_hasher():
+    hasher = InMemoryPasswordHasher()
+    hashed = hasher.hash_password("secret")
+    assert hashed == "mock_hash:secret"
+    assert hasher.verify_password("secret", hashed) is True
+    assert hasher.verify_password("wrong", hashed) is False
+    assert hasher.verify_password("secret", "mock_hash:other") is False
 
 
 def test_in_memory_security_service_creation_and_lookup(
@@ -64,6 +67,12 @@ def test_in_memory_security_service_custom_ttls(sample_identity: Identity):
     assert abs((exp_int - time.time()) - 1800) < 5
 
 
+def test_in_memory_security_service_default_constructor():
+    svc = InMemorySecurityService()
+    assert svc._default_ttl_seconds == 3600
+    assert svc._tokens == {}
+
+
 def test_in_memory_security_service_expiration(sample_identity: Identity):
     svc = InMemorySecurityService(default_ttl_seconds=3600)
     # Expired token with negative ttl
@@ -86,12 +95,3 @@ def test_in_memory_security_service_invalid_and_empty_tokens(
 
     with pytest.raises(InvalidTokenError, match="not recognized"):
         svc.verify_token("unknown_non_existent_token")
-
-
-def test_in_memory_password_hasher():
-    hasher = InMemoryPasswordHasher()
-    hashed = hasher.hash_password("secret")
-    assert hashed == "mock_hash:secret"
-    assert hasher.verify_password("secret", hashed) is True
-    assert hasher.verify_password("wrong", hashed) is False
-    assert hasher.verify_password("secret", "mock_hash:other") is False

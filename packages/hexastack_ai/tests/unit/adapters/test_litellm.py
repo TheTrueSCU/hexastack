@@ -13,6 +13,27 @@ class SummarySchema(BaseModel):
     score: int
 
 
+def test_litellm_adapter_error_handling():
+    with patch("litellm.completion", side_effect=RuntimeError("API down")):
+        adapter = LiteLlmAdapter()
+        with pytest.raises(LlmProviderError) as exc_info:
+            adapter.generate_text("Fail please")
+        assert "API down" in str(exc_info.value)
+
+
+def test_litellm_adapter_generate_structured():
+    expected = SummarySchema(title="Report", score=95)
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = expected
+
+    with patch("instructor.from_litellm", return_value=mock_client):
+        adapter = LiteLlmAdapter()
+        res = adapter.generate_structured("Analyze this", SummarySchema)
+        assert res == expected
+        assert res.title == "Report"
+        assert res.score == 95
+
+
 def test_litellm_adapter_generate_text():
     mock_choice = MagicMock()
     mock_choice.message.content = "Mocked AI Response"
@@ -42,24 +63,3 @@ async def test_litellm_adapter_generate_text_async():
         res = await adapter.generate_text_async("Hello Async")
         assert res == "Async AI Response"
         mock_acomp.assert_called_once()
-
-
-def test_litellm_adapter_generate_structured():
-    expected = SummarySchema(title="Report", score=95)
-    mock_client = MagicMock()
-    mock_client.chat.completions.create.return_value = expected
-
-    with patch("instructor.from_litellm", return_value=mock_client):
-        adapter = LiteLlmAdapter()
-        res = adapter.generate_structured("Analyze this", SummarySchema)
-        assert res == expected
-        assert res.title == "Report"
-        assert res.score == 95
-
-
-def test_litellm_adapter_error_handling():
-    with patch("litellm.completion", side_effect=RuntimeError("API down")):
-        adapter = LiteLlmAdapter()
-        with pytest.raises(LlmProviderError) as exc_info:
-            adapter.generate_text("Fail please")
-        assert "API down" in str(exc_info.value)

@@ -10,6 +10,65 @@ from hexastack_core.utils.context import get_correlation_id, get_user_context
 from hexastack_events.domain.exceptions import EventSerializationError
 from hexastack_events.domain.models import CloudEventEnvelope
 
+__all__ = [
+    "cloudevent_to_dict",
+    "cloudevent_to_json",
+    "from_cloudevent",
+    "to_cloudevent",
+    "to_envelope",
+]
+
+
+def cloudevent_to_dict(ce: CloudEvent) -> dict[str, Any]:
+    """Serialize a CloudEvent instance to a standard dictionary format."""
+    result = dict(ce.get_attributes())
+    result["data"] = ce.data
+    return result
+
+
+def cloudevent_to_json(ce: CloudEvent) -> str:
+    """Serialize a CloudEvent instance to a valid JSON string."""
+    return json.dumps(cloudevent_to_dict(ce))
+
+
+def from_cloudevent[T: Event](
+    cloudevent_data: CloudEvent | dict[str, Any] | str,
+    event_cls: type[T],
+) -> T:
+    """Deserialize a CloudEvent envelope or JSON payload into a typed domain Event.
+
+    Notes/Architectural Intent:
+        Reconstructs the domain Event model from CloudEvent data payload while
+        preserving structural validation via Pydantic model_validate.
+
+    Args:
+        cloudevent_data: CloudEvent instance, dictionary payload, or JSON string.
+        event_cls: Target Event class to instantiate.
+
+    Returns:
+        Instantiated and validated domain Event model.
+
+    Raises:
+        EventSerializationError: If deserialization fails.
+    """
+    try:
+        if isinstance(cloudevent_data, str):
+            ce = from_json(cloudevent_data)
+        elif isinstance(cloudevent_data, dict):
+            ce = from_dict(cloudevent_data)
+        else:
+            ce = cloudevent_data
+
+        payload = ce.data
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+
+        return event_cls.model_validate(payload)
+    except Exception as exc:
+        raise EventSerializationError(
+            f"Failed to deserialize CloudEvent into '{event_cls.__name__}': {exc}"
+        ) from exc
+
 
 def to_cloudevent(
     event: Event,
@@ -64,45 +123,6 @@ def to_cloudevent(
     return CloudEvent(attributes, data)
 
 
-def from_cloudevent[T: Event](
-    cloudevent_data: CloudEvent | dict[str, Any] | str,
-    event_cls: type[T],
-) -> T:
-    """Deserialize a CloudEvent envelope or JSON payload into a typed domain Event.
-
-    Notes/Architectural Intent:
-        Reconstructs the domain Event model from CloudEvent data payload while
-        preserving structural validation via Pydantic model_validate.
-
-    Args:
-        cloudevent_data: CloudEvent instance, dictionary payload, or JSON string.
-        event_cls: Target Event class to instantiate.
-
-    Returns:
-        Instantiated and validated domain Event model.
-
-    Raises:
-        EventSerializationError: If deserialization fails.
-    """
-    try:
-        if isinstance(cloudevent_data, str):
-            ce = from_json(cloudevent_data)
-        elif isinstance(cloudevent_data, dict):
-            ce = from_dict(cloudevent_data)
-        else:
-            ce = cloudevent_data
-
-        payload = ce.data
-        if isinstance(payload, str):
-            payload = json.loads(payload)
-
-        return event_cls.model_validate(payload)
-    except Exception as exc:
-        raise EventSerializationError(
-            f"Failed to deserialize CloudEvent into '{event_cls.__name__}': {exc}"
-        ) from exc
-
-
 def to_envelope(
     event: Event,
     *,
@@ -133,24 +153,3 @@ def to_envelope(
         tenantid=attrs.get("tenantid"),
         data=ce.data if isinstance(ce.data, dict) else {},
     )
-
-
-def cloudevent_to_dict(ce: CloudEvent) -> dict[str, Any]:
-    """Serialize a CloudEvent instance to a standard dictionary format."""
-    result = dict(ce.get_attributes())
-    result["data"] = ce.data
-    return result
-
-
-def cloudevent_to_json(ce: CloudEvent) -> str:
-    """Serialize a CloudEvent instance to a valid JSON string."""
-    return json.dumps(cloudevent_to_dict(ce))
-
-
-__all__ = [
-    "cloudevent_to_dict",
-    "cloudevent_to_json",
-    "from_cloudevent",
-    "to_cloudevent",
-    "to_envelope",
-]

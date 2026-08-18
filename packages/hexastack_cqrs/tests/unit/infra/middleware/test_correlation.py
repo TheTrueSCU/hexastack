@@ -20,6 +20,28 @@ class _CmdWithoutCid(Command):
     name: str
 
 
+@pytest.mark.anyio
+async def test_correlation_middleware_async():
+    set_correlation_id("")
+    middleware = CorrelationMiddleware()
+
+    captured_cid = ""
+
+    async def async_handler(cmd: _CmdWithCid) -> str:
+        nonlocal captured_cid
+        await asyncio.sleep(0.01)
+        captured_cid = get_correlation_id()
+        return "async-ok"
+
+    cmd = _CmdWithCid(correlation_id="async-cid-999", name="async-test")
+    coro = middleware(cmd, async_handler)
+    res = await coro
+
+    assert res == "async-ok"
+    assert captured_cid == "async-cid-999"
+    correlation_id_ctx.set("")
+
+
 def test_correlation_middleware_extracts_existing_cid():
     set_correlation_id("")
     middleware = CorrelationMiddleware()
@@ -73,26 +95,4 @@ def test_correlation_middleware_preserves_existing_context():
 
     assert res == "ok"
     assert captured_cid == "pre-existing-cid"
-    correlation_id_ctx.set("")
-
-
-@pytest.mark.anyio
-async def test_correlation_middleware_async():
-    set_correlation_id("")
-    middleware = CorrelationMiddleware()
-
-    captured_cid = ""
-
-    async def async_handler(cmd: _CmdWithCid) -> str:
-        nonlocal captured_cid
-        await asyncio.sleep(0.01)
-        captured_cid = get_correlation_id()
-        return "async-ok"
-
-    cmd = _CmdWithCid(correlation_id="async-cid-999", name="async-test")
-    coro = middleware(cmd, async_handler)
-    res = await coro
-
-    assert res == "async-ok"
-    assert captured_cid == "async-cid-999"
     correlation_id_ctx.set("")

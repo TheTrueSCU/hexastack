@@ -38,6 +38,15 @@ class GroupMetadata:
     help: str | None = None
 
 
+__all__ = [
+    "CliMetadata",
+    "GroupMetadata",
+    "cli_command",
+    "cli_group",
+    "cli_query",
+]
+
+
 def _normalize_tokens(tokens: Sequence[str] | str | None) -> tuple[str, ...]:
     """Normalize string or sequence of token strings into an immutable tuple."""
     if not tokens:
@@ -89,6 +98,32 @@ def cli_command[TCommand: Command](
     return decorator
 
 
+def cli_group(
+    name: str,
+    *,
+    help: str | None = None,
+) -> Callable[[type], type]:
+    """Decorator configuring custom metadata or documentation for a CLI group.
+
+    Args:
+        name: The group name path (e.g. 'user', 'user.profile').
+        help: Help description displayed for the group in terminal --help.
+
+    Returns:
+        Decorator function attaching GroupMetadata.
+
+    Raises:
+        None.
+    """
+
+    def decorator(cls: type) -> type:
+        meta = GroupMetadata(name=name, help=help)
+        setattr(cls, _CLI_GROUP_ATTR, meta)
+        return cls
+
+    return decorator
+
+
 def cli_query[TQuery: Query](
     name: str | None = None,
     *,
@@ -129,38 +164,3 @@ def cli_query[TQuery: Query](
         return cls
 
     return decorator
-
-
-def cli_group(
-    name: str,
-    *,
-    help: str | None = None,
-) -> Callable[[type], type]:
-    """Decorator configuring custom metadata or documentation for a CLI group.
-
-    Args:
-        name: The group name path (e.g. 'user', 'user.profile').
-        help: Help description displayed for the group in terminal --help.
-
-    Returns:
-        Decorator function attaching GroupMetadata.
-
-    Raises:
-        None.
-    """
-
-    def decorator(cls: type) -> type:
-        meta = GroupMetadata(name=name, help=help)
-        setattr(cls, _CLI_GROUP_ATTR, meta)
-        return cls
-
-    return decorator
-
-
-__all__ = [
-    "CliMetadata",
-    "GroupMetadata",
-    "cli_command",
-    "cli_group",
-    "cli_query",
-]

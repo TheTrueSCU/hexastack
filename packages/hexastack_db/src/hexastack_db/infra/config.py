@@ -149,27 +149,18 @@ class HexastackDatabaseConfig(BaseModel):
     )
 
     @property
-    def is_sqlite(self) -> bool:
-        """Return True if connection URL targets an SQLite database."""
-        return "sqlite" in self.url.lower()
-
-    @property
     def is_postgres(self) -> bool:
         """Return True if connection URL targets a PostgreSQL database."""
         return "postgres" in self.url.lower()
 
+    @property
+    def is_sqlite(self) -> bool:
+        """Return True if connection URL targets an SQLite database."""
+        return "sqlite" in self.url.lower()
+
 
 # Alias for backward compatibility / natural naming
 HexastackDbConfig = HexastackDatabaseConfig
-
-
-def register_database_config(registry: ConfigRegistry) -> None:
-    """Register database configuration schema under 'db'.
-
-    Args:
-        registry: Target ConfigRegistry instance.
-    """
-    registry.register_config_section("db", HexastackDatabaseConfig)
 
 
 __all__ = [
@@ -180,3 +171,12 @@ __all__ = [
     "SqliteDialectConfig",
     "register_database_config",
 ]
+
+
+def register_database_config(registry: ConfigRegistry) -> None:
+    """Register database configuration schema under 'db'.
+
+    Args:
+        registry: Target ConfigRegistry instance.
+    """
+    registry.register_config_section("db", HexastackDatabaseConfig)

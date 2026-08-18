@@ -33,14 +33,6 @@ class BootstrapContext:
     properties: dict[str, Any] = field(default_factory=dict)
     visitors: list[DiscoveryVisitor] = field(default_factory=list)
 
-    def register_visitor(self, visitor: DiscoveryVisitor) -> None:
-        """Register a visitor callback to participate in single-pass module scanning.
-
-        Args:
-            visitor: Callable receiving (discovered_member, module).
-        """
-        self.visitors.append(visitor)
-
     def get_config[T: BaseModel](
         self,
         section: str,
@@ -66,6 +58,14 @@ class BootstrapContext:
             if val is not None:
                 return val
         return default if default is not None else schema_cls()
+
+    def register_visitor(self, visitor: DiscoveryVisitor) -> None:
+        """Register a visitor callback to participate in single-pass module scanning.
+
+        Args:
+            visitor: Callable receiving (discovered_member, module).
+        """
+        self.visitors.append(visitor)
 
 
 @dataclass(frozen=True)
@@ -94,6 +94,13 @@ class BootstrapResult:
             The stored property value or default.
         """
         return self.properties.get(key, default)
+
+
+__all__ = [
+    "BootstrapContext",
+    "BootstrapResult",
+    "bootstrap",
+]
 
 
 def _discover_bootstrappers() -> list[BootstrapperPort]:
@@ -191,10 +198,3 @@ def bootstrap(
         bootstrappers=sorted_bootstrappers,
         properties=context.properties,
     )
-
-
-__all__ = [
-    "BootstrapContext",
-    "BootstrapResult",
-    "bootstrap",
-]

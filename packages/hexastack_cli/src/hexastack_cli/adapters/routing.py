@@ -19,18 +19,10 @@ from hexastack_core.utils.context import (
 )
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
-
-def _to_kebab_case(name: str) -> str:
-    """Convert PascalCase class name to kebab-case CLI command name."""
-    s = re.sub(r"(.)([A-Z][a-z]+)", r"\1-\2", name)
-    s = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", s)
-    return (
-        s.lower()
-        .removesuffix("-command")
-        .removesuffix("-query")
-        .removesuffix("-cmd")
-        .removesuffix("-qry")
-    )
+__all__ = [
+    "register_cqrs_command",
+    "register_cqrs_query",
+]
 
 
 def _build_dynamic_cli_runner(
@@ -256,6 +248,19 @@ def _build_dynamic_cli_runner(
     return runner
 
 
+def _to_kebab_case(name: str) -> str:
+    """Convert PascalCase class name to kebab-case CLI command name."""
+    s = re.sub(r"(.)([A-Z][a-z]+)", r"\1-\2", name)
+    s = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", s)
+    return (
+        s.lower()
+        .removesuffix("-command")
+        .removesuffix("-query")
+        .removesuffix("-cmd")
+        .removesuffix("-qry")
+    )
+
+
 def register_cqrs_command(
     app: typer.Typer,
     command_cls: type[Command],
@@ -348,9 +353,3 @@ def register_cqrs_query(
         console=console,
     )
     app.command(name=qry_name, help=doc)(runner)
-
-
-__all__ = [
-    "register_cqrs_command",
-    "register_cqrs_query",
-]

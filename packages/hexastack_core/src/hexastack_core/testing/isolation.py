@@ -12,6 +12,12 @@ class ClearableRegistry(Protocol):
         ...
 
 
+__all__ = [
+    "ClearableRegistry",
+    "isolate_registries",
+]
+
+
 @contextmanager
 def isolate_registries(*registries: Any) -> Iterator[None]:
     """Context manager ensuring registry state is isolated during execution.
@@ -35,9 +41,3 @@ def isolate_registries(*registries: Any) -> Iterator[None]:
         for reg in registries:
             if hasattr(reg, "clear") and callable(reg.clear):
                 reg.clear()
-
-
-__all__ = [
-    "ClearableRegistry",
-    "isolate_registries",
-]

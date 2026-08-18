@@ -21,6 +21,17 @@ class TrackingMiddleware:
         return next_call(instance)
 
 
+def test_synchronous_event_bus_clear():
+    bus = SynchronousEventBus()
+    handled: list[str] = []
+
+    bus.subscribe(UserRegistered, lambda e: handled.append(e.user_id))
+    bus.clear()
+    bus.publish(UserRegistered(user_id="u-100"))
+
+    assert handled == []
+
+
 def test_synchronous_event_bus_publish():
     bus = SynchronousEventBus()
     received_1: list[str] = []
@@ -46,14 +57,3 @@ def test_synchronous_event_bus_with_middleware():
 
     assert handled == ["ord-99"]
     assert mw.intercepted == ["OrderPlaced"]
-
-
-def test_synchronous_event_bus_clear():
-    bus = SynchronousEventBus()
-    handled: list[str] = []
-
-    bus.subscribe(UserRegistered, lambda e: handled.append(e.user_id))
-    bus.clear()
-    bus.publish(UserRegistered(user_id="u-100"))
-
-    assert handled == []

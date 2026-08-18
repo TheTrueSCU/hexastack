@@ -5,16 +5,6 @@ from hexastack_events.infra.config import (
 )
 
 
-def test_events_config_defaults():
-    cfg = HexastackEventsConfig()
-    assert cfg.source == "hexastack-app"
-    assert cfg.relay_mode == "asyncio"
-    assert cfg.poll_interval_seconds == 1.0
-    assert cfg.batch_size == 50
-    assert cfg.max_retries == 5
-    assert cfg.enabled is True
-
-
 def test_events_config_custom_values():
     cfg = HexastackEventsConfig(
         source="custom-service",
@@ -30,6 +20,16 @@ def test_events_config_custom_values():
     assert cfg.batch_size == 100
     assert cfg.max_retries == 10
     assert cfg.enabled is False
+
+
+def test_events_config_defaults():
+    cfg = HexastackEventsConfig()
+    assert cfg.source == "hexastack-app"
+    assert cfg.relay_mode == "asyncio"
+    assert cfg.poll_interval_seconds == 1.0
+    assert cfg.batch_size == 50
+    assert cfg.max_retries == 5
+    assert cfg.enabled is True
 
 
 def test_register_events_config():

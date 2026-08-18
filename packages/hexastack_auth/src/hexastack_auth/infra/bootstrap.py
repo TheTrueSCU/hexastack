@@ -24,14 +24,6 @@ class AuthBootstrapper(BootstrapperPort):
     order: int = 16
     name: str = "auth"
 
-    def register_config(self, registry: ConfigRegistry) -> None:
-        """Register the Auth configuration section in Phase 1.
-
-        Args:
-            registry: The active ConfigRegistry instance.
-        """
-        register_auth_config(registry)
-
     def configure(self, context: BootstrapContext) -> None:
         """Configure security ports, token adapters, and middleware in Phase 2.
 
@@ -80,6 +72,14 @@ class AuthBootstrapper(BootstrapperPort):
         context.properties["auth_config"] = cfg
         context.properties["security_service"] = security_svc
         context.properties["password_hasher"] = hasher
+
+    def register_config(self, registry: ConfigRegistry) -> None:
+        """Register the Auth configuration section in Phase 1.
+
+        Args:
+            registry: The active ConfigRegistry instance.
+        """
+        register_auth_config(registry)
 
 
 __all__ = [

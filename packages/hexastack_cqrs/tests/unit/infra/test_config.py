@@ -5,13 +5,6 @@ from hexastack_cqrs.infra.config import (
 )
 
 
-def test_register_cqrs_config():
-    registry = ConfigRegistry()
-    register_cqrs_config(registry)
-
-    assert registry.get("cqrs") == HexastackCqrsConfig
-
-
 def test_default_cqrs_config():
     config = HexastackCqrsConfig()
     assert config.use_huey_async is False
@@ -30,3 +23,10 @@ def test_default_cqrs_config():
     assert config.middleware.retry.max_attempts == 3
     assert config.middleware.retry.circuit_breaker_threshold == 5
     assert config.middleware.retry.recovery_timeout_seconds == 10.0
+
+
+def test_register_cqrs_config():
+    registry = ConfigRegistry()
+    register_cqrs_config(registry)
+
+    assert registry.get("cqrs") == HexastackCqrsConfig

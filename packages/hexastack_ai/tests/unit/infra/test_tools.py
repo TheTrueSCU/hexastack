@@ -44,15 +44,6 @@ def pipeline() -> ExecutionPipeline:
     )
 
 
-@pytest.mark.anyio
-async def test_create_tool_for_message(pipeline: ExecutionPipeline):
-    tool_fn = create_tool_for_message(CalculateTaxCommand, pipeline)
-    assert tool_fn.__name__ == "CalculateTaxCommand"
-
-    res = await tool_fn(amount=100.0, tax_rate=0.2)
-    assert res == {"total": 120.0}
-
-
 def test_create_cqrs_agent(pipeline: ExecutionPipeline):
     agent = create_cqrs_agent(
         pipeline=pipeline,
@@ -63,3 +54,12 @@ def test_create_cqrs_agent(pipeline: ExecutionPipeline):
     assert agent is not None
     res = agent.run_sync("Calculate tax for 100")
     assert res is not None
+
+
+@pytest.mark.anyio
+async def test_create_tool_for_message(pipeline: ExecutionPipeline):
+    tool_fn = create_tool_for_message(CalculateTaxCommand, pipeline)
+    assert tool_fn.__name__ == "CalculateTaxCommand"
+
+    res = await tool_fn(amount=100.0, tax_rate=0.2)
+    assert res == {"total": 120.0}

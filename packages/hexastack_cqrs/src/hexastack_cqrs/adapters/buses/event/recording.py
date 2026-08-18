@@ -20,19 +20,6 @@ class RecordingEventBus(SynchronousEventBus):
         super().__init__(middleware=middleware)
         self.published_events: list[Event] = []
 
-    def publish(self, event: Event) -> None:
-        """Publish a domain event, record it to history, and dispatch to handlers."""
-        self.published_events.append(event)
-        super().publish(event)
-
-    def has_published(self, event_cls: type[Event]) -> bool:
-        """Check if any event of the specified class was published."""
-        return any(isinstance(e, event_cls) for e in self.published_events)
-
-    def get_published(self, event_cls: type[E]) -> list[E]:
-        """Retrieve all recorded published events of a specific type."""
-        return [e for e in self.published_events if isinstance(e, event_cls)]
-
     def assert_published(
         self, event_cls: type[Event], count: int | None = None
     ) -> None:
@@ -53,14 +40,27 @@ class RecordingEventBus(SynchronousEventBus):
                 f"but found {len(matches)}"
             )
 
-    def clear_recorded(self) -> None:
-        """Clear recorded events journal without removing subscriber handlers."""
-        self.published_events.clear()
-
     def clear(self) -> None:
         """Clear all subscribers and recorded events."""
         super().clear()
         self.published_events.clear()
+
+    def clear_recorded(self) -> None:
+        """Clear recorded events journal without removing subscriber handlers."""
+        self.published_events.clear()
+
+    def get_published(self, event_cls: type[E]) -> list[E]:
+        """Retrieve all recorded published events of a specific type."""
+        return [e for e in self.published_events if isinstance(e, event_cls)]
+
+    def has_published(self, event_cls: type[Event]) -> bool:
+        """Check if any event of the specified class was published."""
+        return any(isinstance(e, event_cls) for e in self.published_events)
+
+    def publish(self, event: Event) -> None:
+        """Publish a domain event, record it to history, and dispatch to handlers."""
+        self.published_events.append(event)
+        super().publish(event)
 
 
 __all__ = [

@@ -16,6 +16,11 @@ from hexastack_core.ports.presenter import PresenterPort
 from hexastack_cqrs.infra.decorators import HandlerMetadata, PresenterMetadata
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
+__all__ = [
+    "autodiscover_cqrs",
+    "create_cqrs_visitor",
+]
+
 
 def _resolve_callable(
     obj: Any, container: Container | None = None
@@ -30,6 +35,34 @@ def _resolve_callable(
             )(*args, **kwargs)
         return cast("Callable[..., Any]", obj())
     return cast("Callable[..., Any]", obj)
+
+
+def autodiscover_cqrs(
+    packages_or_modules: Sequence[str | ModuleType],
+    pipeline: ExecutionPipeline,
+    container: Container | None = None,
+    config_registry: ConfigRegistry | None = None,
+) -> None:
+    """Scan packages and register discovered CQRS handlers, presenters, and config sections.
+
+    Args:
+        packages_or_modules: Sequence of package names or module objects to inspect.
+        pipeline: Target ExecutionPipeline instance.
+        container: Optional rodi Container instance.
+        config_registry: Optional ConfigRegistry instance.
+
+    Returns:
+        None.
+
+    Raises:
+        None.
+    """
+    visitor = create_cqrs_visitor(
+        pipeline=pipeline,
+        container=container,
+        config_registry=config_registry,
+    )
+    scan_modules(packages_or_modules, [visitor])
 
 
 def create_cqrs_visitor(
@@ -100,37 +133,3 @@ def create_cqrs_visitor(
                 config_registry.register_config_section(meta.section_name, obj)
 
     return visitor
-
-
-def autodiscover_cqrs(
-    packages_or_modules: Sequence[str | ModuleType],
-    pipeline: ExecutionPipeline,
-    container: Container | None = None,
-    config_registry: ConfigRegistry | None = None,
-) -> None:
-    """Scan packages and register discovered CQRS handlers, presenters, and config sections.
-
-    Args:
-        packages_or_modules: Sequence of package names or module objects to inspect.
-        pipeline: Target ExecutionPipeline instance.
-        container: Optional rodi Container instance.
-        config_registry: Optional ConfigRegistry instance.
-
-    Returns:
-        None.
-
-    Raises:
-        None.
-    """
-    visitor = create_cqrs_visitor(
-        pipeline=pipeline,
-        container=container,
-        config_registry=config_registry,
-    )
-    scan_modules(packages_or_modules, [visitor])
-
-
-__all__ = [
-    "autodiscover_cqrs",
-    "create_cqrs_visitor",
-]

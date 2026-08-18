@@ -119,21 +119,21 @@ class AsyncInMemoryRepository[E, ID](AsyncRepositoryPort[E, ID]):
         """Asynchronously add or update an entity."""
         self._sync_repo.add(entity)
 
-    async def get_by_id_async(self, entity_id: ID) -> E | None:
-        """Asynchronously retrieve an entity by ID."""
-        return self._sync_repo.get_by_id(entity_id)
-
     async def all_async(self) -> list[E]:
         """Asynchronously retrieve all entities."""
         return self._sync_repo.all()
 
-    async def remove_async(self, entity_id: ID) -> None:
-        """Asynchronously remove an entity by ID."""
-        self._sync_repo.remove(entity_id)
-
     def clear(self) -> None:
         """Clear all stored entities."""
         self._sync_repo.clear()
+
+    async def get_by_id_async(self, entity_id: ID) -> E | None:
+        """Asynchronously retrieve an entity by ID."""
+        return self._sync_repo.get_by_id(entity_id)
+
+    async def remove_async(self, entity_id: ID) -> None:
+        """Asynchronously remove an entity by ID."""
+        self._sync_repo.remove(entity_id)
 
 
 __all__ = [

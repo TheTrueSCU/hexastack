@@ -29,6 +29,21 @@ class InvoicePaidEvent(Event):
     currency: str = "USD"
 
 
+def test_cloudevent_deserialization_failure():
+    invalid_ce_data = {
+        "id": "bad-ce",
+        "source": "unknown",
+        "type": "InvoicePaidEvent",
+        "specversion": "1.0",
+        "data": "not-a-valid-dict",
+    }
+    with pytest.raises(
+        EventSerializationError,
+        match="Failed to deserialize CloudEvent into 'InvoicePaidEvent'",
+    ):
+        from_cloudevent(invalid_ce_data, InvoicePaidEvent)
+
+
 @pytest.mark.snapshot
 def test_cloudevent_serializer_defaults():
     """Snapshot the full CloudEvent dict shape produced by to_cloudevent defaults.
@@ -60,6 +75,56 @@ def test_cloudevent_serializer_defaults():
             "data": {"invoice_id": "inv-default", "amount": 100.0, "currency": "USD"},
         }
     )
+
+
+def test_cloudevent_serializer_roundtrip():
+    event = InvoicePaidEvent(invoice_id="inv-888", amount=2500.0)
+
+    with correlation_scope("corr-invoice-1"):
+        set_user_context(UserContext(user_id="usr_1", tenant_id="tenant_corp"))
+        ce = to_cloudevent(
+            event,
+            source="https://hexastack.io/billing",
+            event_type="io.hexastack.billing.invoice_paid",
+        )
+
+        assert ce["id"] is not None
+        assert ce["source"] == "https://hexastack.io/billing"
+        assert ce["type"] == "io.hexastack.billing.invoice_paid"
+        assert ce["correlationid"] == "corr-invoice-1"
+        assert ce["tenantid"] == "tenant_corp"
+
+        # Roundtrip via to_dict
+        d = cloudevent_to_dict(ce)
+        assert d["id"] == ce["id"]
+        assert d["source"] == "https://hexastack.io/billing"
+        assert d["type"] == "io.hexastack.billing.invoice_paid"
+        assert d["correlationid"] == "corr-invoice-1"
+        assert d["tenantid"] == "tenant_corp"
+        assert d["data"] == {
+            "invoice_id": "inv-888",
+            "amount": 2500.0,
+            "currency": "USD",
+        }
+
+        # Roundtrip via to_json
+        raw_json = cloudevent_to_json(ce)
+        assert isinstance(raw_json, str)
+
+        # Deserialize back to domain Event
+        restored = from_cloudevent(ce, InvoicePaidEvent)
+        assert isinstance(restored, InvoicePaidEvent)
+        assert restored.invoice_id == "inv-888"
+        assert restored.amount == 2500.0
+        assert restored.currency == "USD"
+
+        # Deserialize from JSON
+        restored_from_json = from_cloudevent(raw_json, InvoicePaidEvent)
+        assert restored_from_json.invoice_id == "inv-888"
+
+        # Deserialize from dict
+        restored_from_dict = from_cloudevent(d, InvoicePaidEvent)
+        assert restored_from_dict.invoice_id == "inv-888"
 
 
 @pytest.mark.snapshot
@@ -121,68 +186,3 @@ def test_to_envelope_shape():
             "data": {"invoice_id": "inv-env-1", "amount": 75.0, "currency": "USD"},
         }
     )
-
-
-def test_cloudevent_serializer_roundtrip():
-    event = InvoicePaidEvent(invoice_id="inv-888", amount=2500.0)
-
-    with correlation_scope("corr-invoice-1"):
-        set_user_context(UserContext(user_id="usr_1", tenant_id="tenant_corp"))
-        ce = to_cloudevent(
-            event,
-            source="https://hexastack.io/billing",
-            event_type="io.hexastack.billing.invoice_paid",
-        )
-
-        assert ce["id"] is not None
-        assert ce["source"] == "https://hexastack.io/billing"
-        assert ce["type"] == "io.hexastack.billing.invoice_paid"
-        assert ce["correlationid"] == "corr-invoice-1"
-        assert ce["tenantid"] == "tenant_corp"
-
-        # Roundtrip via to_dict
-        d = cloudevent_to_dict(ce)
-        assert d["id"] == ce["id"]
-        assert d["source"] == "https://hexastack.io/billing"
-        assert d["type"] == "io.hexastack.billing.invoice_paid"
-        assert d["correlationid"] == "corr-invoice-1"
-        assert d["tenantid"] == "tenant_corp"
-        assert d["data"] == {
-            "invoice_id": "inv-888",
-            "amount": 2500.0,
-            "currency": "USD",
-        }
-
-        # Roundtrip via to_json
-        raw_json = cloudevent_to_json(ce)
-        assert isinstance(raw_json, str)
-
-        # Deserialize back to domain Event
-        restored = from_cloudevent(ce, InvoicePaidEvent)
-        assert isinstance(restored, InvoicePaidEvent)
-        assert restored.invoice_id == "inv-888"
-        assert restored.amount == 2500.0
-        assert restored.currency == "USD"
-
-        # Deserialize from JSON
-        restored_from_json = from_cloudevent(raw_json, InvoicePaidEvent)
-        assert restored_from_json.invoice_id == "inv-888"
-
-        # Deserialize from dict
-        restored_from_dict = from_cloudevent(d, InvoicePaidEvent)
-        assert restored_from_dict.invoice_id == "inv-888"
-
-
-def test_cloudevent_deserialization_failure():
-    invalid_ce_data = {
-        "id": "bad-ce",
-        "source": "unknown",
-        "type": "InvoicePaidEvent",
-        "specversion": "1.0",
-        "data": "not-a-valid-dict",
-    }
-    with pytest.raises(
-        EventSerializationError,
-        match="Failed to deserialize CloudEvent into 'InvoicePaidEvent'",
-    ):
-        from_cloudevent(invalid_ce_data, InvoicePaidEvent)

@@ -7,6 +7,10 @@ from hexastack_core.domain import HexastackError
 from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.utils.context import get_correlation_id
 
+__all__ = [
+    "register_exception_handlers",
+]
+
 
 def register_exception_handlers(
     app: FastAPI,
@@ -54,8 +58,3 @@ def register_exception_handlers(
             "correlation_id": get_correlation_id(),
         }
         return JSONResponse(status_code=status_code, content=content)
-
-
-__all__ = [
-    "register_exception_handlers",
-]

@@ -37,6 +37,12 @@ class HexastackOtelConfig(BaseModel):
     )
 
 
+__all__ = [
+    "HexastackOtelConfig",
+    "register_otel_config",
+]
+
+
 def register_otel_config(registry: ConfigRegistry) -> None:
     """Register the OpenTelemetry config section schema in ConfigRegistry.
 
@@ -44,9 +50,3 @@ def register_otel_config(registry: ConfigRegistry) -> None:
         registry: Target ConfigRegistry instance.
     """
     registry.register_config_section("otel", HexastackOtelConfig)
-
-
-__all__ = [
-    "HexastackOtelConfig",
-    "register_otel_config",
-]

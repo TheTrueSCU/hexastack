@@ -29,6 +29,65 @@ class UserRecord(Base):
     email: Mapped[str]
 
 
+@pytest.mark.anyio
+async def test_async_sqlalchemy_repository():
+    async_engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=StaticPool,
+    )
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async_factory = async_sessionmaker(bind=async_engine)
+    async with async_factory() as session:
+        repo = AsyncSqlAlchemyRepository(session=session, model_cls=UserRecord)
+
+        # 1. Add
+        user1 = UserRecord(username="dave", email="dave@example.com")
+        await repo.add(user1)
+        assert user1.id is not None
+        assert await repo.count() == 1
+
+        # 2. Add many
+        await repo.add_many(
+            [
+                UserRecord(username="eve", email="eve@example.com"),
+                UserRecord(username="frank", email="frank@example.com"),
+            ]
+        )
+        assert await repo.count() == 3
+
+        # 3. Get
+        fetched = await repo.get(user1.id)
+        assert fetched is not None
+        assert fetched.username == "dave"
+        assert await repo.get(99999) is None
+
+        # 4. List with offset and limit
+        results = await repo.list(offset=1, limit=1)
+        assert len(results) == 1
+
+        # Count with filter
+        assert await repo.count(username="eve") == 1
+        assert await repo.count(username="none") == 0
+
+        # 5. Update
+        user1.email = "dave_updated@example.com"
+        await repo.update(user1)
+        refetched = await repo.get(user1.id)
+        assert refetched is not None
+        assert refetched.email == "dave_updated@example.com"
+
+        # 6. Delete
+        assert await repo.delete(user1.id) is True
+        assert await repo.delete(999999) is False
+        assert await repo.count() == 2
+
+        # 7. Unique constraint error
+        with pytest.raises(UniqueConstraintViolationError):
+            await repo.add(UserRecord(username="eve", email="duplicate@example.com"))
+
+
 def test_sqlalchemy_repository_sync():
     engine = create_engine(
         "sqlite:///:memory:",
@@ -92,62 +151,3 @@ def test_sqlalchemy_repository_sync():
 
     session.close()
     engine.dispose()
-
-
-@pytest.mark.anyio
-async def test_async_sqlalchemy_repository():
-    async_engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        poolclass=StaticPool,
-    )
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    async_factory = async_sessionmaker(bind=async_engine)
-    async with async_factory() as session:
-        repo = AsyncSqlAlchemyRepository(session=session, model_cls=UserRecord)
-
-        # 1. Add
-        user1 = UserRecord(username="dave", email="dave@example.com")
-        await repo.add(user1)
-        assert user1.id is not None
-        assert await repo.count() == 1
-
-        # 2. Add many
-        await repo.add_many(
-            [
-                UserRecord(username="eve", email="eve@example.com"),
-                UserRecord(username="frank", email="frank@example.com"),
-            ]
-        )
-        assert await repo.count() == 3
-
-        # 3. Get
-        fetched = await repo.get(user1.id)
-        assert fetched is not None
-        assert fetched.username == "dave"
-        assert await repo.get(99999) is None
-
-        # 4. List with offset and limit
-        results = await repo.list(offset=1, limit=1)
-        assert len(results) == 1
-
-        # Count with filter
-        assert await repo.count(username="eve") == 1
-        assert await repo.count(username="none") == 0
-
-        # 5. Update
-        user1.email = "dave_updated@example.com"
-        await repo.update(user1)
-        refetched = await repo.get(user1.id)
-        assert refetched is not None
-        assert refetched.email == "dave_updated@example.com"
-
-        # 6. Delete
-        assert await repo.delete(user1.id) is True
-        assert await repo.delete(999999) is False
-        assert await repo.count() == 2
-
-        # 7. Unique constraint error
-        with pytest.raises(UniqueConstraintViolationError):
-            await repo.add(UserRecord(username="eve", email="duplicate@example.com"))

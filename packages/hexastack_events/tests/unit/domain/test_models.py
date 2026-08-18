@@ -7,13 +7,23 @@ from hexastack_events.domain.models import (
 )
 
 
-def test_outbox_status_enum_values():
-    assert OutboxStatus.PENDING == "PENDING"
-    assert OutboxStatus.PUBLISHED == "PUBLISHED"
-    assert OutboxStatus.FAILED == "FAILED"
-    assert isinstance(OutboxStatus.PENDING, str)
-    assert isinstance(OutboxStatus.PUBLISHED, str)
-    assert isinstance(OutboxStatus.FAILED, str)
+def test_cloudevent_envelope_defaults():
+    env = CloudEventEnvelope(
+        id="ce-default",
+        source="services/order",
+        type="order.placed",
+        time="2026-08-14T10:00:00Z",
+        data={"order_id": "o-1"},
+    )
+    assert env.specversion == "1.0"
+    assert env.datacontenttype == "application/json"
+    assert env.correlationid is None
+    assert env.tenantid is None
+    assert env.id == "ce-default"
+    assert env.source == "services/order"
+    assert env.type == "order.placed"
+    assert env.time == "2026-08-14T10:00:00Z"
+    assert env.data == {"order_id": "o-1"}
 
 
 def test_outbox_record_defaults_and_lifecycle():
@@ -53,20 +63,10 @@ def test_outbox_record_defaults_and_lifecycle():
     assert rec.retry_count == 2  # retry_count preserved for auditing
 
 
-def test_cloudevent_envelope_defaults():
-    env = CloudEventEnvelope(
-        id="ce-default",
-        source="services/order",
-        type="order.placed",
-        time="2026-08-14T10:00:00Z",
-        data={"order_id": "o-1"},
-    )
-    assert env.specversion == "1.0"
-    assert env.datacontenttype == "application/json"
-    assert env.correlationid is None
-    assert env.tenantid is None
-    assert env.id == "ce-default"
-    assert env.source == "services/order"
-    assert env.type == "order.placed"
-    assert env.time == "2026-08-14T10:00:00Z"
-    assert env.data == {"order_id": "o-1"}
+def test_outbox_status_enum_values():
+    assert OutboxStatus.PENDING == "PENDING"
+    assert OutboxStatus.PUBLISHED == "PUBLISHED"
+    assert OutboxStatus.FAILED == "FAILED"
+    assert isinstance(OutboxStatus.PENDING, str)
+    assert isinstance(OutboxStatus.PUBLISHED, str)
+    assert isinstance(OutboxStatus.FAILED, str)

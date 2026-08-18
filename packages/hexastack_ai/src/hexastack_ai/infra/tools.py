@@ -9,6 +9,46 @@ from pydantic_core import PydanticUndefined
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
+__all__ = [
+    "create_cqrs_agent",
+    "create_tool_for_message",
+]
+
+
+def create_cqrs_agent(
+    pipeline: ExecutionPipeline,
+    messages: Sequence[type[Command | Query[Any]]],
+    model: str | Model = "test",
+    system_prompt: str | None = None,
+) -> Agent[Any, Any]:
+    """Assemble a PydanticAI Agent with CQRS message handlers reflected as tools.
+
+    Notes/Architectural Intent:
+        Bridges the CQRS message bus with AI agent capabilities. The agent can
+        reason, select appropriate Commands/Queries, and invoke domain logic
+        through the standard Hexastack execution pipeline.
+
+    Args:
+        pipeline: Target ExecutionPipeline.
+        messages: Sequence of Command/Query classes to expose as tools.
+        model: Target model string ('test', 'openai:gpt-4o', 'anthropic:claude-3-5-sonnet') or Model instance.
+        system_prompt: Optional initial persona instructions.
+
+    Returns:
+        Configured PydanticAI Agent instance.
+    """
+    sys_prompt = system_prompt or (
+        "You are an AI assistant capable of executing domain operations "
+        "using the provided tools."
+    )
+    agent: Agent[Any, Any] = Agent(model=model, system_prompt=sys_prompt)
+
+    for msg_cls in messages:
+        tool_fn = create_tool_for_message(msg_cls, pipeline)
+        agent.tool_plain(tool_fn)
+
+    return agent
+
 
 def create_tool_for_message(
     msg_cls: type[Generic],
@@ -69,44 +109,3 @@ def create_tool_for_message(
         msg_cls.__doc__ or f"Execute the {msg_cls.__name__} domain operation."
     )
     return tool_executor
-
-
-def create_cqrs_agent(
-    pipeline: ExecutionPipeline,
-    messages: Sequence[type[Command | Query[Any]]],
-    model: str | Model = "test",
-    system_prompt: str | None = None,
-) -> Agent[Any, Any]:
-    """Assemble a PydanticAI Agent with CQRS message handlers reflected as tools.
-
-    Notes/Architectural Intent:
-        Bridges the CQRS message bus with AI agent capabilities. The agent can
-        reason, select appropriate Commands/Queries, and invoke domain logic
-        through the standard Hexastack execution pipeline.
-
-    Args:
-        pipeline: Target ExecutionPipeline.
-        messages: Sequence of Command/Query classes to expose as tools.
-        model: Target model string ('test', 'openai:gpt-4o', 'anthropic:claude-3-5-sonnet') or Model instance.
-        system_prompt: Optional initial persona instructions.
-
-    Returns:
-        Configured PydanticAI Agent instance.
-    """
-    sys_prompt = system_prompt or (
-        "You are an AI assistant capable of executing domain operations "
-        "using the provided tools."
-    )
-    agent: Agent[Any, Any] = Agent(model=model, system_prompt=sys_prompt)
-
-    for msg_cls in messages:
-        tool_fn = create_tool_for_message(msg_cls, pipeline)
-        agent.tool_plain(tool_fn)
-
-    return agent
-
-
-__all__ = [
-    "create_cqrs_agent",
-    "create_tool_for_message",
-]

@@ -12,20 +12,6 @@ from hexastack_events.adapters.outbox.in_memory import InMemoryOutboxStorage
 from hexastack_events.domain.models import OutboxRecord, OutboxStatus
 
 
-def test_asyncio_outbox_relay_defaults():
-    storage = InMemoryOutboxStorage()
-    bus = InMemoryDistributedEventBus()
-
-    relay = AsyncioOutboxRelay(storage=storage, bus=bus)
-    assert relay._poll_interval == 1.0
-    assert relay._batch_size == 50
-    assert relay._running is False
-
-    # Stop when not running is a no-op
-    relay.stop()
-    assert relay._running is False
-
-
 def test_asyncio_outbox_relay_batch_distributed_and_standard_bus():
     storage = InMemoryOutboxStorage()
     dist_bus = InMemoryDistributedEventBus()
@@ -72,6 +58,20 @@ def test_asyncio_outbox_relay_batch_distributed_and_standard_bus():
     count2 = std_relay.publish_pending_batch(limit=10)
     assert count2 == 1
     assert mock_std_bus.publish.called
+
+
+def test_asyncio_outbox_relay_defaults():
+    storage = InMemoryOutboxStorage()
+    bus = InMemoryDistributedEventBus()
+
+    relay = AsyncioOutboxRelay(storage=storage, bus=bus)
+    assert relay._poll_interval == 1.0
+    assert relay._batch_size == 50
+    assert relay._running is False
+
+    # Stop when not running is a no-op
+    relay.stop()
+    assert relay._running is False
 
 
 def test_asyncio_outbox_relay_failure_handling():

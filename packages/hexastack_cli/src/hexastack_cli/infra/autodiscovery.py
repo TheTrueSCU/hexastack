@@ -25,6 +25,11 @@ from hexastack_core.infra.autodiscovery import (
 )
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
+__all__ = [
+    "autodiscover_cli_commands",
+    "create_cli_visitor",
+]
+
 
 def _normalize_group_path(group: str | Sequence[str] | None) -> list[str]:
     """Normalize a string or sequence into a list of subcommand group tokens."""
@@ -33,6 +38,30 @@ def _normalize_group_path(group: str | Sequence[str] | None) -> list[str]:
     if isinstance(group, str):
         return [part.strip() for part in re.split(r"[./\s]+", group) if part.strip()]
     return [str(part).strip() for part in group if str(part).strip()]
+
+
+def autodiscover_cli_commands(
+    app: typer.Typer,
+    packages_or_modules: Sequence[str | ModuleType],
+    pipeline: ExecutionPipeline,
+    console: Console | None = None,
+) -> None:
+    """Scan packages and register discovered CLI commands into a Typer application.
+
+    Args:
+        app: Target Typer application instance.
+        packages_or_modules: Sequence of package names or module objects to inspect.
+        pipeline: Target ExecutionPipeline instance.
+        console: Optional rich Console instance.
+
+    Returns:
+        None.
+
+    Raises:
+        None.
+    """
+    visitor = create_cli_visitor(app=app, pipeline=pipeline, console=console)
+    scan_modules(packages_or_modules, [visitor])
 
 
 def create_cli_visitor(
@@ -153,33 +182,3 @@ def create_cli_visitor(
                 )
 
     return visitor
-
-
-def autodiscover_cli_commands(
-    app: typer.Typer,
-    packages_or_modules: Sequence[str | ModuleType],
-    pipeline: ExecutionPipeline,
-    console: Console | None = None,
-) -> None:
-    """Scan packages and register discovered CLI commands into a Typer application.
-
-    Args:
-        app: Target Typer application instance.
-        packages_or_modules: Sequence of package names or module objects to inspect.
-        pipeline: Target ExecutionPipeline instance.
-        console: Optional rich Console instance.
-
-    Returns:
-        None.
-
-    Raises:
-        None.
-    """
-    visitor = create_cli_visitor(app=app, pipeline=pipeline, console=console)
-    scan_modules(packages_or_modules, [visitor])
-
-
-__all__ = [
-    "autodiscover_cli_commands",
-    "create_cli_visitor",
-]

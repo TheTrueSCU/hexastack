@@ -95,33 +95,6 @@ def test_outbox_event_mixin_to_domain():
     assert domain_rec.last_error == "retry error"
 
 
-def test_sqlalchemy_outbox_storage_save_and_fetch(db_session_and_factory):
-    _session, factory = db_session_and_factory
-    # Test using callable factory as session_factory
-    storage = SqlAlchemyOutboxStorage(session_factory=factory)
-
-    record = OutboxRecord(
-        id="rec-sql-1",
-        event_type="OrderPaidEvent",
-        source="billing-service",
-        payload={"order_id": "ord-1", "total": 99.50},
-        correlation_id="corr-sql-10",
-        tenant_id="tenant-acme",
-        created_at=datetime.now(UTC),
-    )
-
-    storage.save(record)
-
-    pending = storage.fetch_pending(limit=10)
-    assert len(pending) == 1
-    assert pending[0].id == "rec-sql-1"
-    assert pending[0].event_type == "OrderPaidEvent"
-    assert pending[0].payload["total"] == 99.50
-    assert pending[0].correlation_id == "corr-sql-10"
-    assert pending[0].tenant_id == "tenant-acme"
-    assert pending[0].status == OutboxStatus.PENDING
-
-
 def test_sqlalchemy_outbox_storage_lifecycle_and_ordering(
     db_session_and_factory,
 ):
@@ -169,3 +142,30 @@ def test_sqlalchemy_outbox_storage_lifecycle_and_ordering(
     assert row_b.status == OutboxStatus.FAILED.value
     assert row_b.retry_count == 1
     assert row_b.last_error == "Kafka unreachable"
+
+
+def test_sqlalchemy_outbox_storage_save_and_fetch(db_session_and_factory):
+    _session, factory = db_session_and_factory
+    # Test using callable factory as session_factory
+    storage = SqlAlchemyOutboxStorage(session_factory=factory)
+
+    record = OutboxRecord(
+        id="rec-sql-1",
+        event_type="OrderPaidEvent",
+        source="billing-service",
+        payload={"order_id": "ord-1", "total": 99.50},
+        correlation_id="corr-sql-10",
+        tenant_id="tenant-acme",
+        created_at=datetime.now(UTC),
+    )
+
+    storage.save(record)
+
+    pending = storage.fetch_pending(limit=10)
+    assert len(pending) == 1
+    assert pending[0].id == "rec-sql-1"
+    assert pending[0].event_type == "OrderPaidEvent"
+    assert pending[0].payload["total"] == 99.50
+    assert pending[0].correlation_id == "corr-sql-10"
+    assert pending[0].tenant_id == "tenant-acme"
+    assert pending[0].status == OutboxStatus.PENDING

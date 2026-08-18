@@ -5,34 +5,10 @@ from hexastack_core.domain.query import Query
 from hexastack_graphql.domain.context import GraphQLContext
 from hexastack_graphql.domain.exceptions import GraphQLError
 
-
-def dispatch_query[T](
-    info: Info[GraphQLContext, None],
-    query: Query,
-) -> T:
-    """Dispatch a CQRS query from inside a Strawberry field resolver.
-
-    Notes/Architectural Intent:
-        Resolves QueryBusPort from info.context and dispatches the query,
-        returning the handler's result with type inference.
-
-    Args:
-        info: Strawberry execution Info object containing GraphQLContext.
-        query: Concrete Query instance to dispatch.
-
-    Returns:
-        The query execution result.
-
-    Raises:
-        GraphQLError: If QueryBusPort is not configured in context.
-    """
-    bus = info.context.query_bus
-    if bus is None:
-        raise GraphQLError(
-            "QueryBusPort is not available in GraphQLContext. "
-            "Ensure hexastack-cqrs is configured."
-        )
-    return bus.dispatch(query)  # type: ignore[no-any-return]
+__all__ = [
+    "dispatch_command",
+    "dispatch_query",
+]
 
 
 def dispatch_command[T](
@@ -64,7 +40,30 @@ def dispatch_command[T](
     return bus.dispatch(command)  # type: ignore[no-any-return]
 
 
-__all__ = [
-    "dispatch_command",
-    "dispatch_query",
-]
+def dispatch_query[T](
+    info: Info[GraphQLContext, None],
+    query: Query,
+) -> T:
+    """Dispatch a CQRS query from inside a Strawberry field resolver.
+
+    Notes/Architectural Intent:
+        Resolves QueryBusPort from info.context and dispatches the query,
+        returning the handler's result with type inference.
+
+    Args:
+        info: Strawberry execution Info object containing GraphQLContext.
+        query: Concrete Query instance to dispatch.
+
+    Returns:
+        The query execution result.
+
+    Raises:
+        GraphQLError: If QueryBusPort is not configured in context.
+    """
+    bus = info.context.query_bus
+    if bus is None:
+        raise GraphQLError(
+            "QueryBusPort is not available in GraphQLContext. "
+            "Ensure hexastack-cqrs is configured."
+        )
+    return bus.dispatch(query)  # type: ignore[no-any-return]

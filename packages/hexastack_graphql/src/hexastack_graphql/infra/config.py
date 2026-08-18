@@ -39,6 +39,12 @@ class HexastackGraphQLConfig(BaseModel):
     )
 
 
+__all__ = [
+    "HexastackGraphQLConfig",
+    "register_graphql_config",
+]
+
+
 def register_graphql_config(registry: ConfigRegistry) -> None:
     """Register GraphQL configuration schema under 'graphql'.
 
@@ -52,9 +58,3 @@ def register_graphql_config(registry: ConfigRegistry) -> None:
         None.
     """
     registry.register_config_section("graphql", HexastackGraphQLConfig)
-
-
-__all__ = [
-    "HexastackGraphQLConfig",
-    "register_graphql_config",
-]

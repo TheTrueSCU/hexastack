@@ -17,13 +17,15 @@ class MockUnitOfWork(UnitOfWorkPort):
         self.rolled_back = True
 
 
-def test_unit_of_work_success_commits():
-    uow = MockUnitOfWork()
-    with uow:
-        pass
+def test_unit_of_work_exception_reraises_as_unit_of_work_error():
+    uow = MockUnitOfWork(reraise=True)
 
-    assert uow.committed is True
-    assert uow.rolled_back is False
+    with pytest.raises(UnitOfWorkError) as exc_info, uow:
+        raise ValueError("original error")
+
+    assert uow.committed is False
+    assert uow.rolled_back is True
+    assert isinstance(exc_info.value.__cause__, ValueError)
 
 
 def test_unit_of_work_exception_rolls_back_and_propagates():
@@ -36,12 +38,10 @@ def test_unit_of_work_exception_rolls_back_and_propagates():
     assert uow.rolled_back is True
 
 
-def test_unit_of_work_exception_reraises_as_unit_of_work_error():
-    uow = MockUnitOfWork(reraise=True)
+def test_unit_of_work_success_commits():
+    uow = MockUnitOfWork()
+    with uow:
+        pass
 
-    with pytest.raises(UnitOfWorkError) as exc_info, uow:
-        raise ValueError("original error")
-
-    assert uow.committed is False
-    assert uow.rolled_back is True
-    assert isinstance(exc_info.value.__cause__, ValueError)
+    assert uow.committed is True
+    assert uow.rolled_back is False

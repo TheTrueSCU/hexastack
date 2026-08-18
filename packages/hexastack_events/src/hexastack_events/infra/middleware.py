@@ -28,22 +28,6 @@ class OutboxCaptureMiddleware:
         self._source = source
         self._enabled = enabled
 
-    def _stage_event(self, event: Event) -> None:
-        """Helper to create and stage an OutboxRecord."""
-        user_ctx = get_user_context()
-        tenant_id = user_ctx.tenant_id if user_ctx is not None else None
-
-        record = OutboxRecord(
-            id=str(uuid.uuid4()),
-            event_type=event.__class__.__name__,
-            source=self._source,
-            payload=event.model_dump(mode="json"),
-            correlation_id=get_correlation_id(),
-            tenant_id=tenant_id,
-            created_at=datetime.now(UTC),
-        )
-        self._storage.save(record)
-
     def __call__[G: Generic, R](
         self,
         instance: G,
@@ -77,6 +61,22 @@ class OutboxCaptureMiddleware:
             self._stage_event(result)
 
         return result
+
+    def _stage_event(self, event: Event) -> None:
+        """Helper to create and stage an OutboxRecord."""
+        user_ctx = get_user_context()
+        tenant_id = user_ctx.tenant_id if user_ctx is not None else None
+
+        record = OutboxRecord(
+            id=str(uuid.uuid4()),
+            event_type=event.__class__.__name__,
+            source=self._source,
+            payload=event.model_dump(mode="json"),
+            correlation_id=get_correlation_id(),
+            tenant_id=tenant_id,
+            created_at=datetime.now(UTC),
+        )
+        self._storage.save(record)
 
 
 __all__ = [

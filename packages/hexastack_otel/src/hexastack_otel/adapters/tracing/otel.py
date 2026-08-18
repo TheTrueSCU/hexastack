@@ -32,22 +32,22 @@ class OtelSpan(SpanPort):
     def __init__(self, raw_span: OtelRawSpan) -> None:
         self._span = raw_span
 
+    def end(self) -> None:
+        self._span.end()
+
+    def record_exception(self, exception: BaseException) -> None:
+        self._span.record_exception(exception)
+        self._span.set_status(StatusCode.ERROR, str(exception))
+
     def set_attribute(self, key: str, value: Any) -> None:
         self._span.set_attribute(key, value)
 
     def set_attributes(self, attributes: dict[str, Any]) -> None:
         self._span.set_attributes(attributes)
 
-    def record_exception(self, exception: BaseException) -> None:
-        self._span.record_exception(exception)
-        self._span.set_status(StatusCode.ERROR, str(exception))
-
     def set_status(self, status: str, description: str | None = None) -> None:
         code = StatusCode.OK if status.upper() == "OK" else StatusCode.ERROR
         self._span.set_status(code, description)
-
-    def end(self) -> None:
-        self._span.end()
 
 
 class OtelTracingAdapter(TracingPort):
@@ -76,6 +76,27 @@ class OtelTracingAdapter(TracingPort):
                 self._provider.add_span_processor(SimpleSpanProcessor(exporter))
 
         self._tracer = self._provider.get_tracer("hexastack", "0.1.0")
+
+    def extract_context(self, carrier: dict[str, str]) -> SpanContext | None:
+        ctx = self._propagator.extract(carrier)
+        current = trace.get_current_span(ctx)
+        span_ctx = current.get_span_context()
+        if span_ctx.is_valid:
+            return SpanContext(
+                trace_id=f"{span_ctx.trace_id:032x}",
+                span_id=f"{span_ctx.span_id:016x}",
+                trace_flags=int(span_ctx.trace_flags),
+            )
+        return None
+
+    def get_current_span(self) -> OtelSpan | None:
+        raw = trace.get_current_span()
+        if raw and raw.is_recording():
+            return OtelSpan(raw)
+        return None
+
+    def inject_context(self, carrier: dict[str, str]) -> None:
+        self._propagator.inject(carrier)
 
     def start_span(
         self,
@@ -109,27 +130,6 @@ class OtelTracingAdapter(TracingPort):
     ) -> Iterator[OtelSpan]:
         with self._tracer.start_as_current_span(name, attributes=attributes) as raw:
             yield OtelSpan(raw)
-
-    def get_current_span(self) -> OtelSpan | None:
-        raw = trace.get_current_span()
-        if raw and raw.is_recording():
-            return OtelSpan(raw)
-        return None
-
-    def inject_context(self, carrier: dict[str, str]) -> None:
-        self._propagator.inject(carrier)
-
-    def extract_context(self, carrier: dict[str, str]) -> SpanContext | None:
-        ctx = self._propagator.extract(carrier)
-        current = trace.get_current_span(ctx)
-        span_ctx = current.get_span_context()
-        if span_ctx.is_valid:
-            return SpanContext(
-                trace_id=f"{span_ctx.trace_id:032x}",
-                span_id=f"{span_ctx.span_id:016x}",
-                trace_flags=int(span_ctx.trace_flags),
-            )
-        return None
 
 
 __all__ = [

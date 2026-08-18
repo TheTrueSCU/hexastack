@@ -9,22 +9,6 @@ from hexastack_events.adapters.outbox.in_memory import InMemoryOutboxStorage
 from hexastack_events.domain.models import OutboxRecord, OutboxStatus
 
 
-def test_huey_outbox_relay_defaults_and_lifecycle():
-    storage = InMemoryOutboxStorage()
-    bus = InMemoryDistributedEventBus()
-
-    relay = HueyOutboxRelay(storage=storage, bus=bus)
-    assert relay._batch_size == 50
-    assert relay._huey is None
-    assert relay._is_active is False
-
-    relay.start()
-    assert relay._is_active is True
-
-    relay.stop()
-    assert relay._is_active is False
-
-
 def test_huey_outbox_relay_batch():
     storage = InMemoryOutboxStorage()
     bus = InMemoryDistributedEventBus()
@@ -57,6 +41,22 @@ def test_huey_outbox_relay_batch():
     records = storage.get_all()
     assert records[0].status == OutboxStatus.PUBLISHED
     relay.stop()
+
+
+def test_huey_outbox_relay_defaults_and_lifecycle():
+    storage = InMemoryOutboxStorage()
+    bus = InMemoryDistributedEventBus()
+
+    relay = HueyOutboxRelay(storage=storage, bus=bus)
+    assert relay._batch_size == 50
+    assert relay._huey is None
+    assert relay._is_active is False
+
+    relay.start()
+    assert relay._is_active is True
+
+    relay.stop()
+    assert relay._is_active is False
 
 
 def test_huey_outbox_relay_standard_bus_and_error():

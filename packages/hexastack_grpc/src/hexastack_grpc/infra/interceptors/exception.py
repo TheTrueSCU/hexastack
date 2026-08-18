@@ -10,27 +10,6 @@ from hexastack_grpc.infra.interceptors.generic import (
 )
 
 
-def _map_exception_to_status_code(exc: Exception) -> tuple[grpc.StatusCode, str]:
-    """Map domain exceptions to gRPC status codes and detail messages."""
-    exc_name = type(exc).__name__.lower()
-    msg = str(exc)
-
-    if "notfound" in exc_name:
-        return grpc.StatusCode.NOT_FOUND, msg
-    if "validation" in exc_name or "invalid" in exc_name:
-        return grpc.StatusCode.INVALID_ARGUMENT, msg
-    if "unauthorized" in exc_name or "authentication" in exc_name:
-        return grpc.StatusCode.UNAUTHENTICATED, msg
-    if "forbidden" in exc_name or "permission" in exc_name:
-        return grpc.StatusCode.PERMISSION_DENIED, msg
-    if "conflict" in exc_name or "alreadyexists" in exc_name:
-        return grpc.StatusCode.ALREADY_EXISTS, msg
-    if isinstance(exc, HexastackError):
-        return grpc.StatusCode.INTERNAL, msg
-
-    return grpc.StatusCode.UNKNOWN, msg
-
-
 class ExceptionServerInterceptor(GenericServerInterceptor):
     """Synchronous gRPC Server Interceptor mapping domain exceptions to gRPC status codes.
 
@@ -76,3 +55,24 @@ __all__ = [
     "AsyncExceptionServerInterceptor",
     "ExceptionServerInterceptor",
 ]
+
+
+def _map_exception_to_status_code(exc: Exception) -> tuple[grpc.StatusCode, str]:
+    """Map domain exceptions to gRPC status codes and detail messages."""
+    exc_name = type(exc).__name__.lower()
+    msg = str(exc)
+
+    if "notfound" in exc_name:
+        return grpc.StatusCode.NOT_FOUND, msg
+    if "validation" in exc_name or "invalid" in exc_name:
+        return grpc.StatusCode.INVALID_ARGUMENT, msg
+    if "unauthorized" in exc_name or "authentication" in exc_name:
+        return grpc.StatusCode.UNAUTHENTICATED, msg
+    if "forbidden" in exc_name or "permission" in exc_name:
+        return grpc.StatusCode.PERMISSION_DENIED, msg
+    if "conflict" in exc_name or "alreadyexists" in exc_name:
+        return grpc.StatusCode.ALREADY_EXISTS, msg
+    if isinstance(exc, HexastackError):
+        return grpc.StatusCode.INTERNAL, msg
+
+    return grpc.StatusCode.UNKNOWN, msg

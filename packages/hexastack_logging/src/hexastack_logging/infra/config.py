@@ -88,6 +88,16 @@ class HexastackLoggingConfig(BaseModel):
     loggers: dict[str, str] = Field(default_factory=dict)
 
 
+__all__ = [
+    "AsyncQueueConfig",
+    "FileLoggingConfig",
+    "HexastackLoggingConfig",
+    "SanitizerConfig",
+    "configure_logging",
+    "register_logging_config",
+]
+
+
 def _get_formatter(
     fmt: str,
     colorize: bool,
@@ -230,13 +240,3 @@ def register_logging_config(registry: ConfigRegistry) -> None:
         None.
     """
     registry.register_config_section("logging", HexastackLoggingConfig)
-
-
-__all__ = [
-    "AsyncQueueConfig",
-    "FileLoggingConfig",
-    "HexastackLoggingConfig",
-    "SanitizerConfig",
-    "configure_logging",
-    "register_logging_config",
-]

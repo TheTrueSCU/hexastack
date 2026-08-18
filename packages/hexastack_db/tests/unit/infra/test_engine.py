@@ -14,6 +14,34 @@ from hexastack_db.infra.engine import (
 )
 
 
+def test_create_async_engine_and_factory():
+    cfg = HexastackDatabaseConfig(url="sqlite+aiosqlite:///:memory:", async_mode=True)
+    async_engine = create_async_db_engine(cfg)
+    assert isinstance(async_engine, AsyncEngine)
+    assert async_engine.pool.__class__ is StaticPool
+
+    factory = create_async_session_factory(async_engine)
+    session = factory()
+    assert session is not None
+
+
+def test_create_async_engine_auto_adapter():
+    # SQLite URL rewrite
+    cfg_sqlite = HexastackDatabaseConfig(url="sqlite:///:memory:", async_mode=True)
+    async_engine_sqlite = create_async_db_engine(cfg_sqlite)
+    assert "aiosqlite" in str(async_engine_sqlite.url)
+
+    # Postgres URL rewrite (without connecting)
+    cfg_pg = HexastackDatabaseConfig(
+        url="postgresql://usr:pwd@localhost:5432/testdb",
+        async_mode=True,
+        pool_size=12,
+        max_overflow=18,
+    )
+    assert cfg_pg.is_postgres is True
+    assert cfg_pg.is_sqlite is False
+
+
 def test_create_sync_engine_and_factory_memory():
     cfg = HexastackDatabaseConfig(
         url="sqlite:///:memory:",
@@ -49,31 +77,3 @@ def test_create_sync_engine_file_null_pool(tmp_path):
     engine = create_db_engine(cfg)
     assert engine.pool.__class__ is NullPool
     engine.dispose()
-
-
-def test_create_async_engine_and_factory():
-    cfg = HexastackDatabaseConfig(url="sqlite+aiosqlite:///:memory:", async_mode=True)
-    async_engine = create_async_db_engine(cfg)
-    assert isinstance(async_engine, AsyncEngine)
-    assert async_engine.pool.__class__ is StaticPool
-
-    factory = create_async_session_factory(async_engine)
-    session = factory()
-    assert session is not None
-
-
-def test_create_async_engine_auto_adapter():
-    # SQLite URL rewrite
-    cfg_sqlite = HexastackDatabaseConfig(url="sqlite:///:memory:", async_mode=True)
-    async_engine_sqlite = create_async_db_engine(cfg_sqlite)
-    assert "aiosqlite" in str(async_engine_sqlite.url)
-
-    # Postgres URL rewrite (without connecting)
-    cfg_pg = HexastackDatabaseConfig(
-        url="postgresql://usr:pwd@localhost:5432/testdb",
-        async_mode=True,
-        pool_size=12,
-        max_overflow=18,
-    )
-    assert cfg_pg.is_postgres is True
-    assert cfg_pg.is_sqlite is False

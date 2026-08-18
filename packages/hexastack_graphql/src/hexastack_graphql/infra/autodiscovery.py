@@ -28,6 +28,32 @@ class GraphQLFieldMetadata:
         self.name = name
 
 
+__all__ = [
+    "GraphQLFieldMetadata",
+    "GraphQLTypeMetadata",
+    "autodiscover_graphql_schema",
+    "create_graphql_visitor",
+]
+
+
+def autodiscover_graphql_schema(
+    packages_to_scan: Sequence[str | ModuleType],
+    registry: GraphQLSchemaRegistry,
+) -> GraphQLSchemaRegistry:
+    """Discover decorated GraphQL components and register them into the schema registry.
+
+    Args:
+        packages_to_scan: Sequence of package names or module objects to inspect.
+        registry: Target GraphQLSchemaRegistry instance.
+
+    Returns:
+        The populated GraphQLSchemaRegistry instance.
+    """
+    visitor = create_graphql_visitor(registry)
+    scan_modules(packages_to_scan, [visitor])
+    return registry
+
+
 def create_graphql_visitor(
     registry: GraphQLSchemaRegistry,
 ) -> DiscoveryVisitor:
@@ -67,29 +93,3 @@ def create_graphql_visitor(
                 registry.register_mutation_field(field_name, obj)
 
     return visitor
-
-
-def autodiscover_graphql_schema(
-    packages_to_scan: Sequence[str | ModuleType],
-    registry: GraphQLSchemaRegistry,
-) -> GraphQLSchemaRegistry:
-    """Discover decorated GraphQL components and register them into the schema registry.
-
-    Args:
-        packages_to_scan: Sequence of package names or module objects to inspect.
-        registry: Target GraphQLSchemaRegistry instance.
-
-    Returns:
-        The populated GraphQLSchemaRegistry instance.
-    """
-    visitor = create_graphql_visitor(registry)
-    scan_modules(packages_to_scan, [visitor])
-    return registry
-
-
-__all__ = [
-    "GraphQLFieldMetadata",
-    "GraphQLTypeMetadata",
-    "autodiscover_graphql_schema",
-    "create_graphql_visitor",
-]

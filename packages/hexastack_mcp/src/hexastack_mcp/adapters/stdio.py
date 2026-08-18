@@ -2,6 +2,11 @@ import asyncio
 
 from mcp.server.fastmcp import FastMCP as McpServer
 
+__all__ = [
+    "run_stdio_async",
+    "run_stdio_server",
+]
+
 
 async def run_stdio_async(server: McpServer) -> None:
     """Asynchronously execute the MCP stdio communication loop.
@@ -23,9 +28,3 @@ def run_stdio_server(server: McpServer) -> None:
         server: Configured McpServer instance.
     """
     asyncio.run(run_stdio_async(server))
-
-
-__all__ = [
-    "run_stdio_async",
-    "run_stdio_server",
-]

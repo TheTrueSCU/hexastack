@@ -38,6 +38,36 @@ class GenericServerInterceptor(grpc.ServerInterceptor, ABC):
         not need to handle those cases unless they wish to.
     """
 
+    @abstractmethod
+    def _handle_unary(
+        self,
+        request: Any,
+        context: grpc.ServicerContext,
+        unary_fn: Callable[[Any, grpc.ServicerContext], Any],
+        handler_call_details: grpc.HandlerCallDetails,
+    ) -> Any:
+        """Execute the cross-cutting concern around the unary handler invocation.
+
+        Args:
+            request: The deserialized gRPC request message.
+            context: The active ``grpc.ServicerContext`` for this RPC call.
+            unary_fn: The next-in-chain unary handler callable to invoke.
+            handler_call_details: Metadata about the incoming RPC call, including
+                method name and invocation metadata.
+
+        Returns:
+            The response returned by ``unary_fn`` (or a substitute value).
+
+        Raises:
+            Exception: Subclasses may raise, suppress, or re-raise as needed.
+
+        Notes/Architectural Intent:
+            Subclasses must call ``unary_fn(request, context)`` to propagate the
+            call downstream.  They may wrap the call in try/except, prepend or
+            postpend logic, or modify context (e.g. abort) before/after.
+        """
+        ...
+
     def intercept_service(
         self,
         continuation: Callable[[grpc.HandlerCallDetails], grpc.RpcMethodHandler],
@@ -73,36 +103,6 @@ class GenericServerInterceptor(grpc.ServerInterceptor, ABC):
             response_serializer=getattr(handler, "response_serializer", None),
         )
 
-    @abstractmethod
-    def _handle_unary(
-        self,
-        request: Any,
-        context: grpc.ServicerContext,
-        unary_fn: Callable[[Any, grpc.ServicerContext], Any],
-        handler_call_details: grpc.HandlerCallDetails,
-    ) -> Any:
-        """Execute the cross-cutting concern around the unary handler invocation.
-
-        Args:
-            request: The deserialized gRPC request message.
-            context: The active ``grpc.ServicerContext`` for this RPC call.
-            unary_fn: The next-in-chain unary handler callable to invoke.
-            handler_call_details: Metadata about the incoming RPC call, including
-                method name and invocation metadata.
-
-        Returns:
-            The response returned by ``unary_fn`` (or a substitute value).
-
-        Raises:
-            Exception: Subclasses may raise, suppress, or re-raise as needed.
-
-        Notes/Architectural Intent:
-            Subclasses must call ``unary_fn(request, context)`` to propagate the
-            call downstream.  They may wrap the call in try/except, prepend or
-            postpend logic, or modify context (e.g. abort) before/after.
-        """
-        ...
-
 
 class AsyncGenericServerInterceptor(grpc.aio.ServerInterceptor, ABC):
     """Abstract base for asynchronous unary-unary gRPC server interceptors.
@@ -112,6 +112,31 @@ class AsyncGenericServerInterceptor(grpc.aio.ServerInterceptor, ABC):
         ``await continuation(...)`` / ``await context.abort(...)`` plumbing so
         concrete subclasses only implement ``_handle_unary_async``.
     """
+
+    @abstractmethod
+    async def _handle_unary_async(
+        self,
+        request: Any,
+        context: grpc.aio.ServicerContext,
+        unary_fn: Callable[[Any, grpc.aio.ServicerContext], Any],
+        handler_call_details: grpc.HandlerCallDetails,
+    ) -> Any:
+        """Execute the cross-cutting concern around the async unary handler invocation.
+
+        Args:
+            request: The deserialized gRPC request message.
+            context: The active ``grpc.aio.ServicerContext`` for this RPC call.
+            unary_fn: The next-in-chain async unary handler coroutine to invoke.
+            handler_call_details: Metadata about the incoming RPC call, including
+                method name and invocation metadata.
+
+        Returns:
+            The response returned by ``await unary_fn(request, context)``.
+
+        Raises:
+            Exception: Subclasses may raise, suppress, or re-raise as needed.
+        """
+        ...
 
     async def intercept_service(
         self,
@@ -147,31 +172,6 @@ class AsyncGenericServerInterceptor(grpc.aio.ServerInterceptor, ABC):
             request_deserializer=getattr(handler, "request_deserializer", None),
             response_serializer=getattr(handler, "response_serializer", None),
         )
-
-    @abstractmethod
-    async def _handle_unary_async(
-        self,
-        request: Any,
-        context: grpc.aio.ServicerContext,
-        unary_fn: Callable[[Any, grpc.aio.ServicerContext], Any],
-        handler_call_details: grpc.HandlerCallDetails,
-    ) -> Any:
-        """Execute the cross-cutting concern around the async unary handler invocation.
-
-        Args:
-            request: The deserialized gRPC request message.
-            context: The active ``grpc.aio.ServicerContext`` for this RPC call.
-            unary_fn: The next-in-chain async unary handler coroutine to invoke.
-            handler_call_details: Metadata about the incoming RPC call, including
-                method name and invocation metadata.
-
-        Returns:
-            The response returned by ``await unary_fn(request, context)``.
-
-        Raises:
-            Exception: Subclasses may raise, suppress, or re-raise as needed.
-        """
-        ...
 
 
 __all__ = [

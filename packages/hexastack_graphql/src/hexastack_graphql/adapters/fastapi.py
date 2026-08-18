@@ -8,6 +8,11 @@ from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
 from hexastack_graphql.domain.context import GraphQLContext
 
+__all__ = [
+    "create_graphql_router",
+    "mount_graphql_router",
+]
+
 
 def _require_fastapi() -> None:
     """Guard against missing FastAPI installation.
@@ -115,9 +120,3 @@ def mount_graphql_router(
         graphiql=graphiql,
     )
     app.include_router(router, prefix=path)
-
-
-__all__ = [
-    "create_graphql_router",
-    "mount_graphql_router",
-]

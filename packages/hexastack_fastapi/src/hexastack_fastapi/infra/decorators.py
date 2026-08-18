@@ -25,6 +25,13 @@ class RouteMetadata:
     tags: tuple[str | Enum, ...] | None = None
 
 
+__all__ = [
+    "RouteMetadata",
+    "api_command",
+    "api_query",
+]
+
+
 def api_command[TCommand: Command](
     path: str,
     *,
@@ -107,10 +114,3 @@ def api_query[TQuery: Query](
         return cls
 
     return decorator
-
-
-__all__ = [
-    "RouteMetadata",
-    "api_command",
-    "api_query",
-]

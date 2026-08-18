@@ -12,18 +12,18 @@ class SummarizeOutput(BaseModel):
     confidence: float
 
 
-def test_in_memory_llm_provider_text_and_rules():
-    llm = InMemoryLlmProvider(default_text="General default")
+def test_in_memory_llm_provider_simulated_error():
+    llm = InMemoryLlmProvider()
+    llm.set_error(RuntimeError("API quota exceeded"))
 
-    # Default generation
-    assert llm.generate_text("Hi there") == "General default"
-    assert len(llm.history) == 1
-    assert llm.history[0].prompt == "Hi there"
+    with pytest.raises(RuntimeError, match="API quota exceeded"):
+        llm.generate_text("Hello")
 
-    # Custom text response rule
-    llm.add_text_response("weather", "The weather is sunny")
-    assert llm.generate_text("What is the weather today?") == "The weather is sunny"
-    assert len(llm.history) == 2
+    with pytest.raises(RuntimeError, match="API quota exceeded"):
+        llm.generate_structured("Hello", SummarizeOutput)
+
+    llm.clear()
+    assert llm.generate_text("Hello") == "Mock LLM text response"
 
 
 def test_in_memory_llm_provider_structured():
@@ -38,18 +38,18 @@ def test_in_memory_llm_provider_structured():
     assert res.confidence == 0.95
 
 
-def test_in_memory_llm_provider_simulated_error():
-    llm = InMemoryLlmProvider()
-    llm.set_error(RuntimeError("API quota exceeded"))
+def test_in_memory_llm_provider_text_and_rules():
+    llm = InMemoryLlmProvider(default_text="General default")
 
-    with pytest.raises(RuntimeError, match="API quota exceeded"):
-        llm.generate_text("Hello")
+    # Default generation
+    assert llm.generate_text("Hi there") == "General default"
+    assert len(llm.history) == 1
+    assert llm.history[0].prompt == "Hi there"
 
-    with pytest.raises(RuntimeError, match="API quota exceeded"):
-        llm.generate_structured("Hello", SummarizeOutput)
-
-    llm.clear()
-    assert llm.generate_text("Hello") == "Mock LLM text response"
+    # Custom text response rule
+    llm.add_text_response("weather", "The weather is sunny")
+    assert llm.generate_text("What is the weather today?") == "The weather is sunny"
+    assert len(llm.history) == 2
 
 
 def test_in_memory_vector_store_upsert_and_similarity_search():

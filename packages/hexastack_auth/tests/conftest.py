@@ -10,16 +10,12 @@ from hexastack_auth.domain.models import Identity
 from hexastack_core.utils.context import set_user_context
 
 
-@pytest.fixture
-def mock_security() -> InMemorySecurityService:
-    """Fixture providing a clean in-memory security token service."""
-    return InMemorySecurityService()
-
-
-@pytest.fixture
-def mock_hasher() -> InMemoryPasswordHasher:
-    """Fixture providing a clean in-memory password hasher."""
-    return InMemoryPasswordHasher()
+@pytest.fixture(autouse=True)
+def clean_user_context():
+    """Autouse fixture resetting user context between tests."""
+    set_user_context(None)
+    yield
+    set_user_context(None)
 
 
 @pytest.fixture
@@ -32,6 +28,18 @@ def jwt_security() -> JwtSecurityAdapter:
         issuer="hexastack-test",
         audience="hexastack-aud",
     )
+
+
+@pytest.fixture
+def mock_hasher() -> InMemoryPasswordHasher:
+    """Fixture providing a clean in-memory password hasher."""
+    return InMemoryPasswordHasher()
+
+
+@pytest.fixture
+def mock_security() -> InMemorySecurityService:
+    """Fixture providing a clean in-memory security token service."""
+    return InMemorySecurityService()
 
 
 @pytest.fixture
@@ -50,11 +58,3 @@ def sample_identity() -> Identity:
         tenant_id="tenant_abc",
         claims={"email": "admin@hexastack.io"},
     )
-
-
-@pytest.fixture(autouse=True)
-def clean_user_context():
-    """Autouse fixture resetting user context between tests."""
-    set_user_context(None)
-    yield
-    set_user_context(None)

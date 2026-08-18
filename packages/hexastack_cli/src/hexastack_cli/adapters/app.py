@@ -8,6 +8,10 @@ from hexastack_core.domain import Generic
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 
+__all__ = [
+    "create_cli_app",
+]
+
 
 def create_cli_app(
     config: HexastackCliConfig | None = None,
@@ -71,8 +75,3 @@ def create_cli_app(
         container.add_instance(terminal_presenter, declared_class=RichTerminalPresenter)
 
     return app
-
-
-__all__ = [
-    "create_cli_app",
-]

@@ -23,16 +23,6 @@ class UnitOfWorkPort(ABC):
         """
         self._reraise = reraise
 
-    @abstractmethod
-    def commit(self) -> None:
-        """Commit all pending transactional changes."""
-        ...
-
-    @abstractmethod
-    def rollback(self) -> None:
-        """Roll back all pending transactional changes."""
-        ...
-
     def __enter__(self) -> Self:
         """Enter the transactional context manager."""
         return self
@@ -52,22 +42,22 @@ class UnitOfWorkPort(ABC):
             if self._reraise:
                 raise UnitOfWorkError() from exc
 
+    @abstractmethod
+    def commit(self) -> None:
+        """Commit all pending transactional changes."""
+        ...
+
+    @abstractmethod
+    def rollback(self) -> None:
+        """Roll back all pending transactional changes."""
+        ...
+
 
 class AsyncUnitOfWorkPort(ABC):
     """Abstract port interface defining asynchronous Unit of Work transactional boundaries."""
 
     def __init__(self, reraise: bool = False) -> None:
         self._reraise = reraise
-
-    @abstractmethod
-    async def commit_async(self) -> None:
-        """Asynchronously commit all pending transactional changes."""
-        ...
-
-    @abstractmethod
-    async def rollback_async(self) -> None:
-        """Asynchronously roll back all pending transactional changes."""
-        ...
 
     async def __aenter__(self) -> Self:
         return self
@@ -85,6 +75,16 @@ class AsyncUnitOfWorkPort(ABC):
 
             if self._reraise:
                 raise UnitOfWorkError() from exc
+
+    @abstractmethod
+    async def commit_async(self) -> None:
+        """Asynchronously commit all pending transactional changes."""
+        ...
+
+    @abstractmethod
+    async def rollback_async(self) -> None:
+        """Asynchronously roll back all pending transactional changes."""
+        ...
 
 
 __all__ = [

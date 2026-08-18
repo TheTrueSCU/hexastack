@@ -78,12 +78,6 @@ class AccountJsonPresenter:
         return None
 
 
-def test_cqrs_bootstrapper_metadata():
-    bootstrapper = CqrsBootstrapper()
-    assert bootstrapper.name == "cqrs"
-    assert bootstrapper.order == 20
-
-
 def test_bootstrap_default():
     result = bootstrap_cqrs()
 
@@ -223,3 +217,9 @@ def test_cqrs_bootstrapper_isolated_configure_with_custom_config():
     assert cqrs_result.presenter_registry is not None
     assert cqrs_result.exception_registry is not None
     assert cqrs_result.pipeline is ctx.properties["pipeline"]
+
+
+def test_cqrs_bootstrapper_metadata():
+    bootstrapper = CqrsBootstrapper()
+    assert bootstrapper.name == "cqrs"
+    assert bootstrapper.order == 20

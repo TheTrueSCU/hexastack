@@ -49,6 +49,12 @@ class HexastackAuthConfig(BaseModel):
     )
 
 
+__all__ = [
+    "HexastackAuthConfig",
+    "register_auth_config",
+]
+
+
 def register_auth_config(registry: ConfigRegistry) -> None:
     """Register the auth configuration section in the global ConfigRegistry.
 
@@ -56,9 +62,3 @@ def register_auth_config(registry: ConfigRegistry) -> None:
         registry: Target ConfigRegistry instance.
     """
     registry.register_config_section("auth", HexastackAuthConfig)
-
-
-__all__ = [
-    "HexastackAuthConfig",
-    "register_auth_config",
-]

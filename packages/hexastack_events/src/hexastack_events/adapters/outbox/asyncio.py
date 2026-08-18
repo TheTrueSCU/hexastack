@@ -37,6 +37,21 @@ class AsyncioOutboxRelay(OutboxRelayPort):
         self._task: asyncio.Task[Any] | None = None
         self._running: bool = False
 
+    async def _poll_loop(self) -> None:
+        """Internal asynchronous polling loop."""
+        while self._running:
+            try:
+                count = self.publish_pending_batch(limit=self._batch_size)
+                if count > 0:
+                    logger.debug("Relayed %d outbox events", count)
+            except Exception as exc:  # noqa: BLE001
+                logger.error("Unexpected error in outbox relay loop: %s", exc)
+
+            try:
+                await asyncio.sleep(self._poll_interval)
+            except asyncio.CancelledError:
+                break
+
     def publish_pending_batch(self, limit: int = 50) -> int:
         """Fetch pending records and dispatch them to the event bus.
 
@@ -77,21 +92,6 @@ class AsyncioOutboxRelay(OutboxRelayPort):
                 self._storage.mark_failed(record.id, str(exc))
 
         return published_count
-
-    async def _poll_loop(self) -> None:
-        """Internal asynchronous polling loop."""
-        while self._running:
-            try:
-                count = self.publish_pending_batch(limit=self._batch_size)
-                if count > 0:
-                    logger.debug("Relayed %d outbox events", count)
-            except Exception as exc:  # noqa: BLE001
-                logger.error("Unexpected error in outbox relay loop: %s", exc)
-
-            try:
-                await asyncio.sleep(self._poll_interval)
-            except asyncio.CancelledError:
-                break
 
     def start(self) -> None:
         """Start the background outbox polling task."""

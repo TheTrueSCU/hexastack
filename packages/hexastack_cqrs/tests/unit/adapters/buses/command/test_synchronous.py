@@ -35,6 +35,14 @@ def test_synchronous_command_bus_dispatch():
     assert res == "created Alice"
 
 
+def test_synchronous_command_bus_unregistered_raises():
+    registry = HandlerRegistry()
+    bus = SynchronousCommandBus(handler_registry=registry)
+
+    with pytest.raises(HandlerRegistryError):
+        bus.dispatch(CreateUser(username="Nobody"))
+
+
 def test_synchronous_command_bus_with_middleware():
     registry = HandlerRegistry()
     registry.register(CreateUser, lambda cmd: f"created {cmd.username}")
@@ -45,11 +53,3 @@ def test_synchronous_command_bus_with_middleware():
     res = bus.dispatch(CreateUser(username="Bob"))
     assert res == "created Bob"
     assert mw.called is True
-
-
-def test_synchronous_command_bus_unregistered_raises():
-    registry = HandlerRegistry()
-    bus = SynchronousCommandBus(handler_registry=registry)
-
-    with pytest.raises(HandlerRegistryError):
-        bus.dispatch(CreateUser(username="Nobody"))

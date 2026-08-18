@@ -13,6 +13,56 @@ from hexastack_db.adapters.vector import (
 from hexastack_db.infra.config import PgVectorConfig
 
 
+@pytest.mark.anyio
+async def test_async_pg_vector_store_adapter():
+    async_engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=StaticPool,
+    )
+    async_factory = async_sessionmaker(bind=async_engine)
+    config = PgVectorConfig(table_name="test_async_vectors", dimension=2)
+
+    adapter = AsyncPgVectorStoreAdapter(session_factory=async_factory, config=config)
+    await adapter.create_table_async()
+
+    # Default config constructor
+    default_adapter = AsyncPgVectorStoreAdapter(session_factory=async_factory)
+    assert default_adapter._config.table_name == "hexastack_vectors"
+    assert default_adapter._config.dimension == 1536
+
+    # Upsert
+    await adapter.upsert_async("v1", [0.707, 0.707], {"title": "diagonal"})
+    await adapter.upsert_async("v2", [1.0, 0.0], {"title": "horizontal"})
+
+    # Update existing
+    await adapter.upsert_async("v1", [0.707, 0.707], {"title": "diagonal_updated"})
+
+    # Get
+    res = await adapter.get_async("v1")
+    assert res is not None
+    emb, meta = res
+    assert emb == [0.707, 0.707]
+    assert meta == {"title": "diagonal_updated"}
+
+    # Get non-existent
+    assert await adapter.get_async("non_existent") is None
+
+    # Search
+    results = await adapter.search_async([0.707, 0.707], limit=2)
+    assert len(results) == 2
+    assert results[0]["_id"] == "v1"
+    assert results[0]["_score"] > results[1]["_score"]
+
+    # Delete
+    assert await adapter.delete_async("v1") is True
+    assert await adapter.delete_async("non_existent") is False
+    assert await adapter.get_async("v1") is None
+
+    # Clear
+    await adapter.clear_async()
+    assert len(await adapter.search_async([1.0, 0.0])) == 0
+
+
 def test_cosine_similarity_math():
     # Identical vectors
     assert pytest.approx(_cosine_similarity([1.0, 0.0], [1.0, 0.0])) == 1.0
@@ -96,53 +146,3 @@ def test_pg_vector_store_adapter_sync():
     # Clear
     adapter.clear()
     assert len(adapter.search([0.0, 1.0])) == 0
-
-
-@pytest.mark.anyio
-async def test_async_pg_vector_store_adapter():
-    async_engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        poolclass=StaticPool,
-    )
-    async_factory = async_sessionmaker(bind=async_engine)
-    config = PgVectorConfig(table_name="test_async_vectors", dimension=2)
-
-    adapter = AsyncPgVectorStoreAdapter(session_factory=async_factory, config=config)
-    await adapter.create_table_async()
-
-    # Default config constructor
-    default_adapter = AsyncPgVectorStoreAdapter(session_factory=async_factory)
-    assert default_adapter._config.table_name == "hexastack_vectors"
-    assert default_adapter._config.dimension == 1536
-
-    # Upsert
-    await adapter.upsert_async("v1", [0.707, 0.707], {"title": "diagonal"})
-    await adapter.upsert_async("v2", [1.0, 0.0], {"title": "horizontal"})
-
-    # Update existing
-    await adapter.upsert_async("v1", [0.707, 0.707], {"title": "diagonal_updated"})
-
-    # Get
-    res = await adapter.get_async("v1")
-    assert res is not None
-    emb, meta = res
-    assert emb == [0.707, 0.707]
-    assert meta == {"title": "diagonal_updated"}
-
-    # Get non-existent
-    assert await adapter.get_async("non_existent") is None
-
-    # Search
-    results = await adapter.search_async([0.707, 0.707], limit=2)
-    assert len(results) == 2
-    assert results[0]["_id"] == "v1"
-    assert results[0]["_score"] > results[1]["_score"]
-
-    # Delete
-    assert await adapter.delete_async("v1") is True
-    assert await adapter.delete_async("non_existent") is False
-    assert await adapter.get_async("v1") is None
-
-    # Clear
-    await adapter.clear_async()
-    assert len(await adapter.search_async([1.0, 0.0])) == 0

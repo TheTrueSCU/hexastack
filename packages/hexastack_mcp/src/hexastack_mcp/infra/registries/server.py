@@ -37,45 +37,6 @@ class McpServerRegistry:
         self._resources: list[McpResourceMetadata] = []
         self._prompts: list[McpPromptMetadata] = []
 
-    def register_tool(self, meta: McpToolMetadata) -> None:
-        """Register tool metadata.
-
-        Args:
-            meta: McpToolMetadata instance.
-        """
-        if meta not in self._tools:
-            self._tools.append(meta)
-
-    def register_resource(self, meta: McpResourceMetadata) -> None:
-        """Register resource metadata.
-
-        Args:
-            meta: McpResourceMetadata instance.
-        """
-        if meta not in self._resources:
-            self._resources.append(meta)
-
-    def register_prompt(self, meta: McpPromptMetadata) -> None:
-        """Register prompt template metadata.
-
-        Args:
-            meta: McpPromptMetadata instance.
-        """
-        if meta not in self._prompts:
-            self._prompts.append(meta)
-
-    @property
-    def tools(self) -> list[McpToolMetadata]:
-        return list(self._tools)
-
-    @property
-    def resources(self) -> list[McpResourceMetadata]:
-        return list(self._resources)
-
-    @property
-    def prompts(self) -> list[McpPromptMetadata]:
-        return list(self._prompts)
-
     def _create_cqrs_tool_wrapper(
         self,
         target_cls: type[Any],
@@ -226,6 +187,45 @@ class McpServerRegistry:
                 )(prompt_meta.handler)
 
         return server
+
+    @property
+    def prompts(self) -> list[McpPromptMetadata]:
+        return list(self._prompts)
+
+    def register_prompt(self, meta: McpPromptMetadata) -> None:
+        """Register prompt template metadata.
+
+        Args:
+            meta: McpPromptMetadata instance.
+        """
+        if meta not in self._prompts:
+            self._prompts.append(meta)
+
+    def register_resource(self, meta: McpResourceMetadata) -> None:
+        """Register resource metadata.
+
+        Args:
+            meta: McpResourceMetadata instance.
+        """
+        if meta not in self._resources:
+            self._resources.append(meta)
+
+    def register_tool(self, meta: McpToolMetadata) -> None:
+        """Register tool metadata.
+
+        Args:
+            meta: McpToolMetadata instance.
+        """
+        if meta not in self._tools:
+            self._tools.append(meta)
+
+    @property
+    def resources(self) -> list[McpResourceMetadata]:
+        return list(self._resources)
+
+    @property
+    def tools(self) -> list[McpToolMetadata]:
+        return list(self._tools)
 
 
 __all__ = [

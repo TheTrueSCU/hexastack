@@ -11,6 +11,12 @@ _GRPC_SERVICE_ATTR = "__hexastack_grpc_service__"
 _default_registry = GrpcServiceRegistry()
 
 
+__all__ = [
+    "get_grpc_registry",
+    "grpc_service",
+]
+
+
 def get_grpc_registry() -> GrpcServiceRegistry:
     """Return the global default GrpcServiceRegistry instance.
 
@@ -54,9 +60,3 @@ def grpc_service(
         return target
 
     return decorator
-
-
-__all__ = [
-    "get_grpc_registry",
-    "grpc_service",
-]

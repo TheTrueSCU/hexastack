@@ -15,15 +15,6 @@ from hexastack_grpc.infra.interceptors.generic import (
 _CORRELATION_METADATA_KEY = "x-correlation-id"
 
 
-def _extract_cid(metadata: Any) -> str:
-    """Extract correlation ID from gRPC invocation metadata or generate fresh UUID."""
-    if metadata:
-        for key, val in metadata:
-            if key.lower() == _CORRELATION_METADATA_KEY:
-                return val.decode("utf-8") if isinstance(val, bytes) else str(val)
-    return new_correlation_id()
-
-
 class CorrelationServerInterceptor(GenericServerInterceptor):
     """Synchronous gRPC Server Interceptor for correlation ID propagation.
 
@@ -65,3 +56,12 @@ __all__ = [
     "AsyncCorrelationServerInterceptor",
     "CorrelationServerInterceptor",
 ]
+
+
+def _extract_cid(metadata: Any) -> str:
+    """Extract correlation ID from gRPC invocation metadata or generate fresh UUID."""
+    if metadata:
+        for key, val in metadata:
+            if key.lower() == _CORRELATION_METADATA_KEY:
+                return val.decode("utf-8") if isinstance(val, bytes) else str(val)
+    return new_correlation_id()

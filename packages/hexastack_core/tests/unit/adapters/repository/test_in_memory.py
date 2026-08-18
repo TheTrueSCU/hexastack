@@ -18,19 +18,15 @@ class CustomKeyEntity:
         self.name = name
 
 
-def test_in_memory_repository_default_id_attribute(
+def test_in_memory_repository_clear(
     in_memory_repo: InMemoryRepository[DummyEntity, str],
 ):
-    entity = DummyEntity(id="e1", name="Alice")
-    in_memory_repo.add(entity)
+    in_memory_repo.add(DummyEntity(id="1", name="One"))
+    in_memory_repo.add(DummyEntity(id="2", name="Two"))
 
-    assert in_memory_repo.get_by_id("e1") == entity
-    assert in_memory_repo.get_by_id("missing") is None
-    assert in_memory_repo.all() == [entity]
-
-    in_memory_repo.remove("e1")
-    assert in_memory_repo.get_by_id("e1") is None
-    assert in_memory_repo.all() == []
+    assert len(in_memory_repo.all()) == 2
+    in_memory_repo.clear()
+    assert len(in_memory_repo.all()) == 0
 
 
 def test_in_memory_repository_custom_id_attr(
@@ -55,15 +51,19 @@ def test_in_memory_repository_custom_id_getter(
     assert repo.all() == [entity]
 
 
-def test_in_memory_repository_clear(
+def test_in_memory_repository_default_id_attribute(
     in_memory_repo: InMemoryRepository[DummyEntity, str],
 ):
-    in_memory_repo.add(DummyEntity(id="1", name="One"))
-    in_memory_repo.add(DummyEntity(id="2", name="Two"))
+    entity = DummyEntity(id="e1", name="Alice")
+    in_memory_repo.add(entity)
 
-    assert len(in_memory_repo.all()) == 2
-    in_memory_repo.clear()
-    assert len(in_memory_repo.all()) == 0
+    assert in_memory_repo.get_by_id("e1") == entity
+    assert in_memory_repo.get_by_id("missing") is None
+    assert in_memory_repo.all() == [entity]
+
+    in_memory_repo.remove("e1")
+    assert in_memory_repo.get_by_id("e1") is None
+    assert in_memory_repo.all() == []
 
 
 def test_in_memory_repository_missing_id_raises_attribute_error(

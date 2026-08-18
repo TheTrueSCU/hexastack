@@ -4,6 +4,11 @@ from mcp.server.fastmcp import FastMCP as McpServer
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
 
+__all__ = [
+    "create_mcp_sse_app",
+    "mount_mcp_sse",
+]
+
 
 def create_mcp_sse_app(
     server: McpServer,
@@ -51,9 +56,3 @@ def mount_mcp_sse(
         transport_security=transport_security,
     )
     app.mount(path_prefix, sse_app)
-
-
-__all__ = [
-    "create_mcp_sse_app",
-    "mount_mcp_sse",
-]

@@ -74,6 +74,15 @@ class HexastackFastApiConfig(BaseModel):
     packages_to_scan: list[str] = Field(default_factory=list)
 
 
+__all__ = [
+    "CorsConfig",
+    "HealthConfig",
+    "HexastackFastApiConfig",
+    "RequestLoggingConfig",
+    "register_fastapi_config",
+]
+
+
 def register_fastapi_config(registry: ConfigRegistry) -> None:
     """Register FastAPI configuration schema with a ConfigRegistry under 'fastapi'.
 
@@ -87,12 +96,3 @@ def register_fastapi_config(registry: ConfigRegistry) -> None:
         None.
     """
     registry.register_config_section("fastapi", HexastackFastApiConfig)
-
-
-__all__ = [
-    "CorsConfig",
-    "HealthConfig",
-    "HexastackFastApiConfig",
-    "RequestLoggingConfig",
-    "register_fastapi_config",
-]

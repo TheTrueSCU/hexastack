@@ -20,6 +20,39 @@ from hexastack_db.infra.bootstrap import (
 from hexastack_db.infra.config import HexastackDatabaseConfig, PgVectorConfig
 
 
+def test_database_bootstrapper_async_with_vector():
+    config = HexastackDatabaseConfig(
+        url="sqlite+aiosqlite:///:memory:",
+        async_mode=True,
+        vector=PgVectorConfig(enabled=True, table_name="async_vec"),
+        auto_create_tables=True,
+    )
+
+    c = Container()
+    c.add_instance(config, declared_class=HexastackDatabaseConfig)
+
+    result = bootstrap(
+        bootstrappers=[DatabaseBootstrapper()],
+        container=c,
+    )
+    container = result.container
+
+    assert AsyncEngine in container
+    assert AsyncSqlAlchemyUnitOfWork in container
+    assert AsyncPgVectorStoreAdapter in container
+
+    vec_store = container.resolve(AsyncPgVectorStoreAdapter)
+    assert isinstance(vec_store, AsyncPgVectorStoreAdapter)
+
+    db_res: DatabaseBootstrapResult = result.get("database_result")
+    assert db_res is not None
+    assert db_res.vector_store is vec_store
+    assert result.get("db_vector_store") is vec_store
+    assert result.get("db_engine") is not None
+    assert result.get("db_session_factory") is not None
+    assert result.get("db_uow") is not None
+
+
 def test_database_bootstrapper_order():
     bootstrapper = DatabaseBootstrapper()
     assert bootstrapper.name == "db"
@@ -68,36 +101,3 @@ def test_database_bootstrapper_with_vector_sync():
     db_res: DatabaseBootstrapResult = result.get("database_result")
     assert db_res.vector_store is vec_store
     assert result.get("db_vector_store") is vec_store
-
-
-def test_database_bootstrapper_async_with_vector():
-    config = HexastackDatabaseConfig(
-        url="sqlite+aiosqlite:///:memory:",
-        async_mode=True,
-        vector=PgVectorConfig(enabled=True, table_name="async_vec"),
-        auto_create_tables=True,
-    )
-
-    c = Container()
-    c.add_instance(config, declared_class=HexastackDatabaseConfig)
-
-    result = bootstrap(
-        bootstrappers=[DatabaseBootstrapper()],
-        container=c,
-    )
-    container = result.container
-
-    assert AsyncEngine in container
-    assert AsyncSqlAlchemyUnitOfWork in container
-    assert AsyncPgVectorStoreAdapter in container
-
-    vec_store = container.resolve(AsyncPgVectorStoreAdapter)
-    assert isinstance(vec_store, AsyncPgVectorStoreAdapter)
-
-    db_res: DatabaseBootstrapResult = result.get("database_result")
-    assert db_res is not None
-    assert db_res.vector_store is vec_store
-    assert result.get("db_vector_store") is vec_store
-    assert result.get("db_engine") is not None
-    assert result.get("db_session_factory") is not None
-    assert result.get("db_uow") is not None

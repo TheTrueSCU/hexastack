@@ -12,6 +12,29 @@ from hexastack_grpc.infra.registries.service import (
     GrpcServiceRegistry,
 )
 
+__all__ = [
+    "autodiscover_grpc_services",
+    "create_grpc_visitor",
+]
+
+
+def autodiscover_grpc_services(
+    packages_to_scan: Sequence[str | ModuleType],
+    registry: GrpcServiceRegistry,
+) -> GrpcServiceRegistry:
+    """Discover decorated gRPC servicers from packages.
+
+    Args:
+        packages_to_scan: Sequence of package names or module objects to inspect.
+        registry: Target GrpcServiceRegistry instance.
+
+    Returns:
+        The populated GrpcServiceRegistry instance.
+    """
+    visitor = create_grpc_visitor(registry)
+    scan_modules(packages_to_scan, [visitor])
+    return registry
+
 
 def create_grpc_visitor(
     registry: GrpcServiceRegistry,
@@ -39,27 +62,3 @@ def create_grpc_visitor(
             )
 
     return visitor
-
-
-def autodiscover_grpc_services(
-    packages_to_scan: Sequence[str | ModuleType],
-    registry: GrpcServiceRegistry,
-) -> GrpcServiceRegistry:
-    """Discover decorated gRPC servicers from packages.
-
-    Args:
-        packages_to_scan: Sequence of package names or module objects to inspect.
-        registry: Target GrpcServiceRegistry instance.
-
-    Returns:
-        The populated GrpcServiceRegistry instance.
-    """
-    visitor = create_grpc_visitor(registry)
-    scan_modules(packages_to_scan, [visitor])
-    return registry
-
-
-__all__ = [
-    "autodiscover_grpc_services",
-    "create_grpc_visitor",
-]

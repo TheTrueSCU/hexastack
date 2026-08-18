@@ -22,6 +22,41 @@ correlation_id_ctx: ContextVar[str] = ContextVar("correlation_id", default="")
 user_ctx: ContextVar[UserContext | None] = ContextVar("user", default=None)
 
 
+__all__ = [
+    "UserContext",
+    "correlation_id_ctx",
+    "correlation_scope",
+    "get_correlation_id",
+    "get_user_context",
+    "new_correlation_id",
+    "set_correlation_id",
+    "set_user_context",
+    "user_ctx",
+]
+
+
+@contextmanager
+def correlation_scope(cid: str | None = None) -> Iterator[str]:
+    """Execute a code block within a managed correlation ID scope.
+
+    Notes/Architectural Intent:
+        Guarantees that correlation_id_ctx is updated with either the given ID or
+        a newly generated UUID4, and reliably resets back to the prior token on exit.
+
+    Args:
+        cid: Optional correlation ID string. If omitted, generates a fresh UUID4.
+
+    Yields:
+        The effective correlation ID string.
+    """
+    effective_cid = cid or str(uuid.uuid4())
+    token = correlation_id_ctx.set(effective_cid)
+    try:
+        yield effective_cid
+    finally:
+        correlation_id_ctx.reset(token)
+
+
 def get_correlation_id() -> str:
     """Retrieve the current correlation ID string from context.
 
@@ -73,38 +108,3 @@ def set_user_context(user: UserContext | None) -> Token[UserContext | None]:
         Token object that can be used to reset the context variable.
     """
     return user_ctx.set(user)
-
-
-@contextmanager
-def correlation_scope(cid: str | None = None) -> Iterator[str]:
-    """Execute a code block within a managed correlation ID scope.
-
-    Notes/Architectural Intent:
-        Guarantees that correlation_id_ctx is updated with either the given ID or
-        a newly generated UUID4, and reliably resets back to the prior token on exit.
-
-    Args:
-        cid: Optional correlation ID string. If omitted, generates a fresh UUID4.
-
-    Yields:
-        The effective correlation ID string.
-    """
-    effective_cid = cid or str(uuid.uuid4())
-    token = correlation_id_ctx.set(effective_cid)
-    try:
-        yield effective_cid
-    finally:
-        correlation_id_ctx.reset(token)
-
-
-__all__ = [
-    "UserContext",
-    "correlation_id_ctx",
-    "correlation_scope",
-    "get_correlation_id",
-    "get_user_context",
-    "new_correlation_id",
-    "set_correlation_id",
-    "set_user_context",
-    "user_ctx",
-]

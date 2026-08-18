@@ -9,6 +9,15 @@ from hexastack_fastapi.infra.middleware.correlation import (
 )
 
 
+def test_custom_health_paths():
+    cfg = HealthConfig(health_path="/livez", ready_path="/readyz")
+    app = FastAPI()
+    app.include_router(create_health_router(config=cfg))
+
+    client = TestClient(app)
+    assert client.get("/livez").status_code == 200
+
+
 def test_health_and_readiness_endpoints_healthy():
     container = Container()
     app = FastAPI()
@@ -43,12 +52,3 @@ def test_readiness_unconfigured_container():
     r_data = r_res.json()
     assert r_data["status"] == "unhealthy"
     assert r_data["checks"]["container"] == "unconfigured"
-
-
-def test_custom_health_paths():
-    cfg = HealthConfig(health_path="/livez", ready_path="/readyz")
-    app = FastAPI()
-    app.include_router(create_health_router(config=cfg))
-
-    client = TestClient(app)
-    assert client.get("/livez").status_code == 200

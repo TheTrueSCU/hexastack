@@ -16,19 +16,15 @@ class ListOutput(Generic):
     tags: list[str]
 
 
-def test_rich_terminal_presenter_table():
-    buf = StringIO()
-    console = Console(file=buf, color_system=None, width=80)
-    presenter = RichTerminalPresenter(console=console)
+def test_rich_terminal_presenter_error():
+    err_buf = StringIO()
+    stderr_console = Console(file=err_buf, color_system=None)
+    presenter = RichTerminalPresenter(stderr_console=stderr_console)
 
-    item = SampleOutput(name="Alice", age=30)
-    out = presenter.present(item, format_mode="table")
-
-    assert out == {"name": "Alice", "age": 30}
-    rendered = buf.getvalue()
-    assert "SampleOutput" in rendered
-    assert "Alice" in rendered
-    assert "30" in rendered
+    presenter.print_error("Invalid token")
+    err_out = err_buf.getvalue()
+    assert "Error:" in err_out
+    assert "Invalid token" in err_out
 
 
 def test_rich_terminal_presenter_json(capsys):
@@ -53,12 +49,16 @@ def test_rich_terminal_presenter_plain(capsys):
     assert "age\t40" in captured.out
 
 
-def test_rich_terminal_presenter_error():
-    err_buf = StringIO()
-    stderr_console = Console(file=err_buf, color_system=None)
-    presenter = RichTerminalPresenter(stderr_console=stderr_console)
+def test_rich_terminal_presenter_table():
+    buf = StringIO()
+    console = Console(file=buf, color_system=None, width=80)
+    presenter = RichTerminalPresenter(console=console)
 
-    presenter.print_error("Invalid token")
-    err_out = err_buf.getvalue()
-    assert "Error:" in err_out
-    assert "Invalid token" in err_out
+    item = SampleOutput(name="Alice", age=30)
+    out = presenter.present(item, format_mode="table")
+
+    assert out == {"name": "Alice", "age": 30}
+    rendered = buf.getvalue()
+    assert "SampleOutput" in rendered
+    assert "Alice" in rendered
+    assert "30" in rendered

@@ -21,6 +21,31 @@ class PaymentReceivedEvent(Event):
     pass
 
 
+def test_recording_event_bus_clearing():
+    bus = RecordingEventBus()
+    received: list[Event] = []
+    bus.subscribe(UserCreatedEvent, lambda e: received.append(e))
+
+    bus.publish(UserCreatedEvent(user_id="u-10"))
+    assert len(bus.published_events) == 1
+    assert len(received) == 1
+
+    # clear_recorded removes journal entries but keeps subscription
+    bus.clear_recorded()
+    assert len(bus.published_events) == 0
+
+    bus.publish(UserCreatedEvent(user_id="u-20"))
+    assert len(bus.published_events) == 1
+    assert len(received) == 2
+
+    # clear removes both journal and subscription
+    bus.clear()
+    assert len(bus.published_events) == 0
+    bus.publish(UserCreatedEvent(user_id="u-30"))
+    assert len(bus.published_events) == 1
+    assert len(received) == 2  # not dispatched to handler
+
+
 def test_recording_event_bus_journal_and_assertions():
     bus = RecordingEventBus()
     dispatched_events: list[Event] = []
@@ -64,28 +89,3 @@ def test_recording_event_bus_journal_and_assertions():
         match="Expected 3 event\\(s\\) of type UserCreatedEvent, but found 2",
     ):
         bus.assert_published(UserCreatedEvent, count=3)
-
-
-def test_recording_event_bus_clearing():
-    bus = RecordingEventBus()
-    received: list[Event] = []
-    bus.subscribe(UserCreatedEvent, lambda e: received.append(e))
-
-    bus.publish(UserCreatedEvent(user_id="u-10"))
-    assert len(bus.published_events) == 1
-    assert len(received) == 1
-
-    # clear_recorded removes journal entries but keeps subscription
-    bus.clear_recorded()
-    assert len(bus.published_events) == 0
-
-    bus.publish(UserCreatedEvent(user_id="u-20"))
-    assert len(bus.published_events) == 1
-    assert len(received) == 2
-
-    # clear removes both journal and subscription
-    bus.clear()
-    assert len(bus.published_events) == 0
-    bus.publish(UserCreatedEvent(user_id="u-30"))
-    assert len(bus.published_events) == 1
-    assert len(received) == 2  # not dispatched to handler

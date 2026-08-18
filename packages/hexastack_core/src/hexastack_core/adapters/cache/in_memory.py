@@ -26,6 +26,14 @@ class InMemoryCache(CachePort):
     def _now(self) -> float:
         return self._clock.timestamp() if self._clock else time.time()
 
+    def clear(self) -> None:
+        """Clear all keys from the cache."""
+        self._store.clear()
+
+    def delete(self, key: str) -> bool:
+        """Delete a key from the cache."""
+        return self._store.pop(key, None) is not None
+
     def get(self, key: str, default: Any = None) -> Any:
         """Retrieve a cached value if present and not expired."""
         if key not in self._store:
@@ -35,15 +43,6 @@ class InMemoryCache(CachePort):
             del self._store[key]
             return default
         return val
-
-    def set(self, key: str, value: Any, ttl_seconds: float | None = None) -> None:
-        """Store a cached value with optional TTL expiration."""
-        expiry = self._now() + ttl_seconds if ttl_seconds is not None else None
-        self._store[key] = (value, expiry)
-
-    def delete(self, key: str) -> bool:
-        """Delete a key from the cache."""
-        return self._store.pop(key, None) is not None
 
     def has(self, key: str) -> bool:
         """Check if a key exists and has not expired."""
@@ -55,9 +54,10 @@ class InMemoryCache(CachePort):
             return False
         return True
 
-    def clear(self) -> None:
-        """Clear all keys from the cache."""
-        self._store.clear()
+    def set(self, key: str, value: Any, ttl_seconds: float | None = None) -> None:
+        """Store a cached value with optional TTL expiration."""
+        expiry = self._now() + ttl_seconds if ttl_seconds is not None else None
+        self._store[key] = (value, expiry)
 
 
 class AsyncInMemoryCache(AsyncCachePort):
@@ -66,22 +66,22 @@ class AsyncInMemoryCache(AsyncCachePort):
     def __init__(self, clock: ClockPort | None = None) -> None:
         self._sync_cache = InMemoryCache(clock=clock)
 
+    async def clear_async(self) -> None:
+        self._sync_cache.clear()
+
+    async def delete_async(self, key: str) -> bool:
+        return self._sync_cache.delete(key)
+
     async def get_async(self, key: str, default: Any = None) -> Any:
         return self._sync_cache.get(key, default)
+
+    async def has_async(self, key: str) -> bool:
+        return self._sync_cache.has(key)
 
     async def set_async(
         self, key: str, value: Any, ttl_seconds: float | None = None
     ) -> None:
         self._sync_cache.set(key, value, ttl_seconds)
-
-    async def delete_async(self, key: str) -> bool:
-        return self._sync_cache.delete(key)
-
-    async def has_async(self, key: str) -> bool:
-        return self._sync_cache.has(key)
-
-    async def clear_async(self) -> None:
-        self._sync_cache.clear()
 
 
 __all__ = [

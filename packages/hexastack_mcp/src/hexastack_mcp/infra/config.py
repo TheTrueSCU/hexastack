@@ -52,6 +52,12 @@ class HexastackMcpConfig(BaseModel):
     )
 
 
+__all__ = [
+    "HexastackMcpConfig",
+    "register_mcp_config",
+]
+
+
 def register_mcp_config(registry: ConfigRegistry) -> None:
     """Register MCP configuration schema under 'mcp'.
 
@@ -62,9 +68,3 @@ def register_mcp_config(registry: ConfigRegistry) -> None:
         None.
     """
     registry.register_config_section("mcp", HexastackMcpConfig)
-
-
-__all__ = [
-    "HexastackMcpConfig",
-    "register_mcp_config",
-]

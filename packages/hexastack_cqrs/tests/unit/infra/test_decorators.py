@@ -49,16 +49,14 @@ def test_command_handler_decorator():
     assert handle_cmd(SampleCommand(id="c1")) == "c1"
 
 
-def test_query_handler_decorator():
-    @query_handler(SampleQuery)
-    def handle_qry(qry: SampleQuery) -> str:
-        return qry.id
+def test_config_section_decorator():
+    @config_section("app.database")
+    class DbConfig(BaseModel):
+        url: str = "sqlite:///:memory:"
 
-    meta = getattr(handle_qry, "__hexastack_handler__", None)
-    assert isinstance(meta, HandlerMetadata)
-    assert meta.kind == "query"
-    assert meta.target_cls == SampleQuery
-    assert handle_qry(SampleQuery(id="q1")) == "q1"
+    meta = getattr(DbConfig, "__hexastack_handler__", None)
+    assert isinstance(meta, ConfigMetadata)
+    assert meta.section_name == "app.database"
 
 
 def test_event_listener_decorator():
@@ -70,6 +68,16 @@ def test_event_listener_decorator():
     assert isinstance(meta, HandlerMetadata)
     assert meta.kind == "event"
     assert meta.target_cls == SampleEvent
+
+
+def test_exception_handler_decorator():
+    @exception_handler(CustomAppError)
+    def handle_custom_err(exc: CustomAppError) -> dict[str, str]:
+        return {"error": str(exc)}
+
+    meta = getattr(handle_custom_err, "__hexastack_handler__", None)
+    assert isinstance(meta, ExceptionMetadata)
+    assert meta.target_cls == CustomAppError
 
 
 def test_presenter_decorator():
@@ -84,21 +92,13 @@ def test_presenter_decorator():
     assert meta.output_format == "json"
 
 
-def test_config_section_decorator():
-    @config_section("app.database")
-    class DbConfig(BaseModel):
-        url: str = "sqlite:///:memory:"
+def test_query_handler_decorator():
+    @query_handler(SampleQuery)
+    def handle_qry(qry: SampleQuery) -> str:
+        return qry.id
 
-    meta = getattr(DbConfig, "__hexastack_handler__", None)
-    assert isinstance(meta, ConfigMetadata)
-    assert meta.section_name == "app.database"
-
-
-def test_exception_handler_decorator():
-    @exception_handler(CustomAppError)
-    def handle_custom_err(exc: CustomAppError) -> dict[str, str]:
-        return {"error": str(exc)}
-
-    meta = getattr(handle_custom_err, "__hexastack_handler__", None)
-    assert isinstance(meta, ExceptionMetadata)
-    assert meta.target_cls == CustomAppError
+    meta = getattr(handle_qry, "__hexastack_handler__", None)
+    assert isinstance(meta, HandlerMetadata)
+    assert meta.kind == "query"
+    assert meta.target_cls == SampleQuery
+    assert handle_qry(SampleQuery(id="q1")) == "q1"

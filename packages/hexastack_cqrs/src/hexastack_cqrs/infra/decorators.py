@@ -39,6 +39,20 @@ class PresenterMetadata:
     output_format: str
 
 
+__all__ = [
+    "ConfigMetadata",
+    "ExceptionMetadata",
+    "HandlerMetadata",
+    "PresenterMetadata",
+    "command_handler",
+    "config_section",
+    "event_listener",
+    "exception_handler",
+    "presenter",
+    "query_handler",
+]
+
+
 def _tag_object(obj: Any, metadata: Any) -> None:
     """Attach metadata tag to target object."""
     setattr(obj, _HANDLER_META_ATTR, metadata)
@@ -135,17 +149,3 @@ def query_handler(
         return fn
 
     return decorator
-
-
-__all__ = [
-    "ConfigMetadata",
-    "ExceptionMetadata",
-    "HandlerMetadata",
-    "PresenterMetadata",
-    "command_handler",
-    "config_section",
-    "event_listener",
-    "exception_handler",
-    "presenter",
-    "query_handler",
-]

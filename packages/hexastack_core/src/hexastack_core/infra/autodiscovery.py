@@ -8,6 +8,41 @@ from typing import Any
 type DiscoveryVisitor = Callable[[Any, ModuleType], None]
 
 
+__all__ = [
+    "DiscoveryVisitor",
+    "scan_modules",
+]
+
+
+def _scan_module_recursive(
+    mod: ModuleType,
+    visitors: Sequence[DiscoveryVisitor],
+    visited: set[str],
+) -> None:
+    """Internal recursive module scanner with cycle prevention."""
+    mod_name = getattr(mod, "__name__", "")
+    if mod_name in visited:
+        return
+    visited.add(mod_name)
+
+    # 1. Inspect classes and functions in the module
+    for _, obj in inspect.getmembers(
+        mod, lambda m: inspect.isclass(m) or inspect.isfunction(m)
+    ):
+        for visitor in visitors:
+            visitor(obj, mod)
+
+    # 2. If it is a package with __path__, recurse over child submodules
+    if hasattr(mod, "__path__"):
+        for _, sub_name, _ in pkgutil.iter_modules(mod.__path__):
+            full_sub_name = f"{mod_name}.{sub_name}"
+            try:
+                sub_mod = importlib.import_module(full_sub_name)
+                _scan_module_recursive(sub_mod, visitors, visited)
+            except ImportError:
+                continue
+
+
 def scan_modules(
     packages_or_modules: Sequence[str | ModuleType],
     visitors: Sequence[DiscoveryVisitor],
@@ -44,38 +79,3 @@ def scan_modules(
             mod = item
 
         _scan_module_recursive(mod, visitors, visited)
-
-
-def _scan_module_recursive(
-    mod: ModuleType,
-    visitors: Sequence[DiscoveryVisitor],
-    visited: set[str],
-) -> None:
-    """Internal recursive module scanner with cycle prevention."""
-    mod_name = getattr(mod, "__name__", "")
-    if mod_name in visited:
-        return
-    visited.add(mod_name)
-
-    # 1. Inspect classes and functions in the module
-    for _, obj in inspect.getmembers(
-        mod, lambda m: inspect.isclass(m) or inspect.isfunction(m)
-    ):
-        for visitor in visitors:
-            visitor(obj, mod)
-
-    # 2. If it is a package with __path__, recurse over child submodules
-    if hasattr(mod, "__path__"):
-        for _, sub_name, _ in pkgutil.iter_modules(mod.__path__):
-            full_sub_name = f"{mod_name}.{sub_name}"
-            try:
-                sub_mod = importlib.import_module(full_sub_name)
-                _scan_module_recursive(sub_mod, visitors, visited)
-            except ImportError:
-                continue
-
-
-__all__ = [
-    "DiscoveryVisitor",
-    "scan_modules",
-]

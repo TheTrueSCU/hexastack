@@ -13,9 +13,11 @@ from hexastack_cqrs.infra.registries import (
 
 
 @pytest.fixture
-def mock_llm() -> InMemoryLlmProvider:
-    """Fixture providing a clean InMemoryLlmProvider instance for tests."""
-    return InMemoryLlmProvider()
+def clean_pipeline(
+    create_pipeline_fixture: Callable[..., ExecutionPipeline],
+) -> ExecutionPipeline:
+    """Fixture providing a fresh default ExecutionPipeline instance."""
+    return create_pipeline_fixture()
 
 
 @pytest.fixture
@@ -39,8 +41,6 @@ def create_pipeline_fixture() -> Callable[..., ExecutionPipeline]:
 
 
 @pytest.fixture
-def clean_pipeline(
-    create_pipeline_fixture: Callable[..., ExecutionPipeline],
-) -> ExecutionPipeline:
-    """Fixture providing a fresh default ExecutionPipeline instance."""
-    return create_pipeline_fixture()
+def mock_llm() -> InMemoryLlmProvider:
+    """Fixture providing a clean InMemoryLlmProvider instance for tests."""
+    return InMemoryLlmProvider()

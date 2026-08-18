@@ -174,6 +174,15 @@ class ExecutionPipeline:
         )
 
 
+__all__ = [
+    "AmbiguousMessageError",
+    "ExecutionPipeline",
+    "PipelineError",
+    "UnregisteredMessageError",
+    "create_pipeline",
+]
+
+
 def create_pipeline(
     handler_registry: HandlerRegistry | None = None,
     command_registry: CommandRegistry | None = None,
@@ -209,12 +218,3 @@ def create_pipeline(
         query_bus=query_bus,
         event_bus=event_bus,
     )
-
-
-__all__ = [
-    "AmbiguousMessageError",
-    "ExecutionPipeline",
-    "PipelineError",
-    "UnregisteredMessageError",
-    "create_pipeline",
-]

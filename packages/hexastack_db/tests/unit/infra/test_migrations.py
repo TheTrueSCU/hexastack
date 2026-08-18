@@ -37,14 +37,6 @@ def _make_config(tmp_path: Path):
     return cfg, migrations_dir, db_url
 
 
-def test_require_alembic_missing():
-    with (
-        patch("importlib.util.find_spec", return_value=None),
-        pytest.raises(MissingDependencyError, match="alembic is required"),
-    ):
-        _require_alembic()
-
-
 def test_env_py_template_contains_url():
     tmpl = _env_py_template("sqlite:///demo.db")
     assert "sqlite:///demo.db" in tmpl
@@ -123,3 +115,11 @@ def test_migration_commands_dispatch(tmp_path: Path):
     with patch("alembic.command.history") as mock_history:
         run_history(cfg)
         mock_history.assert_called_once_with(cfg)
+
+
+def test_require_alembic_missing():
+    with (
+        patch("importlib.util.find_spec", return_value=None),
+        pytest.raises(MissingDependencyError, match="alembic is required"),
+    ):
+        _require_alembic()

@@ -3,15 +3,6 @@ from datetime import UTC, datetime
 from hexastack_core.adapters.clock import FrozenClock, InMemoryClock
 
 
-def test_in_memory_clock():
-    clock = InMemoryClock()
-    now = clock.now_utc()
-    ts = clock.timestamp()
-
-    assert now.tzinfo == UTC
-    assert ts > 0
-
-
 def test_frozen_clock_advance_and_set():
     start = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
     clock = FrozenClock(initial_time=start)
@@ -28,3 +19,12 @@ def test_frozen_clock_advance_and_set():
     target = datetime(2027, 5, 20, 0, 0, 0, tzinfo=UTC)
     clock.set_time(target)
     assert clock.now_utc() == target
+
+
+def test_in_memory_clock():
+    clock = InMemoryClock()
+    now = clock.now_utc()
+    ts = clock.timestamp()
+
+    assert now.tzinfo == UTC
+    assert ts > 0

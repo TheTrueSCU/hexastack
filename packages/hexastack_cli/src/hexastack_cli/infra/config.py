@@ -22,6 +22,12 @@ class HexastackCliConfig(BaseModel):
     packages_to_scan: list[str] = Field(default_factory=list)
 
 
+__all__ = [
+    "HexastackCliConfig",
+    "register_cli_config",
+]
+
+
 def register_cli_config(registry: ConfigRegistry) -> None:
     """Register CLI configuration schema with a ConfigRegistry under 'cli'.
 
@@ -35,9 +41,3 @@ def register_cli_config(registry: ConfigRegistry) -> None:
         None.
     """
     registry.register_config_section("cli", HexastackCliConfig)
-
-
-__all__ = [
-    "HexastackCliConfig",
-    "register_cli_config",
-]

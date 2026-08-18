@@ -13,6 +13,28 @@ class _DummyCommand(Command):
     name: str
 
 
+@pytest.mark.anyio
+async def test_timing_middleware_async_coroutine_execution():
+    logger = InMemoryLogger()
+    config = TimingMiddlewareConfig(
+        enable_slow_warning=True, slow_threshold_seconds=0.01
+    )
+    middleware = TimingMiddleware(logger=logger, config=config)
+
+    async def async_slow_handler(cmd: _DummyCommand) -> str:
+        await asyncio.sleep(0.02)
+        return "async-slow"
+
+    cmd = _DummyCommand(name="async-cmd")
+    coro = middleware(cmd, async_slow_handler)
+    result = await coro
+
+    assert result == "async-slow"
+    assert len(logger.entries) == 1
+    assert logger.entries[0].level == "warning"
+    assert "Slow execution detected for _DummyCommand" in logger.entries[0].message
+
+
 def test_timing_middleware_normal_execution():
     logger = InMemoryLogger()
     config = TimingMiddlewareConfig(
@@ -72,25 +94,3 @@ def test_timing_middleware_slow_warning_disabled():
     assert result == "slow"
     assert len(logger.entries) == 1
     assert logger.entries[0].level == "info"
-
-
-@pytest.mark.anyio
-async def test_timing_middleware_async_coroutine_execution():
-    logger = InMemoryLogger()
-    config = TimingMiddlewareConfig(
-        enable_slow_warning=True, slow_threshold_seconds=0.01
-    )
-    middleware = TimingMiddleware(logger=logger, config=config)
-
-    async def async_slow_handler(cmd: _DummyCommand) -> str:
-        await asyncio.sleep(0.02)
-        return "async-slow"
-
-    cmd = _DummyCommand(name="async-cmd")
-    coro = middleware(cmd, async_slow_handler)
-    result = await coro
-
-    assert result == "async-slow"
-    assert len(logger.entries) == 1
-    assert logger.entries[0].level == "warning"
-    assert "Slow execution detected for _DummyCommand" in logger.entries[0].message

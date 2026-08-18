@@ -32,18 +32,6 @@ def test_presenter_registry():
     assert presented == {"name": "Alice", "format": "json"}
 
 
-def test_presenter_registry_unregistered_raises():
-    registry = PresenterRegistry()
-
-    with pytest.raises(PresenterRegistryError):
-        registry.present(SampleDTO(name="Bob"), "xml", reraise=True)
-
-
-def test_presenter_registry_unregistered_returns_none_when_reraise_false():
-    registry = PresenterRegistry()
-    assert registry.present(SampleDTO(name="Bob"), "xml", reraise=False) is None
-
-
 def test_presenter_registry_all_clear_contains():
     registry = PresenterRegistry()
     presenter = JsonPresenter()
@@ -56,3 +44,15 @@ def test_presenter_registry_all_clear_contains():
     registry.clear()
     assert len(registry.all) == 0
     assert (SampleDTO, "json") not in registry
+
+
+def test_presenter_registry_unregistered_raises():
+    registry = PresenterRegistry()
+
+    with pytest.raises(PresenterRegistryError):
+        registry.present(SampleDTO(name="Bob"), "xml", reraise=True)
+
+
+def test_presenter_registry_unregistered_returns_none_when_reraise_false():
+    registry = PresenterRegistry()
+    assert registry.present(SampleDTO(name="Bob"), "xml", reraise=False) is None

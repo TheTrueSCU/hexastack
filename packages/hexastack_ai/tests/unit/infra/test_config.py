@@ -8,23 +8,6 @@ from hexastack_ai.infra.config import (
 from hexastack_core.infra.registries.config import ConfigRegistry
 
 
-def test_ai_config_defaults():
-    config = HexastackAiConfig()
-    assert config.provider == "memory"
-    assert config.model == "gpt-4o-mini"
-    assert config.temperature == 0.2
-    assert config.max_tokens == 2048
-    assert config.api_key is None
-
-    # Dialect defaults
-    assert config.litellm.drop_params is True
-    assert config.litellm.num_retries == 3
-    assert config.litellm.timeout == 60.0
-    assert config.ollama.base_url == "http://localhost:11434"
-    assert config.agent.max_turns == 10
-    assert config.agent.system_prompt is None
-
-
 def test_ai_config_custom_values():
     config = HexastackAiConfig(
         provider="litellm",
@@ -47,6 +30,23 @@ def test_ai_config_custom_values():
     assert config.litellm.num_retries == 5
     assert config.ollama.base_url == "http://remote-ollama:11434"
     assert config.agent.system_prompt == "You are a helpful banking assistant."
+
+
+def test_ai_config_defaults():
+    config = HexastackAiConfig()
+    assert config.provider == "memory"
+    assert config.model == "gpt-4o-mini"
+    assert config.temperature == 0.2
+    assert config.max_tokens == 2048
+    assert config.api_key is None
+
+    # Dialect defaults
+    assert config.litellm.drop_params is True
+    assert config.litellm.num_retries == 3
+    assert config.litellm.timeout == 60.0
+    assert config.ollama.base_url == "http://localhost:11434"
+    assert config.agent.max_turns == 10
+    assert config.agent.system_prompt is None
 
 
 def test_register_ai_config():

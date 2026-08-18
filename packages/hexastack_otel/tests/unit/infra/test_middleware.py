@@ -23,58 +23,6 @@ class InvoiceCreatedEvent(Event):
     invoice_id: str
 
 
-def test_tracing_middleware_with_command():
-    tracer = InMemoryTracingAdapter()
-    middleware = TracingMiddleware(tracer=tracer)
-
-    with correlation_scope("corr-999"):
-        set_user_context(UserContext(user_id="usr_abc", tenant_id="tenant_xyz"))
-        cmd = CreateInvoiceCommand(invoice_id="inv-1", amount=99.0)
-        res = middleware(cmd, lambda c: f"created {c.invoice_id}")
-        assert res == "created inv-1"
-
-    assert len(tracer.finished_spans) == 1
-    span = tracer.finished_spans[0]
-    assert span.name == "cqrs.CreateInvoiceCommand"
-    assert span.attributes["message.name"] == "CreateInvoiceCommand"
-    assert span.attributes["message.type"] == "command"
-    assert span.attributes["correlation.id"] == "corr-999"
-    assert span.attributes["tenant.id"] == "tenant_xyz"
-    assert span.attributes["user.id"] == "usr_abc"
-    assert span.status != "ERROR"
-
-
-def test_tracing_middleware_records_exceptions():
-    tracer = InMemoryTracingAdapter()
-    middleware = TracingMiddleware(tracer=tracer)
-
-    def _failing_handler(cmd: CreateInvoiceCommand):
-        raise ValueError("Invalid tax calculation")
-
-    cmd = CreateInvoiceCommand(invoice_id="inv-2", amount=-1.0)
-    with pytest.raises(ValueError, match="Invalid tax calculation"):
-        middleware(cmd, _failing_handler)
-
-    assert len(tracer.finished_spans) == 1
-    span = tracer.finished_spans[0]
-    assert span.status == "ERROR"
-    assert (
-        span.status_description is not None
-        and "Invalid tax calculation" in span.status_description
-    )
-
-
-def test_tracing_middleware_disabled():
-    tracer = InMemoryTracingAdapter()
-    middleware = TracingMiddleware(tracer=tracer, enabled=False)
-
-    res = middleware(
-        CreateInvoiceCommand(invoice_id="inv-3", amount=10.0), lambda cmd: "done"
-    )
-    assert res == "done"
-    assert len(tracer.finished_spans) == 0
-
-
 @pytest.mark.anyio
 async def test_tracing_middleware_async_handler():
     tracer = InMemoryTracingAdapter()
@@ -109,6 +57,17 @@ async def test_tracing_middleware_async_handler_exception():
     assert span.status == "ERROR"
 
 
+def test_tracing_middleware_disabled():
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer, enabled=False)
+
+    res = middleware(
+        CreateInvoiceCommand(invoice_id="inv-3", amount=10.0), lambda cmd: "done"
+    )
+    assert res == "done"
+    assert len(tracer.finished_spans) == 0
+
+
 def test_tracing_middleware_event_and_query_types():
     tracer = InMemoryTracingAdapter()
     middleware = TracingMiddleware(tracer=tracer)
@@ -120,3 +79,44 @@ def test_tracing_middleware_event_and_query_types():
     # Event message type
     middleware(InvoiceCreatedEvent(invoice_id="e1"), lambda e: "e_res")
     assert tracer.finished_spans[-1].attributes["message.type"] == "event"
+
+
+def test_tracing_middleware_records_exceptions():
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer)
+
+    def _failing_handler(cmd: CreateInvoiceCommand):
+        raise ValueError("Invalid tax calculation")
+
+    cmd = CreateInvoiceCommand(invoice_id="inv-2", amount=-1.0)
+    with pytest.raises(ValueError, match="Invalid tax calculation"):
+        middleware(cmd, _failing_handler)
+
+    assert len(tracer.finished_spans) == 1
+    span = tracer.finished_spans[0]
+    assert span.status == "ERROR"
+    assert (
+        span.status_description is not None
+        and "Invalid tax calculation" in span.status_description
+    )
+
+
+def test_tracing_middleware_with_command():
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer)
+
+    with correlation_scope("corr-999"):
+        set_user_context(UserContext(user_id="usr_abc", tenant_id="tenant_xyz"))
+        cmd = CreateInvoiceCommand(invoice_id="inv-1", amount=99.0)
+        res = middleware(cmd, lambda c: f"created {c.invoice_id}")
+        assert res == "created inv-1"
+
+    assert len(tracer.finished_spans) == 1
+    span = tracer.finished_spans[0]
+    assert span.name == "cqrs.CreateInvoiceCommand"
+    assert span.attributes["message.name"] == "CreateInvoiceCommand"
+    assert span.attributes["message.type"] == "command"
+    assert span.attributes["correlation.id"] == "corr-999"
+    assert span.attributes["tenant.id"] == "tenant_xyz"
+    assert span.attributes["user.id"] == "usr_abc"
+    assert span.status != "ERROR"

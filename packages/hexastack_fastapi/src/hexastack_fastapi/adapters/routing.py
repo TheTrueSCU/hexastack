@@ -10,89 +10,6 @@ from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_fastapi.adapters.dependencies import get_pipeline
 
 
-def _create_command_endpoint(
-    command_cls: type[Command], output_format: str | None
-) -> Callable[..., Any]:
-    """Dynamically construct a typed FastAPI endpoint for a Command model."""
-
-    async def endpoint(
-        cmd: Any,
-        pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
-    ) -> Any:
-        return pipeline.execute(cmd, output_format=output_format)
-
-    sig = inspect.signature(endpoint)
-    params = [
-        inspect.Parameter(
-            "cmd",
-            inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            annotation=command_cls,
-        ),
-        inspect.Parameter(
-            "pipeline",
-            inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            annotation=ExecutionPipeline,
-            default=Depends(get_pipeline),
-        ),
-    ]
-    cast("Any", endpoint).__signature__ = sig.replace(parameters=params)
-    return endpoint
-
-
-def _create_query_endpoint(
-    query_cls: type[Query], method: str, output_format: str | None
-) -> Callable[..., Any]:
-    """Dynamically construct a typed FastAPI endpoint for a Query model."""
-    if method.upper() == "GET":
-
-        async def get_endpoint(
-            qry: Any,
-            pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
-        ) -> Any:
-            return pipeline.execute(qry, output_format=output_format)
-
-        sig = inspect.signature(get_endpoint)
-        params = [
-            inspect.Parameter(
-                "qry",
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                annotation=query_cls,
-                default=Depends(query_cls),
-            ),
-            inspect.Parameter(
-                "pipeline",
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                annotation=ExecutionPipeline,
-                default=Depends(get_pipeline),
-            ),
-        ]
-        cast("Any", get_endpoint).__signature__ = sig.replace(parameters=params)
-        return get_endpoint
-
-    async def post_endpoint(
-        qry: Any,
-        pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
-    ) -> Any:
-        return pipeline.execute(qry, output_format=output_format)
-
-    sig = inspect.signature(post_endpoint)
-    params = [
-        inspect.Parameter(
-            "qry",
-            inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            annotation=query_cls,
-        ),
-        inspect.Parameter(
-            "pipeline",
-            inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            annotation=ExecutionPipeline,
-            default=Depends(get_pipeline),
-        ),
-    ]
-    cast("Any", post_endpoint).__signature__ = sig.replace(parameters=params)
-    return post_endpoint
-
-
 class CqrsRouter(APIRouter):
     """APIRouter providing direct endpoint registration for CQRS Commands and Queries.
 
@@ -183,3 +100,86 @@ class CqrsRouter(APIRouter):
 __all__ = [
     "CqrsRouter",
 ]
+
+
+def _create_command_endpoint(
+    command_cls: type[Command], output_format: str | None
+) -> Callable[..., Any]:
+    """Dynamically construct a typed FastAPI endpoint for a Command model."""
+
+    async def endpoint(
+        cmd: Any,
+        pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
+    ) -> Any:
+        return pipeline.execute(cmd, output_format=output_format)
+
+    sig = inspect.signature(endpoint)
+    params = [
+        inspect.Parameter(
+            "cmd",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=command_cls,
+        ),
+        inspect.Parameter(
+            "pipeline",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=ExecutionPipeline,
+            default=Depends(get_pipeline),
+        ),
+    ]
+    cast("Any", endpoint).__signature__ = sig.replace(parameters=params)
+    return endpoint
+
+
+def _create_query_endpoint(
+    query_cls: type[Query], method: str, output_format: str | None
+) -> Callable[..., Any]:
+    """Dynamically construct a typed FastAPI endpoint for a Query model."""
+    if method.upper() == "GET":
+
+        async def get_endpoint(
+            qry: Any,
+            pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
+        ) -> Any:
+            return pipeline.execute(qry, output_format=output_format)
+
+        sig = inspect.signature(get_endpoint)
+        params = [
+            inspect.Parameter(
+                "qry",
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                annotation=query_cls,
+                default=Depends(query_cls),
+            ),
+            inspect.Parameter(
+                "pipeline",
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                annotation=ExecutionPipeline,
+                default=Depends(get_pipeline),
+            ),
+        ]
+        cast("Any", get_endpoint).__signature__ = sig.replace(parameters=params)
+        return get_endpoint
+
+    async def post_endpoint(
+        qry: Any,
+        pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
+    ) -> Any:
+        return pipeline.execute(qry, output_format=output_format)
+
+    sig = inspect.signature(post_endpoint)
+    params = [
+        inspect.Parameter(
+            "qry",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=query_cls,
+        ),
+        inspect.Parameter(
+            "pipeline",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=ExecutionPipeline,
+            default=Depends(get_pipeline),
+        ),
+    ]
+    cast("Any", post_endpoint).__signature__ = sig.replace(parameters=params)
+    return post_endpoint

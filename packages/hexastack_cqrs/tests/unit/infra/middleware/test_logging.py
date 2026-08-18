@@ -11,6 +11,81 @@ class _DummyCommand(Command):
     name: str
 
 
+@pytest.mark.anyio
+async def test_logging_middleware_async_coroutine_error():
+    logger = InMemoryLogger()
+    middleware = LoggingMiddleware(logger=logger)
+
+    async def async_failing_handler(cmd: _DummyCommand) -> str:
+        raise RuntimeError("async failure")
+
+    cmd = _DummyCommand(name="async-error-cmd")
+    coro = middleware(cmd, async_failing_handler)
+
+    with pytest.raises(RuntimeError, match="async failure"):
+        await coro
+
+    assert len(logger.entries) == 2
+    assert logger.entries[0].level == "info"
+    assert logger.entries[1].level == "error"
+    assert "Failed processing _DummyCommand" in logger.entries[1].message
+
+
+@pytest.mark.anyio
+async def test_logging_middleware_async_coroutine_success():
+    logger = InMemoryLogger()
+    middleware = LoggingMiddleware(logger=logger)
+
+    async def async_handler(cmd: _DummyCommand) -> str:
+        return f"async {cmd.name}"
+
+    cmd = _DummyCommand(name="async-cmd")
+    coro = middleware(cmd, async_handler)
+    result = await coro
+
+    assert result == "async async-cmd"
+    assert len(logger.entries) == 2
+    assert logger.entries[0].level == "info"
+    assert logger.entries[1].level == "debug"
+
+
+def test_logging_middleware_disabled():
+    logger = InMemoryLogger()
+    config = LoggingMiddlewareConfig(enable=False)
+    middleware = LoggingMiddleware(logger=logger, config=config)
+
+    cmd = _DummyCommand(name="disabled-cmd")
+    result = middleware(cmd, lambda c: "ok")
+
+    assert result == "ok"
+    assert len(logger.entries) == 0
+
+
+@pytest.mark.snapshot
+def test_logging_middleware_error_execution():
+    logger = InMemoryLogger()
+    middleware = LoggingMiddleware(logger=logger)
+
+    def failing_handler(cmd: _DummyCommand) -> str:
+        raise ValueError("handling failed")
+
+    cmd = _DummyCommand(name="error-cmd")
+    with pytest.raises(ValueError, match="handling failed"):
+        middleware(cmd, failing_handler)
+
+    assert [
+        {"level": e.level, "message": e.message} for e in logger.entries
+    ] == snapshot(
+        [
+            {"level": "info", "message": "Processing _DummyCommand"},
+            {
+                "level": "error",
+                "message": "Failed processing _DummyCommand: handling failed",
+            },
+        ]
+    )
+
+
 @pytest.mark.snapshot
 def test_logging_middleware_successful_execution():
     logger = InMemoryLogger()
@@ -44,78 +119,3 @@ def test_logging_middleware_successful_execution():
             },
         ]
     )
-
-
-@pytest.mark.snapshot
-def test_logging_middleware_error_execution():
-    logger = InMemoryLogger()
-    middleware = LoggingMiddleware(logger=logger)
-
-    def failing_handler(cmd: _DummyCommand) -> str:
-        raise ValueError("handling failed")
-
-    cmd = _DummyCommand(name="error-cmd")
-    with pytest.raises(ValueError, match="handling failed"):
-        middleware(cmd, failing_handler)
-
-    assert [
-        {"level": e.level, "message": e.message} for e in logger.entries
-    ] == snapshot(
-        [
-            {"level": "info", "message": "Processing _DummyCommand"},
-            {
-                "level": "error",
-                "message": "Failed processing _DummyCommand: handling failed",
-            },
-        ]
-    )
-
-
-def test_logging_middleware_disabled():
-    logger = InMemoryLogger()
-    config = LoggingMiddlewareConfig(enable=False)
-    middleware = LoggingMiddleware(logger=logger, config=config)
-
-    cmd = _DummyCommand(name="disabled-cmd")
-    result = middleware(cmd, lambda c: "ok")
-
-    assert result == "ok"
-    assert len(logger.entries) == 0
-
-
-@pytest.mark.anyio
-async def test_logging_middleware_async_coroutine_success():
-    logger = InMemoryLogger()
-    middleware = LoggingMiddleware(logger=logger)
-
-    async def async_handler(cmd: _DummyCommand) -> str:
-        return f"async {cmd.name}"
-
-    cmd = _DummyCommand(name="async-cmd")
-    coro = middleware(cmd, async_handler)
-    result = await coro
-
-    assert result == "async async-cmd"
-    assert len(logger.entries) == 2
-    assert logger.entries[0].level == "info"
-    assert logger.entries[1].level == "debug"
-
-
-@pytest.mark.anyio
-async def test_logging_middleware_async_coroutine_error():
-    logger = InMemoryLogger()
-    middleware = LoggingMiddleware(logger=logger)
-
-    async def async_failing_handler(cmd: _DummyCommand) -> str:
-        raise RuntimeError("async failure")
-
-    cmd = _DummyCommand(name="async-error-cmd")
-    coro = middleware(cmd, async_failing_handler)
-
-    with pytest.raises(RuntimeError, match="async failure"):
-        await coro
-
-    assert len(logger.entries) == 2
-    assert logger.entries[0].level == "info"
-    assert logger.entries[1].level == "error"
-    assert "Failed processing _DummyCommand" in logger.entries[1].message

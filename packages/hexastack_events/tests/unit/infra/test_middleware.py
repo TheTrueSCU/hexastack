@@ -26,13 +26,6 @@ class OrderCreatedDomainEvent(Event):
     status: str = "CONFIRMED"
 
 
-def test_outbox_capture_middleware_defaults():
-    storage = InMemoryOutboxStorage()
-    middleware = OutboxCaptureMiddleware(storage=storage)
-    assert middleware._source == "hexastack"
-    assert middleware._enabled is True
-
-
 def test_outbox_capture_middleware():
     storage = InMemoryOutboxStorage()
     middleware = OutboxCaptureMiddleware(storage=storage, source="order-service")
@@ -71,27 +64,6 @@ def test_outbox_capture_middleware():
     assert rec.status == OutboxStatus.PENDING
 
 
-def test_outbox_capture_middleware_direct_event_instance():
-    storage = InMemoryOutboxStorage()
-    middleware = OutboxCaptureMiddleware(storage=storage, source="test-source")
-
-    ev = OrderCreatedDomainEvent(order_id="direct-1")
-    res = middleware(ev, lambda e: "handled")
-    assert res == "handled"
-    assert len(storage.get_all()) == 1
-    assert storage.get_all()[0].payload["order_id"] == "direct-1"
-
-
-def test_outbox_capture_middleware_disabled():
-    storage = InMemoryOutboxStorage()
-    middleware = OutboxCaptureMiddleware(storage=storage, enabled=False)
-
-    ev = OrderCreatedDomainEvent(order_id="disabled-1")
-    res = middleware(ev, lambda e: "handled")
-    assert res == "handled"
-    assert len(storage.get_all()) == 0
-
-
 @pytest.mark.anyio
 async def test_outbox_capture_middleware_async_handler():
     storage = InMemoryOutboxStorage()
@@ -113,3 +85,31 @@ async def test_outbox_capture_middleware_async_handler():
     res2 = await middleware(cmd, _async_string_handler)
     assert res2 == "not-an-event"
     assert len(storage.get_all()) == 1
+
+
+def test_outbox_capture_middleware_defaults():
+    storage = InMemoryOutboxStorage()
+    middleware = OutboxCaptureMiddleware(storage=storage)
+    assert middleware._source == "hexastack"
+    assert middleware._enabled is True
+
+
+def test_outbox_capture_middleware_direct_event_instance():
+    storage = InMemoryOutboxStorage()
+    middleware = OutboxCaptureMiddleware(storage=storage, source="test-source")
+
+    ev = OrderCreatedDomainEvent(order_id="direct-1")
+    res = middleware(ev, lambda e: "handled")
+    assert res == "handled"
+    assert len(storage.get_all()) == 1
+    assert storage.get_all()[0].payload["order_id"] == "direct-1"
+
+
+def test_outbox_capture_middleware_disabled():
+    storage = InMemoryOutboxStorage()
+    middleware = OutboxCaptureMiddleware(storage=storage, enabled=False)
+
+    ev = OrderCreatedDomainEvent(order_id="disabled-1")
+    res = middleware(ev, lambda e: "handled")
+    assert res == "handled"
+    assert len(storage.get_all()) == 0
