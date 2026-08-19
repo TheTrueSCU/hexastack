@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
 
+from hexastack_core.testing.flags import require_extra
 from hexastack_fastapi.adapters.db_session import (
     AsyncDbSessionMiddleware,
     DbSessionMiddleware,
@@ -30,6 +31,7 @@ def _sync_factory():
     return sessionmaker(bind=engine)
 
 
+@require_extra("aiosqlite")
 def test_add_db_session_middleware_async():
     app = FastAPI()
     factory = _async_factory()
@@ -56,6 +58,7 @@ def test_add_db_session_middleware_sync():
     assert client.get("/check").json()["has_session"] is True
 
 
+@require_extra("aiosqlite")
 def test_async_db_session_middleware_injects_session():
     app = FastAPI()
     factory = _async_factory()

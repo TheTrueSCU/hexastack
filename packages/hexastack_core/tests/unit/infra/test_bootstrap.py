@@ -53,3 +53,10 @@ def test_core_meta_bootstrap():
     assert res.bootstrappers == [ext_a, ext_b]
     assert res.get("ext_a_ran") is True
     assert res.get("ext_b_ran") is True
+
+    # FeatureFlagPort should be registered in container
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+
+    assert FeatureFlagPort in res.container
+    flags = res.container.resolve(FeatureFlagPort)
+    assert flags.is_enabled("features.lib.pydantic") is True

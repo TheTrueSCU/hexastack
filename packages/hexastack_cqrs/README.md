@@ -14,10 +14,11 @@
 - **Composable Middleware Pipeline**: Pluggable middlewares executed sequentially before and after command/query handling:
   - `CorrelationMiddleware`: Propagates correlation IDs across requests and async tasks.
   - `TimingMiddleware`: Measures and records execution latency.
-  - `LoggingMiddleware`: Logs execution lifecycles and errors via `LoggerPort`.
-  - `RetryMiddleware`: Exponential backoff and retry policies powered by `tenacity`.
+  - `LoggingMiddleware`: Logs execution lifecycles and errors via `LoggerPort` (dynamically gated via `features.cqrs.logging`).
+  - `TenacityRetryMiddleware`: Exponential backoff and retry policies powered by `tenacity` (dynamically gated via `features.cqrs.retry`).
   - `UnitOfWorkMiddleware`: Automatic transaction scoping (`commit()` on success, `rollback()` on failure).
-- **Declarative Decorators & Scanning**: `@command_handler`, `@query_handler`, and `@event_handler` registered via reflective module scanning.
+  - `ConditionalFeatureFlagMiddleware`: Evaluates dynamic feature flags before dispatching commands/queries.
+- **Declarative Decorators & Scanning**: `@command_handler`, `@query_handler`, `@event_handler`, and `@feature_flag` registered via reflective module scanning.
 - **Presenter & Response Mapping**: Integration with `PresenterPort` for formatting outputs across CLI and REST adapters.
 
 ---
@@ -29,7 +30,7 @@ hexastack_cqrs/
 ├── domain/          # Command, Query, Event, Handler protocols, CQRS exceptions
 ├── ports/           # CommandBusPort, QueryBusPort, EventBusPort, MiddlewarePort
 ├── adapters/        # Buses (Synchronous & Asynchronous with Huey)
-└── infra/           # CqrsBootstrapper (order=20), Middleware pipeline, Registries
+└── infra/           # CqrsBootstrapper (order=20), Middleware pipeline, Registries, @feature_flag
 ```
 
 ### Key Exports
@@ -39,8 +40,8 @@ hexastack_cqrs/
 | **Domain** | `Command`, `Query`, `Event`, `CommandHandler`, `QueryHandler`, `EventHandler` |
 | **Ports** | `CommandBusPort`, `QueryBusPort`, `EventBusPort`, `MiddlewarePort` |
 | **Adapters** | `SynchronousCommandBus`, `SynchronousQueryBus`, `SynchronousEventBus`, `HueyCommandBus`, `HueyEventBus` |
-| **Middlewares** | `CorrelationMiddleware`, `TimingMiddleware`, `LoggingMiddleware`, `RetryMiddleware`, `UnitOfWorkMiddleware`, `Pipeline` |
-| **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@presenter` |
+| **Middlewares** | `CorrelationMiddleware`, `TimingMiddleware`, `LoggingMiddleware`, `TenacityRetryMiddleware`, `UnitOfWorkMiddleware`, `ConditionalFeatureFlagMiddleware`, `ExecutionPipeline` |
+| **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@feature_flag`, `@presenter` |
 | **Bootstrap** | `CqrsBootstrapper` (order=20), `CqrsConfig` |
 
 ---

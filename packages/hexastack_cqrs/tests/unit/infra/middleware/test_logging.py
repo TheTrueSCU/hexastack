@@ -61,6 +61,26 @@ def test_logging_middleware_disabled():
     assert len(logger.entries) == 0
 
 
+def test_logging_middleware_dynamic_feature_flag():
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+
+    flags = InMemoryFeatureFlagAdapter({"features.cqrs.logging": False})
+    logger = InMemoryLogger()
+    middleware = LoggingMiddleware(logger=logger, flags=flags)
+
+    cmd = _DummyCommand(name="dynamic-flag-cmd")
+    res = middleware(cmd, lambda c: "bypassed")
+    assert res == "bypassed"
+    assert len(logger.entries) == 0
+
+    flags.set_flag("features.cqrs.logging", True)
+    res_active = middleware(cmd, lambda c: "active")
+    assert res_active == "active"
+    assert len(logger.entries) == 2
+
+
 @pytest.mark.snapshot
 def test_logging_middleware_error_execution():
     logger = InMemoryLogger()

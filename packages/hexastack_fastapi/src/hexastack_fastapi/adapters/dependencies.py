@@ -1,12 +1,19 @@
-from fastapi import Request
+from typing import Any
+
+from fastapi import HTTPException, Request, status
 from rodi import Container
 
+from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
 from hexastack_core.domain.exceptions import DependencyResolutionError
+from hexastack_core.domain.feature_flags import EvaluationContext
+from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
 __all__ = [
     "get_container",
+    "get_feature_flags",
     "get_pipeline",
+    "require_feature",
 ]
 
 
@@ -31,6 +38,60 @@ def get_container(request: Request) -> Container:
             "rodi.Container is not configured on request.app.state.container."
         )
     return container
+
+
+def get_feature_flags(request: Request) -> FeatureFlagPort:
+    """FastAPI dependency provider resolving the active FeatureFlagPort instance.
+
+    Notes/Architectural Intent:
+        Retrieves the registered FeatureFlagPort from the application container or
+        falls back to ConfigFeatureFlagAdapter.
+
+    Args:
+        request: Incoming FastAPI Request object.
+
+    Returns:
+        The FeatureFlagPort instance.
+    """
+    container = getattr(request.app.state, "container", None)
+    if isinstance(container, Container) and FeatureFlagPort in container:
+        return container.resolve(FeatureFlagPort)
+    return ConfigFeatureFlagAdapter()
+
+
+def require_feature(
+    flag_key: str,
+    *,
+    default: bool = False,
+    status_code: int = status.HTTP_404_NOT_FOUND,
+    detail: str | None = None,
+) -> Any:
+    """Create a FastAPI dependency that enforces a feature flag is enabled.
+
+    Notes/Architectural Intent:
+        Evaluates the feature flag dynamically against ambient UserContext / request state.
+        If disabled, raises an HTTPException (default 404 Not Found) to cleanly hide or gate routes.
+
+    Args:
+        flag_key: Unique identifier of the feature flag to check.
+        default: Fallback boolean value if flag is not explicitly configured.
+        status_code: HTTP status code to return when disabled (defaults to 404).
+        detail: Optional error detail message.
+
+    Returns:
+        A FastAPI dependency callable.
+    """
+
+    async def _dependency(request: Request) -> None:
+        flags = get_feature_flags(request)
+        eval_ctx = EvaluationContext.from_current_context()
+        if not flags.is_enabled(flag_key, default=default, context=eval_ctx):
+            raise HTTPException(
+                status_code=status_code,
+                detail=detail or f"Feature '{flag_key}' is disabled.",
+            )
+
+    return _dependency
 
 
 def get_pipeline(request: Request) -> ExecutionPipeline:

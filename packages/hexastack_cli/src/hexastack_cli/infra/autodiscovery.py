@@ -106,6 +106,7 @@ def _register_model_target(
             help_text=help_text,
             output_format=meta.output_format,
             console=console,
+            feature_flag=meta.feature_flag,
         )
     elif meta.kind == "query" and issubclass(obj, Query):
         register_cqrs_query(
@@ -117,6 +118,7 @@ def _register_model_target(
             help_text=help_text,
             output_format=meta.output_format,
             console=console,
+            feature_flag=meta.feature_flag,
         )
 
 

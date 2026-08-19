@@ -225,6 +225,7 @@ def _build_dynamic_cli_runner(
     output_format: str | None = None,
     presenter: RichTerminalPresenter | None = None,
     console: Console | None = None,
+    feature_flag: str | None = None,
 ) -> Callable[..., None]:
     """Dynamically construct a typed function whose signature matches model_cls fields and CLI flags for Typer."""
     active_presenter = presenter or RichTerminalPresenter(console=console)
@@ -242,6 +243,21 @@ def _build_dynamic_cli_runner(
 
         _setup_cli_context(correlation_id, user_id, tenant_id)
 
+        if feature_flag:
+            from hexastack_core.adapters.feature_flags.config import (
+                ConfigFeatureFlagAdapter,
+            )
+            from hexastack_core.domain.feature_flags import EvaluationContext
+            from hexastack_core.ports.feature_flags import FeatureFlagPort
+
+            flags: FeatureFlagPort = ConfigFeatureFlagAdapter()
+            eval_ctx = EvaluationContext.from_current_context()
+            if not flags.is_enabled(feature_flag, default=False, context=eval_ctx):
+                active_presenter.print_error(
+                    f"Command is disabled by feature flag '{feature_flag}'."
+                )
+                raise typer.Exit(code=1)
+
         try:
             field_data = _resolve_cli_input(input_payload)
             cli_flags = {k: v for k, v in kwargs.items() if v is not None}
@@ -251,6 +267,8 @@ def _build_dynamic_cli_runner(
             _present_cli_result(
                 result, requested_output, quiet_mode, active_presenter, active_console
             )
+        except typer.Exit:
+            raise
         except Exception as exc:
             if debug_mode:
                 active_presenter.print_exception()
@@ -290,6 +308,7 @@ def register_cqrs_command(
     output_format: str | None = None,
     presenter: RichTerminalPresenter | None = None,
     console: Console | None = None,
+    feature_flag: str | None = None,
 ) -> None:
     """Register a CQRS Command model as a typed CLI sub-command on a Typer application.
 
@@ -307,6 +326,7 @@ def register_cqrs_command(
         output_format: Optional presenter format.
         presenter: Optional RichTerminalPresenter instance.
         console: Optional rich Console instance.
+        feature_flag: Optional feature flag key required for execution.
 
     Returns:
         None.
@@ -323,6 +343,7 @@ def register_cqrs_command(
         output_format=output_format,
         presenter=presenter,
         console=console,
+        feature_flag=feature_flag,
     )
     app.command(name=cmd_name, help=doc)(runner)
 
@@ -337,6 +358,7 @@ def register_cqrs_query(
     output_format: str | None = None,
     presenter: RichTerminalPresenter | None = None,
     console: Console | None = None,
+    feature_flag: str | None = None,
 ) -> None:
     """Register a CQRS Query model as a typed CLI sub-command on a Typer application.
 
@@ -354,6 +376,7 @@ def register_cqrs_query(
         output_format: Optional presenter format.
         presenter: Optional RichTerminalPresenter instance.
         console: Optional rich Console instance.
+        feature_flag: Optional feature flag key required for execution.
 
     Returns:
         None.
@@ -370,5 +393,6 @@ def register_cqrs_query(
         output_format=output_format,
         presenter=presenter,
         console=console,
+        feature_flag=feature_flag,
     )
     app.command(name=qry_name, help=doc)(runner)

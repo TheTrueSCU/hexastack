@@ -28,6 +28,7 @@ class CqrsRouter(APIRouter):
         output_format: str | None = None,
         summary: str | None = None,
         tags: list[str | Enum] | None = None,
+        feature_flag: str | None = None,
     ) -> None:
         """Register an HTTP endpoint for executing a domain Command.
 
@@ -39,6 +40,7 @@ class CqrsRouter(APIRouter):
             output_format: Optional presenter format (e.g., 'json').
             summary: Optional OpenAPI summary string.
             tags: Optional OpenAPI tags list.
+            feature_flag: Optional feature flag key required for endpoint execution.
 
         Returns:
             None.
@@ -47,6 +49,12 @@ class CqrsRouter(APIRouter):
             None.
         """
         endpoint = _create_command_endpoint(command_cls, output_format)
+        dependencies = []
+        if feature_flag:
+            from hexastack_fastapi.adapters.dependencies import require_feature
+
+            dependencies.append(Depends(require_feature(feature_flag)))
+
         self.add_api_route(
             path=path,
             endpoint=endpoint,
@@ -54,6 +62,7 @@ class CqrsRouter(APIRouter):
             status_code=status_code,
             summary=summary or f"Execute {command_cls.__name__}",
             tags=tags,
+            dependencies=dependencies if dependencies else None,
             response_model=None,
         )
 
@@ -67,6 +76,7 @@ class CqrsRouter(APIRouter):
         output_format: str | None = None,
         summary: str | None = None,
         tags: list[str | Enum] | None = None,
+        feature_flag: str | None = None,
     ) -> None:
         """Register an HTTP endpoint for executing a domain Query.
 
@@ -78,6 +88,7 @@ class CqrsRouter(APIRouter):
             output_format: Optional presenter format (e.g., 'json').
             summary: Optional OpenAPI summary string.
             tags: Optional OpenAPI tags list.
+            feature_flag: Optional feature flag key required for endpoint execution.
 
         Returns:
             None.
@@ -86,6 +97,12 @@ class CqrsRouter(APIRouter):
             None.
         """
         endpoint = _create_query_endpoint(query_cls, method, output_format)
+        dependencies = []
+        if feature_flag:
+            from hexastack_fastapi.adapters.dependencies import require_feature
+
+            dependencies.append(Depends(require_feature(feature_flag)))
+
         self.add_api_route(
             path=path,
             endpoint=endpoint,
@@ -93,6 +110,7 @@ class CqrsRouter(APIRouter):
             status_code=status_code,
             summary=summary or f"Execute {query_cls.__name__}",
             tags=tags,
+            dependencies=dependencies if dependencies else None,
             response_model=None,
         )
 

@@ -10,6 +10,7 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.pool import StaticPool
 
+from hexastack_core.testing.flags import require_extra
 from hexastack_db.adapters.repository import (
     AsyncSqlAlchemyRepository,
     SqlAlchemyRepository,
@@ -29,6 +30,7 @@ class UserRecord(Base):
     email: Mapped[str]
 
 
+@require_extra("aiosqlite")
 @pytest.mark.anyio
 async def test_async_sqlalchemy_repository():
     async_engine = create_async_engine(

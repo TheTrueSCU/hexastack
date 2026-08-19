@@ -9,6 +9,8 @@ from tenacity import (
 )
 
 from hexastack_core.domain import Generic, HexastackError
+from hexastack_core.domain.feature_flags import EvaluationContext
+from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.config import RetryMiddlewareConfig
 
@@ -19,21 +21,25 @@ class TenacityRetryMiddleware:
     Notes/Architectural Intent:
         Provides resilience against transient failures during command/query execution,
         skipping retries on explicit Hexastack domain errors and logging retry state.
+        Respects dynamic feature flag evaluation via FeatureFlagPort.
     """
 
     def __init__(
         self,
         logger: LoggingPort | None = None,
         config: RetryMiddlewareConfig | None = None,
+        flags: FeatureFlagPort | None = None,
     ) -> None:
-        """Initialize retry middleware with optional logger and retry configuration.
+        """Initialize retry middleware with optional logger, retry configuration, and flags.
 
         Args:
             logger: Optional LoggingPort instance to receive retry debug messages.
             config: Optional RetryMiddlewareConfig providing retry attempts and toggles.
+            flags: Optional FeatureFlagPort to dynamically evaluate retry activation.
         """
         self._logger = logger
         self._config = config or RetryMiddlewareConfig()
+        self._flags = flags
 
     def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
         """Execute next_call with retry policies and debug logging.
@@ -50,6 +56,13 @@ class TenacityRetryMiddleware:
         """
         if not self._config.enable:
             return next_call(instance)
+
+        if self._flags is not None:
+            eval_ctx = EvaluationContext.from_current_context()
+            if not self._flags.is_enabled(
+                "features.cqrs.retry", default=True, context=eval_ctx
+            ):
+                return next_call(instance)
 
         message_name = instance.__class__.__name__
 

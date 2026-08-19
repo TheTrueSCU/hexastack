@@ -8,9 +8,7 @@
 
 ## 1. Overview & Capabilities
 
-`hexastack-fastapi` exposes Hexastack applications as high-performance REST APIs:
-
-- **Automatic CQRS Routing**: Map HTTP endpoints directly to `CommandBusPort` or `QueryBusPort` using `@api_route`.
+- **Automatic CQRS Routing & Feature Gating**: Map HTTP endpoints directly to `CommandBusPort` or `QueryBusPort` using `@api_command` and `@api_query`, with native feature flag route guards (`@feature_flag_route` and `require_feature(...)`).
 - **Decoupled Database Session Middleware**: `DbSessionMiddleware` (sync) and `AsyncDbSessionMiddleware` (async) manage session-per-request lifecycles by consuming sessionmakers from DI without a hard dependency on `hexastack-db`.
 - **Standardized Exception Handlers**: Automatically translates domain exceptions (`EntityNotFoundError`, `UniqueConstraintViolationError`, `HexastackError`) into appropriate HTTP status codes (404, 409, 500) and structured JSON error envelopes.
 - **Observability & Correlation Middleware**: Injects `X-Correlation-ID` headers and logs HTTP request lifecycles.
@@ -23,7 +21,7 @@
 ```
 hexastack_fastapi/
 ├── domain/          # HealthStatus, HTTP error envelope models
-├── adapters/        # create_app, routing decorators, health endpoints, db_session middleware
+├── adapters/        # create_app, routing decorators, health endpoints, db_session middleware, dependencies
 └── infra/           # FastApiBootstrapper (order=30), exception handlers, correlation/logging middlewares
 ```
 
@@ -32,8 +30,10 @@ hexastack_fastapi/
 | Category | Exports |
 |---|---|
 | **Application Factory** | `create_app`, `FastApiBootstrapper` (order=30) |
+| **Dependencies** | `get_container`, `get_pipeline`, `get_feature_flags`, `require_feature` |
 | **Middlewares** | `DbSessionMiddleware`, `AsyncDbSessionMiddleware`, `add_db_session_middleware`, `CorrelationMiddleware`, `HttpLoggingMiddleware` |
-| **Decorators** | `@api_route`, `@get`, `@post`, `@put`, `@delete` |
+| **Decorators** | `@api_command`, `@api_query`, `@feature_flag_route`, `RouteMetadata` |
+| **Routing** | `CqrsRouter`, `autodiscover_routes` |
 | **Exception Handlers** | `register_exception_handlers`, `domain_exception_handler` |
 
 ---

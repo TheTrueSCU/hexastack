@@ -12,6 +12,7 @@
 
 - **Nested Command Hierarchies**: Nest subcommands naturally (`app user create`, `app db migrate`) using `@cli_group`.
 - **Command Aliases**: Register multiple aliases for the same action (`app user new == app user create`).
+- **Feature Flag Gating**: Gate CLI commands dynamically with `@feature_flag_command(...)` and `@cli_command(..., feature_flag=...)`.
 - **Rich Formatted & CI-Friendly Output**: Beautiful tables, panels, and spinners for interactive terminals; clean text/JSON streaming for CI/CD pipelines.
 - **Direct CQRS Dispatching**: Declaratively expose domain commands (`@cli_command`) and queries (`@cli_query`) with automatic parameter parsing and validation.
 
@@ -23,16 +24,16 @@
 hexastack_cli/
 ├── domain/          # CliContext, OutputFormat enum
 ├── adapters/        # create_cli_app, Rich presenters, Typer command runners
-└── infra/           # CliBootstrapper (order=30), @cli_command, @cli_query, @cli_group decorators
+└── infra/           # CliBootstrapper (order=30), @cli_command, @cli_query, @cli_group, @feature_flag_command
 ```
 
 ### Key Exports
 
 | Category | Exports |
 |---|---|
-| **Decorators** | `@cli_command`, `@cli_query`, `@cli_group` |
+| **Decorators** | `@cli_command`, `@cli_query`, `@cli_group`, `@feature_flag_command` |
 | **Application Factory** | `create_cli_app`, `CliBootstrapper` (order=30) |
-| **Presenters** | `ConsolePresenter`, `TablePresenter`, `JsonPresenter` |
+| **Presenters** | `RichTerminalPresenter`, `ConsolePresenter`, `TablePresenter`, `JsonPresenter` |
 
 ---
 

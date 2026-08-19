@@ -13,6 +13,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.pool import StaticPool
 
 from hexastack_core.domain.exceptions import UnitOfWorkError
+from hexastack_core.testing.flags import require_extra
 from hexastack_db.adapters.unit_of_work import (
     AsyncSqlAlchemyUnitOfWork,
     SqlAlchemyUnitOfWork,
@@ -31,6 +32,7 @@ class TaskRecord(Base):
     title: Mapped[str]
 
 
+@require_extra("aiosqlite")
 @pytest.mark.anyio
 async def test_async_sqlalchemy_unit_of_work():
     async_engine = create_async_engine(

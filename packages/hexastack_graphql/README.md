@@ -15,6 +15,8 @@
 - **Declarative Query & Mutation Registries**:
   - `@graphql_query_type` and `@graphql_mutation_type`: Register whole type classes to be merged into root Query and Mutation types.
   - `@graphql_query` and `@graphql_mutation`: Register standalone resolver functions as top-level fields.
+- **Dynamic Field Resolver Feature Flagging**:
+  - `@feature_flag_field("flag_key", raise_error=True, fallback=...)`: Evaluates feature flags dynamically before executing field resolvers, raising a `GraphQLError` or returning a safe fallback value.
 - **FastAPI Mount & GraphiQL Playground**: Seamless mounting as a `GraphQLRouter` into FastAPI applications with interactive GraphiQL playground enabled.
 
 ---
@@ -29,7 +31,7 @@ hexastack_graphql/
 └── infra/
     ├── bootstrap.py # GraphQLBootstrapper (order=35)
     ├── config.py    # HexastackGraphQLConfig
-    ├── decorators.py# @graphql_query, @graphql_mutation, @graphql_query_type, @graphql_mutation_type
+    ├── decorators.py# @graphql_query, @graphql_mutation, @graphql_query_type, @graphql_mutation_type, @feature_flag_field
     └── registries/  # schema.py (GraphQLSchemaRegistry)
 ```
 
@@ -38,7 +40,7 @@ hexastack_graphql/
 | Category | Exports |
 |---|---|
 | **Context & Domain** | `GraphQLContext`, `GraphQLError`, `SchemaBuildingError` |
-| **Decorators** | `@graphql_query`, `@graphql_mutation`, `@graphql_query_type`, `@graphql_mutation_type` |
+| **Decorators** | `@graphql_query`, `@graphql_mutation`, `@graphql_query_type`, `@graphql_mutation_type`, `@feature_flag_field` |
 | **Registries** | `GraphQLSchemaRegistry`, `get_schema_registry` |
 | **FastAPI Adapters** | `create_graphql_router`, `mount_graphql_router` |
 | **Bootstrap** | `GraphQLBootstrapper` (order=35), `HexastackGraphQLConfig` |

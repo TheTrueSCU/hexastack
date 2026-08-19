@@ -3,6 +3,7 @@ from typing import Any, cast
 
 import strawberry
 
+from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_graphql.infra.autodiscovery import (
     _GRAPHQL_FIELD_ATTR,
     _GRAPHQL_TYPE_ATTR,
@@ -15,12 +16,91 @@ _default_registry = GraphQLSchemaRegistry()
 
 
 __all__ = [
+    "feature_flag_field",
     "get_schema_registry",
     "graphql_mutation",
     "graphql_mutation_type",
     "graphql_query",
     "graphql_query_type",
 ]
+
+
+def _resolve_flags(args: tuple[Any, ...], kwargs: dict[str, Any]) -> FeatureFlagPort:
+    """Helper to extract FeatureFlagPort from arguments context or fallback to ConfigFeatureFlagAdapter."""
+    from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+
+    for item in (*args, *kwargs.values()):
+        if hasattr(item, "context") and getattr(item.context, "container", None):
+            container = item.context.container
+            if FeatureFlagPort in container:
+                return container.resolve(FeatureFlagPort)
+            break
+    return ConfigFeatureFlagAdapter()
+
+
+def feature_flag_field(
+    flag_key: str,
+    *,
+    default: bool = False,
+    fallback: Any = None,
+    raise_error: bool = True,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Wrap a Strawberry GraphQL field resolver with dynamic feature flag evaluation.
+
+    Notes/Architectural Intent:
+        Evaluates the specified feature flag against ambient UserContext / GraphQLContext.
+        If disabled:
+        - If raise_error is True, raises a GraphQLError with a descriptive message.
+        - If raise_error is False, returns fallback value (e.g. None).
+
+    Args:
+        flag_key: Unique identifier of the feature flag to check.
+        default: Fallback boolean value if flag is not explicitly configured.
+        fallback: Value to return if flag is disabled and raise_error is False (defaults to None).
+        raise_error: Whether to raise a GraphQLError when disabled (defaults to True).
+
+    Returns:
+        Decorator wrapping the GraphQL resolver function.
+    """
+    import inspect
+    from functools import wraps
+
+    from hexastack_core.domain.feature_flags import EvaluationContext
+    from hexastack_graphql.domain.exceptions import GraphQLError
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        if inspect.iscoroutinefunction(fn):
+
+            @wraps(fn)
+            async def async_wrapped(*args: Any, **kwargs: Any) -> Any:
+                flags = _resolve_flags(args, kwargs)
+                eval_ctx = EvaluationContext.from_current_context()
+                if not flags.is_enabled(flag_key, default=default, context=eval_ctx):
+                    if raise_error:
+                        raise GraphQLError(
+                            f"GraphQL field is disabled by feature flag '{flag_key}'."
+                        )
+                    return fallback
+                return await fn(*args, **kwargs)
+
+            return async_wrapped
+
+        @wraps(fn)
+        def sync_wrapped(*args: Any, **kwargs: Any) -> Any:
+            flags = _resolve_flags(args, kwargs)
+            eval_ctx = EvaluationContext.from_current_context()
+            if not flags.is_enabled(flag_key, default=default, context=eval_ctx):
+                if raise_error:
+                    raise GraphQLError(
+                        f"GraphQL field is disabled by feature flag '{flag_key}'."
+                    )
+                return fallback
+            return fn(*args, **kwargs)
+
+        return sync_wrapped
+
+    return decorator
 
 
 def get_schema_registry() -> GraphQLSchemaRegistry:

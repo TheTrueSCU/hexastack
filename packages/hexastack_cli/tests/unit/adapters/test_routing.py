@@ -290,3 +290,44 @@ def test_register_cqrs_command_and_query(tmp_path: Path):
     res_async = runner.invoke(app, ["async", "--value", "futuristic"])
     assert res_async.exit_code == 0
     assert "Async result: futuristic" in res_async.stdout
+
+
+def test_cli_routing_feature_flag_gated():
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(AddNumbersCommand, lambda cmd: cmd.a + cmd.b)
+
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=CommandRegistry(),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+        presenter_registry=PresenterRegistry(),
+    )
+
+    app = typer.Typer()
+    register_cqrs_command(
+        app,
+        AddNumbersCommand,
+        pipeline,
+        name="gated-add",
+        feature_flag="features.cli.addition",
+    )
+    register_cqrs_command(
+        app,
+        PositionalCommand,
+        pipeline,
+        name="positional",
+    )
+
+    runner = CliRunner()
+
+    # 1. By default, disabled flag prevents execution with exit code 1
+    res_disabled = runner.invoke(app, ["gated-add", "--a", "5"])
+    assert res_disabled.exit_code == 1
+    assert (
+        "disabled by feature flag" in res_disabled.stderr
+        or "disabled by feature flag" in res_disabled.stdout
+    )

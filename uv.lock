@@ -1699,18 +1699,24 @@ provides-extras = ["otlp"]
 name = "hexastack-workspace"
 version = "0.1.0"
 source = { editable = "." }
+dependencies = [
+    { name = "hexastack", extra = ["all"] },
+]
 
 [package.dev-dependencies]
 dev = [
     { name = "alembic" },
     { name = "complexipy" },
     { name = "dirty-equals" },
+    { name = "grpcio-reflection" },
     { name = "httpx" },
+    { name = "huey" },
     { name = "hypothesis" },
     { name = "import-linter" },
     { name = "inline-snapshot" },
     { name = "libcst" },
     { name = "mutmut" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "pre-commit" },
     { name = "pydeps" },
     { name = "pytest" },
@@ -1724,18 +1730,22 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "hexastack", extras = ["all"], editable = "packages/hexastack" }]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "alembic", specifier = ">=1.19.1" },
     { name = "complexipy", specifier = ">=7.0.1" },
     { name = "dirty-equals", specifier = ">=0.11" },
+    { name = "grpcio-reflection", specifier = ">=1.68.0" },
     { name = "httpx", specifier = ">=0.27.0" },
+    { name = "huey", specifier = ">=3.3.4" },
     { name = "hypothesis", specifier = ">=6.100.0" },
     { name = "import-linter", specifier = ">=2.13" },
     { name = "inline-snapshot", specifier = ">=0.35.4" },
     { name = "libcst", specifier = ">=1.9.0" },
     { name = "mutmut", specifier = "<3" },
+    { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.27.0" },
     { name = "pre-commit", specifier = ">=3.8.0" },
     { name = "pydeps", specifier = ">=3.0.7" },
     { name = "pytest", specifier = ">=8.0.0" },

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from hexastack_core.testing.flags import require_extra
 from hexastack_db.adapters.repository import (
     AsyncSqlAlchemyRepository,
     SqlAlchemyRepository,
@@ -38,6 +39,7 @@ def test_hexastack_base_metadata_contains_table():
     assert "test_articles" in table_names
 
 
+@require_extra("aiosqlite")
 @pytest.mark.anyio
 async def test_mixin_async_repository():
     async_engine = create_async_engine(

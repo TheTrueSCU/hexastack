@@ -39,15 +39,31 @@ class PresenterMetadata:
     output_format: str
 
 
+@dataclass(frozen=True)
+class FeatureFlagMetadata:
+    """Metadata tag attached to handlers or pipeline targets for feature flag gating.
+
+    Notes/Architectural Intent:
+        Associates feature flag identifier, fallback handler callable, and default
+        boolean value for conditional execution without modifying the underlying handler.
+    """
+
+    flag_key: str
+    fallback: Callable[..., Any] | None = None
+    default: bool = False
+
+
 __all__ = [
     "ConfigMetadata",
     "ExceptionMetadata",
+    "FeatureFlagMetadata",
     "HandlerMetadata",
     "PresenterMetadata",
     "command_handler",
     "config_section",
     "event_listener",
     "exception_handler",
+    "feature_flag",
     "presenter",
     "query_handler",
 ]
@@ -147,5 +163,64 @@ def query_handler(
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         _tag_object(fn, HandlerMetadata(kind="query", target_cls=target_cls))
         return fn
+
+    return decorator
+
+
+def feature_flag(
+    flag_key: str,
+    *,
+    fallback: Callable[..., Any] | None = None,
+    default: bool = False,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Wrap a handler or function with dynamic feature flag evaluation.
+
+    Notes/Architectural Intent:
+        Evaluates the specified feature flag via ambient UserContext / FeatureFlagPort.
+        If enabled, executes the target function; if disabled, executes fallback (if supplied)
+        or raises FeatureFlagDisabledError.
+
+    Args:
+        flag_key: Unique identifier of the feature flag to check.
+        fallback: Optional callable to invoke if the flag is disabled.
+        default: Fallback boolean value if flag is not explicitly configured.
+
+    Returns:
+        Decorator function wrapping target callable.
+    """
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        from hexastack_core.domain.feature_flags import EvaluationContext
+        from hexastack_core.ports.feature_flags import FeatureFlagPort
+        from hexastack_cqrs.infra.middleware.feature_flag import (
+            FeatureFlagDisabledError,
+        )
+
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
+            eval_ctx = EvaluationContext.from_current_context()
+            flags: FeatureFlagPort | None = kwargs.pop("__feature_flags__", None)
+            if flags is None:
+                from hexastack_core.adapters.feature_flags.config import (
+                    ConfigFeatureFlagAdapter,
+                )
+
+                flags = ConfigFeatureFlagAdapter()
+
+            is_active = flags.is_enabled(flag_key, default=default, context=eval_ctx)
+            if is_active:
+                return fn(*args, **kwargs)
+
+            if fallback is not None:
+                return fallback(*args, **kwargs)
+
+            raise FeatureFlagDisabledError(
+                f"Feature flag '{flag_key}' is disabled for current context."
+            )
+
+        _tag_object(
+            wrapped,
+            FeatureFlagMetadata(flag_key=flag_key, fallback=fallback, default=default),
+        )
+        return wrapped
 
     return decorator

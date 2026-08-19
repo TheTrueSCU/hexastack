@@ -57,10 +57,11 @@ enabled = true
 
 ---
 
-## 3. Automatic CQRS Tracing
+## 3. Automatic CQRS Tracing & Dynamic Feature Flagging
 
 The [`TracingMiddleware`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel/src/hexastack_otel/infra/middleware.py) automatically wraps every dispatched command or query in a scoped span:
 
+- **Dynamic Feature Flag Control**: Evaluates `features.otel.tracing` via `FeatureFlagPort` dynamically per-message, enabling zero-downtime activation/deactivation of telemetry spans.
 - **Span Name**: `cqrs.CreateOrderCommand`
 - **Attributes**:
   - `message.name`: `CreateOrderCommand`

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_core.ports.ai import VectorStorePort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
+from hexastack_core.testing.flags import require_extra
 from hexastack_db.adapters.unit_of_work import (
     AsyncSqlAlchemyUnitOfWork,
     SqlAlchemyUnitOfWork,
@@ -20,6 +21,7 @@ from hexastack_db.infra.bootstrap import (
 from hexastack_db.infra.config import HexastackDatabaseConfig, PgVectorConfig
 
 
+@require_extra("aiosqlite")
 def test_database_bootstrapper_async_with_vector():
     config = HexastackDatabaseConfig(
         url="sqlite+aiosqlite:///:memory:",

@@ -3,6 +3,8 @@ from collections.abc import Callable
 from typing import Any, cast
 
 from hexastack_core.domain import Command, Generic, Query
+from hexastack_core.domain.feature_flags import EvaluationContext
+from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_core.utils.context import get_correlation_id, get_user_context
 from hexastack_otel.ports.tracing import TracingPort
 
@@ -14,21 +16,25 @@ class TracingMiddleware:
         Automatically creates distributed telemetry spans with correlation ID,
         message type, tenant ID, and user ID attributes, recording execution
         failures without altering domain handler logic.
+        Respects dynamic feature flag evaluation via FeatureFlagPort.
     """
 
     def __init__(
         self,
         tracer: TracingPort,
         enabled: bool = True,
+        flags: FeatureFlagPort | None = None,
     ) -> None:
         """Initialize tracing middleware with a TracingPort implementation.
 
         Args:
             tracer: TracingPort instance (Otel or InMemory).
             enabled: Whether span creation is active.
+            flags: Optional FeatureFlagPort to dynamically evaluate tracing activation.
         """
         self._tracer = tracer
         self._enabled = enabled
+        self._flags = flags
 
     def __call__[G: Generic, R](
         self,
@@ -46,6 +52,13 @@ class TracingMiddleware:
         """
         if not self._enabled:
             return next_call(instance)
+
+        if self._flags is not None:
+            eval_ctx = EvaluationContext.from_current_context()
+            if not self._flags.is_enabled(
+                "features.otel.tracing", default=True, context=eval_ctx
+            ):
+                return next_call(instance)
 
         span_name = f"cqrs.{instance.__class__.__name__}"
         attrs = self._build_attributes(instance)

@@ -4,6 +4,7 @@ from sqlalchemy import Engine, text
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.pool import NullPool, StaticPool
 
+from hexastack_core.testing.flags import require_extra
 from hexastack_db.infra.config import (
     HexastackDatabaseConfig,
     SqliteDialectConfig,
@@ -16,6 +17,7 @@ from hexastack_db.infra.engine import (
 )
 
 
+@require_extra("aiosqlite")
 def test_create_async_engine_and_factory():
     cfg = HexastackDatabaseConfig(url="sqlite+aiosqlite:///:memory:", async_mode=True)
     async_engine = create_async_db_engine(cfg)
@@ -27,6 +29,7 @@ def test_create_async_engine_and_factory():
     assert session is not None
 
 
+@require_extra("aiosqlite")
 def test_create_async_engine_auto_adapter():
     # SQLite URL rewrite
     cfg_sqlite = HexastackDatabaseConfig(url="sqlite:///:memory:", async_mode=True)
@@ -50,6 +53,7 @@ def test_create_async_engine_auto_adapter():
     assert cfg_pg.pool_recycle == 900
 
 
+@require_extra("aiosqlite")
 def test_create_async_engine_file_null_pool(tmp_path: Path):
     db_file = tmp_path / "async_test.db"
     cfg = HexastackDatabaseConfig(url=f"sqlite:///{db_file}", async_mode=True)

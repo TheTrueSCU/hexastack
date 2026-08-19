@@ -104,3 +104,32 @@ def test_skips_retry_when_disabled():
     result = middleware(_DummyCommand(val=7), handler)
     assert result == 7
     assert len(calls) == 1
+
+
+def test_retry_middleware_dynamic_feature_flag():
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+
+    flags = InMemoryFeatureFlagAdapter({"features.cqrs.retry": False})
+    middleware = TenacityRetryMiddleware(flags=flags)
+    attempts = 0
+
+    def flaky(cmd: _DummyCommand) -> int:
+        nonlocal attempts
+        attempts += 1
+        if attempts < 2:
+            raise RuntimeError("flaky fail")
+        return cmd.val
+
+    # When flag is False, retry is disabled dynamically (fails on attempt 1 without retry)
+    with pytest.raises(RuntimeError, match="flaky fail"):
+        middleware(_DummyCommand(val=10), flaky)
+    assert attempts == 1
+
+    # When flag is True, retry activates dynamically
+    flags.set_flag("features.cqrs.retry", True)
+    attempts = 0
+    res = middleware(_DummyCommand(val=10), flaky)
+    assert res == 10
+    assert attempts == 2

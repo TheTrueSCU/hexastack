@@ -40,21 +40,27 @@ def test_correlation_id_filter_enriches_record():
 
 
 def test_correlation_id_filter_no_user():
-    filt = CorrelationIdFilter()
-    record = logging.LogRecord(
-        name="test_logger",
-        level=logging.INFO,
-        pathname=__file__,
-        lineno=10,
-        msg="test message",
-        args=(),
-        exc_info=None,
-    )
+    token = user_ctx.set(None)
+    corr_token = correlation_id_ctx.set("")
+    try:
+        filt = CorrelationIdFilter()
+        record = logging.LogRecord(
+            name="test_logger",
+            level=logging.INFO,
+            pathname=__file__,
+            lineno=10,
+            msg="test message",
+            args=(),
+            exc_info=None,
+        )
 
-    res = filt.filter(record)
-    assert res is True
-    assert record.__dict__["user_id"] is None
-    assert record.__dict__["tenant_id"] is None
+        res = filt.filter(record)
+        assert res is True
+        assert record.__dict__["user_id"] is None
+        assert record.__dict__["tenant_id"] is None
+    finally:
+        user_ctx.reset(token)
+        correlation_id_ctx.reset(corr_token)
 
 
 def test_sanitizer_filter_masks_record_dict_and_tuple_args():

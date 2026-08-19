@@ -11,11 +11,12 @@
 `hexastack-core` serves as the zero-dependency (excluding `pydantic` and `rodi`) microkernel for all Hexastack packages. It establishes:
 
 - **Dependency Injection Engine**: Powered by `rodi`, managing service lifecycles (singleton, scoped, transient).
+- **Feature Flag Port & Providers**: Vendor-agnostic feature toggling (`FeatureFlagPort`, `EvaluationContext`, `ConfigFeatureFlagAdapter`, `InMemoryFeatureFlagAdapter`) with multi-tenant and ambient `UserContext` targeting.
 - **Core Domain Primitives**: Generic `Result[T, E]`, generic types, and standard exception hierarchies (`HexastackError`, `ConfigurationError`, `MissingDependencyError`).
-- **Core Port Contracts**: Standard abstract protocols and ABCs for repositories (`Repository[E, ID]`), unit of work (`UnitOfWork`), logging (`LoggerPort`), presenters (`PresenterPort`), and bootstrappers (`BootstrapperPort`).
+- **Core Port Contracts**: Standard abstract protocols and ABCs for repositories (`Repository[E, ID]`), unit of work (`UnitOfWork`), logging (`LoggerPort`), presenters (`PresenterPort`), feature flags (`FeatureFlagPort`), and bootstrappers (`BootstrapperPort`).
 - **Configuration & Type Registries**: Type-safe Pydantic configuration parsing from TOML (`ConfigRegistry`) and generic type registries (`GenericTypeRegistry`).
 - **Three-Phase Bootstrap Engine**: Deterministic orchestration of Phase 1 config registration, Phase 2 container assembly, and Phase 3 reflective scanning.
-- **Context Utilities**: Async-safe correlation ID and context variable management (`get_correlation_id`, `set_correlation_id`).
+- **Context Utilities & Testing Guards**: Async-safe correlation ID and context variable management (`get_correlation_id`, `set_correlation_id`), plus test decorators (`@require_extra`, `@require_feature`).
 
 ---
 
@@ -23,10 +24,11 @@
 
 ```
 hexastack_core/
-├── domain/          # Result[T, E], HexastackError, Entity, ValueObject
-├── ports/           # Repository, UnitOfWork, BootstrapperPort, LoggerPort, PresenterPort
-├── adapters/        # InMemoryRepository, InMemoryUnitOfWork
+├── domain/          # Result[T, E], HexastackError, Entity, ValueObject, EvaluationContext
+├── ports/           # Repository, UnitOfWork, BootstrapperPort, LoggerPort, PresenterPort, FeatureFlagPort
+├── adapters/        # InMemoryRepository, InMemoryUnitOfWork, InMemoryFeatureFlagAdapter, ConfigFeatureFlagAdapter
 ├── infra/           # Bootstrap engine, ConfigRegistry, GenericTypeRegistry, decorators
+├── testing/         # @require_extra, @require_feature
 └── utils/           # Context variable utilities, reflection helpers
 ```
 
@@ -35,11 +37,13 @@ hexastack_core/
 | Category | Exports |
 |---|---|
 | **Bootstrap** | `bootstrap`, `BootstrapContext`, `BootstrapResult`, `scan_modules` |
-| **Ports** | `BootstrapperPort`, `Repository`, `AsyncRepository`, `UnitOfWork`, `AsyncUnitOfWork`, `LoggerPort`, `PresenterPort` |
+| **Ports** | `BootstrapperPort`, `Repository`, `AsyncRepository`, `UnitOfWork`, `AsyncUnitOfWork`, `LoggerPort`, `PresenterPort`, `FeatureFlagPort` |
+| **Feature Flags** | `EvaluationContext`, `FlagEvaluationDetails`, `InMemoryFeatureFlagAdapter`, `ConfigFeatureFlagAdapter` |
 | **Domain** | `Result`, `Ok`, `Err`, `HexastackError`, `ConfigurationError`, `MissingDependencyError`, `EntityNotFoundError` |
 | **Config** | `ConfigRegistry`, `HexastackConfig`, `HexastackCoreConfig`, `@config_section` |
 | **Registries** | `GenericTypeRegistry`, `ExceptionRegistry` |
-| **Context** | `get_correlation_id`, `set_correlation_id`, `correlation_scope` |
+| **Testing** | `@require_extra`, `@require_feature` |
+| **Context** | `get_correlation_id`, `set_correlation_id`, `correlation_scope`, `UserContext` |
 
 ---
 

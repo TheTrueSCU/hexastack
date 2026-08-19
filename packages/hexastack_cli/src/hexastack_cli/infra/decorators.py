@@ -1,6 +1,6 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 from hexastack_core.domain import Command, Query
 
@@ -14,7 +14,7 @@ class CliMetadata:
 
     Notes/Architectural Intent:
         Carries CLI command naming, positional parameter mappings, aliases, help descriptions,
-        and optional sub-command group identifications for automated terminal routing.
+        optional sub-command group identifications, and feature flag gating for automated terminal routing.
     """
 
     kind: Literal["command", "query"]
@@ -24,6 +24,7 @@ class CliMetadata:
     help: str | None = None
     output_format: str | None = None
     group: str | Sequence[str] | None = None
+    feature_flag: str | None = None
 
 
 @dataclass(frozen=True)
@@ -44,7 +45,53 @@ __all__ = [
     "cli_command",
     "cli_group",
     "cli_query",
+    "feature_flag_command",
 ]
+
+
+def feature_flag_command(
+    flag_key: str,
+    *,
+    default: bool = False,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Wrap a Typer command callable with dynamic feature flag evaluation.
+
+    Notes/Architectural Intent:
+        Evaluates the specified feature flag prior to command execution. If disabled,
+        prints a clean error message and exits with a non-zero status code without crashing.
+
+    Args:
+        flag_key: Unique identifier of the feature flag to check.
+        default: Fallback boolean value if flag is not explicitly configured.
+
+    Returns:
+        Decorator wrapping the target callable.
+    """
+    from functools import wraps
+
+    import typer
+
+    from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
+    from hexastack_core.domain.feature_flags import EvaluationContext
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(fn)
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
+            flags: FeatureFlagPort = ConfigFeatureFlagAdapter()
+            eval_ctx = EvaluationContext.from_current_context()
+            if not flags.is_enabled(flag_key, default=default, context=eval_ctx):
+                typer.secho(
+                    f"Error: Command is disabled by feature flag '{flag_key}'.",
+                    fg=typer.colors.RED,
+                    err=True,
+                )
+                raise typer.Exit(code=1)
+            return fn(*args, **kwargs)
+
+        return wrapped
+
+    return decorator
 
 
 def _normalize_tokens(tokens: Sequence[str] | str | None) -> tuple[str, ...]:
@@ -64,6 +111,7 @@ def cli_command[TCommand: Command](
     help: str | None = None,
     output_format: str | None = None,
     group: str | Sequence[str] | None = None,
+    feature_flag: str | None = None,
 ) -> Callable[[type[TCommand]], type[TCommand]]:
     """Decorator marking a Command class for automatic CLI command exposure.
 
@@ -74,6 +122,7 @@ def cli_command[TCommand: Command](
         help: Optional help text for the command.
         output_format: Optional presenter output format.
         group: Optional sub-command group name or nested group path (e.g. 'user', 'user.profile').
+        feature_flag: Optional feature flag key required to execute the command.
 
     Returns:
         Decorated Command class with attached CLI metadata.
@@ -91,6 +140,7 @@ def cli_command[TCommand: Command](
             help=help,
             output_format=output_format,
             group=group,
+            feature_flag=feature_flag,
         )
         setattr(cls, _CLI_METADATA_ATTR, meta)
         return cls
@@ -132,6 +182,7 @@ def cli_query[TQuery: Query](
     help: str | None = None,
     output_format: str | None = None,
     group: str | Sequence[str] | None = None,
+    feature_flag: str | None = None,
 ) -> Callable[[type[TQuery]], type[TQuery]]:
     """Decorator marking a Query class for automatic CLI command exposure.
 
@@ -142,6 +193,7 @@ def cli_query[TQuery: Query](
         help: Optional help text for the command.
         output_format: Optional presenter output format.
         group: Optional sub-command group name or nested group path (e.g. 'user', 'user.profile').
+        feature_flag: Optional feature flag key required to execute the command.
 
     Returns:
         Decorated Query class with attached CLI metadata.
@@ -159,6 +211,7 @@ def cli_query[TQuery: Query](
             help=help,
             output_format=output_format,
             group=group,
+            feature_flag=feature_flag,
         )
         setattr(cls, _CLI_METADATA_ATTR, meta)
         return cls

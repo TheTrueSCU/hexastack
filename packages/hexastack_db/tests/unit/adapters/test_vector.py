@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from hexastack_core.testing.flags import require_extra
 from hexastack_db.adapters.vector import (
     AsyncPgVectorStoreAdapter,
     PgVectorStoreAdapter,
@@ -13,6 +14,7 @@ from hexastack_db.adapters.vector import (
 from hexastack_db.infra.config import PgVectorConfig
 
 
+@require_extra("aiosqlite")
 @pytest.mark.anyio
 async def test_async_pg_vector_store_adapter():
     async_engine = create_async_engine(

@@ -126,3 +126,57 @@ def test_cqrs_router_command_and_query():
     qry_post_res = client.post("/users/get-post", json={"user_id": "u-1"})
     assert qry_post_res.status_code == 200
     assert qry_post_res.json() == {"id": "u-1", "name": "user_u-1"}
+
+
+def test_cqrs_router_feature_flag_gated():
+    from rodi import Container
+
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(
+        RegisterUser,
+        lambda cmd: UserDTO(user_id=cmd.user_id, username=cmd.username),
+    )
+
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=CommandRegistry(),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+        presenter_registry=PresenterRegistry(),
+    )
+
+    flags = InMemoryFeatureFlagAdapter({"features.api.registration": False})
+    container = Container()
+    container.add_instance(flags, declared_class=FeatureFlagPort)
+
+    router = CqrsRouter()
+    router.add_command(
+        "/register-gated", RegisterUser, feature_flag="features.api.registration"
+    )
+
+    app = FastAPI()
+    app.state.container = container
+    app.state.pipeline = pipeline
+    app.include_router(router)
+
+    client = TestClient(app)
+
+    # 1. Disabled returns 404
+    res_disabled = client.post(
+        "/register-gated", json={"user_id": "u-gated", "username": "Gated"}
+    )
+    assert res_disabled.status_code == 404
+
+    # 2. Enabling dynamically unlocks endpoint
+    flags.set_flag("features.api.registration", True)
+    res_enabled = client.post(
+        "/register-gated", json={"user_id": "u-gated", "username": "Gated"}
+    )
+    assert res_enabled.status_code == 200

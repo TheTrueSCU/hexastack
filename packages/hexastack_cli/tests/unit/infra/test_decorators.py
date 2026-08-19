@@ -57,3 +57,36 @@ def test_cli_query_decorator():
     assert meta.positional == ("user_id",)
     assert meta.help == "Find user by ID"
     assert meta.group == "users.search"
+
+
+def test_cli_command_with_feature_flag():
+    @cli_command("secret-task", feature_flag="flags.secret_cli")
+    class SecretTaskCommand(Command):
+        name: str
+
+    meta: CliMetadata = getattr(SecretTaskCommand, _CLI_METADATA_ATTR)
+    assert meta.feature_flag == "flags.secret_cli"
+
+
+def test_feature_flag_command_decorator():
+    import typer
+    from typer.testing import CliRunner
+
+    from hexastack_cli.infra.decorators import feature_flag_command
+
+    app = typer.Typer()
+
+    @app.command("beta")
+    @feature_flag_command("cli.beta_tool")
+    def beta_cmd():
+        typer.echo("beta success")
+
+    runner = CliRunner()
+
+    # 1. In Typer with multiple commands, invoke with command name; for single command app, invoke with []
+    res_disabled = runner.invoke(app, [])
+    assert res_disabled.exit_code == 1
+    assert (
+        "disabled by feature flag" in res_disabled.stderr
+        or "disabled by feature flag" in res_disabled.stdout
+    )

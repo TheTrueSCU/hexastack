@@ -68,6 +68,33 @@ def test_tracing_middleware_disabled():
     assert len(tracer.finished_spans) == 0
 
 
+def test_tracing_middleware_dynamic_feature_flag():
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+
+    flags = InMemoryFeatureFlagAdapter({"features.otel.tracing": False})
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer, enabled=True, flags=flags)
+
+    # 1. When flag is False, tracing is bypassed dynamically
+    res = middleware(
+        CreateInvoiceCommand(invoice_id="inv-dynamic", amount=15.0),
+        lambda cmd: "bypassed",
+    )
+    assert res == "bypassed"
+    assert len(tracer.finished_spans) == 0
+
+    # 2. When flag is True, tracing activates dynamically
+    flags.set_flag("features.otel.tracing", True)
+    res_active = middleware(
+        CreateInvoiceCommand(invoice_id="inv-dynamic", amount=15.0),
+        lambda cmd: "active",
+    )
+    assert res_active == "active"
+    assert len(tracer.finished_spans) == 1
+
+
 def test_tracing_middleware_event_and_query_types():
     tracer = InMemoryTracingAdapter()
     middleware = TracingMiddleware(tracer=tracer)

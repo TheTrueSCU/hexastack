@@ -86,6 +86,7 @@ def create_route_visitor(router: CqrsRouter) -> DiscoveryVisitor:
                 output_format=meta.output_format,
                 summary=meta.summary,
                 tags=tags,
+                feature_flag=meta.feature_flag,
             )
         elif meta.kind == "query" and isinstance(obj, type) and issubclass(obj, Query):
             router.add_query(
@@ -96,6 +97,7 @@ def create_route_visitor(router: CqrsRouter) -> DiscoveryVisitor:
                 output_format=meta.output_format,
                 summary=meta.summary,
                 tags=tags,
+                feature_flag=meta.feature_flag,
             )
 
     return visitor

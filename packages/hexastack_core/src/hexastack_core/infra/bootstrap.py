@@ -8,6 +8,7 @@ from typing import Any
 from pydantic import BaseModel
 from rodi import Container
 
+from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
 from hexastack_core.infra.autodiscovery import (
     DiscoveryVisitor,
     scan_modules,
@@ -15,6 +16,7 @@ from hexastack_core.infra.autodiscovery import (
 from hexastack_core.infra.config import HexastackConfig
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_core.ports.feature_flags import FeatureFlagPort
 
 
 @dataclass
@@ -23,7 +25,7 @@ class BootstrapContext:
 
     Notes/Architectural Intent:
         Aggregates DI container, configuration models, registered discovery visitors,
-        and module scanning metadata for single-pass multi-subsystem discovery.
+        feature flag evaluation, and module scanning metadata for single-pass multi-subsystem discovery.
     """
 
     container: Container
@@ -32,6 +34,7 @@ class BootstrapContext:
     packages_to_scan: list[str | ModuleType] | None = None
     properties: dict[str, Any] = field(default_factory=dict)
     visitors: list[DiscoveryVisitor] = field(default_factory=list)
+    flags: FeatureFlagPort = field(default_factory=ConfigFeatureFlagAdapter)
 
     def get_config[T: BaseModel](
         self,
@@ -178,12 +181,16 @@ def bootstrap(
         loaded_config = config_reg.load_config_toml(config_path)
 
     # 4. Phase 2: Runtime Subsystem Configuration
+    flags_adapter = ConfigFeatureFlagAdapter(config=loaded_config)
+    di.add_instance(flags_adapter, declared_class=FeatureFlagPort)
+
     context = BootstrapContext(
         container=di,
         config=loaded_config,
         config_registry=config_reg,
         packages_to_scan=packages_to_scan,
         properties={},
+        flags=flags_adapter,
     )
 
     for b in sorted_bootstrappers:

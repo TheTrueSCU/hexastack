@@ -105,3 +105,45 @@ def test_get_pipeline_resolved_from_container():
     res = client.get("/pipeline-from-di")
     assert res.status_code == 200
     assert res.json() == {"resolved": True}
+
+
+def test_get_feature_flags_and_require_feature_guard():
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+    from hexastack_fastapi.adapters.dependencies import (
+        get_feature_flags,
+        require_feature,
+    )
+
+    flags = InMemoryFeatureFlagAdapter({"api.beta_checkout": False})
+    container = Container()
+    container.add_instance(flags, declared_class=FeatureFlagPort)
+
+    app = FastAPI()
+    app.state.container = container
+
+    @app.get(
+        "/beta-checkout", dependencies=[Depends(require_feature("api.beta_checkout"))]
+    )
+    async def beta_endpoint():
+        return {"status": "beta active"}
+
+    client = TestClient(app)
+
+    # 1. Disabled flag yields 404
+    res_disabled = client.get("/beta-checkout")
+    assert res_disabled.status_code == 404
+    assert res_disabled.json() == {"detail": "Feature 'api.beta_checkout' is disabled."}
+
+    # 2. Enabling flag dynamically unlocks route
+    flags.set_flag("api.beta_checkout", True)
+    res_enabled = client.get("/beta-checkout")
+    assert res_enabled.status_code == 200
+    assert res_enabled.json() == {"status": "beta active"}
+
+    # 3. Direct request with default fallback
+    plain_req = Request(scope={"type": "http", "app": FastAPI()})
+    default_flags = get_feature_flags(plain_req)
+    assert default_flags is not None
