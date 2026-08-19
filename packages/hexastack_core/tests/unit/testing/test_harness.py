@@ -28,12 +28,11 @@ class SampleModel(BaseModel):
     is_active: bool
 
 
-def test_layer_restrictions():
-    restrictions = get_layer_restrictions()
-    assert "domain" in restrictions
-    assert "ports" in restrictions
-    assert "adapters" in restrictions
-    assert "infra" in restrictions
+@given(cmd=cqrs_strategy(SampleCommand))
+def test_cqrs_strategy_fuzz(cmd: SampleCommand):
+    assert isinstance(cmd, SampleCommand)
+    assert isinstance(cmd.user_id, str)
+    assert isinstance(cmd.age, int)
 
 
 def test_create_test_runtime():
@@ -57,13 +56,14 @@ def test_flag_scope():
     assert flags.is_enabled("my_flag") is False
 
 
+def test_layer_restrictions():
+    restrictions = get_layer_restrictions()
+    assert "domain" in restrictions
+    assert "ports" in restrictions
+    assert "adapters" in restrictions
+    assert "infra" in restrictions
+
+
 @parametrize_flags("test.flag", [True, False])
 def test_parametrize_flags(flag__test_flag: bool):
     assert isinstance(flag__test_flag, bool)
-
-
-@given(cmd=cqrs_strategy(SampleCommand))
-def test_cqrs_strategy_fuzz(cmd: SampleCommand):
-    assert isinstance(cmd, SampleCommand)
-    assert isinstance(cmd.user_id, str)
-    assert isinstance(cmd.age, int)

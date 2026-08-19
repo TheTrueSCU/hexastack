@@ -92,20 +92,6 @@ def test_retry_middleware_defaults():
     assert middleware._config.max_attempts == 3
 
 
-def test_skips_retry_when_disabled():
-    config = RetryMiddlewareConfig(enable=False)
-    middleware = TenacityRetryMiddleware(config=config)
-    calls = []
-
-    def handler(cmd: _DummyCommand) -> int:
-        calls.append(1)
-        return cmd.val
-
-    result = middleware(_DummyCommand(val=7), handler)
-    assert result == 7
-    assert len(calls) == 1
-
-
 def test_retry_middleware_dynamic_feature_flag():
     from hexastack_core.adapters.feature_flags.in_memory import (
         InMemoryFeatureFlagAdapter,
@@ -133,3 +119,17 @@ def test_retry_middleware_dynamic_feature_flag():
     res = middleware(_DummyCommand(val=10), flaky)
     assert res == 10
     assert attempts == 2
+
+
+def test_skips_retry_when_disabled():
+    config = RetryMiddlewareConfig(enable=False)
+    middleware = TenacityRetryMiddleware(config=config)
+    calls = []
+
+    def handler(cmd: _DummyCommand) -> int:
+        calls.append(1)
+        return cmd.val
+
+    result = middleware(_DummyCommand(val=7), handler)
+    assert result == 7
+    assert len(calls) == 1

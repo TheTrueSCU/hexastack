@@ -23,6 +23,68 @@ __all__ = [
 ]
 
 
+def check_openapi_conformance(
+    app: Any,
+    *,
+    schema_url: str = "/openapi.json",
+    validate_schema: bool = True,
+) -> None:
+    """Run Schemathesis contract conformance and schema validation checks against a FastAPI app.
+
+    Notes/Architectural Intent:
+        Automatically tests that all exposed FastAPI endpoints conform to the
+        derived OpenAPI schema, validate properly, and have complete route definitions.
+
+    Args:
+        app: The FastAPI application instance.
+        schema_url: URL path where the OpenAPI JSON is served (defaults to '/openapi.json').
+        validate_schema: Whether to validate the OpenAPI specification structure itself.
+
+    Raises:
+        MissingDependencyError: If `schemathesis` is not installed.
+        AssertionError: If any API contract violation or unhandled error is detected.
+    """
+    try:
+        import schemathesis
+    except ImportError as e:
+        raise MissingDependencyError(
+            "schemathesis is required for check_openapi_conformance. "
+            "Install with 'pip install schemathesis' or 'pip install hexastack[testing]'."
+        ) from e
+
+    schema = schemathesis.openapi.from_asgi(schema_url, app)
+
+    if validate_schema:
+        schema.validate()
+
+
+def create_test_client(
+    app: Any,
+    *,
+    flags: dict[str, Any] | None = None,
+    **test_client_kwargs: Any,
+) -> Any:
+    """Create a FastAPI TestClient configured with an in-memory feature flag adapter.
+
+    Args:
+        app: The FastAPI application instance.
+        flags: Optional initial flag states.
+        **test_client_kwargs: Extra keyword arguments forwarded to TestClient.
+
+    Returns:
+        Configured starlette / fastapi TestClient.
+    """
+    from fastapi.testclient import TestClient
+
+    if flags is not None:
+        container = getattr(app.state, "container", None)
+        flags_adapter = InMemoryFeatureFlagAdapter(flags=flags)
+        if container is not None:
+            container.add_instance(flags_adapter, declared_class=FeatureFlagPort)
+
+    return TestClient(app, **test_client_kwargs)
+
+
 def get_container(request: Request) -> Container:
     """FastAPI dependency provider resolving the active rodi Container instance.
 
@@ -65,6 +127,34 @@ def get_feature_flags(request: Request) -> FeatureFlagPort:
     return ConfigFeatureFlagAdapter()
 
 
+def get_pipeline(request: Request) -> ExecutionPipeline:
+    """FastAPI dependency provider resolving the active ExecutionPipeline instance.
+
+    Notes/Architectural Intent:
+        Enables route handlers to execute CQRS commands and queries through the unified pipeline.
+
+    Args:
+        request: Incoming FastAPI Request object.
+
+    Returns:
+        The ExecutionPipeline instance attached to application state or resolved from DI.
+
+    Raises:
+        DependencyResolutionError: If ExecutionPipeline cannot be resolved from application state or container.
+    """
+    pipeline = getattr(request.app.state, "pipeline", None)
+    if isinstance(pipeline, ExecutionPipeline):
+        return pipeline
+
+    container = getattr(request.app.state, "container", None)
+    if isinstance(container, Container) and ExecutionPipeline in container:
+        return container.resolve(ExecutionPipeline)
+
+    raise DependencyResolutionError(
+        "ExecutionPipeline is not available on request.app.state.pipeline or container."
+    )
+
+
 def require_feature(
     flag_key: str,
     *,
@@ -98,93 +188,3 @@ def require_feature(
             )
 
     return _dependency
-
-
-def get_pipeline(request: Request) -> ExecutionPipeline:
-    """FastAPI dependency provider resolving the active ExecutionPipeline instance.
-
-    Notes/Architectural Intent:
-        Enables route handlers to execute CQRS commands and queries through the unified pipeline.
-
-    Args:
-        request: Incoming FastAPI Request object.
-
-    Returns:
-        The ExecutionPipeline instance attached to application state or resolved from DI.
-
-    Raises:
-        DependencyResolutionError: If ExecutionPipeline cannot be resolved from application state or container.
-    """
-    pipeline = getattr(request.app.state, "pipeline", None)
-    if isinstance(pipeline, ExecutionPipeline):
-        return pipeline
-
-    container = getattr(request.app.state, "container", None)
-    if isinstance(container, Container) and ExecutionPipeline in container:
-        return container.resolve(ExecutionPipeline)
-
-    raise DependencyResolutionError(
-        "ExecutionPipeline is not available on request.app.state.pipeline or container."
-    )
-
-
-def create_test_client(
-    app: Any,
-    *,
-    flags: dict[str, Any] | None = None,
-    **test_client_kwargs: Any,
-) -> Any:
-    """Create a FastAPI TestClient configured with an in-memory feature flag adapter.
-
-    Args:
-        app: The FastAPI application instance.
-        flags: Optional initial flag states.
-        **test_client_kwargs: Extra keyword arguments forwarded to TestClient.
-
-    Returns:
-        Configured starlette / fastapi TestClient.
-    """
-    from fastapi.testclient import TestClient
-
-    if flags is not None:
-        container = getattr(app.state, "container", None)
-        flags_adapter = InMemoryFeatureFlagAdapter(flags=flags)
-        if container is not None:
-            container.add_instance(flags_adapter, declared_class=FeatureFlagPort)
-
-    return TestClient(app, **test_client_kwargs)
-
-
-def check_openapi_conformance(
-    app: Any,
-    *,
-    schema_url: str = "/openapi.json",
-    validate_schema: bool = True,
-) -> None:
-    """Run Schemathesis contract conformance and schema validation checks against a FastAPI app.
-
-    Notes/Architectural Intent:
-        Automatically tests that all exposed FastAPI endpoints conform to the
-        derived OpenAPI schema, validate properly, and have complete route definitions.
-
-    Args:
-        app: The FastAPI application instance.
-        schema_url: URL path where the OpenAPI JSON is served (defaults to '/openapi.json').
-        validate_schema: Whether to validate the OpenAPI specification structure itself.
-
-    Raises:
-        MissingDependencyError: If `schemathesis` is not installed.
-        AssertionError: If any API contract violation or unhandled error is detected.
-    """
-    try:
-        import schemathesis
-    except ImportError as e:
-        raise MissingDependencyError(
-            "schemathesis is required for check_openapi_conformance. "
-            "Install with 'pip install schemathesis' or 'pip install hexastack[testing]'."
-        ) from e
-
-    schema = schemathesis.openapi.from_asgi(schema_url, app)
-
-    if validate_schema:
-        schema.validate()

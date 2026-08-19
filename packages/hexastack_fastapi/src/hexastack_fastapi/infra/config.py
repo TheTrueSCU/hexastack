@@ -78,8 +78,8 @@ __all__ = [
     "CorsConfig",
     "HealthConfig",
     "HexastackFastApiConfig",
-    "RequestLoggingConfig",
     "register_fastapi_config",
+    "RequestLoggingConfig",
 ]
 
 

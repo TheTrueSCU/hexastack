@@ -176,10 +176,10 @@ class ExecutionPipeline:
 
 __all__ = [
     "AmbiguousMessageError",
+    "create_pipeline",
     "ExecutionPipeline",
     "PipelineError",
     "UnregisteredMessageError",
-    "create_pipeline",
 ]
 
 

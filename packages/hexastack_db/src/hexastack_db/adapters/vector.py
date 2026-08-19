@@ -225,8 +225,8 @@ class AsyncPgVectorStoreAdapter:
 
 __all__ = [
     "AsyncPgVectorStoreAdapter",
-    "PgVectorStoreAdapter",
     "create_vector_table",
+    "PgVectorStoreAdapter",
 ]
 
 

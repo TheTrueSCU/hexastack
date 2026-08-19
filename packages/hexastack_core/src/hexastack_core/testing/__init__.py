@@ -21,9 +21,8 @@ from hexastack_core.testing.isolation import (
 )
 
 __all__ = [
-    "ClearableRegistry",
-    "TestRuntime",
     "assert_clean_architecture",
+    "ClearableRegistry",
     "cqrs_strategy",
     "create_test_runtime",
     "flag_scope",
@@ -32,4 +31,5 @@ __all__ = [
     "parametrize_flags",
     "require_extra",
     "require_feature",
+    "TestRuntime",
 ]

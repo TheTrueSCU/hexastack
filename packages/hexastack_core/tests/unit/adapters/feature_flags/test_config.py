@@ -3,6 +3,41 @@ from hexastack_core.domain.feature_flags import FlagEvaluationReason
 from hexastack_core.infra.config import HexastackConfig
 
 
+def test_config_feature_flag_adapter_config_inspection():
+    from hexastack_core.infra.config import HexastackCoreConfig
+
+    core_cfg = HexastackCoreConfig(
+        app_name="TestApp",
+        environment="testing",
+        debug=True,
+    )
+    config = HexastackConfig(core=core_cfg, sections={})
+    adapter = ConfigFeatureFlagAdapter(config=config)
+
+    assert adapter.is_enabled("debug") is True
+    assert adapter.get_string_value("app_name", default="") == "TestApp"
+    assert adapter.get_string_value("environment", default="") == "testing"
+    assert adapter.is_enabled("nonexistent_prop", default=False) is False
+
+
+def test_config_feature_flag_adapter_library_inspection():
+    adapter = ConfigFeatureFlagAdapter()
+
+    # Built-in or installed packages
+    assert adapter.is_enabled("features.lib.pydantic") is True
+    details_found = adapter.get_boolean_details("features.lib.pydantic")
+    assert details_found.value is True
+    assert details_found.reason == FlagEvaluationReason.STATIC
+
+    # Non-existent package
+    assert adapter.is_enabled("features.lib.non_existent_fake_package_xyz") is False
+    details_missing = adapter.get_boolean_details(
+        "features.lib.non_existent_fake_package_xyz"
+    )
+    assert details_missing.value is False
+    assert details_missing.reason == FlagEvaluationReason.STATIC
+
+
 def test_config_feature_flag_adapter_overrides():
     adapter = ConfigFeatureFlagAdapter(
         overrides={
@@ -24,38 +59,3 @@ def test_config_feature_flag_adapter_overrides():
     details = adapter.get_boolean_details("flag.bool")
     assert details.value is True
     assert details.reason == FlagEvaluationReason.STATIC
-
-
-def test_config_feature_flag_adapter_library_inspection():
-    adapter = ConfigFeatureFlagAdapter()
-
-    # Built-in or installed packages
-    assert adapter.is_enabled("features.lib.pydantic") is True
-    details_found = adapter.get_boolean_details("features.lib.pydantic")
-    assert details_found.value is True
-    assert details_found.reason == FlagEvaluationReason.STATIC
-
-    # Non-existent package
-    assert adapter.is_enabled("features.lib.non_existent_fake_package_xyz") is False
-    details_missing = adapter.get_boolean_details(
-        "features.lib.non_existent_fake_package_xyz"
-    )
-    assert details_missing.value is False
-    assert details_missing.reason == FlagEvaluationReason.STATIC
-
-
-def test_config_feature_flag_adapter_config_inspection():
-    from hexastack_core.infra.config import HexastackCoreConfig
-
-    core_cfg = HexastackCoreConfig(
-        app_name="TestApp",
-        environment="testing",
-        debug=True,
-    )
-    config = HexastackConfig(core=core_cfg, sections={})
-    adapter = ConfigFeatureFlagAdapter(config=config)
-
-    assert adapter.is_enabled("debug") is True
-    assert adapter.get_string_value("app_name", default="") == "TestApp"
-    assert adapter.get_string_value("environment", default="") == "testing"
-    assert adapter.is_enabled("nonexistent_prop", default=False) is False

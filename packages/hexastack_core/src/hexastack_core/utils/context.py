@@ -23,7 +23,6 @@ user_ctx: ContextVar[UserContext | None] = ContextVar("user", default=None)
 
 
 __all__ = [
-    "UserContext",
     "correlation_id_ctx",
     "correlation_scope",
     "get_correlation_id",
@@ -32,6 +31,7 @@ __all__ = [
     "set_correlation_id",
     "set_user_context",
     "user_ctx",
+    "UserContext",
 ]
 
 

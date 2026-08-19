@@ -226,6 +226,6 @@ class AsyncNativeEventBus(EventBusPort):
 
 
 __all__ = [
-    "HueyEventBus",
     "AsyncNativeEventBus",
+    "HueyEventBus",
 ]

@@ -74,6 +74,6 @@ class AiBootstrapper(BootstrapperPort):
 
 
 __all__ = [
-    "AiBootstrapResult",
     "AiBootstrapper",
+    "AiBootstrapResult",
 ]

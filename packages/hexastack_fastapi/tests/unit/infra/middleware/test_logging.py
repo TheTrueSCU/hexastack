@@ -83,22 +83,6 @@ def test_request_logging_middleware_5xx_is_error():
     assert "GET /server-err HTTP/1.1 -> 500" in logger.entries[0].message
 
 
-def test_request_logging_middleware_disabled():
-    client, logger = _make_app(enable=False)
-    client.get("/items")
-    assert len(logger.entries) == 0
-
-
-def test_request_logging_middleware_post_method_and_status():
-    client, logger = _make_app()
-    client.post("/items")
-    assert len(logger.entries) == 1
-    assert logger.entries[0].extra is not None
-    assert logger.entries[0].extra["http_method"] == "POST"
-    assert logger.entries[0].extra["http_status"] == 201
-    assert "POST /items HTTP/1.1 -> 201" in logger.entries[0].message
-
-
 @pytest.mark.anyio
 async def test_request_logging_middleware_direct_asgi_scope_handling():
     logger = InMemoryLogger()
@@ -142,3 +126,19 @@ async def test_request_logging_middleware_direct_asgi_scope_handling():
     assert logger.entries[0].extra["client_ip"] == "unknown"
     assert logger.entries[0].extra["http_path"] == "/api"
     assert "GET /api HTTP/2.0 -> 200" in logger.entries[0].message
+
+
+def test_request_logging_middleware_disabled():
+    client, logger = _make_app(enable=False)
+    client.get("/items")
+    assert len(logger.entries) == 0
+
+
+def test_request_logging_middleware_post_method_and_status():
+    client, logger = _make_app()
+    client.post("/items")
+    assert len(logger.entries) == 1
+    assert logger.entries[0].extra is not None
+    assert logger.entries[0].extra["http_method"] == "POST"
+    assert logger.entries[0].extra["http_status"] == 201
+    assert "POST /items HTTP/1.1 -> 201" in logger.entries[0].message

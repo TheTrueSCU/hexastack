@@ -5,6 +5,6 @@ from hexastack_otel.infra.middleware import TracingMiddleware
 __all__ = [
     "HexastackOtelConfig",
     "OtelBootstrapper",
-    "TracingMiddleware",
     "register_otel_config",
+    "TracingMiddleware",
 ]

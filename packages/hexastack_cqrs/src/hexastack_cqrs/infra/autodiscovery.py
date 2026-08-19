@@ -22,47 +22,30 @@ __all__ = [
 ]
 
 
-def _resolve_callable(
-    obj: Any, container: Container | None = None
-) -> Callable[..., Any]:
-    """Resolve a callable handler from a function or class object."""
-    if inspect.isclass(obj):
-        if container is not None:
-            if obj not in container:
-                container.register(obj)
-            return lambda *args, **kwargs: cast(
-                "Callable[..., Any]", container.resolve(obj)
-            )(*args, **kwargs)
-        return cast("Callable[..., Any]", obj())
-    return cast("Callable[..., Any]", obj)
-
-
-def autodiscover_cqrs(
-    packages_or_modules: Sequence[str | ModuleType],
-    pipeline: ExecutionPipeline,
-    container: Container | None = None,
-    config_registry: ConfigRegistry | None = None,
+def _register_config(
+    obj: Any,
+    meta: ConfigMetadata,
+    config_registry: ConfigRegistry | None,
 ) -> None:
-    """Scan packages and register discovered CQRS handlers, presenters, and config sections.
+    """Register discovered config section."""
+    if (
+        config_registry is not None
+        and inspect.isclass(obj)
+        and issubclass(obj, BaseModel)
+    ):
+        config_registry.register_config_section(meta.section_name, obj)
 
-    Args:
-        packages_or_modules: Sequence of package names or module objects to inspect.
-        pipeline: Target ExecutionPipeline instance.
-        container: Optional rodi Container instance.
-        config_registry: Optional ConfigRegistry instance.
 
-    Returns:
-        None.
-
-    Raises:
-        None.
-    """
-    visitor = create_cqrs_visitor(
-        pipeline=pipeline,
-        container=container,
-        config_registry=config_registry,
-    )
-    scan_modules(packages_or_modules, [visitor])
+def _register_exception(
+    obj: Any,
+    meta: ExceptionMetadata,
+    pipeline: ExecutionPipeline,
+    container: Container | None,
+) -> None:
+    """Register discovered domain exception handler."""
+    if pipeline._exception_registry is not None:
+        handler_fn = _resolve_callable(obj, container)
+        pipeline._exception_registry.register(meta.target_cls, handler_fn)
 
 
 def _register_handler(
@@ -106,30 +89,47 @@ def _register_presenter(
     )
 
 
-def _register_exception(
-    obj: Any,
-    meta: ExceptionMetadata,
+def _resolve_callable(
+    obj: Any, container: Container | None = None
+) -> Callable[..., Any]:
+    """Resolve a callable handler from a function or class object."""
+    if inspect.isclass(obj):
+        if container is not None:
+            if obj not in container:
+                container.register(obj)
+            return lambda *args, **kwargs: cast(
+                "Callable[..., Any]", container.resolve(obj)
+            )(*args, **kwargs)
+        return cast("Callable[..., Any]", obj())
+    return cast("Callable[..., Any]", obj)
+
+
+def autodiscover_cqrs(
+    packages_or_modules: Sequence[str | ModuleType],
     pipeline: ExecutionPipeline,
-    container: Container | None,
+    container: Container | None = None,
+    config_registry: ConfigRegistry | None = None,
 ) -> None:
-    """Register discovered domain exception handler."""
-    if pipeline._exception_registry is not None:
-        handler_fn = _resolve_callable(obj, container)
-        pipeline._exception_registry.register(meta.target_cls, handler_fn)
+    """Scan packages and register discovered CQRS handlers, presenters, and config sections.
 
+    Args:
+        packages_or_modules: Sequence of package names or module objects to inspect.
+        pipeline: Target ExecutionPipeline instance.
+        container: Optional rodi Container instance.
+        config_registry: Optional ConfigRegistry instance.
 
-def _register_config(
-    obj: Any,
-    meta: ConfigMetadata,
-    config_registry: ConfigRegistry | None,
-) -> None:
-    """Register discovered config section."""
-    if (
-        config_registry is not None
-        and inspect.isclass(obj)
-        and issubclass(obj, BaseModel)
-    ):
-        config_registry.register_config_section(meta.section_name, obj)
+    Returns:
+        None.
+
+    Raises:
+        None.
+    """
+    visitor = create_cqrs_visitor(
+        pipeline=pipeline,
+        container=container,
+        config_registry=config_registry,
+    )
+    scan_modules(packages_or_modules, [visitor])
 
 
 def create_cqrs_visitor(

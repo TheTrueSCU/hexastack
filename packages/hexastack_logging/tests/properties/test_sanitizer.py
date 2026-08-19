@@ -25,6 +25,21 @@ json_tree = st.recursive(
 
 
 @given(
+    token=st.from_regex(r"[A-Za-z0-9\-_~+/]{10,40}", fullmatch=True),
+    prefix=st.text(max_size=20),
+    suffix=st.text(max_size=20),
+)
+def test_sanitizer_bearer_pattern_invariant(token: str, prefix: str, suffix: str):
+    sanitizer = Sanitizer(mask_replacement="***")
+    input_str = f"{prefix} Bearer {token} {suffix}"
+    scrubbed = sanitizer.sanitize(input_str)
+
+    # Invariant: Token substring never appears in the output when prefixed with Bearer
+    if token:
+        assert f"Bearer {token}" not in scrubbed
+
+
+@given(
     secret_key=st.sampled_from(
         ["password", "token", "secret", "api_key", "cvv", "access_token"]
     ),
@@ -49,18 +64,3 @@ def test_sanitizer_key_redaction_invariant(
 
     # Invariant 2: Nested sensitive keys are always replaced
     assert sanitized["nested"][secret_key] == "[PROTECTED]"
-
-
-@given(
-    token=st.from_regex(r"[A-Za-z0-9\-_~+/]{10,40}", fullmatch=True),
-    prefix=st.text(max_size=20),
-    suffix=st.text(max_size=20),
-)
-def test_sanitizer_bearer_pattern_invariant(token: str, prefix: str, suffix: str):
-    sanitizer = Sanitizer(mask_replacement="***")
-    input_str = f"{prefix} Bearer {token} {suffix}"
-    scrubbed = sanitizer.sanitize(input_str)
-
-    # Invariant: Token substring never appears in the output when prefixed with Bearer
-    if token:
-        assert f"Bearer {token}" not in scrubbed

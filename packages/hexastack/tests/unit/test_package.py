@@ -25,6 +25,17 @@ def test_guaranteed_packages_present():
     assert hs.logging.adapters is not None
 
 
+def test_installed_optional_packages_dynamically_available():
+    """Verify optional packages in current workspace are available if installed."""
+    import importlib.util
+
+    for extra in ["events", "auth", "otel", "db", "fastapi"]:
+        if importlib.util.find_spec(f"hexastack_{extra}") is not None:
+            mod = getattr(hs, extra)
+            assert mod is not None
+            assert hasattr(mod, "infra") or hasattr(mod, "domain")
+
+
 def test_uninstalled_package_error_message(monkeypatch):
     """Verify accessing an uninstalled optional package gives clear install instructions."""
     with pytest.raises(AttributeError) as exc_info:
@@ -37,14 +48,3 @@ def test_uninstalled_package_error_message(monkeypatch):
         _ = hs.__getattr__("ai")
     assert "Package 'hexastack-ai' is not installed" in str(exc_info.value)
     assert "pip install hexastack[ai]" in str(exc_info.value)
-
-
-def test_installed_optional_packages_dynamically_available():
-    """Verify optional packages in current workspace are available if installed."""
-    import importlib.util
-
-    for extra in ["events", "auth", "otel", "db", "fastapi"]:
-        if importlib.util.find_spec(f"hexastack_{extra}") is not None:
-            mod = getattr(hs, extra)
-            assert mod is not None
-            assert hasattr(mod, "infra") or hasattr(mod, "domain")

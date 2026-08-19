@@ -80,21 +80,45 @@ class NoneReturnCommand(Command):
     name: str
 
 
-@pytest.mark.parametrize(
-    ("input_name", "expected_kebab"),
-    [
-        ("CreateOrderCommand", "create-order"),
-        ("GetUserByIdQuery", "get-user-by-id"),
-        ("SendNotificationCmd", "send-notification"),
-        ("FindActiveUsersQry", "find-active-users"),
-        ("SimpleCommand", "simple"),
-        ("HTTPRequestHandler", "http-request-handler"),
-        ("XML2JSONConverter", "xml2-json-converter"),
-    ],
-)
-def test_to_kebab_case(input_name: str, expected_kebab: str):
-    """Verify all regex transforms and suffix strippers in _to_kebab_case."""
-    assert _to_kebab_case(input_name) == expected_kebab
+def test_cli_routing_feature_flag_gated():
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(AddNumbersCommand, lambda cmd: cmd.a + cmd.b)
+
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=CommandRegistry(),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+        presenter_registry=PresenterRegistry(),
+    )
+
+    app = typer.Typer()
+    register_cqrs_command(
+        app,
+        AddNumbersCommand,
+        pipeline,
+        name="gated-add",
+        feature_flag="features.cli.addition",
+    )
+    register_cqrs_command(
+        app,
+        PositionalCommand,
+        pipeline,
+        name="positional",
+    )
+
+    runner = CliRunner()
+
+    # 1. By default, disabled flag prevents execution with exit code 1
+    res_disabled = runner.invoke(app, ["gated-add", "--a", "5"])
+    assert res_disabled.exit_code == 1
+    assert (
+        "disabled by feature flag" in res_disabled.stderr
+        or "disabled by feature flag" in res_disabled.stdout
+    )
 
 
 def test_register_cqrs_command_and_query(tmp_path: Path):
@@ -292,42 +316,18 @@ def test_register_cqrs_command_and_query(tmp_path: Path):
     assert "Async result: futuristic" in res_async.stdout
 
 
-def test_cli_routing_feature_flag_gated():
-
-    handler_reg = HandlerRegistry()
-    handler_reg.register(AddNumbersCommand, lambda cmd: cmd.a + cmd.b)
-
-    pipeline = ExecutionPipeline(
-        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
-        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
-        event_bus=SynchronousEventBus(),
-        command_registry=CommandRegistry(),
-        query_registry=QueryRegistry(),
-        handler_registry=handler_reg,
-        presenter_registry=PresenterRegistry(),
-    )
-
-    app = typer.Typer()
-    register_cqrs_command(
-        app,
-        AddNumbersCommand,
-        pipeline,
-        name="gated-add",
-        feature_flag="features.cli.addition",
-    )
-    register_cqrs_command(
-        app,
-        PositionalCommand,
-        pipeline,
-        name="positional",
-    )
-
-    runner = CliRunner()
-
-    # 1. By default, disabled flag prevents execution with exit code 1
-    res_disabled = runner.invoke(app, ["gated-add", "--a", "5"])
-    assert res_disabled.exit_code == 1
-    assert (
-        "disabled by feature flag" in res_disabled.stderr
-        or "disabled by feature flag" in res_disabled.stdout
-    )
+@pytest.mark.parametrize(
+    ("input_name", "expected_kebab"),
+    [
+        ("CreateOrderCommand", "create-order"),
+        ("GetUserByIdQuery", "get-user-by-id"),
+        ("SendNotificationCmd", "send-notification"),
+        ("FindActiveUsersQry", "find-active-users"),
+        ("SimpleCommand", "simple"),
+        ("HTTPRequestHandler", "http-request-handler"),
+        ("XML2JSONConverter", "xml2-json-converter"),
+    ],
+)
+def test_to_kebab_case(input_name: str, expected_kebab: str):
+    """Verify all regex transforms and suffix strippers in _to_kebab_case."""
+    assert _to_kebab_case(input_name) == expected_kebab

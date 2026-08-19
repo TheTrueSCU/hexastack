@@ -79,6 +79,12 @@ def test_structlog_adapter_all_methods_and_mock():
     user_ctx.reset(user_token)
 
 
+def test_structlog_adapter_default_constructor():
+    if importlib.util.find_spec("structlog") is not None:
+        adapter = StructlogAdapter()
+        assert adapter._logger is not None
+
+
 def test_structlog_adapter_missing_dependency():
     with (
         patch("importlib.import_module", side_effect=ImportError("No structlog")),
@@ -88,9 +94,3 @@ def test_structlog_adapter_missing_dependency():
     ):
         StructlogAdapter()
     assert isinstance(exc_info.value, HexastackError)
-
-
-def test_structlog_adapter_default_constructor():
-    if importlib.util.find_spec("structlog") is not None:
-        adapter = StructlogAdapter()
-        assert adapter._logger is not None

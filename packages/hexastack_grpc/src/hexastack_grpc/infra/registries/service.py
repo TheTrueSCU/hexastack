@@ -31,6 +31,20 @@ class GrpcServiceRegistry:
         """Initialize empty gRPC registry."""
         self._services: list[GrpcServiceRegistration] = []
 
+    def _enable_reflection(
+        self,
+        server: grpc.Server,
+        all_service_names: Sequence[str],
+    ) -> None:
+        """Enable gRPC Server Reflection protocol if package is present."""
+        try:
+            from grpc_reflection.v1alpha import reflection
+
+            names = tuple(all_service_names) + (reflection.SERVICE_NAME,)
+            reflection.enable_server_reflection(names, server)
+        except ImportError:
+            pass
+
     def _resolve_servicer_instance(
         self,
         servicer_val: Any,
@@ -45,20 +59,6 @@ class GrpcServiceRegistry:
             except Exception:  # noqa: BLE001
                 return servicer_val()
         return servicer_val()
-
-    def _enable_reflection(
-        self,
-        server: grpc.Server,
-        all_service_names: Sequence[str],
-    ) -> None:
-        """Enable gRPC Server Reflection protocol if package is present."""
-        try:
-            from grpc_reflection.v1alpha import reflection
-
-            names = tuple(all_service_names) + (reflection.SERVICE_NAME,)
-            reflection.enable_server_reflection(names, server)
-        except ImportError:
-            pass
 
     def build_server(
         self,

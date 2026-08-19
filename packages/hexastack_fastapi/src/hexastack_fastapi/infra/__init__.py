@@ -24,18 +24,18 @@ from hexastack_fastapi.infra.middleware import (
 )
 
 __all__ = [
-    "CorrelationHttpMiddleware",
-    "CorsConfig",
-    "FastApiBootstrapper",
-    "HealthConfig",
-    "HexastackFastApiConfig",
-    "RequestLoggingConfig",
-    "RequestLoggingHttpMiddleware",
-    "RouteMetadata",
     "api_command",
     "api_query",
     "autodiscover_routes",
+    "CorrelationHttpMiddleware",
+    "CorsConfig",
     "create_route_visitor",
+    "FastApiBootstrapper",
+    "HealthConfig",
+    "HexastackFastApiConfig",
     "register_exception_handlers",
     "register_fastapi_config",
+    "RequestLoggingConfig",
+    "RequestLoggingHttpMiddleware",
+    "RouteMetadata",
 ]

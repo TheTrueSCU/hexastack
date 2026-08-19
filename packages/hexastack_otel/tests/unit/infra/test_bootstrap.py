@@ -44,6 +44,23 @@ def test_otel_bootstrapper_configuration_console():
     assert ctx.properties.get("otel_config") is cfg
 
 
+def test_otel_bootstrapper_configuration_memory():
+    bootstrapper = OtelBootstrapper()
+    container = Container()
+    config_reg = ConfigRegistry()
+    bootstrapper.register_config(config_reg)
+
+    ctx = BootstrapContext(container=container, config=None, config_registry=config_reg)
+    bootstrapper.configure(ctx)
+
+    tracer = container.resolve(TracingPort)
+    assert isinstance(tracer, InMemoryTracingAdapter)
+
+    middleware = container.resolve(TracingMiddleware)
+    assert isinstance(middleware, TracingMiddleware)
+    assert ctx.properties.get("tracing_port") is tracer
+
+
 def test_otel_bootstrapper_configuration_otlp_http_and_grpc():
     bootstrapper = OtelBootstrapper()
     container = Container()
@@ -62,20 +79,3 @@ def test_otel_bootstrapper_configuration_otlp_http_and_grpc():
 
     tracer = container.resolve(TracingPort)
     assert isinstance(tracer, OtelTracingAdapter)
-
-
-def test_otel_bootstrapper_configuration_memory():
-    bootstrapper = OtelBootstrapper()
-    container = Container()
-    config_reg = ConfigRegistry()
-    bootstrapper.register_config(config_reg)
-
-    ctx = BootstrapContext(container=container, config=None, config_registry=config_reg)
-    bootstrapper.configure(ctx)
-
-    tracer = container.resolve(TracingPort)
-    assert isinstance(tracer, InMemoryTracingAdapter)
-
-    middleware = container.resolve(TracingMiddleware)
-    assert isinstance(middleware, TracingMiddleware)
-    assert ctx.properties.get("tracing_port") is tracer

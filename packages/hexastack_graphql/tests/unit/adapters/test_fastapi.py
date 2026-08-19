@@ -24,18 +24,82 @@ from hexastack_graphql.infra.decorators import (
 )
 
 
+def test_fastapi_graphql_context_buses_resolution():
+    @strawberry.type
+    class ContextStatus:
+        has_command_bus: bool
+        has_query_bus: bool
+        has_request: bool
+
+    @graphql_query_type
+    class ContextInspectionQuery:
+        @strawberry.field
+        def inspect_buses(
+            self, info: strawberry.Info[GraphQLContext, None]
+        ) -> ContextStatus:
+            return ContextStatus(
+                has_command_bus=info.context.command_bus is not None,
+                has_query_bus=info.context.query_bus is not None,
+                has_request=info.context.request is not None,
+            )
+
+    runtime = bootstrap(packages_to_scan=[__name__])
+    schema = runtime.container.resolve(Schema)
+
+    # Both buses explicit
+    mock_cbus = MagicMock(spec=CommandBusPort)
+    mock_qbus = MagicMock(spec=QueryBusPort)
+    r1 = create_graphql_router(
+        schema,
+        container=runtime.container,
+        command_bus=mock_cbus,
+        query_bus=mock_qbus,
+    )
+    assert r1.graphql_ide == "graphiql"
+    app1 = FastAPI()
+    app1.include_router(r1, prefix="/g1")
+    c1 = TestClient(app1)
+    res1 = c1.post(
+        "/g1",
+        json={"query": "{ inspectBuses { hasCommandBus hasQueryBus hasRequest } }"},
+    )
+    assert res1.status_code == 200
+    assert res1.json()["data"]["inspectBuses"] == {
+        "hasCommandBus": True,
+        "hasQueryBus": True,
+        "hasRequest": True,
+    }
+
+    # Container without CommandBusPort or QueryBusPort
+    empty_c = Container()
+    r2 = create_graphql_router(schema, container=empty_c, graphiql=False)
+    app2 = FastAPI()
+    app2.include_router(r2, prefix="/g2")
+    c2 = TestClient(app2)
+    res2 = c2.post(
+        "/g2",
+        json={"query": "{ inspectBuses { hasCommandBus hasQueryBus hasRequest } }"},
+    )
+    assert res2.status_code == 200
+    assert res2.json()["data"]["inspectBuses"] == {
+        "hasCommandBus": False,
+        "hasQueryBus": False,
+        "hasRequest": True,
+    }
+
+
 def test_fastapi_graphql_router_mounting():
     @graphql_query_type
     class HealthQuery:
-        @strawberry.field
-        def status(self) -> str:
-            return "OK"
-
         @strawberry.field
         def check_context(self, info: strawberry.Info[GraphQLContext, None]) -> str:
             assert info.context.container is not None
             assert info.context.request is not None
             return "ContextValid"
+
+        @strawberry.field
+        def status(self) -> str:
+            return "OK"
 
     runtime = bootstrap(packages_to_scan=[__name__])
     schema = runtime.container.resolve(Schema)
@@ -119,67 +183,3 @@ def test_require_fastapi_missing():
     ):
         _require_fastapi()
     assert isinstance(exc_info.value, HexastackError)
-
-
-def test_fastapi_graphql_context_buses_resolution():
-    @strawberry.type
-    class ContextStatus:
-        has_command_bus: bool
-        has_query_bus: bool
-        has_request: bool
-
-    @graphql_query_type
-    class ContextInspectionQuery:
-        @strawberry.field
-        def inspect_buses(
-            self, info: strawberry.Info[GraphQLContext, None]
-        ) -> ContextStatus:
-            return ContextStatus(
-                has_command_bus=info.context.command_bus is not None,
-                has_query_bus=info.context.query_bus is not None,
-                has_request=info.context.request is not None,
-            )
-
-    runtime = bootstrap(packages_to_scan=[__name__])
-    schema = runtime.container.resolve(Schema)
-
-    # Both buses explicit
-    mock_cbus = MagicMock(spec=CommandBusPort)
-    mock_qbus = MagicMock(spec=QueryBusPort)
-    r1 = create_graphql_router(
-        schema,
-        container=runtime.container,
-        command_bus=mock_cbus,
-        query_bus=mock_qbus,
-    )
-    assert r1.graphql_ide == "graphiql"
-    app1 = FastAPI()
-    app1.include_router(r1, prefix="/g1")
-    c1 = TestClient(app1)
-    res1 = c1.post(
-        "/g1",
-        json={"query": "{ inspectBuses { hasCommandBus hasQueryBus hasRequest } }"},
-    )
-    assert res1.status_code == 200
-    assert res1.json()["data"]["inspectBuses"] == {
-        "hasCommandBus": True,
-        "hasQueryBus": True,
-        "hasRequest": True,
-    }
-
-    # Container without CommandBusPort or QueryBusPort
-    empty_c = Container()
-    r2 = create_graphql_router(schema, container=empty_c, graphiql=False)
-    app2 = FastAPI()
-    app2.include_router(r2, prefix="/g2")
-    c2 = TestClient(app2)
-    res2 = c2.post(
-        "/g2",
-        json={"query": "{ inspectBuses { hasCommandBus hasQueryBus hasRequest } }"},
-    )
-    assert res2.status_code == 200
-    assert res2.json()["data"]["inspectBuses"] == {
-        "hasCommandBus": False,
-        "hasQueryBus": False,
-        "hasRequest": True,
-    }

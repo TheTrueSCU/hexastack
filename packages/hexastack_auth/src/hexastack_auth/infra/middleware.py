@@ -83,6 +83,36 @@ __all__ = [
 ]
 
 
+def _check_permissions(metadata: AuthMetadata, identity: Identity) -> None:
+    """Verify permission requirements against effective identity."""
+    if not metadata.permissions:
+        return
+    if metadata.match_all_permissions:
+        if not identity.has_all_permissions(metadata.permissions):
+            raise InsufficientPermissionsError(
+                f"Identity '{identity.user_id}' lacks required permissions: {sorted(metadata.permissions)}"
+            )
+    elif not identity.has_any_permission(metadata.permissions):
+        raise InsufficientPermissionsError(
+            f"Identity '{identity.user_id}' lacks any of the required permissions: {sorted(metadata.permissions)}"
+        )
+
+
+def _check_roles(metadata: AuthMetadata, identity: Identity) -> None:
+    """Verify role requirements against effective identity."""
+    if not metadata.roles:
+        return
+    if metadata.match_all_roles:
+        if not identity.has_all_roles(metadata.roles):
+            raise InsufficientPermissionsError(
+                f"Identity '{identity.user_id}' lacks required roles: {sorted(metadata.roles)}"
+            )
+    elif not identity.has_any_role(metadata.roles):
+        raise InsufficientPermissionsError(
+            f"Identity '{identity.user_id}' lacks any of the required roles: {sorted(metadata.roles)}"
+        )
+
+
 def _resolve_effective_identity(identity: Any | None) -> Identity:
     """Normalize UserContext or Identity into an Identity instance."""
     if identity is None:
@@ -117,36 +147,6 @@ def _resolve_effective_identity(identity: Any | None) -> Identity:
         tenant_id=str(tenant_id) if tenant_id is not None else None,
         is_authenticated=is_auth,
     )
-
-
-def _check_roles(metadata: AuthMetadata, identity: Identity) -> None:
-    """Verify role requirements against effective identity."""
-    if not metadata.roles:
-        return
-    if metadata.match_all_roles:
-        if not identity.has_all_roles(metadata.roles):
-            raise InsufficientPermissionsError(
-                f"Identity '{identity.user_id}' lacks required roles: {sorted(metadata.roles)}"
-            )
-    elif not identity.has_any_role(metadata.roles):
-        raise InsufficientPermissionsError(
-            f"Identity '{identity.user_id}' lacks any of the required roles: {sorted(metadata.roles)}"
-        )
-
-
-def _check_permissions(metadata: AuthMetadata, identity: Identity) -> None:
-    """Verify permission requirements against effective identity."""
-    if not metadata.permissions:
-        return
-    if metadata.match_all_permissions:
-        if not identity.has_all_permissions(metadata.permissions):
-            raise InsufficientPermissionsError(
-                f"Identity '{identity.user_id}' lacks required permissions: {sorted(metadata.permissions)}"
-            )
-    elif not identity.has_any_permission(metadata.permissions):
-        raise InsufficientPermissionsError(
-            f"Identity '{identity.user_id}' lacks any of the required permissions: {sorted(metadata.permissions)}"
-        )
 
 
 def evaluate_authorization(

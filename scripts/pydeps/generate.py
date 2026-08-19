@@ -5,13 +5,16 @@ from pathlib import Path
 from pydeps.pydeps import pydeps
 
 from scripts._common import (
+    HexastackScriptArgumentParser,
     get_package_directories,
+    get_package_directory,
     get_packages_directory,
     get_repo_root,
 )
 
 
 def generate_package_diagram(pkg_path: Path) -> None:
+    """Generate architecture diagram SVG for a single package."""
     pkg_name = pkg_path.name
     src_dir = pkg_path / "src" / pkg_name
     output_file = pkg_path / f"{pkg_name}-architecture.svg"
@@ -54,13 +57,25 @@ def generate_monorepo_diagram() -> None:
 
 
 def main() -> None:
-    # 1. Global package-level diagram
-    generate_monorepo_diagram()
+    """CLI entrypoint to generate architecture diagrams."""
+    parser = HexastackScriptArgumentParser(
+        description="Generate pydeps architecture diagrams."
+    )
+    args = parser.parse_args()
+
+    # 1. Global package-level diagram if no specific packages requested
+    if not args.packages:
+        generate_monorepo_diagram()
 
     # 2. Per-package internal hexagonal diagrams
-    for pkg in get_package_directories():
-        if pkg.is_dir() and (pkg / "pyproject.toml").is_file():
-            generate_package_diagram(pkg)
+    root = get_repo_root()
+    if args.packages:
+        packages = [get_package_directory(p, root) for p in args.packages]
+    else:
+        packages = get_package_directories(root)
+
+    for pkg_path in packages:
+        generate_package_diagram(pkg_path)
 
 
 if __name__ == "__main__":

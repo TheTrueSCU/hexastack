@@ -54,6 +54,12 @@ def test_rich_logger_all_methods_and_console_mock():
     correlation_id_ctx.reset(corr_token)
 
 
+def test_rich_logger_default_constructor():
+    if importlib.util.find_spec("rich") is not None:
+        logger = RichLogger()
+        assert logger._console is not None
+
+
 def test_rich_logger_missing_dependency():
     with (
         patch("importlib.import_module", side_effect=ImportError("No rich")),
@@ -61,9 +67,3 @@ def test_rich_logger_missing_dependency():
     ):
         RichLogger()
     assert isinstance(exc_info.value, HexastackError)
-
-
-def test_rich_logger_default_constructor():
-    if importlib.util.find_spec("rich") is not None:
-        logger = RichLogger()
-        assert logger._console is not None

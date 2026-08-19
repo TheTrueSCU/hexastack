@@ -17,21 +17,21 @@ class FeatureFlagPort(Protocol):
         providers (OpenFeature / Flagd / Unleash / LaunchDarkly).
     """
 
-    def is_enabled(
+    def get_boolean_details(
         self,
         flag_key: str,
         default: bool = False,
         context: EvaluationContext | None = None,
-    ) -> bool:
-        """Evaluate a boolean feature flag.
+    ) -> FlagEvaluationDetails[bool]:
+        """Evaluate a boolean feature flag with complete resolution metadata.
 
         Args:
             flag_key: Unique identifier of the feature flag.
-            default: Fallback value if resolution fails or flag is missing.
+            default: Fallback value if resolution fails.
             context: Optional EvaluationContext for targeting rules.
 
         Returns:
-            Resolved boolean flag status.
+            FlagEvaluationDetails containing value, reason, and variant.
         """
         ...
 
@@ -53,13 +53,13 @@ class FeatureFlagPort(Protocol):
         """
         ...
 
-    def get_string_value(
+    def get_float_value(
         self,
         flag_key: str,
-        default: str,
+        default: float,
         context: EvaluationContext | None = None,
-    ) -> str:
-        """Evaluate a string feature flag / variant.
+    ) -> float:
+        """Evaluate a floating-point feature flag.
 
         Args:
             flag_key: Unique identifier of the feature flag.
@@ -67,7 +67,7 @@ class FeatureFlagPort(Protocol):
             context: Optional EvaluationContext for targeting rules.
 
         Returns:
-            Resolved string variation.
+            Resolved float value.
         """
         ...
 
@@ -89,24 +89,6 @@ class FeatureFlagPort(Protocol):
         """
         ...
 
-    def get_float_value(
-        self,
-        flag_key: str,
-        default: float,
-        context: EvaluationContext | None = None,
-    ) -> float:
-        """Evaluate a floating-point feature flag.
-
-        Args:
-            flag_key: Unique identifier of the feature flag.
-            default: Fallback value if resolution fails.
-            context: Optional EvaluationContext for targeting rules.
-
-        Returns:
-            Resolved float value.
-        """
-        ...
-
     def get_object_value(
         self,
         flag_key: str,
@@ -125,13 +107,13 @@ class FeatureFlagPort(Protocol):
         """
         ...
 
-    def get_boolean_details(
+    def get_string_value(
         self,
         flag_key: str,
-        default: bool = False,
+        default: str,
         context: EvaluationContext | None = None,
-    ) -> FlagEvaluationDetails[bool]:
-        """Evaluate a boolean feature flag with complete resolution metadata.
+    ) -> str:
+        """Evaluate a string feature flag / variant.
 
         Args:
             flag_key: Unique identifier of the feature flag.
@@ -139,7 +121,25 @@ class FeatureFlagPort(Protocol):
             context: Optional EvaluationContext for targeting rules.
 
         Returns:
-            FlagEvaluationDetails containing value, reason, and variant.
+            Resolved string variation.
+        """
+        ...
+
+    def is_enabled(
+        self,
+        flag_key: str,
+        default: bool = False,
+        context: EvaluationContext | None = None,
+    ) -> bool:
+        """Evaluate a boolean feature flag.
+
+        Args:
+            flag_key: Unique identifier of the feature flag.
+            default: Fallback value if resolution fails or flag is missing.
+            context: Optional EvaluationContext for targeting rules.
+
+        Returns:
+            Resolved boolean flag status.
         """
         ...
 

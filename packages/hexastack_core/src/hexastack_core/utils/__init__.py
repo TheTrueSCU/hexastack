@@ -10,7 +10,6 @@ from hexastack_core.utils.context import (
 )
 
 __all__ = [
-    "UserContext",
     "correlation_id_ctx",
     "get_correlation_id",
     "get_user_context",
@@ -18,4 +17,5 @@ __all__ = [
     "set_correlation_id",
     "set_user_context",
     "user_ctx",
+    "UserContext",
 ]

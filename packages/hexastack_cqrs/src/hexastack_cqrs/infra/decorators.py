@@ -54,17 +54,17 @@ class FeatureFlagMetadata:
 
 
 __all__ = [
-    "ConfigMetadata",
-    "ExceptionMetadata",
-    "FeatureFlagMetadata",
-    "HandlerMetadata",
-    "PresenterMetadata",
     "command_handler",
     "config_section",
+    "ConfigMetadata",
     "event_listener",
     "exception_handler",
+    "ExceptionMetadata",
     "feature_flag",
+    "FeatureFlagMetadata",
+    "HandlerMetadata",
     "presenter",
+    "PresenterMetadata",
     "query_handler",
 ]
 
@@ -113,55 +113,6 @@ def event_listener(
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         _tag_object(fn, HandlerMetadata(kind="event", target_cls=target_cls))
-        return fn
-
-    return decorator
-
-
-def presenter(
-    target_cls: type[Generic],
-    output_format: str,
-) -> Callable[[Any], Any]:
-    """Mark a class or callable as a presenter for target_cls in output_format.
-
-    Args:
-        target_cls: The Generic domain object class type to be presented.
-        output_format: Target format string (e.g. 'json', 'html', 'csv').
-
-    Returns:
-        Decorator function attaching PresenterMetadata.
-
-    Raises:
-        None.
-    """
-
-    def decorator(obj: Any) -> Any:
-        _tag_object(
-            obj,
-            PresenterMetadata(target_cls=target_cls, output_format=output_format),
-        )
-        return obj
-
-    return decorator
-
-
-def query_handler(
-    target_cls: type[Query[Any]],
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Mark a callable as a handler for a target Query class.
-
-    Args:
-        target_cls: The Query class type handled by the decorated function.
-
-    Returns:
-        Decorator function attaching HandlerMetadata.
-
-    Raises:
-        None.
-    """
-
-    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
-        _tag_object(fn, HandlerMetadata(kind="query", target_cls=target_cls))
         return fn
 
     return decorator
@@ -222,5 +173,54 @@ def feature_flag(
             FeatureFlagMetadata(flag_key=flag_key, fallback=fallback, default=default),
         )
         return wrapped
+
+    return decorator
+
+
+def presenter(
+    target_cls: type[Generic],
+    output_format: str,
+) -> Callable[[Any], Any]:
+    """Mark a class or callable as a presenter for target_cls in output_format.
+
+    Args:
+        target_cls: The Generic domain object class type to be presented.
+        output_format: Target format string (e.g. 'json', 'html', 'csv').
+
+    Returns:
+        Decorator function attaching PresenterMetadata.
+
+    Raises:
+        None.
+    """
+
+    def decorator(obj: Any) -> Any:
+        _tag_object(
+            obj,
+            PresenterMetadata(target_cls=target_cls, output_format=output_format),
+        )
+        return obj
+
+    return decorator
+
+
+def query_handler(
+    target_cls: type[Query[Any]],
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Mark a callable as a handler for a target Query class.
+
+    Args:
+        target_cls: The Query class type handled by the decorated function.
+
+    Returns:
+        Decorator function attaching HandlerMetadata.
+
+    Raises:
+        None.
+    """
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        _tag_object(fn, HandlerMetadata(kind="query", target_cls=target_cls))
+        return fn
 
     return decorator

@@ -16,14 +16,14 @@ from hexastack_cli.infra.decorators import (
 )
 
 __all__ = [
-    "CliBootstrapper",
-    "CliMetadata",
-    "GroupMetadata",
-    "HexastackCliConfig",
     "autodiscover_cli_commands",
     "cli_command",
     "cli_group",
     "cli_query",
+    "CliBootstrapper",
+    "CliMetadata",
     "create_cli_visitor",
+    "GroupMetadata",
+    "HexastackCliConfig",
     "register_cli_config",
 ]

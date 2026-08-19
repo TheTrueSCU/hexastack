@@ -226,9 +226,9 @@ class CqrsBootstrapper(BootstrapperPort):
 
 
 __all__ = [
-    "CqrsBootstrapResult",
-    "CqrsBootstrapper",
     "bootstrap_cqrs",
+    "CqrsBootstrapper",
+    "CqrsBootstrapResult",
 ]
 
 

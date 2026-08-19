@@ -72,126 +72,6 @@ _PKG_TO_MODULE_MAP = {
 }
 
 
-def _find_pyproject_toml() -> Path | None:
-    """Locate root or umbrella pyproject.toml in the filesystem."""
-    curr = Path(__file__).resolve().parent
-    for _ in range(5):
-        candidate = curr / "pyproject.toml"
-        if candidate.exists():
-            return candidate
-        curr = curr.parent
-
-    cwd_candidate = Path.cwd() / "pyproject.toml"
-    if cwd_candidate.exists():
-        return cwd_candidate
-
-    return None
-
-
-def _parse_pyproject_metadata() -> tuple[list[str], dict[str, list[str]]]:
-    """Parse pyproject.toml to extract workspace packages and optional extras."""
-    packages = list(_DEFAULT_KNOWN_PACKAGES)
-    extras: dict[str, list[str]] = {}
-
-    pyproject_path = _find_pyproject_toml()
-    if pyproject_path is not None:
-        try:
-            with Path(pyproject_path).open("rb") as f:
-                data = tomllib.load(f)
-
-            tool_uv = data.get("tool", {}).get("uv", {})
-            members = tool_uv.get("workspace", {}).get("members", [])
-            for member in members:
-                pkg_name = member.replace("packages/", "").replace("_", "-")
-                if pkg_name not in packages:
-                    packages.append(pkg_name)
-
-            opt_deps = data.get("project", {}).get("optional-dependencies", {})
-            for extra, deps in opt_deps.items():
-                extras[extra] = deps
-        except (OSError, tomllib.TOMLDecodeError):
-            pass
-
-    return sorted(set(packages)), extras
-
-
-def _is_module_available(module_or_pkg_name: str) -> bool:
-    """Check if a module or package is available in the current environment."""
-    mod_name = _PKG_TO_MODULE_MAP.get(
-        module_or_pkg_name, module_or_pkg_name.replace("-", "_")
-    )
-    if importlib.util.find_spec(mod_name) is not None:
-        return True
-    try:
-        importlib.metadata.version(module_or_pkg_name)
-        return True
-    except importlib.metadata.PackageNotFoundError:
-        return False
-
-
-def _clean_req_name(req_str: str) -> tuple[str, bool]:
-    """Parse requirement string into (clean_package_name, is_extra)."""
-    is_extra = "extra ==" in req_str or "extra ==" in req_str.replace(" ", "")
-    clean = re.split(r"[><=~!;\[\s]", req_str)[0].strip()
-    return clean, is_extra
-
-
-def _discover_installed_hexastack(
-    known_packages: list[str],
-) -> tuple[dict[str, str], set[str]]:
-    """Discover installed 1st-party Hexastack distributions and versions."""
-    installed_hexastack: dict[str, str] = {}
-    installed_package_names: set[str] = set()
-
-    for pkg in known_packages:
-        try:
-            ver = importlib.metadata.version(pkg)
-            installed_hexastack[pkg] = ver
-            installed_package_names.add(pkg)
-        except importlib.metadata.PackageNotFoundError:
-            installed_hexastack[pkg] = "not installed"
-
-    return installed_hexastack, installed_package_names
-
-
-def _classify_3rd_party_deps(
-    installed_package_names: set[str],
-) -> tuple[set[str], set[str]]:
-    """Classify 3rd-party dependencies into required vs optional."""
-    required_3rd_party: set[str] = set()
-    optional_3rd_party: set[str] = set()
-
-    for pkg in installed_package_names:
-        try:
-            requirements = importlib.metadata.requires(pkg) or []
-        except importlib.metadata.PackageNotFoundError:
-            requirements = []
-
-        for req_str in requirements:
-            req_name, is_extra = _clean_req_name(req_str)
-            if not req_name or req_name in _DEFAULT_KNOWN_PACKAGES:
-                continue
-
-            if is_extra:
-                optional_3rd_party.add(req_name)
-            else:
-                required_3rd_party.add(req_name)
-
-    optional_3rd_party -= required_3rd_party
-    return required_3rd_party, optional_3rd_party
-
-
-def _evaluate_extras_status(known_extras: dict[str, list[str]]) -> dict[str, bool]:
-    """Check umbrella extras availability."""
-    extras_status: dict[str, bool] = {}
-    for extra_name in known_extras:
-        mod_name = f"hexastack_{extra_name}"
-        extras_status[extra_name] = importlib.util.find_spec(
-            mod_name
-        ) is not None or _is_module_available(extra_name)
-    return extras_status
-
-
 @query_handler(GetSystemInfoQuery)
 class GetSystemInfoHandler:
     """Handler executing GetSystemInfoQuery with dynamic dependency classification.
@@ -314,3 +194,123 @@ __all__ = [
     "InspectRegistryHandler",
     "PingDemoHandler",
 ]
+
+
+def _classify_3rd_party_deps(
+    installed_package_names: set[str],
+) -> tuple[set[str], set[str]]:
+    """Classify 3rd-party dependencies into required vs optional."""
+    required_3rd_party: set[str] = set()
+    optional_3rd_party: set[str] = set()
+
+    for pkg in installed_package_names:
+        try:
+            requirements = importlib.metadata.requires(pkg) or []
+        except importlib.metadata.PackageNotFoundError:
+            requirements = []
+
+        for req_str in requirements:
+            req_name, is_extra = _clean_req_name(req_str)
+            if not req_name or req_name in _DEFAULT_KNOWN_PACKAGES:
+                continue
+
+            if is_extra:
+                optional_3rd_party.add(req_name)
+            else:
+                required_3rd_party.add(req_name)
+
+    optional_3rd_party -= required_3rd_party
+    return required_3rd_party, optional_3rd_party
+
+
+def _clean_req_name(req_str: str) -> tuple[str, bool]:
+    """Parse requirement string into (clean_package_name, is_extra)."""
+    is_extra = "extra ==" in req_str or "extra ==" in req_str.replace(" ", "")
+    clean = re.split(r"[><=~!;\[\s]", req_str)[0].strip()
+    return clean, is_extra
+
+
+def _discover_installed_hexastack(
+    known_packages: list[str],
+) -> tuple[dict[str, str], set[str]]:
+    """Discover installed 1st-party Hexastack distributions and versions."""
+    installed_hexastack: dict[str, str] = {}
+    installed_package_names: set[str] = set()
+
+    for pkg in known_packages:
+        try:
+            ver = importlib.metadata.version(pkg)
+            installed_hexastack[pkg] = ver
+            installed_package_names.add(pkg)
+        except importlib.metadata.PackageNotFoundError:
+            installed_hexastack[pkg] = "not installed"
+
+    return installed_hexastack, installed_package_names
+
+
+def _evaluate_extras_status(known_extras: dict[str, list[str]]) -> dict[str, bool]:
+    """Check umbrella extras availability."""
+    extras_status: dict[str, bool] = {}
+    for extra_name in known_extras:
+        mod_name = f"hexastack_{extra_name}"
+        extras_status[extra_name] = importlib.util.find_spec(
+            mod_name
+        ) is not None or _is_module_available(extra_name)
+    return extras_status
+
+
+def _find_pyproject_toml() -> Path | None:
+    """Locate root or umbrella pyproject.toml in the filesystem."""
+    curr = Path(__file__).resolve().parent
+    for _ in range(5):
+        candidate = curr / "pyproject.toml"
+        if candidate.exists():
+            return candidate
+        curr = curr.parent
+
+    cwd_candidate = Path.cwd() / "pyproject.toml"
+    if cwd_candidate.exists():
+        return cwd_candidate
+
+    return None
+
+
+def _is_module_available(module_or_pkg_name: str) -> bool:
+    """Check if a module or package is available in the current environment."""
+    mod_name = _PKG_TO_MODULE_MAP.get(
+        module_or_pkg_name, module_or_pkg_name.replace("-", "_")
+    )
+    if importlib.util.find_spec(mod_name) is not None:
+        return True
+    try:
+        importlib.metadata.version(module_or_pkg_name)
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
+
+
+def _parse_pyproject_metadata() -> tuple[list[str], dict[str, list[str]]]:
+    """Parse pyproject.toml to extract workspace packages and optional extras."""
+    packages = list(_DEFAULT_KNOWN_PACKAGES)
+    extras: dict[str, list[str]] = {}
+
+    pyproject_path = _find_pyproject_toml()
+    if pyproject_path is not None:
+        try:
+            with Path(pyproject_path).open("rb") as f:
+                data = tomllib.load(f)
+
+            tool_uv = data.get("tool", {}).get("uv", {})
+            members = tool_uv.get("workspace", {}).get("members", [])
+            for member in members:
+                pkg_name = member.replace("packages/", "").replace("_", "-")
+                if pkg_name not in packages:
+                    packages.append(pkg_name)
+
+            opt_deps = data.get("project", {}).get("optional-dependencies", {})
+            for extra, deps in opt_deps.items():
+                extras[extra] = deps
+        except (OSError, tomllib.TOMLDecodeError):
+            pass
+
+    return sorted(set(packages)), extras

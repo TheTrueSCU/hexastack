@@ -27,8 +27,8 @@ class AuthMetadata:
 
 
 __all__ = [
-    "AuthMetadata",
     "authenticated",
+    "AuthMetadata",
     "authorize",
     "get_auth_metadata",
     "requires_permission",

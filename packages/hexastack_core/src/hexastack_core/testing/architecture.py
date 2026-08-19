@@ -23,11 +23,6 @@ DEFAULT_LAYER_RESTRICTIONS: dict[str, list[str]] = {
 }
 
 
-def get_layer_restrictions() -> dict[str, list[str]]:
-    """Return a copy of the default hexagonal layer import restrictions."""
-    return {k: list(v) for k, v in DEFAULT_LAYER_RESTRICTIONS.items()}
-
-
 def assert_clean_architecture(
     package_name: str,
     *,
@@ -86,3 +81,8 @@ def assert_clean_architecture(
             .should_not_import(*target_modules)
             .check(package_name)
         )
+
+
+def get_layer_restrictions() -> dict[str, list[str]]:
+    """Return a copy of the default hexagonal layer import restrictions."""
+    return {k: list(v) for k, v in DEFAULT_LAYER_RESTRICTIONS.items()}

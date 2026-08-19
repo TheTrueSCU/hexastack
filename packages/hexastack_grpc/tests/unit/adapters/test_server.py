@@ -19,13 +19,6 @@ async def test_create_async_grpc_server():
     await server.stop(grace=None)
 
 
-def test_run_grpc_server_non_blocking():
-    mock_server = MagicMock(spec=grpc.Server)
-    run_grpc_server(mock_server, block=False)
-    mock_server.start.assert_called_once()
-    mock_server.wait_for_termination.assert_not_called()
-
-
 def test_run_grpc_server_blocking_keyboard_interrupt():
     mock_server = MagicMock(spec=grpc.Server)
     mock_server.wait_for_termination.side_effect = KeyboardInterrupt()
@@ -33,3 +26,10 @@ def test_run_grpc_server_blocking_keyboard_interrupt():
     mock_server.start.assert_called_once()
     mock_server.wait_for_termination.assert_called_once()
     mock_server.stop.assert_called_once_with(grace=5.0)
+
+
+def test_run_grpc_server_non_blocking():
+    mock_server = MagicMock(spec=grpc.Server)
+    run_grpc_server(mock_server, block=False)
+    mock_server.start.assert_called_once()
+    mock_server.wait_for_termination.assert_not_called()

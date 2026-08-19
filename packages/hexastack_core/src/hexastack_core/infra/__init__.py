@@ -30,12 +30,15 @@ from hexastack_core.infra.registries import (
 )
 
 __all__ = [
+    "bootstrap",
     "BootstrapContext",
     "BootstrapResult",
+    "config_section",
     "ConfigMetadata",
     "ConfigRegistry",
     "ConfigRegistryError",
     "DiscoveryVisitor",
+    "exception_handler",
     "ExceptionMetadata",
     "ExceptionRegistry",
     "ExceptionRegistryError",
@@ -46,8 +49,5 @@ __all__ = [
     "HexastackConfig",
     "HexastackConfigError",
     "HexastackCoreConfig",
-    "bootstrap",
-    "config_section",
-    "exception_handler",
     "scan_modules",
 ]

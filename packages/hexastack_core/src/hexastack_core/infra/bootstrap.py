@@ -100,25 +100,10 @@ class BootstrapResult:
 
 
 __all__ = [
+    "bootstrap",
     "BootstrapContext",
     "BootstrapResult",
-    "bootstrap",
 ]
-
-
-def _discover_bootstrappers() -> list[BootstrapperPort]:
-    """Discover installed bootstrap extensions via Python entry points."""
-    discovered: list[BootstrapperPort] = []
-    try:
-        eps = importlib.metadata.entry_points(group="hexastack.bootstrappers")
-        for ep in eps:
-            loaded = ep.load()
-            instance = loaded() if isinstance(loaded, type) else loaded
-            if isinstance(instance, BootstrapperPort):
-                discovered.append(instance)
-    except Exception:  # noqa: BLE001, S110
-        pass
-    return discovered
 
 
 def _collect_and_sort_bootstrappers(
@@ -136,6 +121,21 @@ def _collect_and_sort_bootstrappers(
                 existing_types.add(type(auto_b))
 
     return sorted(collected, key=lambda b: getattr(b, "order", 50))
+
+
+def _discover_bootstrappers() -> list[BootstrapperPort]:
+    """Discover installed bootstrap extensions via Python entry points."""
+    discovered: list[BootstrapperPort] = []
+    try:
+        eps = importlib.metadata.entry_points(group="hexastack.bootstrappers")
+        for ep in eps:
+            loaded = ep.load()
+            instance = loaded() if isinstance(loaded, type) else loaded
+            if isinstance(instance, BootstrapperPort):
+                discovered.append(instance)
+    except Exception:  # noqa: BLE001, S110
+        pass
+    return discovered
 
 
 def bootstrap(

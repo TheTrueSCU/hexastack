@@ -21,6 +21,31 @@ class FuzzProductSchema(BaseModel):
 
 @settings(deadline=None)
 @given(
+    name=st.text(min_size=1, max_size=50),
+    price=st.floats(min_value=0.0, max_value=1_000_000.0, allow_nan=False),
+    tags=st.lists(st.text(min_size=1, max_size=20), max_size=5),
+)
+def test_litellm_adapter_structured_generation_fuzz(
+    name: str,
+    price: float,
+    tags: list[str],
+):
+    """Property test verifying structured output generation invariants."""
+    expected_obj = FuzzProductSchema(name=name, price=price, tags=tags)
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = expected_obj
+
+    with patch("instructor.from_litellm", return_value=mock_client):
+        adapter = LiteLlmAdapter()
+        res = adapter.generate_structured("Generate product", FuzzProductSchema)
+        assert res == expected_obj
+        assert res.name == name
+        assert res.price == price
+        assert res.tags == tags
+
+
+@settings(deadline=None)
+@given(
     model=st.sampled_from(
         ["gpt-4o", "claude-3-5-sonnet-20241022", "gemini-1.5-pro", "llama3"]
     ),
@@ -70,28 +95,3 @@ def test_litellm_adapter_text_generation_fuzz(
         else:
             assert len(messages) == 1
             assert messages[0] == {"role": "user", "content": prompt}
-
-
-@settings(deadline=None)
-@given(
-    name=st.text(min_size=1, max_size=50),
-    price=st.floats(min_value=0.0, max_value=1_000_000.0, allow_nan=False),
-    tags=st.lists(st.text(min_size=1, max_size=20), max_size=5),
-)
-def test_litellm_adapter_structured_generation_fuzz(
-    name: str,
-    price: float,
-    tags: list[str],
-):
-    """Property test verifying structured output generation invariants."""
-    expected_obj = FuzzProductSchema(name=name, price=price, tags=tags)
-    mock_client = MagicMock()
-    mock_client.chat.completions.create.return_value = expected_obj
-
-    with patch("instructor.from_litellm", return_value=mock_client):
-        adapter = LiteLlmAdapter()
-        res = adapter.generate_structured("Generate product", FuzzProductSchema)
-        assert res == expected_obj
-        assert res.name == name
-        assert res.price == price
-        assert res.tags == tags

@@ -101,6 +101,33 @@ async def _assert_diagnostic_resources(server: Any) -> None:
     assert all("name" in p and "description" in p for p in manifest_json["prompts"])
 
 
+def test_mcp_server_registry_registration_idempotency_and_properties():
+    """Verify registry getters, properties, and idempotency of registration."""
+    reg = McpServerRegistry()
+    assert reg.tools == []
+    assert reg.resources == []
+    assert reg.prompts == []
+
+    tool_meta = McpToolMetadata(name="t1", target=lambda: "t1", kind="function")
+    res_meta = McpResourceMetadata(uri="test://res", name="r1", handler=lambda: "res")
+    prompt_meta = McpPromptMetadata(name="p1", handler=lambda: "p1")
+
+    reg.register_tool(tool_meta)
+    reg.register_tool(tool_meta)  # Duplicate registration ignored
+    assert len(reg.tools) == 1
+    assert reg.tools[0].name == "t1"
+
+    reg.register_resource(res_meta)
+    reg.register_resource(res_meta)  # Duplicate ignored
+    assert len(reg.resources) == 1
+    assert reg.resources[0].uri == "test://res"
+
+    reg.register_prompt(prompt_meta)
+    reg.register_prompt(prompt_meta)  # Duplicate ignored
+    assert len(reg.prompts) == 1
+    assert reg.prompts[0].name == "p1"
+
+
 @pytest.mark.anyio
 async def test_mcp_server_registry_tools_execution():
     @mcp_tool(name="calc_tax", description="Calculate tax for an amount")
@@ -193,30 +220,3 @@ async def test_mcp_server_registry_tools_execution():
     prompts = await server.list_prompts()
     prompt_names = [p.name for p in prompts]
     assert "greet_user" in prompt_names
-
-
-def test_mcp_server_registry_registration_idempotency_and_properties():
-    """Verify registry getters, properties, and idempotency of registration."""
-    reg = McpServerRegistry()
-    assert reg.tools == []
-    assert reg.resources == []
-    assert reg.prompts == []
-
-    tool_meta = McpToolMetadata(name="t1", target=lambda: "t1", kind="function")
-    res_meta = McpResourceMetadata(uri="test://res", name="r1", handler=lambda: "res")
-    prompt_meta = McpPromptMetadata(name="p1", handler=lambda: "p1")
-
-    reg.register_tool(tool_meta)
-    reg.register_tool(tool_meta)  # Duplicate registration ignored
-    assert len(reg.tools) == 1
-    assert reg.tools[0].name == "t1"
-
-    reg.register_resource(res_meta)
-    reg.register_resource(res_meta)  # Duplicate ignored
-    assert len(reg.resources) == 1
-    assert reg.resources[0].uri == "test://res"
-
-    reg.register_prompt(prompt_meta)
-    reg.register_prompt(prompt_meta)  # Duplicate ignored
-    assert len(reg.prompts) == 1
-    assert reg.prompts[0].name == "p1"

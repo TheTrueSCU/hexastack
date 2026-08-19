@@ -18,14 +18,14 @@ def test_require_extra_missing():
     )
 
 
-def test_require_feature_enabled():
-    adapter = InMemoryFeatureFlagAdapter({"beta.search": True, "beta.chat": False})
-    mark = require_feature("beta.search", flags=adapter)
-    assert mark.args[0] is False
-
-
 def test_require_feature_disabled():
     adapter = InMemoryFeatureFlagAdapter({"beta.search": True, "beta.chat": False})
     mark = require_feature("beta.chat", flags=adapter)
     assert mark.args[0] is True
     assert "Feature flag 'beta.chat' is disabled" in mark.kwargs["reason"]
+
+
+def test_require_feature_enabled():
+    adapter = InMemoryFeatureFlagAdapter({"beta.search": True, "beta.chat": False})
+    mark = require_feature("beta.search", flags=adapter)
+    assert mark.args[0] is False

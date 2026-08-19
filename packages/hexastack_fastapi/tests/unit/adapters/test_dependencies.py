@@ -78,35 +78,6 @@ def test_get_dependencies_direct_invocation_raises():
         get_pipeline(req)
 
 
-def test_get_pipeline_resolved_from_container():
-    handler_reg = HandlerRegistry()
-    pipeline = ExecutionPipeline(
-        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
-        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
-        event_bus=SynchronousEventBus(),
-        command_registry=CommandRegistry(),
-        query_registry=QueryRegistry(),
-        handler_registry=handler_reg,
-        presenter_registry=PresenterRegistry(),
-    )
-    container = Container()
-    container.add_instance(pipeline)
-
-    app = FastAPI()
-    app.state.container = container
-
-    @app.get("/pipeline-from-di")
-    async def endpoint(
-        p: Annotated[ExecutionPipeline, Depends(get_pipeline)],
-    ):
-        return {"resolved": p is pipeline}
-
-    client = TestClient(app)
-    res = client.get("/pipeline-from-di")
-    assert res.status_code == 200
-    assert res.json() == {"resolved": True}
-
-
 def test_get_feature_flags_and_require_feature_guard():
     from hexastack_core.adapters.feature_flags.in_memory import (
         InMemoryFeatureFlagAdapter,
@@ -147,3 +118,32 @@ def test_get_feature_flags_and_require_feature_guard():
     plain_req = Request(scope={"type": "http", "app": FastAPI()})
     default_flags = get_feature_flags(plain_req)
     assert default_flags is not None
+
+
+def test_get_pipeline_resolved_from_container():
+    handler_reg = HandlerRegistry()
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=CommandRegistry(),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+        presenter_registry=PresenterRegistry(),
+    )
+    container = Container()
+    container.add_instance(pipeline)
+
+    app = FastAPI()
+    app.state.container = container
+
+    @app.get("/pipeline-from-di")
+    async def endpoint(
+        p: Annotated[ExecutionPipeline, Depends(get_pipeline)],
+    ):
+        return {"resolved": p is pipeline}
+
+    client = TestClient(app)
+    res = client.get("/pipeline-from-di")
+    assert res.status_code == 200
+    assert res.json() == {"resolved": True}

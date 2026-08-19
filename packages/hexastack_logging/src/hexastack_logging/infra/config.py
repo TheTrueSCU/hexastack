@@ -90,11 +90,11 @@ class HexastackLoggingConfig(BaseModel):
 
 __all__ = [
     "AsyncQueueConfig",
+    "configure_logging",
     "FileLoggingConfig",
     "HexastackLoggingConfig",
-    "SanitizerConfig",
-    "configure_logging",
     "register_logging_config",
+    "SanitizerConfig",
 ]
 
 

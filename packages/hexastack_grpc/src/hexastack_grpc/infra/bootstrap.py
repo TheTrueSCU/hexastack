@@ -108,6 +108,6 @@ class GrpcBootstrapper(BootstrapperPort):
 
 
 __all__ = [
-    "GrpcBootstrapResult",
     "GrpcBootstrapper",
+    "GrpcBootstrapResult",
 ]

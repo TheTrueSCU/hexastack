@@ -6,6 +6,11 @@ import pytest
 from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 
+__all__ = [
+    "require_extra",
+    "require_feature",
+]
+
 
 def require_extra(package_name: str, reason: str | None = None) -> Any:
     """Pytest decorator to skip a test if an optional package/extra is not installed.
@@ -51,9 +56,3 @@ def require_feature(
     is_enabled = adapter.is_enabled(flag_key, default=default)
     msg = reason or f"Feature flag '{flag_key}' is disabled."
     return pytest.mark.skipif(not is_enabled, reason=msg)
-
-
-__all__ = [
-    "require_extra",
-    "require_feature",
-]

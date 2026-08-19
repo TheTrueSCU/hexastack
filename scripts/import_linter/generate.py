@@ -5,8 +5,11 @@ from pathlib import Path
 
 from scripts._common import (
     LAYER_RESTRICTIONS,
+    HexastackScriptArgumentParser,
     get_package_directories,
+    get_package_directory,
     get_present_layers,
+    get_repo_root,
 )
 
 
@@ -69,24 +72,30 @@ def _build_forbidden_contracts(
 
 
 def build_import_linter_toml(pkg_name: str, present_layers: set[str]) -> str:
-    """Generate the TOML block for import-linter contracts based on existing layers."""
-    lines = [
+    """Build the complete [tool.importlinter] TOML section string for a package."""
+    active_layers = [
+        layer
+        for layer in ["adapters", "infra", "ports", "domain"]
+        if layer in present_layers
+    ]
+
+    header = [
         "[tool.importlinter]",
         f'root_packages = ["{pkg_name}"]',
         "",
     ]
+    layers_contract = _build_layers_contract(pkg_name, active_layers)
+    forbidden_contracts = _build_forbidden_contracts(
+        pkg_name, present_layers, active_layers
+    )
 
-    layer_order = ["adapters", "ports", "domain"]
-    active_layers = [layer for layer in layer_order if layer in present_layers]
-
-    lines.extend(_build_layers_contract(pkg_name, active_layers))
-    lines.extend(_build_forbidden_contracts(pkg_name, present_layers, active_layers))
-
-    return "\n".join(lines).strip() + "\n"
+    all_lines = header + layers_contract + forbidden_contracts
+    return "\n".join(all_lines).strip()
 
 
 def update_pyproject_toml(pkg_path: Path) -> None:
-    pkg_name = pkg_path.name
+    """Update [tool.importlinter] in a package's pyproject.toml."""
+    pkg_name = pkg_path.name.replace("-", "_")
     pyproject_file = pkg_path / "pyproject.toml"
 
     if not pyproject_file.is_file():
@@ -115,7 +124,18 @@ def update_pyproject_toml(pkg_path: Path) -> None:
 
 
 def main() -> None:
-    packages = get_package_directories()
+    """CLI entrypoint to generate import-linter contracts."""
+    parser = HexastackScriptArgumentParser(
+        description="Generate [tool.importlinter] contracts in pyproject.toml."
+    )
+    args = parser.parse_args()
+
+    root = get_repo_root()
+    if args.packages:
+        packages = [get_package_directory(p, root) for p in args.packages]
+    else:
+        packages = get_package_directories(root)
+
     if not packages:
         raise SystemExit("No packages found.")
 

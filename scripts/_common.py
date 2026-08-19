@@ -8,7 +8,9 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
+from typing import Any
 
 HEX_LAYERS: list[str] = [
     "domain",
@@ -176,3 +178,98 @@ def get_repo_root(start_path: Path | None = None) -> Path:
     raise RuntimeError(
         f"Could not determine repository root starting from '{current}'."
     )
+
+
+class HexastackScriptArgumentParser(argparse.ArgumentParser):
+    """Standardized CLI argument parser for Hexastack maintenance scripts.
+
+    Notes/Architectural Intent:
+        Provides consistent options across all scripts:
+        - Optional positional files/paths (e.g. from pre-commit)
+        - `--package` / `-p` to target specific packages
+        - `--path` to target specific subdirectories/files
+        - `--all` / `-a` to target all packages unconditionally
+    """
+
+    def __init__(self, description: str, **kwargs: Any) -> None:
+        super().__init__(description=description, **kwargs)
+        self.add_argument(
+            "files",
+            nargs="*",
+            help="Files or paths to process (defaults to all if none specified).",
+        )
+        self.add_argument(
+            "-p",
+            "--package",
+            dest="packages",
+            action="append",
+            choices=VALID_PACKAGES,
+            help="Target specific package(s) (e.g. -p auth -p core).",
+        )
+        self.add_argument(
+            "--path",
+            dest="custom_paths",
+            action="append",
+            help="Target custom directory or file path(s).",
+        )
+        self.add_argument(
+            "-a",
+            "--all",
+            action="store_true",
+            help="Run across all packages unconditionally.",
+        )
+
+
+def _find_py_files_in_dir(directory: Path) -> list[Path]:
+    """Find all .py files in directory recursively."""
+    return (
+        [p.resolve() for p in directory.glob("**/*.py")] if directory.is_dir() else []
+    )
+
+
+def _resolve_explicit_paths(paths: list[str], root: Path) -> list[Path]:
+    """Resolve explicit files and directories to Python files."""
+    resolved: set[Path] = set()
+    for raw in paths:
+        path = Path(raw) if Path(raw).is_absolute() else (root / raw)
+        if path.is_file() and path.suffix == ".py":
+            resolved.add(path.resolve())
+        elif path.is_dir():
+            resolved.update(_find_py_files_in_dir(path))
+    return sorted(resolved)
+
+
+def resolve_target_python_files(
+    args: argparse.Namespace,
+    repo_root: Path | None = None,
+) -> list[Path]:
+    """Resolve target Python source files based on standard CLI arguments.
+
+    Args:
+        args: Parsed CLI arguments from HexastackScriptArgumentParser.
+        repo_root: Optional repository root path.
+
+    Returns:
+        Sorted list of matching Path objects for Python source files.
+    """
+    root = repo_root or get_repo_root()
+
+    # 1. If explicit file arguments or paths were passed
+    explicit = (args.files or []) + (args.custom_paths or [])
+    if explicit:
+        return _resolve_explicit_paths(explicit, root)
+
+    # 2. If specific packages were requested
+    if args.packages:
+        resolved_pkg: set[Path] = set()
+        for pkg_name in args.packages:
+            resolved_pkg.update(
+                _find_py_files_in_dir(get_package_directory(pkg_name, root) / "src")
+            )
+        return sorted(resolved_pkg)
+
+    # 3. Default or --all: All package src/ directories
+    resolved_all: set[Path] = set()
+    for pkg_dir in get_package_directories(root):
+        resolved_all.update(_find_py_files_in_dir(pkg_dir / "src"))
+    return sorted(resolved_all)

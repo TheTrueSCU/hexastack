@@ -16,8 +16,8 @@ __all__ = [
     "AsyncPgVectorStoreAdapter",
     "AsyncSqlAlchemyRepository",
     "AsyncSqlAlchemyUnitOfWork",
+    "create_vector_table",
     "PgVectorStoreAdapter",
     "SqlAlchemyRepository",
     "SqlAlchemyUnitOfWork",
-    "create_vector_table",
 ]

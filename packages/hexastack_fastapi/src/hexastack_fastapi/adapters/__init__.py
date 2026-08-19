@@ -11,8 +11,8 @@ from hexastack_fastapi.adapters.health import create_health_router
 from hexastack_fastapi.adapters.routing import CqrsRouter
 
 __all__ = [
-    "CqrsRouter",
     "check_openapi_conformance",
+    "CqrsRouter",
     "create_fastapi_app",
     "create_health_router",
     "create_test_client",

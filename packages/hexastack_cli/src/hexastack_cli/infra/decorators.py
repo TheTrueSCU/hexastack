@@ -40,58 +40,13 @@ class GroupMetadata:
 
 
 __all__ = [
-    "CliMetadata",
-    "GroupMetadata",
     "cli_command",
     "cli_group",
     "cli_query",
+    "CliMetadata",
     "feature_flag_command",
+    "GroupMetadata",
 ]
-
-
-def feature_flag_command(
-    flag_key: str,
-    *,
-    default: bool = False,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """Wrap a Typer command callable with dynamic feature flag evaluation.
-
-    Notes/Architectural Intent:
-        Evaluates the specified feature flag prior to command execution. If disabled,
-        prints a clean error message and exits with a non-zero status code without crashing.
-
-    Args:
-        flag_key: Unique identifier of the feature flag to check.
-        default: Fallback boolean value if flag is not explicitly configured.
-
-    Returns:
-        Decorator wrapping the target callable.
-    """
-    from functools import wraps
-
-    import typer
-
-    from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
-    from hexastack_core.domain.feature_flags import EvaluationContext
-    from hexastack_core.ports.feature_flags import FeatureFlagPort
-
-    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
-        @wraps(fn)
-        def wrapped(*args: Any, **kwargs: Any) -> Any:
-            flags: FeatureFlagPort = ConfigFeatureFlagAdapter()
-            eval_ctx = EvaluationContext.from_current_context()
-            if not flags.is_enabled(flag_key, default=default, context=eval_ctx):
-                typer.secho(
-                    f"Error: Command is disabled by feature flag '{flag_key}'.",
-                    fg=typer.colors.RED,
-                    err=True,
-                )
-                raise typer.Exit(code=1)
-            return fn(*args, **kwargs)
-
-        return wrapped
-
-    return decorator
 
 
 def _normalize_tokens(tokens: Sequence[str] | str | None) -> tuple[str, ...]:
@@ -215,5 +170,50 @@ def cli_query[TQuery: Query](
         )
         setattr(cls, _CLI_METADATA_ATTR, meta)
         return cls
+
+    return decorator
+
+
+def feature_flag_command(
+    flag_key: str,
+    *,
+    default: bool = False,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Wrap a Typer command callable with dynamic feature flag evaluation.
+
+    Notes/Architectural Intent:
+        Evaluates the specified feature flag prior to command execution. If disabled,
+        prints a clean error message and exits with a non-zero status code without crashing.
+
+    Args:
+        flag_key: Unique identifier of the feature flag to check.
+        default: Fallback boolean value if flag is not explicitly configured.
+
+    Returns:
+        Decorator wrapping the target callable.
+    """
+    from functools import wraps
+
+    import typer
+
+    from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
+    from hexastack_core.domain.feature_flags import EvaluationContext
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(fn)
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
+            flags: FeatureFlagPort = ConfigFeatureFlagAdapter()
+            eval_ctx = EvaluationContext.from_current_context()
+            if not flags.is_enabled(flag_key, default=default, context=eval_ctx):
+                typer.secho(
+                    f"Error: Command is disabled by feature flag '{flag_key}'.",
+                    fg=typer.colors.RED,
+                    err=True,
+                )
+                raise typer.Exit(code=1)
+            return fn(*args, **kwargs)
+
+        return wrapped
 
     return decorator

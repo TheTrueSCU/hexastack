@@ -17,8 +17,8 @@ from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 
 __all__ = [
-    "TestRuntime",
     "create_test_runtime",
+    "TestRuntime",
 ]
 
 

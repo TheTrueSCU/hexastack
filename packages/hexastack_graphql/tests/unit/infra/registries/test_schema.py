@@ -18,46 +18,56 @@ def test_empty_registry_builds_default_ping_schema():
     assert res.data == {"ping": "pong"}
 
 
-def test_schema_registry_with_custom_schema():
+def test_schema_building_error_handling(monkeypatch):
+    import pytest
+
+    from hexastack_graphql.domain.exceptions import SchemaBuildingError
+
+    reg = GraphQLSchemaRegistry()
+
+    def bad_schema(*args, **kwargs):
+        raise ValueError("Invalid schema config")
+
+    monkeypatch.setattr(strawberry, "Schema", bad_schema)
+    with pytest.raises(SchemaBuildingError, match="Failed to build GraphQL schema"):
+        reg.build_schema()
+
+
+def test_schema_registry_clear():
     reg = GraphQLSchemaRegistry()
 
     @strawberry.type
-    class CustomQuery:
+    class Q:
         @strawberry.field
-        def custom(self) -> str:
-            return "custom_val"
+        def val(self) -> int:
+            return 10
 
-    custom_schema = strawberry.Schema(query=CustomQuery)
-    reg.set_custom_schema(custom_schema)
-
-    schema = reg.build_schema()
-    assert schema is custom_schema
-    res = schema.execute_sync("{ custom }")
-    assert res.data == {"custom": "custom_val"}
-
-
-def test_schema_registry_with_query_and_mutation():
-    reg = get_schema_registry()
+    reg.register_query_type(Q)
     reg.clear()
+    schema = reg.build_schema()
+    res = schema.execute_sync("{ ping }")
+    assert res.data == {"ping": "pong"}
 
-    @graphql_query_type
-    class QueryRoot:
+
+def test_schema_registry_composite_with_extra_fields():
+    reg = GraphQLSchemaRegistry()
+
+    @strawberry.type
+    class BaseQ:
         @strawberry.field
-        def hello(self, name: str = "World") -> str:
-            return f"Hello, {name}!"
+        def base(self) -> str:
+            return "base"
 
-    @graphql_mutation_type
-    class MutationRoot:
-        @strawberry.mutation
-        def add(self, a: int, b: int) -> int:
-            return a + b
+    @strawberry.field
+    def extra(info: Info[GraphQLContext, None]) -> str:
+        return "extra"
+
+    reg.register_query_type(BaseQ)
+    reg.register_query_field("extra", extra)
 
     schema = reg.build_schema()
-    res_q = schema.execute_sync('{ hello(name: "Hexastack") }')
-    assert res_q.data == {"hello": "Hello, Hexastack!"}
-
-    res_m = schema.execute_sync("mutation { add(a: 2, b: 3) }")
-    assert res_m.data == {"add": 5}
+    res = schema.execute_sync("{ base extra }")
+    assert res.data == {"base": "base", "extra": "extra"}
 
 
 def test_schema_registry_individual_fields():
@@ -125,53 +135,43 @@ def test_schema_registry_multiple_query_and_mutation_types():
     assert res_m.data == {"createUser": "user_created", "createOrder": "order_created"}
 
 
-def test_schema_registry_clear():
+def test_schema_registry_with_custom_schema():
     reg = GraphQLSchemaRegistry()
 
     @strawberry.type
-    class Q:
+    class CustomQuery:
         @strawberry.field
-        def val(self) -> int:
-            return 10
+        def custom(self) -> str:
+            return "custom_val"
 
-    reg.register_query_type(Q)
+    custom_schema = strawberry.Schema(query=CustomQuery)
+    reg.set_custom_schema(custom_schema)
+
+    schema = reg.build_schema()
+    assert schema is custom_schema
+    res = schema.execute_sync("{ custom }")
+    assert res.data == {"custom": "custom_val"}
+
+
+def test_schema_registry_with_query_and_mutation():
+    reg = get_schema_registry()
     reg.clear()
-    schema = reg.build_schema()
-    res = schema.execute_sync("{ ping }")
-    assert res.data == {"ping": "pong"}
 
-
-def test_schema_registry_composite_with_extra_fields():
-    reg = GraphQLSchemaRegistry()
-
-    @strawberry.type
-    class BaseQ:
+    @graphql_query_type
+    class QueryRoot:
         @strawberry.field
-        def base(self) -> str:
-            return "base"
+        def hello(self, name: str = "World") -> str:
+            return f"Hello, {name}!"
 
-    @strawberry.field
-    def extra(info: Info[GraphQLContext, None]) -> str:
-        return "extra"
-
-    reg.register_query_type(BaseQ)
-    reg.register_query_field("extra", extra)
+    @graphql_mutation_type
+    class MutationRoot:
+        @strawberry.mutation
+        def add(self, a: int, b: int) -> int:
+            return a + b
 
     schema = reg.build_schema()
-    res = schema.execute_sync("{ base extra }")
-    assert res.data == {"base": "base", "extra": "extra"}
+    res_q = schema.execute_sync('{ hello(name: "Hexastack") }')
+    assert res_q.data == {"hello": "Hello, Hexastack!"}
 
-
-def test_schema_building_error_handling(monkeypatch):
-    import pytest
-
-    from hexastack_graphql.domain.exceptions import SchemaBuildingError
-
-    reg = GraphQLSchemaRegistry()
-
-    def bad_schema(*args, **kwargs):
-        raise ValueError("Invalid schema config")
-
-    monkeypatch.setattr(strawberry, "Schema", bad_schema)
-    with pytest.raises(SchemaBuildingError, match="Failed to build GraphQL schema"):
-        reg.build_schema()
+    res_m = schema.execute_sync("mutation { add(a: 2, b: 3) }")
+    assert res_m.data == {"add": 5}

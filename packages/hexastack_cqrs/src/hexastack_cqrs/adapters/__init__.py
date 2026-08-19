@@ -9,10 +9,10 @@ from hexastack_cqrs.adapters.buses import (
 )
 
 __all__ = [
-    "HueyCommandBus",
-    "HueyEventBus",
     "AsyncNativeCommandBus",
     "AsyncNativeEventBus",
+    "HueyCommandBus",
+    "HueyEventBus",
     "SynchronousCommandBus",
     "SynchronousEventBus",
     "SynchronousQueryBus",

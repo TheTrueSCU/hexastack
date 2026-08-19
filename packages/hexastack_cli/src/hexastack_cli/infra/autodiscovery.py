@@ -31,6 +31,52 @@ __all__ = [
 ]
 
 
+class _SubgroupManager:
+    """Manages creation and nested mounting of Typer subgroups."""
+
+    def __init__(self, root_app: typer.Typer) -> None:
+        self.root_app = root_app
+        self.subgroups: dict[tuple[str, ...], typer.Typer] = {}
+        self.group_docs: dict[tuple[str, ...], str] = {}
+
+    def get_or_create(self, group_parts: list[str]) -> typer.Typer:
+        """Get or create nested subgroup Typer application."""
+        if not group_parts:
+            return self.root_app
+
+        current_app = self.root_app
+        current_path: list[str] = []
+        for part in group_parts:
+            current_path.append(part)
+            key = tuple(current_path)
+            if key not in self.subgroups:
+                help_text = self.group_docs.get(
+                    key, f"{part.title()} management commands"
+                )
+                sub_app = typer.Typer(
+                    name=part,
+                    help=help_text,
+                    no_args_is_help=True,
+                )
+
+                @sub_app.callback()
+                def _sub_cb() -> None:
+                    pass
+
+                current_app.add_typer(sub_app, name=part)
+                self.subgroups[key] = sub_app
+            current_app = self.subgroups[key]
+        return current_app
+
+    def register_group_metadata(self, obj: type[Any]) -> None:
+        """Extract and cache group documentation from @cli_group."""
+        grp_meta: GroupMetadata | None = getattr(obj, _CLI_GROUP_ATTR, None)
+        if grp_meta is not None:
+            parts = _normalize_group_path(grp_meta.name)
+            if parts and grp_meta.help:
+                self.group_docs[tuple(parts)] = grp_meta.help
+
+
 def _normalize_group_path(group: str | Sequence[str] | None) -> list[str]:
     """Normalize a string or sequence into a list of subcommand group tokens."""
     if not group:
@@ -38,52 +84,6 @@ def _normalize_group_path(group: str | Sequence[str] | None) -> list[str]:
     if isinstance(group, str):
         return [part.strip() for part in re.split(r"[./\s]+", group) if part.strip()]
     return [str(part).strip() for part in group if str(part).strip()]
-
-
-def autodiscover_cli_commands(
-    app: typer.Typer,
-    packages_or_modules: Sequence[str | ModuleType],
-    pipeline: ExecutionPipeline,
-    console: Console | None = None,
-) -> None:
-    """Scan packages and register discovered CLI commands into a Typer application.
-
-    Args:
-        app: Target Typer application instance.
-        packages_or_modules: Sequence of package names or module objects to inspect.
-        pipeline: Target ExecutionPipeline instance.
-        console: Optional rich Console instance.
-
-    Returns:
-        None.
-
-    Raises:
-        None.
-    """
-    visitor = create_cli_visitor(app=app, pipeline=pipeline, console=console)
-    scan_modules(packages_or_modules, [visitor])
-
-
-def _resolve_targets(
-    meta: CliMetadata, default_name: str
-) -> list[tuple[list[str], str, str | None]]:
-    """Resolve all (group_parts, cmd_name, help) targets including aliases."""
-    primary_group = _normalize_group_path(meta.group)
-    primary_name = meta.name or default_name
-    targets: list[tuple[list[str], str, str | None]] = [
-        (primary_group, primary_name, meta.help)
-    ]
-
-    for alias in meta.aliases:
-        if alias.startswith("/"):
-            targets.append(([], alias.lstrip("/"), meta.help))
-        elif any(sep in alias for sep in (".", "/", " ")):
-            parts = _normalize_group_path(alias)
-            targets.append((parts[:-1], parts[-1], meta.help))
-        else:
-            targets.append((primary_group, alias, meta.help))
-
-    return targets
 
 
 def _register_model_target(
@@ -122,50 +122,50 @@ def _register_model_target(
         )
 
 
-class _SubgroupManager:
-    """Manages creation and nested mounting of Typer subgroups."""
+def _resolve_targets(
+    meta: CliMetadata, default_name: str
+) -> list[tuple[list[str], str, str | None]]:
+    """Resolve all (group_parts, cmd_name, help) targets including aliases."""
+    primary_group = _normalize_group_path(meta.group)
+    primary_name = meta.name or default_name
+    targets: list[tuple[list[str], str, str | None]] = [
+        (primary_group, primary_name, meta.help)
+    ]
 
-    def __init__(self, root_app: typer.Typer) -> None:
-        self.root_app = root_app
-        self.subgroups: dict[tuple[str, ...], typer.Typer] = {}
-        self.group_docs: dict[tuple[str, ...], str] = {}
+    for alias in meta.aliases:
+        if alias.startswith("/"):
+            targets.append(([], alias.lstrip("/"), meta.help))
+        elif any(sep in alias for sep in (".", "/", " ")):
+            parts = _normalize_group_path(alias)
+            targets.append((parts[:-1], parts[-1], meta.help))
+        else:
+            targets.append((primary_group, alias, meta.help))
 
-    def register_group_metadata(self, obj: type[Any]) -> None:
-        """Extract and cache group documentation from @cli_group."""
-        grp_meta: GroupMetadata | None = getattr(obj, _CLI_GROUP_ATTR, None)
-        if grp_meta is not None:
-            parts = _normalize_group_path(grp_meta.name)
-            if parts and grp_meta.help:
-                self.group_docs[tuple(parts)] = grp_meta.help
+    return targets
 
-    def get_or_create(self, group_parts: list[str]) -> typer.Typer:
-        """Get or create nested subgroup Typer application."""
-        if not group_parts:
-            return self.root_app
 
-        current_app = self.root_app
-        current_path: list[str] = []
-        for part in group_parts:
-            current_path.append(part)
-            key = tuple(current_path)
-            if key not in self.subgroups:
-                help_text = self.group_docs.get(
-                    key, f"{part.title()} management commands"
-                )
-                sub_app = typer.Typer(
-                    name=part,
-                    help=help_text,
-                    no_args_is_help=True,
-                )
+def autodiscover_cli_commands(
+    app: typer.Typer,
+    packages_or_modules: Sequence[str | ModuleType],
+    pipeline: ExecutionPipeline,
+    console: Console | None = None,
+) -> None:
+    """Scan packages and register discovered CLI commands into a Typer application.
 
-                @sub_app.callback()
-                def _sub_cb() -> None:
-                    pass
+    Args:
+        app: Target Typer application instance.
+        packages_or_modules: Sequence of package names or module objects to inspect.
+        pipeline: Target ExecutionPipeline instance.
+        console: Optional rich Console instance.
 
-                current_app.add_typer(sub_app, name=part)
-                self.subgroups[key] = sub_app
-            current_app = self.subgroups[key]
-        return current_app
+    Returns:
+        None.
+
+    Raises:
+        None.
+    """
+    visitor = create_cli_visitor(app=app, pipeline=pipeline, console=console)
+    scan_modules(packages_or_modules, [visitor])
 
 
 def create_cli_visitor(

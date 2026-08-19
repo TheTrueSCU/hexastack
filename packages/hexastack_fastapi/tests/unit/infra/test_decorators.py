@@ -42,6 +42,15 @@ def test_api_command_decorator_attaches_metadata():
     assert meta.tags == ("Accounts",)
 
 
+def test_api_command_with_feature_flag():
+    @api_command("/gated-cmd", feature_flag="flags.gated_cmd")
+    class GatedCmd(Command):
+        pass
+
+    meta: RouteMetadata = getattr(GatedCmd, _ROUTE_METADATA_ATTR)
+    assert meta.feature_flag == "flags.gated_cmd"
+
+
 def test_api_query_decorator_attaches_metadata():
     meta: RouteMetadata = getattr(GetAccountQry, _ROUTE_METADATA_ATTR)
     assert meta.path == "/accounts/{account_id}"
@@ -51,15 +60,6 @@ def test_api_query_decorator_attaches_metadata():
     assert meta.output_format == "json"
     assert meta.summary == "Fetch an account"
     assert meta.tags == ("Accounts",)
-
-
-def test_api_command_with_feature_flag():
-    @api_command("/gated-cmd", feature_flag="flags.gated_cmd")
-    class GatedCmd(Command):
-        pass
-
-    meta: RouteMetadata = getattr(GatedCmd, _ROUTE_METADATA_ATTR)
-    assert meta.feature_flag == "flags.gated_cmd"
 
 
 def test_feature_flag_route_decorator():

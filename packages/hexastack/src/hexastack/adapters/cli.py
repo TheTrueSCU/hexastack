@@ -53,44 +53,14 @@ cli_command(
 )(PingDemoCommand)
 
 
-def add_serve_command(app: typer.Typer) -> None:
-    """Register 'serve' command to launch the local FastAPI dev server using Uvicorn.
-
-    Args:
-        app: Target Typer application instance.
-    """
-
-    @app.command(
-        name="serve",
-        help="Launch the Hexastack local development server (requires hexastack[web]).",
-    )
-    def serve(
-        host: str = typer.Option(
-            "127.0.0.1", "--host", "-h", help="Bind host address."
-        ),
-        port: int = typer.Option(8000, "--port", "-p", help="Bind port number."),
-        reload: bool = typer.Option(
-            True, "--reload/--no-reload", help="Enable live reloading."
-        ),
-    ) -> None:
-        if importlib.util.find_spec("uvicorn") is None:
-            raise MissingDependencyError(
-                "uvicorn is required to run the local server. "
-                "Install via 'pip install hexastack[web]' or 'pip install uvicorn[standard]'."
-            )
-
-        if importlib.util.find_spec("fastapi") is None:
-            raise MissingDependencyError(
-                "fastapi is required to run the local server. "
-                "Install via 'pip install hexastack[fastapi]'."
-            )
-
-        import uvicorn
-
-        from hexastack.adapters.fastapi import create_demo_app
-
-        demo_app = create_demo_app()
-        uvicorn.run(demo_app, host=host, port=port, reload=reload)
+__all__ = [
+    "add_db_commands",
+    "add_grpc_commands",
+    "add_mcp_commands",
+    "add_serve_command",
+    "DemoGroupDocs",
+    "InspectGroupDocs",
+]
 
 
 def add_db_commands(app: typer.Typer) -> None:
@@ -246,34 +216,6 @@ def add_db_commands(app: typer.Typer) -> None:
         stamp(_get_config(directory, url), revision)
 
 
-def add_mcp_commands(app: typer.Typer) -> None:
-    """Register 'mcp' subcommand group for AI agent integration."""
-    if importlib.util.find_spec("hexastack_mcp") is None:
-        return
-
-    mcp_app = typer.Typer(
-        name="mcp",
-        help="Model Context Protocol (MCP) AI agent tools and server.",
-        no_args_is_help=True,
-    )
-    app.add_typer(mcp_app, name="mcp")
-
-    @mcp_app.command(
-        name="run",
-        help="Launch the MCP server in stdio mode (for Claude, Cursor, Antigravity).",
-    )
-    def mcp_run() -> None:
-        from mcp.server.fastmcp import FastMCP as McpServer
-
-        import hexastack.application.diagnostics
-        from hexastack_core.infra.bootstrap import bootstrap
-        from hexastack_mcp.adapters.stdio import run_stdio_server
-
-        runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
-        server = runtime.container.resolve(McpServer)
-        run_stdio_server(server)
-
-
 def add_grpc_commands(app: typer.Typer) -> None:
     """Register 'grpc' subcommand group for RPC services."""
     if importlib.util.find_spec("hexastack_grpc") is None:
@@ -306,11 +248,69 @@ def add_grpc_commands(app: typer.Typer) -> None:
         run_grpc_server(server, block=True)
 
 
-__all__ = [
-    "DemoGroupDocs",
-    "InspectGroupDocs",
-    "add_db_commands",
-    "add_grpc_commands",
-    "add_mcp_commands",
-    "add_serve_command",
-]
+def add_mcp_commands(app: typer.Typer) -> None:
+    """Register 'mcp' subcommand group for AI agent integration."""
+    if importlib.util.find_spec("hexastack_mcp") is None:
+        return
+
+    mcp_app = typer.Typer(
+        name="mcp",
+        help="Model Context Protocol (MCP) AI agent tools and server.",
+        no_args_is_help=True,
+    )
+    app.add_typer(mcp_app, name="mcp")
+
+    @mcp_app.command(
+        name="run",
+        help="Launch the MCP server in stdio mode (for Claude, Cursor, Antigravity).",
+    )
+    def mcp_run() -> None:
+        from mcp.server.fastmcp import FastMCP as McpServer
+
+        import hexastack.application.diagnostics
+        from hexastack_core.infra.bootstrap import bootstrap
+        from hexastack_mcp.adapters.stdio import run_stdio_server
+
+        runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+        server = runtime.container.resolve(McpServer)
+        run_stdio_server(server)
+
+
+def add_serve_command(app: typer.Typer) -> None:
+    """Register 'serve' command to launch the local FastAPI dev server using Uvicorn.
+
+    Args:
+        app: Target Typer application instance.
+    """
+
+    @app.command(
+        name="serve",
+        help="Launch the Hexastack local development server (requires hexastack[web]).",
+    )
+    def serve(
+        host: str = typer.Option(
+            "127.0.0.1", "--host", "-h", help="Bind host address."
+        ),
+        port: int = typer.Option(8000, "--port", "-p", help="Bind port number."),
+        reload: bool = typer.Option(
+            True, "--reload/--no-reload", help="Enable live reloading."
+        ),
+    ) -> None:
+        if importlib.util.find_spec("uvicorn") is None:
+            raise MissingDependencyError(
+                "uvicorn is required to run the local server. "
+                "Install via 'pip install hexastack[web]' or 'pip install uvicorn[standard]'."
+            )
+
+        if importlib.util.find_spec("fastapi") is None:
+            raise MissingDependencyError(
+                "fastapi is required to run the local server. "
+                "Install via 'pip install hexastack[fastapi]'."
+            )
+
+        import uvicorn
+
+        from hexastack.adapters.fastapi import create_demo_app
+
+        demo_app = create_demo_app()
+        uvicorn.run(demo_app, host=host, port=port, reload=reload)

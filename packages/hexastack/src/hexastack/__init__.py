@@ -49,6 +49,11 @@ for _shorthand in __all__:
             pass
 
 
+def __dir__() -> list[str]:
+    """Return only installed package shorthands and module globals."""
+    return sorted(set(list(globals().keys()) + _installed_shorthands))
+
+
 def __getattr__(name: str) -> Any:
     """Provide clear guidance when an uninstalled optional package is accessed."""
     if name in __all__:
@@ -57,8 +62,3 @@ def __getattr__(name: str) -> Any:
             f"Install it via 'pip install hexastack[{name}]' or 'pip install hexastack-{name}'."
         )
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
-
-
-def __dir__() -> list[str]:
-    """Return only installed package shorthands and module globals."""
-    return sorted(set(list(globals().keys()) + _installed_shorthands))

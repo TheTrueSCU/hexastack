@@ -108,6 +108,6 @@ class GraphQLBootstrapper(BootstrapperPort):
 
 
 __all__ = [
-    "GraphQLBootstrapResult",
     "GraphQLBootstrapper",
+    "GraphQLBootstrapResult",
 ]

@@ -65,20 +65,6 @@ def test_jwt_custom_claims_and_no_tenant():
     assert decoded.claims["custom_flag"] is True
 
 
-def test_jwt_missing_sub_claim():
-    # Token manually crafted without sub claim
-    raw_token = jwt.encode(
-        {"roles": ["viewer"], "exp": 9999999999},
-        "secret-key-1234567890-thirty-two-bytes-key",
-        algorithm="HS256",
-    )
-    adapter = JwtSecurityAdapter(
-        secret_key="secret-key-1234567890-thirty-two-bytes-key"
-    )
-    with pytest.raises(InvalidTokenError, match="missing required 'sub' claim"):
-        adapter.verify_token(raw_token)
-
-
 def test_jwt_empty_and_malformed_tokens(jwt_security: JwtSecurityAdapter):
     with pytest.raises(InvalidTokenError, match="Token string cannot be empty"):
         jwt_security.verify_token("")
@@ -134,6 +120,20 @@ def test_jwt_issuer_and_audience_claims(sample_identity: Identity):
     )
     with pytest.raises(InvalidTokenError):
         bad_aud_adapter.verify_token(token)
+
+
+def test_jwt_missing_sub_claim():
+    # Token manually crafted without sub claim
+    raw_token = jwt.encode(
+        {"roles": ["viewer"], "exp": 9999999999},
+        "secret-key-1234567890-thirty-two-bytes-key",
+        algorithm="HS256",
+    )
+    adapter = JwtSecurityAdapter(
+        secret_key="secret-key-1234567890-thirty-two-bytes-key"
+    )
+    with pytest.raises(InvalidTokenError, match="missing required 'sub' claim"):
+        adapter.verify_token(raw_token)
 
 
 def test_jwt_ttl_variations_and_expiry(sample_identity: Identity):

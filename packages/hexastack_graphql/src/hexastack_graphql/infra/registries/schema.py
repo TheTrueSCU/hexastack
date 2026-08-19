@@ -25,6 +25,21 @@ class GraphQLSchemaRegistry:
         self._mutation_fields: dict[str, Any] = {}
         self._custom_schema: strawberry.Schema | None = None
 
+    def _build_mutation_root(self) -> type[Any] | None:
+        """Assemble composite GraphQL Mutation root type if any mutations registered."""
+        if self._mutation_types:
+            if len(self._mutation_types) == 1 and not self._mutation_fields:
+                return self._mutation_types[0]
+            bases = tuple(self._mutation_types)
+            MutationType = type("Mutation", bases, dict(self._mutation_fields))
+            return strawberry.type(MutationType)
+
+        if self._mutation_fields:
+            MutationType = type("Mutation", (), dict(self._mutation_fields))
+            return strawberry.type(MutationType)
+
+        return None
+
     def _build_query_root(self) -> type[Any]:
         """Assemble composite or fallback GraphQL Query root type."""
         if self._query_types:
@@ -46,21 +61,6 @@ class GraphQLSchemaRegistry:
                 return "pong"
 
         return DefaultQuery
-
-    def _build_mutation_root(self) -> type[Any] | None:
-        """Assemble composite GraphQL Mutation root type if any mutations registered."""
-        if self._mutation_types:
-            if len(self._mutation_types) == 1 and not self._mutation_fields:
-                return self._mutation_types[0]
-            bases = tuple(self._mutation_types)
-            MutationType = type("Mutation", bases, dict(self._mutation_fields))
-            return strawberry.type(MutationType)
-
-        if self._mutation_fields:
-            MutationType = type("Mutation", (), dict(self._mutation_fields))
-            return strawberry.type(MutationType)
-
-        return None
 
     def build_schema(
         self,

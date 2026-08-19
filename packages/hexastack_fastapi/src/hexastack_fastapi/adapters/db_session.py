@@ -127,9 +127,9 @@ class AsyncDbSessionMiddleware(BaseHTTPMiddleware):
 
 
 __all__ = [
+    "add_db_session_middleware",
     "AsyncDbSessionMiddleware",
     "DbSessionMiddleware",
-    "add_db_session_middleware",
 ]
 
 

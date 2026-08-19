@@ -7,7 +7,7 @@ from hexastack_cqrs.adapters.buses.command.synchronous import (
 )
 
 __all__ = [
-    "HueyCommandBus",
     "AsyncNativeCommandBus",
+    "HueyCommandBus",
     "SynchronousCommandBus",
 ]

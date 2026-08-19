@@ -82,8 +82,8 @@ __all__ = [
     "HexastackAuthConfig",
     "OpaConfig",
     "OpenFgaConfig",
-    "SpiffeConfig",
     "register_auth_config",
+    "SpiffeConfig",
 ]
 
 

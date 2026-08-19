@@ -25,74 +25,6 @@ __all__ = [
 ]
 
 
-def _resolve_cli_input(input_payload: str | None) -> dict[str, Any]:
-    """Parse raw JSON string, file content, or stdin input into a dictionary."""
-    if not input_payload:
-        return {}
-    if input_payload == "-":
-        raw_json = sys.stdin.read()
-    elif Path(input_payload).is_file():
-        with Path(input_payload).open(encoding="utf-8") as f:
-            raw_json = f.read()
-    else:
-        raw_json = input_payload
-    payload_dict = json.loads(raw_json)
-    return payload_dict if isinstance(payload_dict, dict) else {}
-
-
-def _present_cli_result(
-    result: Any,
-    requested_output: str | None,
-    quiet_mode: bool,
-    active_presenter: RichTerminalPresenter,
-    active_console: Console,
-) -> None:
-    """Format and write CLI execution results to stdout or terminal presenter."""
-    if result is None:
-        return
-    if isinstance(result, Generic):
-        active_presenter.present(result, format_mode=requested_output)
-    elif not quiet_mode or requested_output in {"json", "plain"}:
-        if requested_output == "json":
-            sys.stdout.write(json.dumps(result, indent=2, default=str) + "\n")
-            sys.stdout.flush()
-        elif requested_output == "plain":
-            sys.stdout.write(f"{result}\n")
-            sys.stdout.flush()
-        elif not quiet_mode:
-            active_console.print(f"[bold green]{result}[/bold green]")
-
-
-def _build_model_parameters(
-    model_cls: type[Command] | type[Query],
-    pos_set: set[str],
-) -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
-    """Build positional and keyword parameters matching model_cls fields."""
-    pos_params: list[inspect.Parameter] = []
-    opt_params: list[inspect.Parameter] = []
-
-    for field_name, field_info in model_cls.model_fields.items():
-        annotation = field_info.annotation or str
-        is_pos = field_name in pos_set
-        default = (
-            typer.Argument(None, help=field_info.description)
-            if is_pos
-            else typer.Option(None, help=field_info.description)
-        )
-        param = inspect.Parameter(
-            name=field_name,
-            kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            default=default,
-            annotation=annotation,
-        )
-        if is_pos:
-            pos_params.append(param)
-        else:
-            opt_params.append(param)
-
-    return pos_params, opt_params
-
-
 def _build_control_parameters(
     model_cls: type[Command] | type[Query],
     output_format: str | None,
@@ -187,37 +119,6 @@ def _build_control_parameters(
     ]
 
 
-def _setup_cli_context(
-    correlation_id: str | None,
-    user_id: str | None,
-    tenant_id: str | None,
-) -> None:
-    """Initialize correlation and user context for CLI command execution."""
-    if correlation_id:
-        set_correlation_id(correlation_id)
-    if user_id or tenant_id:
-        set_user_context(
-            UserContext(user_id=user_id or "cli-user", tenant_id=tenant_id)
-        )
-
-
-def _execute_cli_model(
-    model_cls: type[Command] | type[Query],
-    pipeline: ExecutionPipeline,
-    field_data: dict[str, Any],
-    cli_flags: dict[str, Any],
-    requested_output: str | None,
-) -> Any:
-    """Instantiate and execute CQRS command/query through the pipeline."""
-    payload = dict(field_data)
-    payload.update(cli_flags)
-    instance = model_cls(**payload)
-    result = pipeline.execute(instance, output_format=requested_output)
-    if inspect.iscoroutine(result):
-        result = asyncio.run(result)
-    return result
-
-
 def _build_dynamic_cli_runner(
     model_cls: type[Command] | type[Query],
     pipeline: ExecutionPipeline,
@@ -283,6 +184,105 @@ def _build_dynamic_cli_runner(
     sig = inspect.Signature(parameters=all_params)
     cast("Any", runner).__signature__ = sig
     return runner
+
+
+def _build_model_parameters(
+    model_cls: type[Command] | type[Query],
+    pos_set: set[str],
+) -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
+    """Build positional and keyword parameters matching model_cls fields."""
+    pos_params: list[inspect.Parameter] = []
+    opt_params: list[inspect.Parameter] = []
+
+    for field_name, field_info in model_cls.model_fields.items():
+        annotation = field_info.annotation or str
+        is_pos = field_name in pos_set
+        default = (
+            typer.Argument(None, help=field_info.description)
+            if is_pos
+            else typer.Option(None, help=field_info.description)
+        )
+        param = inspect.Parameter(
+            name=field_name,
+            kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            default=default,
+            annotation=annotation,
+        )
+        if is_pos:
+            pos_params.append(param)
+        else:
+            opt_params.append(param)
+
+    return pos_params, opt_params
+
+
+def _execute_cli_model(
+    model_cls: type[Command] | type[Query],
+    pipeline: ExecutionPipeline,
+    field_data: dict[str, Any],
+    cli_flags: dict[str, Any],
+    requested_output: str | None,
+) -> Any:
+    """Instantiate and execute CQRS command/query through the pipeline."""
+    payload = dict(field_data)
+    payload.update(cli_flags)
+    instance = model_cls(**payload)
+    result = pipeline.execute(instance, output_format=requested_output)
+    if inspect.iscoroutine(result):
+        result = asyncio.run(result)
+    return result
+
+
+def _present_cli_result(
+    result: Any,
+    requested_output: str | None,
+    quiet_mode: bool,
+    active_presenter: RichTerminalPresenter,
+    active_console: Console,
+) -> None:
+    """Format and write CLI execution results to stdout or terminal presenter."""
+    if result is None:
+        return
+    if isinstance(result, Generic):
+        active_presenter.present(result, format_mode=requested_output)
+    elif not quiet_mode or requested_output in {"json", "plain"}:
+        if requested_output == "json":
+            sys.stdout.write(json.dumps(result, indent=2, default=str) + "\n")
+            sys.stdout.flush()
+        elif requested_output == "plain":
+            sys.stdout.write(f"{result}\n")
+            sys.stdout.flush()
+        elif not quiet_mode:
+            active_console.print(f"[bold green]{result}[/bold green]")
+
+
+def _resolve_cli_input(input_payload: str | None) -> dict[str, Any]:
+    """Parse raw JSON string, file content, or stdin input into a dictionary."""
+    if not input_payload:
+        return {}
+    if input_payload == "-":
+        raw_json = sys.stdin.read()
+    elif Path(input_payload).is_file():
+        with Path(input_payload).open(encoding="utf-8") as f:
+            raw_json = f.read()
+    else:
+        raw_json = input_payload
+    payload_dict = json.loads(raw_json)
+    return payload_dict if isinstance(payload_dict, dict) else {}
+
+
+def _setup_cli_context(
+    correlation_id: str | None,
+    user_id: str | None,
+    tenant_id: str | None,
+) -> None:
+    """Initialize correlation and user context for CLI command execution."""
+    if correlation_id:
+        set_correlation_id(correlation_id)
+    if user_id or tenant_id:
+        set_user_context(
+            UserContext(user_id=user_id or "cli-user", tenant_id=tenant_id)
+        )
 
 
 def _to_kebab_case(name: str) -> str:

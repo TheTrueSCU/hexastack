@@ -168,8 +168,8 @@ __all__ = [
     "HexastackDbConfig",
     "PgVectorConfig",
     "PostgresDialectConfig",
-    "SqliteDialectConfig",
     "register_database_config",
+    "SqliteDialectConfig",
 ]
 
 

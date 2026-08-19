@@ -13,15 +13,6 @@ class SampleCommand(Command):
     amount: int
 
 
-def test_conditional_feature_flag_middleware_enabled():
-    flags = InMemoryFeatureFlagAdapter({"feature.transfer": True})
-    mw = ConditionalFeatureFlagMiddleware(flags, "feature.transfer")
-
-    cmd = SampleCommand(amount=100)
-    result = mw(cmd, lambda c: c.amount * 2)
-    assert result == 200
-
-
 def test_conditional_feature_flag_middleware_disabled_bypass():
     flags = InMemoryFeatureFlagAdapter({"feature.transfer": False})
     mw = ConditionalFeatureFlagMiddleware(
@@ -57,6 +48,26 @@ def test_conditional_feature_flag_middleware_disabled_raises():
         mw(cmd, lambda c: c.amount * 2)
 
 
+def test_conditional_feature_flag_middleware_enabled():
+    flags = InMemoryFeatureFlagAdapter({"feature.transfer": True})
+    mw = ConditionalFeatureFlagMiddleware(flags, "feature.transfer")
+
+    cmd = SampleCommand(amount=100)
+    result = mw(cmd, lambda c: c.amount * 2)
+    assert result == 200
+
+
+def test_feature_flag_decorator_disabled_raises():
+    flags = InMemoryFeatureFlagAdapter({"feature.checkout_v2": False})
+
+    @feature_flag("feature.checkout_v2")
+    def checkout_handler(cmd: SampleCommand, **kw) -> str:
+        return f"modern_{cmd.amount}"
+
+    with pytest.raises(FeatureFlagDisabledError):
+        checkout_handler(SampleCommand(amount=50), __feature_flags__=flags)
+
+
 def test_feature_flag_decorator_enabled_and_fallback():
     flags = InMemoryFeatureFlagAdapter({"feature.checkout_v2": True})
 
@@ -72,14 +83,3 @@ def test_feature_flag_decorator_enabled_and_fallback():
     flags.set_flag("feature.checkout_v2", False)
     res_disabled = checkout_handler(SampleCommand(amount=50), __feature_flags__=flags)
     assert res_disabled == "legacy"
-
-
-def test_feature_flag_decorator_disabled_raises():
-    flags = InMemoryFeatureFlagAdapter({"feature.checkout_v2": False})
-
-    @feature_flag("feature.checkout_v2")
-    def checkout_handler(cmd: SampleCommand, **kw) -> str:
-        return f"modern_{cmd.amount}"
-
-    with pytest.raises(FeatureFlagDisabledError):
-        checkout_handler(SampleCommand(amount=50), __feature_flags__=flags)

@@ -18,13 +18,13 @@ from hexastack_auth.infra.middleware import (
 
 __all__ = [
     "AuthBootstrapper",
+    "authenticated",
     "AuthMetadata",
     "AuthorizationMiddleware",
-    "HexastackAuthConfig",
-    "authenticated",
     "authorize",
     "evaluate_authorization",
     "get_auth_metadata",
+    "HexastackAuthConfig",
     "register_auth_config",
     "requires_permission",
     "requires_role",

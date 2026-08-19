@@ -56,6 +56,29 @@ class DatabaseBootstrapper(BootstrapperPort):
     name: str = "db"
     order: int = 15
 
+    def _auto_create_tables(
+        self,
+        engine: Engine | AsyncEngine,
+        async_mode: bool,
+    ) -> None:
+        """Create database tables across all registered metadata definitions."""
+        registered = get_registered_metadata()
+        if not registered:
+            return
+
+        if async_mode:
+            sync_url = str(engine.url).replace("+aiosqlite", "").replace("+asyncpg", "")
+            from sqlalchemy import create_engine as _ce
+            from sqlalchemy.pool import NullPool
+
+            _sync = _ce(sync_url, poolclass=NullPool)
+            for metadata in registered:
+                metadata.create_all(_sync)
+            _sync.dispose()
+        elif isinstance(engine, Engine):
+            for metadata in registered:
+                metadata.create_all(engine)
+
     def _configure_async_db(
         self,
         di: Any,
@@ -124,29 +147,6 @@ class DatabaseBootstrapper(BootstrapperPort):
 
         return sync_engine, sync_factory, uow, vector_store
 
-    def _auto_create_tables(
-        self,
-        engine: Engine | AsyncEngine,
-        async_mode: bool,
-    ) -> None:
-        """Create database tables across all registered metadata definitions."""
-        registered = get_registered_metadata()
-        if not registered:
-            return
-
-        if async_mode:
-            sync_url = str(engine.url).replace("+aiosqlite", "").replace("+asyncpg", "")
-            from sqlalchemy import create_engine as _ce
-            from sqlalchemy.pool import NullPool
-
-            _sync = _ce(sync_url, poolclass=NullPool)
-            for metadata in registered:
-                metadata.create_all(_sync)
-            _sync.dispose()
-        elif isinstance(engine, Engine):
-            for metadata in registered:
-                metadata.create_all(engine)
-
     def configure(self, context: BootstrapContext) -> None:
         """Phase 2: Assemble database engine, sessionmaker, and UnitOfWork in DI container.
 
@@ -204,6 +204,6 @@ class DatabaseBootstrapper(BootstrapperPort):
 
 
 __all__ = [
-    "DatabaseBootstrapResult",
     "DatabaseBootstrapper",
+    "DatabaseBootstrapResult",
 ]

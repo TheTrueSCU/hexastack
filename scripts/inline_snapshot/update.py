@@ -3,7 +3,7 @@
 Notes/Architectural Intent:
     inline-snapshot requires a single-process (no xdist) run to write updated
     snapshots back into source files. This script provides a consistent,
-    ergonomic interface for the two inline-snapshot modes:
+    ergonomic interface for the three inline-snapshot modes:
 
     - create:  Record new snapshot() calls that have no existing value.
     - fix:     Update existing snapshots whose values have changed.
@@ -13,17 +13,14 @@ Notes/Architectural Intent:
     Only use this script when you intentionally want to write or update snapshots.
 
 Usage:
-    # Create new snapshots in a package
-    uv run python scripts/update_snapshots.py --package cqrs --mode create
+    # Fix stale snapshots in a package
+    uv run python scripts/inline_snapshot/update.py -p core --mode fix
 
-    # Fix stale snapshots after a schema change
-    uv run python scripts/update_snapshots.py --package events --mode fix
-
-    # Review pending changes without writing them
-    uv run python scripts/update_snapshots.py --package grpc --mode review
+    # Create new snapshots in specific paths
+    uv run python scripts/inline_snapshot/update.py --path packages/hexastack_cqrs --mode create
 
     # Run against all packages
-    uv run python scripts/update_snapshots.py --all --mode fix
+    uv run python scripts/inline_snapshot/update.py -a --mode fix
 """
 
 from __future__ import annotations
@@ -31,40 +28,38 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from pathlib import Path
 
-from scripts._common import VALID_PACKAGES, get_repo_root
+from scripts._common import (
+    VALID_PACKAGES,
+    HexastackScriptArgumentParser,
+    get_package_directory,
+    get_repo_root,
+)
 
 ROOT_DIR = get_repo_root()
-
 VALID_MODES = ["create", "fix", "review"]
 
 
-def run_snapshot_update(package: str, mode: str) -> int:
-    """Run pytest in single-process snapshot mode for the given package.
+def run_snapshot_update_for_dir(target_dir: Path, mode: str) -> int:
+    """Run pytest in single-process snapshot mode for the target directory.
 
     Args:
-        package: Short package name (e.g. 'cqrs', 'events', 'grpc').
+        target_dir: Path to directory containing tests to run.
         mode: inline-snapshot mode — one of 'create', 'fix', or 'review'.
 
     Returns:
         Exit code from the pytest subprocess (0 for success).
-
-    Notes/Architectural Intent:
-        Explicitly disables xdist via ``-p no:xdist`` so that inline-snapshot
-        can write back to source files. Coverage is disabled (``--no-cov``) to
-        keep output clean and avoid partial-coverage threshold failures when
-        running a single package.
     """
-    pkg_dir = ROOT_DIR / "packages" / f"hexastack_{package}"
-    if not pkg_dir.is_dir():
-        print(f"Error: Package directory not found: {pkg_dir}", file=sys.stderr)
+    if not target_dir.is_dir():
+        print(f"Error: Target directory not found: {target_dir}", file=sys.stderr)
         return 1
 
     cmd = [
         "uv",
         "run",
         "pytest",
-        str(pkg_dir),
+        str(target_dir),
         "-v",
         "--no-cov",
         "-p",
@@ -73,7 +68,7 @@ def run_snapshot_update(package: str, mode: str) -> int:
         f"--inline-snapshot={mode}",
     ]
 
-    print(f"  → Running inline-snapshot [{mode}] for hexastack_{package}...")
+    print(f"  → Running inline-snapshot [{mode}] for {target_dir.name}...")
     print(f"  → Command: {' '.join(cmd)}\n")
 
     result = subprocess.run(cmd, cwd=ROOT_DIR)
@@ -91,30 +86,46 @@ def run_snapshot_update(package: str, mode: str) -> int:
     return result.returncode
 
 
-def main() -> int:
-    """Entry point for snapshot update utility.
+def _resolve_target_dirs(args: argparse.Namespace) -> list[Path]:
+    """Resolve target package or test directories based on CLI options."""
+    root = ROOT_DIR
+    target_dirs: list[Path] = []
 
-    Returns:
-        Exit code (0 for success, 1 for any failure).
-    """
-    parser = argparse.ArgumentParser(
-        description="Create or fix inline-snapshots for Hexastack test suites.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+    # 1. Custom paths or positional files
+    explicit = (getattr(args, "files", None) or []) + (
+        getattr(args, "custom_paths", None) or []
     )
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
-        "--package",
-        choices=VALID_PACKAGES,
-        metavar="PACKAGE",
-        help=f"Package to update snapshots for. One of: {', '.join(VALID_PACKAGES)}",
-    )
-    group.add_argument(
-        "--all",
-        action="store_true",
-        dest="all_packages",
-        help="Run snapshot update across all packages sequentially.",
+    if explicit:
+        for p in explicit:
+            path = Path(p) if Path(p).is_absolute() else (root / p)
+            if path.exists():
+                target_dirs.append(path)
+        return sorted(target_dirs)
+
+    # 2. Specific packages
+    packages = getattr(args, "packages", None)
+    if packages:
+        for pkg_name in packages:
+            pkg_dir = get_package_directory(pkg_name, root)
+            if pkg_dir.is_dir():
+                target_dirs.append(pkg_dir)
+        return sorted(target_dirs)
+
+    # 3. Default or --all: All packages
+    for pkg_name in VALID_PACKAGES:
+        pkg_dir = get_package_directory(pkg_name, root)
+        if pkg_dir.is_dir():
+            target_dirs.append(pkg_dir)
+    return sorted(target_dirs)
+
+
+def main() -> int:
+    """Entry point for snapshot update utility."""
+    parser = HexastackScriptArgumentParser(
+        description="Create or fix inline-snapshots for Hexastack test suites."
     )
     parser.add_argument(
+        "-m",
         "--mode",
         choices=VALID_MODES,
         default="fix",
@@ -126,25 +137,30 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    packages = VALID_PACKAGES if args.all_packages else [args.package]
+    targets = _resolve_target_dirs(args)
+    if not targets:
+        print("No target package directories found.", file=sys.stderr)
+        return 1
 
     print("=" * 60)
     print(f"  Hexastack Snapshot Updater  [mode: {args.mode}]")
-    print(f"  Packages: {', '.join(packages)}")
+    print(f"  Targets: {', '.join(t.name for t in targets)}")
     print("=" * 60 + "\n")
 
     failed: list[str] = []
-    for pkg in packages:
-        code = run_snapshot_update(pkg, args.mode)
+    for target in targets:
+        code = run_snapshot_update_for_dir(target, args.mode)
         if code != 0:
-            failed.append(pkg)
+            failed.append(target.name)
 
     print("\n" + "=" * 60)
     if failed:
         print(f"❌ Snapshot update failed for: {', '.join(failed)}")
         return 1
 
-    print(f"✅ Snapshot [{args.mode}] complete for: {', '.join(packages)}")
+    print(
+        f"✅ Snapshot [{args.mode}] complete for: {', '.join(t.name for t in targets)}"
+    )
     return 0
 
 

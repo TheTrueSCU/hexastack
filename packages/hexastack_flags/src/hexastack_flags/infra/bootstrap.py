@@ -25,10 +25,6 @@ class FeatureFlagBootstrapper(BootstrapperPort):
     name: str = "feature_flags"
     order: int = 14  # Runs before CQRS (20), FastAPI (30), etc.
 
-    def register_config(self, registry: ConfigRegistry) -> None:
-        """Register HexastackFlagsConfig under [hexastack.flags]."""
-        register_flags_config(registry)
-
     def configure(self, context: BootstrapContext) -> None:
         """Initialize OpenFeature provider and register OpenFeatureFlagAdapter in DI."""
         config = context.get_config("flags", HexastackFlagsConfig)
@@ -49,3 +45,7 @@ class FeatureFlagBootstrapper(BootstrapperPort):
         adapter = OpenFeatureFlagAdapter()
         context.container.add_instance(adapter, declared_class=FeatureFlagPort)
         context.flags = adapter
+
+    def register_config(self, registry: ConfigRegistry) -> None:
+        """Register HexastackFlagsConfig under [hexastack.flags]."""
+        register_flags_config(registry)

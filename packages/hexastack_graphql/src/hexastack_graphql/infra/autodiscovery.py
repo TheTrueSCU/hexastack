@@ -29,11 +29,38 @@ class GraphQLFieldMetadata:
 
 
 __all__ = [
-    "GraphQLFieldMetadata",
-    "GraphQLTypeMetadata",
     "autodiscover_graphql_schema",
     "create_graphql_visitor",
+    "GraphQLFieldMetadata",
+    "GraphQLTypeMetadata",
 ]
+
+
+def _register_graphql_field(
+    obj: Any,
+    registry: GraphQLSchemaRegistry,
+) -> None:
+    """Register decorated GraphQL query or mutation field."""
+    field_meta: GraphQLFieldMetadata | None = getattr(obj, _GRAPHQL_FIELD_ATTR, None)
+    if field_meta is not None:
+        field_name = field_meta.name or getattr(obj, "__name__", "field")
+        if field_meta.kind == "query":
+            registry.register_query_field(field_name, obj)
+        elif field_meta.kind == "mutation":
+            registry.register_mutation_field(field_name, obj)
+
+
+def _register_graphql_type(
+    obj: type[Any],
+    registry: GraphQLSchemaRegistry,
+) -> None:
+    """Register decorated GraphQL query or mutation type."""
+    type_meta: GraphQLTypeMetadata | None = getattr(obj, _GRAPHQL_TYPE_ATTR, None)
+    if type_meta is not None:
+        if type_meta.kind == "query":
+            registry.register_query_type(obj)
+        elif type_meta.kind == "mutation":
+            registry.register_mutation_type(obj)
 
 
 def autodiscover_graphql_schema(
@@ -52,33 +79,6 @@ def autodiscover_graphql_schema(
     visitor = create_graphql_visitor(registry)
     scan_modules(packages_to_scan, [visitor])
     return registry
-
-
-def _register_graphql_type(
-    obj: type[Any],
-    registry: GraphQLSchemaRegistry,
-) -> None:
-    """Register decorated GraphQL query or mutation type."""
-    type_meta: GraphQLTypeMetadata | None = getattr(obj, _GRAPHQL_TYPE_ATTR, None)
-    if type_meta is not None:
-        if type_meta.kind == "query":
-            registry.register_query_type(obj)
-        elif type_meta.kind == "mutation":
-            registry.register_mutation_type(obj)
-
-
-def _register_graphql_field(
-    obj: Any,
-    registry: GraphQLSchemaRegistry,
-) -> None:
-    """Register decorated GraphQL query or mutation field."""
-    field_meta: GraphQLFieldMetadata | None = getattr(obj, _GRAPHQL_FIELD_ATTR, None)
-    if field_meta is not None:
-        field_name = field_meta.name or getattr(obj, "__name__", "field")
-        if field_meta.kind == "query":
-            registry.register_query_field(field_name, obj)
-        elif field_meta.kind == "mutation":
-            registry.register_mutation_field(field_name, obj)
 
 
 def create_graphql_visitor(

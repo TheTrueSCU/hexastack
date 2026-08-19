@@ -3,12 +3,16 @@
 from pathlib import Path
 
 from scripts._common import (
+    HexastackScriptArgumentParser,
     get_package_directories,
+    get_package_directory,
     get_present_layers,
+    get_repo_root,
 )
 
 
 def generate_tests_for_package(pkg_path: Path) -> None:
+    """Generate clean architecture boundary test for a package."""
     pkg_name = pkg_path.name
     present_layers = get_present_layers(pkg_path)
 
@@ -36,7 +40,18 @@ def generate_tests_for_package(pkg_path: Path) -> None:
 
 
 def main() -> None:
-    packages = get_package_directories()
+    """CLI entrypoint to generate architecture tests."""
+    parser = HexastackScriptArgumentParser(
+        description="Generate pytest-archon boundary tests for packages."
+    )
+    args = parser.parse_args()
+
+    root = get_repo_root()
+    if args.packages:
+        packages = [get_package_directory(p, root) for p in args.packages]
+    else:
+        packages = get_package_directories(root)
+
     if not packages:
         raise SystemExit("No packages found.")
 

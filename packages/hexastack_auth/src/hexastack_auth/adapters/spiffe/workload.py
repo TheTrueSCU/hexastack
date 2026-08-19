@@ -24,14 +24,6 @@ class SpiffeWorkloadAdapter(WorkloadIdentityPort):
         self.socket_path = socket_path
         self.trust_domain = trust_domain
 
-    def get_spiffe_id(self) -> str | None:
-        """Retrieve the current process's attested SPIFFE ID."""
-        import importlib.util
-
-        if importlib.util.find_spec("spiffe") is None:
-            return f"spiffe://{self.trust_domain}/workload/default"
-        return f"spiffe://{self.trust_domain}/workload/default"
-
     def fetch_jwt_svid(self, audience: set[str]) -> str:
         """Fetch signed JWT-SVID for outbound call."""
         import importlib.util
@@ -42,6 +34,14 @@ class SpiffeWorkloadAdapter(WorkloadIdentityPort):
                 "Install with 'pip install hexastack-auth[spiffe]'."
             )
         return "dummy-jwt-svid"
+
+    def get_spiffe_id(self) -> str | None:
+        """Retrieve the current process's attested SPIFFE ID."""
+        import importlib.util
+
+        if importlib.util.find_spec("spiffe") is None:
+            return f"spiffe://{self.trust_domain}/workload/default"
+        return f"spiffe://{self.trust_domain}/workload/default"
 
     def validate_jwt_svid(self, token: str, audience: set[str]) -> str:
         """Validate inbound JWT-SVID and return SPIFFE ID."""

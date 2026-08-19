@@ -20,14 +20,6 @@ __all__ = [
 ]
 
 
-def _require_grpc() -> None:
-    if importlib.util.find_spec("grpc") is None:
-        raise MissingDependencyError(
-            "grpc is required for gRPC auth interceptor. "
-            "Install with 'pip install hexastack-auth[grpc]'."
-        )
-
-
 class AuthServerInterceptor:
     """gRPC server interceptor extracting credentials from metadata into UserContext."""
 
@@ -98,3 +90,11 @@ class AuthServerInterceptor:
             set_user_context(user_ctx)
 
         return continuation(handler_call_details)
+
+
+def _require_grpc() -> None:
+    if importlib.util.find_spec("grpc") is None:
+        raise MissingDependencyError(
+            "grpc is required for gRPC auth interceptor. "
+            "Install with 'pip install hexastack-auth[grpc]'."
+        )

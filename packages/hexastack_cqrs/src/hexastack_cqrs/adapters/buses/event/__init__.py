@@ -10,8 +10,8 @@ from hexastack_cqrs.adapters.buses.event.synchronous import (
 )
 
 __all__ = [
-    "HueyEventBus",
     "AsyncNativeEventBus",
+    "HueyEventBus",
     "RecordingEventBus",
     "SynchronousEventBus",
 ]

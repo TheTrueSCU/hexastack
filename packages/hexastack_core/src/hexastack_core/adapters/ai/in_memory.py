@@ -38,23 +38,6 @@ class InMemoryLlmProvider(LlmProviderPort):
         self._simulated_error: Exception | None = None
         self.history: list[LlmCallRecord] = []
 
-    def add_structured_response(
-        self, schema_cls: type[BaseModel], response: BaseModel
-    ) -> None:
-        """Map a response schema class to a specific model response instance."""
-        self._structured_responses[schema_cls] = response
-
-    def add_text_response(self, prompt_substring: str, response: str) -> None:
-        """Map a prompt substring to a specific text response."""
-        self._text_responses[prompt_substring] = response
-
-    def clear(self) -> None:
-        """Reset all mock history and mappings."""
-        self.history.clear()
-        self._text_responses.clear()
-        self._structured_responses.clear()
-        self._simulated_error = None
-
     def _synthesize_mock_instance(self, response_schema: type[BaseModel]) -> BaseModel:
         """Synthesize mock field values for a required Pydantic model schema."""
         try:
@@ -71,6 +54,23 @@ class InMemoryLlmProvider(LlmProviderPort):
                 else:
                     init_data[name] = None
             return response_schema.model_validate(init_data)
+
+    def add_structured_response(
+        self, schema_cls: type[BaseModel], response: BaseModel
+    ) -> None:
+        """Map a response schema class to a specific model response instance."""
+        self._structured_responses[schema_cls] = response
+
+    def add_text_response(self, prompt_substring: str, response: str) -> None:
+        """Map a prompt substring to a specific text response."""
+        self._text_responses[prompt_substring] = response
+
+    def clear(self) -> None:
+        """Reset all mock history and mappings."""
+        self.history.clear()
+        self._text_responses.clear()
+        self._structured_responses.clear()
+        self._simulated_error = None
 
     def generate_structured(
         self,

@@ -126,6 +126,6 @@ class AsyncNativeCommandBus(CommandBusPort):
 
 
 __all__ = [
-    "HueyCommandBus",
     "AsyncNativeCommandBus",
+    "HueyCommandBus",
 ]

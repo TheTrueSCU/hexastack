@@ -26,6 +26,11 @@ api_command(
 )(PingDemoCommand)
 
 
+__all__ = [
+    "create_demo_app",
+]
+
+
 def create_demo_app() -> Any:
     """Instantiate a fully configured FastAPI application with Hexastack diagnostics.
 
@@ -45,8 +50,3 @@ def create_demo_app() -> Any:
         ],
     )
     return result.get("app")
-
-
-__all__ = [
-    "create_demo_app",
-]

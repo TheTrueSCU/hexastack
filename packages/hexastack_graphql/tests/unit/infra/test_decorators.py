@@ -7,36 +7,6 @@ from hexastack_graphql.infra.decorators import (
 )
 
 
-def test_graphql_decorators():
-    registry = get_schema_registry()
-
-    @graphql_query_type
-    class CustomQuery:
-        def hello(self) -> str:
-            return "world"
-
-    @graphql_mutation_type
-    class CustomMutation:
-        def mutate_val(self) -> int:
-            return 42
-
-    @graphql_query(name="pingQuery", description="Ping query endpoint")
-    def ping() -> str:
-        return "pong"
-
-    @graphql_mutation(name="pingMutation", description="Ping mutation endpoint")
-    def trigger() -> bool:
-        return True
-
-    assert CustomQuery in registry._query_types
-    assert CustomMutation in registry._mutation_types
-    assert "pingQuery" in registry._query_fields
-    assert "pingMutation" in registry._mutation_fields
-
-    schema = registry.build_schema()
-    assert schema is not None
-
-
 def test_feature_flag_field_decorator_sync_and_async():
     import strawberry
     from rodi import Container
@@ -59,16 +29,16 @@ def test_feature_flag_field_decorator_sync_and_async():
     @strawberry.type
     class FeatureQuery:
         @strawberry.field
-        @feature_flag_field("graphql.beta_field")
-        def beta_field(self, info: Info[GraphQLContext, None]) -> str:
-            return "secret data"
-
-        @strawberry.field
         @feature_flag_field(
             "graphql.beta_field", raise_error=False, fallback="fallback_val"
         )
         async def async_fallback(self, info: Info[GraphQLContext, None]) -> str:
             return "live data"
+
+        @strawberry.field
+        @feature_flag_field("graphql.beta_field")
+        def beta_field(self, info: Info[GraphQLContext, None]) -> str:
+            return "secret data"
 
     schema = strawberry.Schema(query=FeatureQuery)
 
@@ -99,3 +69,33 @@ def test_feature_flag_field_decorator_sync_and_async():
     )
     assert res_async_enabled.errors is None
     assert res_async_enabled.data == {"asyncFallback": "live data"}
+
+
+def test_graphql_decorators():
+    registry = get_schema_registry()
+
+    @graphql_query_type
+    class CustomQuery:
+        def hello(self) -> str:
+            return "world"
+
+    @graphql_mutation_type
+    class CustomMutation:
+        def mutate_val(self) -> int:
+            return 42
+
+    @graphql_query(name="pingQuery", description="Ping query endpoint")
+    def ping() -> str:
+        return "pong"
+
+    @graphql_mutation(name="pingMutation", description="Ping mutation endpoint")
+    def trigger() -> bool:
+        return True
+
+    assert CustomQuery in registry._query_types
+    assert CustomMutation in registry._mutation_types
+    assert "pingQuery" in registry._query_fields
+    assert "pingMutation" in registry._mutation_fields
+
+    schema = registry.build_schema()
+    assert schema is not None

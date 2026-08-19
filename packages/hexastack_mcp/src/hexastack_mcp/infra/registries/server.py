@@ -37,25 +37,6 @@ class McpServerRegistry:
         self._resources: list[McpResourceMetadata] = []
         self._prompts: list[McpPromptMetadata] = []
 
-    async def _dispatch_cqrs_instance(
-        self,
-        instance: Any,
-        target_cls: type[Any],
-        kind: str,
-        container: Container,
-    ) -> Any:
-        """Resolve bus from container and dispatch command/query instance."""
-        if kind == "command" or issubclass(target_cls, Command):
-            cbus = container.resolve(CommandBusPort)
-            result = cbus.dispatch(instance)
-        else:
-            qbus = container.resolve(QueryBusPort)
-            result = qbus.dispatch(instance)
-
-        if inspect.isawaitable(result):
-            result = await result
-        return result
-
     def _create_cqrs_tool_wrapper(
         self,
         target_cls: type[Any],
@@ -86,6 +67,66 @@ class McpServerRegistry:
         dynamic_mcp_tool.__name__ = target_cls.__name__
         dynamic_mcp_tool.__doc__ = target_cls.__doc__
         return dynamic_mcp_tool
+
+    async def _dispatch_cqrs_instance(
+        self,
+        instance: Any,
+        target_cls: type[Any],
+        kind: str,
+        container: Container,
+    ) -> Any:
+        """Resolve bus from container and dispatch command/query instance."""
+        if kind == "command" or issubclass(target_cls, Command):
+            cbus = container.resolve(CommandBusPort)
+            result = cbus.dispatch(instance)
+        else:
+            qbus = container.resolve(QueryBusPort)
+            result = qbus.dispatch(instance)
+
+        if inspect.isawaitable(result):
+            result = await result
+        return result
+
+    def _mount_prompts(self, server: McpServer) -> None:
+        """Register all prompt templates onto McpServer instance."""
+        for prompt_meta in self._prompts:
+            if prompt_meta.handler is not None:
+                server.prompt(
+                    name=prompt_meta.name,
+                    description=prompt_meta.description,
+                )(prompt_meta.handler)
+
+    def _mount_resources(self, server: McpServer) -> None:
+        """Register all resource endpoints onto McpServer instance."""
+        for res_meta in self._resources:
+            if res_meta.handler is not None:
+                server.resource(
+                    uri=res_meta.uri,
+                    name=res_meta.name,
+                    description=res_meta.description,
+                    mime_type=res_meta.mime_type,
+                )(res_meta.handler)
+
+    def _mount_tools(self, server: McpServer, container: Container) -> None:
+        """Register all tool wrappers onto McpServer instance."""
+        for tool_meta in self._tools:
+            if inspect.isclass(tool_meta.target):
+                tool_fn = self._create_cqrs_tool_wrapper(
+                    target_cls=tool_meta.target,
+                    kind=tool_meta.kind,
+                    container=container,
+                )
+                server.add_tool(
+                    tool_fn,
+                    name=tool_meta.name,
+                    description=tool_meta.description or tool_fn.__doc__,
+                )
+            elif callable(tool_meta.target):
+                server.add_tool(
+                    tool_meta.target,
+                    name=tool_meta.name,
+                    description=tool_meta.description or tool_meta.target.__doc__,
+                )
 
     def _register_diagnostic_resources(
         self, server: McpServer, config: HexastackMcpConfig
@@ -143,47 +184,6 @@ class McpServerRegistry:
                 },
                 indent=2,
             )
-
-    def _mount_tools(self, server: McpServer, container: Container) -> None:
-        """Register all tool wrappers onto McpServer instance."""
-        for tool_meta in self._tools:
-            if inspect.isclass(tool_meta.target):
-                tool_fn = self._create_cqrs_tool_wrapper(
-                    target_cls=tool_meta.target,
-                    kind=tool_meta.kind,
-                    container=container,
-                )
-                server.add_tool(
-                    tool_fn,
-                    name=tool_meta.name,
-                    description=tool_meta.description or tool_fn.__doc__,
-                )
-            elif callable(tool_meta.target):
-                server.add_tool(
-                    tool_meta.target,
-                    name=tool_meta.name,
-                    description=tool_meta.description or tool_meta.target.__doc__,
-                )
-
-    def _mount_resources(self, server: McpServer) -> None:
-        """Register all resource endpoints onto McpServer instance."""
-        for res_meta in self._resources:
-            if res_meta.handler is not None:
-                server.resource(
-                    uri=res_meta.uri,
-                    name=res_meta.name,
-                    description=res_meta.description,
-                    mime_type=res_meta.mime_type,
-                )(res_meta.handler)
-
-    def _mount_prompts(self, server: McpServer) -> None:
-        """Register all prompt templates onto McpServer instance."""
-        for prompt_meta in self._prompts:
-            if prompt_meta.handler is not None:
-                server.prompt(
-                    name=prompt_meta.name,
-                    description=prompt_meta.description,
-                )(prompt_meta.handler)
 
     def build_server(
         self,

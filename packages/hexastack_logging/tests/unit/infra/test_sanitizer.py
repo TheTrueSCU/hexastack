@@ -11,6 +11,47 @@ class UserModel(BaseModel):
     token: str
 
 
+def test_sanitizer_data_structures():
+    sanitizer = Sanitizer()
+
+    # 1. Tuples
+    tup = ("Alice", "Bearer eyJhbGci.secret", 123)
+    san_tup = sanitizer.sanitize(tup)
+    assert isinstance(san_tup, tuple)
+    assert san_tup[0] == "Alice"
+    assert san_tup[1] == "***REDACTED***"
+    assert san_tup[2] == 123
+
+    # 2. Sets
+    s = {"Bearer secret-token-abc", 42}
+    san_s = sanitizer.sanitize(s)
+    assert isinstance(san_s, set)
+    assert "***REDACTED***" in san_s
+    assert 42 in san_s
+
+    # 3. Integers/Primitives (passthrough)
+    assert sanitizer.sanitize(12345) == 12345
+    assert sanitizer.sanitize(None) is None
+    assert sanitizer.sanitize(True) is True
+
+    # 4. Dict containing Pydantic models and nested lists of strings
+    nested = {
+        "user": UserModel(username="charlie", password="pwd", token="tok"),
+        "raw_tokens": ["Bearer token1", "Bearer token2"],
+        "info": "plain text with Bearer abc",
+        "num": 999,
+    }
+    san_nested = sanitizer.sanitize_dict(nested)
+    assert san_nested["user"] == {
+        "username": "charlie",
+        "password": "***REDACTED***",
+        "token": "***REDACTED***",
+    }
+    assert san_nested["raw_tokens"] == ["***REDACTED***", "***REDACTED***"]
+    assert san_nested["info"] == "plain text with ***REDACTED***"
+    assert san_nested["num"] == 999
+
+
 @pytest.mark.snapshot
 def test_sanitizer_nested_dict():
     sanitizer = Sanitizer(
@@ -51,47 +92,6 @@ def test_sanitizer_pydantic_model():
     assert sanitizer.sanitize(user) == snapshot(
         {"username": "bob", "password": "***REDACTED***", "token": "***REDACTED***"}
     )
-
-
-def test_sanitizer_data_structures():
-    sanitizer = Sanitizer()
-
-    # 1. Tuples
-    tup = ("Alice", "Bearer eyJhbGci.secret", 123)
-    san_tup = sanitizer.sanitize(tup)
-    assert isinstance(san_tup, tuple)
-    assert san_tup[0] == "Alice"
-    assert san_tup[1] == "***REDACTED***"
-    assert san_tup[2] == 123
-
-    # 2. Sets
-    s = {"Bearer secret-token-abc", 42}
-    san_s = sanitizer.sanitize(s)
-    assert isinstance(san_s, set)
-    assert "***REDACTED***" in san_s
-    assert 42 in san_s
-
-    # 3. Integers/Primitives (passthrough)
-    assert sanitizer.sanitize(12345) == 12345
-    assert sanitizer.sanitize(None) is None
-    assert sanitizer.sanitize(True) is True
-
-    # 4. Dict containing Pydantic models and nested lists of strings
-    nested = {
-        "user": UserModel(username="charlie", password="pwd", token="tok"),
-        "raw_tokens": ["Bearer token1", "Bearer token2"],
-        "info": "plain text with Bearer abc",
-        "num": 999,
-    }
-    san_nested = sanitizer.sanitize_dict(nested)
-    assert san_nested["user"] == {
-        "username": "charlie",
-        "password": "***REDACTED***",
-        "token": "***REDACTED***",
-    }
-    assert san_nested["raw_tokens"] == ["***REDACTED***", "***REDACTED***"]
-    assert san_nested["info"] == "plain text with ***REDACTED***"
-    assert san_nested["num"] == 999
 
 
 def test_sanitizer_string_patterns():

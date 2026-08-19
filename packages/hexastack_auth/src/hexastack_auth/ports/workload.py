@@ -16,10 +16,6 @@ __all__ = [
 class WorkloadIdentityPort(Protocol):
     """Port interface for SPIFFE Workload API and SPIRE agent integration."""
 
-    def get_spiffe_id(self) -> str | None:
-        """Retrieve the local attested SPIFFE ID (e.g. 'spiffe://example.org/ns/prod/sa/order-service')."""
-        ...
-
     def fetch_jwt_svid(self, audience: set[str]) -> str:
         """Fetch a signed JWT-SVID for outbound service-to-service calls.
 
@@ -29,6 +25,10 @@ class WorkloadIdentityPort(Protocol):
         Returns:
             Cryptographically signed JWT-SVID token string.
         """
+        ...
+
+    def get_spiffe_id(self) -> str | None:
+        """Retrieve the local attested SPIFFE ID (e.g. 'spiffe://example.org/ns/prod/sa/order-service')."""
         ...
 
     def validate_jwt_svid(self, token: str, audience: set[str]) -> str:
