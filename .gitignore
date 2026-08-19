@@ -15,6 +15,7 @@ venv/
 .hypothesis/
 .import_linter_cache/
 .mutmut-cache
+.ropeproject/
 
 # Test & Coverage
 .coverage

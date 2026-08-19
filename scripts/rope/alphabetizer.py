@@ -1,4 +1,12 @@
-"""Script to alphabetize functions and methods across packages or targeted files."""
+"""Script to alphabetize functions and methods across packages or targeted directories.
+
+Notes/Architectural Intent:
+    Serves as the batch runner wrapper around rope's AST sorting capabilities.
+    Processes full packages or subtrees while preserving module headers, class
+    docstrings, dunders, and main guards.
+"""
+
+from __future__ import annotations
 
 import argparse
 import sys
@@ -11,7 +19,17 @@ ROOT_DIR = get_repo_root()
 
 
 def collect_python_files(target_path: Path) -> list[Path]:
-    """Recursively collect all .py files in a target directory or return the file itself."""
+    """Recursively collect all .py files in a target directory or return the file itself.
+
+    Args:
+        target_path: Target directory or file Path.
+
+    Returns:
+        Sorted list of Path objects representing Python files.
+
+    Raises:
+        None.
+    """
     if target_path.is_file() and target_path.suffix == ".py":
         return [target_path]
     if target_path.is_dir():
@@ -19,9 +37,10 @@ def collect_python_files(target_path: Path) -> list[Path]:
     return []
 
 
-def main():
+def main() -> None:
+    """CLI entrypoint for batch alphabetization."""
     parser = argparse.ArgumentParser(
-        description="Alphabetize functions and class methods deterministically."
+        description="Alphabetize functions and class methods across packages deterministically."
     )
 
     parser.add_argument(
@@ -73,7 +92,6 @@ def main():
     elif args.all:
         for pkg in VALID_PACKAGES:
             pkg_dir = get_package_directory(pkg)
-            print(pkg_dir)
             target_files.extend(collect_python_files(pkg_dir))
 
     else:
