@@ -1,12 +1,8 @@
 """Hexagonal architecture boundary tests for hexastack_ai."""
 
-from pytest_archon import archrule
+from hexastack_core.testing import assert_clean_architecture
 
 
-def test_domain_boundary_rules():
-    (
-        archrule("Domain layer must not import from forbidden layers")
-        .match("hexastack_ai.domain")
-        .should_not_import("hexastack_ai.adapters", "hexastack_ai.infra")
-        .check("hexastack_ai")
-    )
+def test_hexastack_ai_clean_architecture():
+    """Assert hexastack_ai strictly complies with Hexagonal layer isolation."""
+    assert_clean_architecture("hexastack_ai")

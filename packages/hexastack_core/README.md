@@ -16,7 +16,12 @@
 - **Core Port Contracts**: Standard abstract protocols and ABCs for repositories (`Repository[E, ID]`), unit of work (`UnitOfWork`), logging (`LoggerPort`), presenters (`PresenterPort`), feature flags (`FeatureFlagPort`), and bootstrappers (`BootstrapperPort`).
 - **Configuration & Type Registries**: Type-safe Pydantic configuration parsing from TOML (`ConfigRegistry`) and generic type registries (`GenericTypeRegistry`).
 - **Three-Phase Bootstrap Engine**: Deterministic orchestration of Phase 1 config registration, Phase 2 container assembly, and Phase 3 reflective scanning.
-- **Context Utilities & Testing Guards**: Async-safe correlation ID and context variable management (`get_correlation_id`, `set_correlation_id`), plus test decorators (`@require_extra`, `@require_feature`).
+- **Testing & Quality Toolkit**:
+  - `assert_clean_architecture(...)`: Hexagonal architecture boundary verification powered by `pytest-archon`.
+  - `create_test_runtime(...)`: Lightweight in-memory DI test harness and doubles (`TestRuntime`).
+  - `cqrs_strategy(...)`: Hypothesis property-based fuzzing strategy generator for Pydantic/dataclass CQRS models.
+  - Feature flag testing: `@parametrize_flags`, `flag_scope`, `@require_feature`, and `@require_extra`.
+- **Context Utilities**: Async-safe correlation ID and context variable management (`get_correlation_id`, `set_correlation_id`, `UserContext`).
 
 ---
 
@@ -28,7 +33,7 @@ hexastack_core/
 ├── ports/           # Repository, UnitOfWork, BootstrapperPort, LoggerPort, PresenterPort, FeatureFlagPort
 ├── adapters/        # InMemoryRepository, InMemoryUnitOfWork, InMemoryFeatureFlagAdapter, ConfigFeatureFlagAdapter
 ├── infra/           # Bootstrap engine, ConfigRegistry, GenericTypeRegistry, decorators
-├── testing/         # @require_extra, @require_feature
+├── testing/         # assert_clean_architecture, create_test_runtime, cqrs_strategy, flag_scope, isolation
 └── utils/           # Context variable utilities, reflection helpers
 ```
 
@@ -42,7 +47,7 @@ hexastack_core/
 | **Domain** | `Result`, `Ok`, `Err`, `HexastackError`, `ConfigurationError`, `MissingDependencyError`, `EntityNotFoundError` |
 | **Config** | `ConfigRegistry`, `HexastackConfig`, `HexastackCoreConfig`, `@config_section` |
 | **Registries** | `GenericTypeRegistry`, `ExceptionRegistry` |
-| **Testing** | `@require_extra`, `@require_feature` |
+| **Testing** | `assert_clean_architecture`, `create_test_runtime`, `TestRuntime`, `cqrs_strategy`, `flag_scope`, `parametrize_flags`, `@require_extra`, `@require_feature`, `isolate_registries` |
 | **Context** | `get_correlation_id`, `set_correlation_id`, `correlation_scope`, `UserContext` |
 
 ---

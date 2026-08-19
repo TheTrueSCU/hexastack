@@ -1,10 +1,8 @@
 """Generate pytest-archon boundary tests for packages in Hexagonal Architecture."""
 
-import textwrap
 from pathlib import Path
 
 from scripts._common import (
-    LAYER_RESTRICTIONS,
     get_package_directories,
     get_present_layers,
 )
@@ -20,43 +18,21 @@ def generate_tests_for_package(pkg_path: Path) -> None:
     test_file_lines = [
         f'"""Hexagonal architecture boundary tests for {pkg_name}."""',
         "",
-        "from pytest_archon import archrule",
+        "from hexastack_core.testing import assert_clean_architecture",
+        "",
+        "",
+        f"def test_{pkg_name.replace('-', '_')}_clean_architecture():",
+        f'    """Assert {pkg_name} strictly complies with Hexagonal layer isolation."""',
+        f'    assert_clean_architecture("{pkg_name.replace("-", "_")}")',
         "",
     ]
-
-    rule_count = 0
-    for layer, disallowed in LAYER_RESTRICTIONS.items():
-        if layer not in present_layers:
-            continue
-
-        active_disallowed = [d for d in disallowed if d in present_layers]
-        if not active_disallowed:
-            continue
-
-        rule_count += 1
-        source_module = f"{pkg_name}.{layer}"
-        target_modules = [f"{pkg_name}.{d}" for d in active_disallowed]
-        formatted_targets = ", ".join(f'"{t}"' for t in target_modules)
-
-        rule_def = textwrap.dedent(
-            f"""\
-            def test_{layer}_boundary_rules():
-                (
-                    archrule("{layer.capitalize()} layer must not import from forbidden layers")
-                    .match("{source_module}")
-                    .should_not_import({formatted_targets})
-                    .check("{pkg_name}")
-                )
-            """
-        )
-        test_file_lines.append(rule_def)
 
     arch_test_dir = pkg_path / "tests" / "architecture"
     arch_test_dir.mkdir(parents=True, exist_ok=True)
     out_file = arch_test_dir / "test_hexagonal_boundaries.py"
 
     out_file.write_text("\n".join(test_file_lines).strip() + "\n")
-    print(f"Generated {rule_count} rule(s) in {out_file}")
+    print(f"Generated clean architecture test in {out_file}")
 
 
 def main() -> None:

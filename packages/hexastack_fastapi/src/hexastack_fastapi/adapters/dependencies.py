@@ -4,12 +4,18 @@ from fastapi import HTTPException, Request, status
 from rodi import Container
 
 from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
-from hexastack_core.domain.exceptions import DependencyResolutionError
+from hexastack_core.adapters.feature_flags.in_memory import InMemoryFeatureFlagAdapter
+from hexastack_core.domain.exceptions import (
+    DependencyResolutionError,
+    MissingDependencyError,
+)
 from hexastack_core.domain.feature_flags import EvaluationContext
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
 __all__ = [
+    "check_openapi_conformance",
+    "create_test_client",
     "get_container",
     "get_feature_flags",
     "get_pipeline",
@@ -120,3 +126,65 @@ def get_pipeline(request: Request) -> ExecutionPipeline:
     raise DependencyResolutionError(
         "ExecutionPipeline is not available on request.app.state.pipeline or container."
     )
+
+
+def create_test_client(
+    app: Any,
+    *,
+    flags: dict[str, Any] | None = None,
+    **test_client_kwargs: Any,
+) -> Any:
+    """Create a FastAPI TestClient configured with an in-memory feature flag adapter.
+
+    Args:
+        app: The FastAPI application instance.
+        flags: Optional initial flag states.
+        **test_client_kwargs: Extra keyword arguments forwarded to TestClient.
+
+    Returns:
+        Configured starlette / fastapi TestClient.
+    """
+    from fastapi.testclient import TestClient
+
+    if flags is not None:
+        container = getattr(app.state, "container", None)
+        flags_adapter = InMemoryFeatureFlagAdapter(flags=flags)
+        if container is not None:
+            container.add_instance(flags_adapter, declared_class=FeatureFlagPort)
+
+    return TestClient(app, **test_client_kwargs)
+
+
+def check_openapi_conformance(
+    app: Any,
+    *,
+    schema_url: str = "/openapi.json",
+    validate_schema: bool = True,
+) -> None:
+    """Run Schemathesis contract conformance and schema validation checks against a FastAPI app.
+
+    Notes/Architectural Intent:
+        Automatically tests that all exposed FastAPI endpoints conform to the
+        derived OpenAPI schema, validate properly, and have complete route definitions.
+
+    Args:
+        app: The FastAPI application instance.
+        schema_url: URL path where the OpenAPI JSON is served (defaults to '/openapi.json').
+        validate_schema: Whether to validate the OpenAPI specification structure itself.
+
+    Raises:
+        MissingDependencyError: If `schemathesis` is not installed.
+        AssertionError: If any API contract violation or unhandled error is detected.
+    """
+    try:
+        import schemathesis
+    except ImportError as e:
+        raise MissingDependencyError(
+            "schemathesis is required for check_openapi_conformance. "
+            "Install with 'pip install schemathesis' or 'pip install hexastack[testing]'."
+        ) from e
+
+    schema = schemathesis.openapi.from_asgi(schema_url, app)
+
+    if validate_schema:
+        schema.validate()

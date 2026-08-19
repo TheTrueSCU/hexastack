@@ -181,8 +181,11 @@ def bootstrap(
         loaded_config = config_reg.load_config_toml(config_path)
 
     # 4. Phase 2: Runtime Subsystem Configuration
-    flags_adapter = ConfigFeatureFlagAdapter(config=loaded_config)
-    di.add_instance(flags_adapter, declared_class=FeatureFlagPort)
+    if FeatureFlagPort in di:
+        flags_adapter = di.resolve(FeatureFlagPort)
+    else:
+        flags_adapter = ConfigFeatureFlagAdapter(config=loaded_config)
+        di.add_instance(flags_adapter, declared_class=FeatureFlagPort)
 
     context = BootstrapContext(
         container=di,

@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from rodi import Container
 
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_core.ports.presenter import PresenterPort
@@ -180,3 +181,57 @@ def test_cqrs_router_feature_flag_gated():
         "/register-gated", json={"user_id": "u-gated", "username": "Gated"}
     )
     assert res_enabled.status_code == 200
+
+
+def test_cqrs_router_openapi_conformance_with_schemathesis():
+    from hexastack_fastapi.adapters.dependencies import (
+        check_openapi_conformance,
+        create_test_client,
+    )
+
+    handler_reg = HandlerRegistry()
+    presenter_reg = PresenterRegistry()
+
+    handler_reg.register(
+        RegisterUser,
+        lambda cmd: UserDTO(user_id=cmd.user_id, username=cmd.username),
+    )
+    handler_reg.register(
+        GetUser,
+        lambda qry: UserDTO(user_id=qry.user_id, username=f"user_{qry.user_id}"),
+    )
+
+    class UserJsonPresenter(PresenterPort):
+        def present(self, instance: Generic) -> Any:
+            if isinstance(instance, UserDTO):
+                return {"id": instance.user_id, "name": instance.username}
+            return None
+
+    presenter_reg.register(UserDTO, "json", UserJsonPresenter())
+
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=CommandRegistry(),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+        presenter_registry=presenter_reg,
+    )
+
+    router = CqrsRouter()
+    router.add_command("/users", RegisterUser, status_code=201)
+    router.add_query("/users/{user_id}", GetUser)
+
+    app = FastAPI()
+    container = Container()
+    app.state.container = container
+    app.state.pipeline = pipeline
+    app.include_router(router)
+
+    # 1. Test Client with initial flag injection
+    client = create_test_client(app, flags={"api.enabled": True})
+    assert client.get("/openapi.json").status_code == 200
+
+    # 2. Automated Schemathesis conformance test
+    check_openapi_conformance(app, validate_schema=True)

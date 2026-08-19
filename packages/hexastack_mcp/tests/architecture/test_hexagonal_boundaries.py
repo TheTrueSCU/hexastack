@@ -1,12 +1,8 @@
 """Hexagonal architecture boundary tests for hexastack_mcp."""
 
-from pytest_archon import archrule
+from hexastack_core.testing import assert_clean_architecture
 
 
-def test_domain_boundary_rules():
-    (
-        archrule("Domain layer must not import from forbidden layers")
-        .match("hexastack_mcp.domain")
-        .should_not_import("hexastack_mcp.adapters", "hexastack_mcp.infra")
-        .check("hexastack_mcp")
-    )
+def test_hexastack_mcp_clean_architecture():
+    """Assert hexastack_mcp strictly complies with Hexagonal layer isolation."""
+    assert_clean_architecture("hexastack_mcp")

@@ -1,12 +1,8 @@
 """Hexagonal architecture boundary tests for hexastack_graphql."""
 
-from pytest_archon import archrule
+from hexastack_core.testing import assert_clean_architecture
 
 
-def test_domain_boundary_rules():
-    (
-        archrule("Domain layer must not import from forbidden layers")
-        .match("hexastack_graphql.domain")
-        .should_not_import("hexastack_graphql.adapters", "hexastack_graphql.infra")
-        .check("hexastack_graphql")
-    )
+def test_hexastack_graphql_clean_architecture():
+    """Assert hexastack_graphql strictly complies with Hexagonal layer isolation."""
+    assert_clean_architecture("hexastack_graphql")

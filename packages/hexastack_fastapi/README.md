@@ -31,6 +31,7 @@ hexastack_fastapi/
 |---|---|
 | **Application Factory** | `create_app`, `FastApiBootstrapper` (order=30) |
 | **Dependencies** | `get_container`, `get_pipeline`, `get_feature_flags`, `require_feature` |
+| **Testing & Conformance** | `create_test_client`, `check_openapi_conformance` (Schemathesis contract checks) |
 | **Middlewares** | `DbSessionMiddleware`, `AsyncDbSessionMiddleware`, `add_db_session_middleware`, `CorrelationMiddleware`, `HttpLoggingMiddleware` |
 | **Decorators** | `@api_command`, `@api_query`, `@feature_flag_route`, `RouteMetadata` |
 | **Routing** | `CqrsRouter`, `autodiscover_routes` |

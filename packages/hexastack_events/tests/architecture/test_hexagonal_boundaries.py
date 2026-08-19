@@ -1,25 +1,8 @@
 """Hexagonal architecture boundary tests for hexastack_events."""
 
-from pytest_archon import archrule
+from hexastack_core.testing import assert_clean_architecture
 
 
-def test_domain_boundary_rules():
-    (
-        archrule("Domain layer must not import from forbidden layers")
-        .match("hexastack_events.domain")
-        .should_not_import(
-            "hexastack_events.ports",
-            "hexastack_events.adapters",
-            "hexastack_events.infra",
-        )
-        .check("hexastack_events")
-    )
-
-
-def test_ports_boundary_rules():
-    (
-        archrule("Ports layer must not import from forbidden layers")
-        .match("hexastack_events.ports")
-        .should_not_import("hexastack_events.adapters", "hexastack_events.infra")
-        .check("hexastack_events")
-    )
+def test_hexastack_events_clean_architecture():
+    """Assert hexastack_events strictly complies with Hexagonal layer isolation."""
+    assert_clean_architecture("hexastack_events")
