@@ -1,3 +1,4 @@
+import inspect
 from typing import Any
 
 from pydantic import BaseModel
@@ -45,6 +46,7 @@ class LiteLlmAdapter(LlmProviderPort):
         """
         import instructor
         import litellm
+        from instructor.core import InstructorRetryException
 
         client = instructor.from_litellm(litellm.completion)
 
@@ -62,7 +64,7 @@ class LiteLlmAdapter(LlmProviderPort):
 
         try:
             return client.chat.completions.create(**kwargs)
-        except instructor.exceptions.InstructorRetryException as exc:
+        except InstructorRetryException as exc:
             raise StructuredOutputParsingError(
                 f"Failed to generate structured {response_schema.__name__}: {exc}"
             ) from exc
@@ -79,6 +81,7 @@ class LiteLlmAdapter(LlmProviderPort):
         """Asynchronously generate structured Pydantic output using Instructor over LiteLLM."""
         import instructor
         import litellm
+        from instructor.core import InstructorRetryException
 
         client = instructor.from_litellm(litellm.acompletion)
 
@@ -96,8 +99,10 @@ class LiteLlmAdapter(LlmProviderPort):
 
         try:
             raw_result: Any = client.chat.completions.create(**kwargs)
-            return await raw_result
-        except instructor.exceptions.InstructorRetryException as exc:
+            if inspect.isawaitable(raw_result):
+                return await raw_result
+            return raw_result
+        except InstructorRetryException as exc:
             raise StructuredOutputParsingError(
                 f"Failed to generate structured {response_schema.__name__}: {exc}"
             ) from exc

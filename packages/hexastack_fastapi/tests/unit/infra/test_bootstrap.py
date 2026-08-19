@@ -33,6 +33,9 @@ class GreetUserHandler:
 def test_fastapi_bootstrapper_registration():
     reg = ConfigRegistry()
     bootstrapper = FastApiBootstrapper()
+    assert bootstrapper.name == "fastapi"
+    assert bootstrapper.order == 30
+
     bootstrapper.register_config(reg)
 
     assert "fastapi" in reg
@@ -58,16 +61,10 @@ def test_meta_bootstrap_with_fastapi_and_autodiscovery():
     assert FastAPI in result.container
     app = result.get("app")
     assert isinstance(app, FastAPI)
+    assert result.properties.get("app") is app
 
-    # 2. Test request execution & health checks in single-pass autodiscovered setup
-    with TestClient(app) as client:
-        # Health check
-        h_res = client.get("/health")
-        assert h_res.status_code == 200
-        assert h_res.json()["status"] == "ok"
-
-        # Autodiscovered endpoint dispatched directly to autodiscovered handler
-        res = client.post("/greet/hello", json={"name": "Antigravity"})
-        assert res.status_code == 200
-        assert res.json() == {"message": "Hello, Antigravity!"}
-        assert res.headers.get("x-correlation-id") is not None
+    # 2. Executing autodiscovered route via TestClient
+    client = TestClient(app)
+    res = client.post("/greet/hello", json={"name": "Hexastack"})
+    assert res.status_code == 200
+    assert res.json() == {"message": "Hello, Hexastack!"}

@@ -38,6 +38,35 @@ class CorrelationIdFilter(logging.Filter):
         return True
 
 
+_STANDARD_LOG_RECORD_KEYS = frozenset(
+    {
+        "name",
+        "msg",
+        "args",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "lineno",
+        "funcName",
+        "created",
+        "msecs",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "processName",
+        "process",
+        "correlation_id",
+        "user_id",
+        "tenant_id",
+    }
+)
+
+
 class SanitizerFilter(logging.Filter):
     """Logging filter sanitizing sensitive keys, PII, and tokens from LogRecords.
 
@@ -54,6 +83,12 @@ class SanitizerFilter(logging.Filter):
         """
         super().__init__()
         self._sanitizer = sanitizer or Sanitizer()
+
+    def _sanitize_extra_attributes(self, record: logging.LogRecord) -> None:
+        """Scrub non-standard LogRecord dictionary attributes."""
+        for key, value in list(record.__dict__.items()):
+            if key not in _STANDARD_LOG_RECORD_KEYS:
+                record.__dict__[key] = self._sanitizer.sanitize(value)
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Sanitize message, arguments, extra attributes, and tracebacks on log record.
@@ -81,34 +116,7 @@ class SanitizerFilter(logging.Filter):
                 record.args = tuple(self._sanitizer.sanitize_list(list(record.args)))
 
         # 3. Sanitize extra attributes on record.__dict__
-        standard_keys = {
-            "name",
-            "msg",
-            "args",
-            "levelname",
-            "levelno",
-            "pathname",
-            "filename",
-            "module",
-            "exc_info",
-            "exc_text",
-            "stack_info",
-            "lineno",
-            "funcName",
-            "created",
-            "msecs",
-            "relativeCreated",
-            "thread",
-            "threadName",
-            "processName",
-            "process",
-            "correlation_id",
-            "user_id",
-            "tenant_id",
-        }
-        for key, value in list(record.__dict__.items()):
-            if key not in standard_keys:
-                record.__dict__[key] = self._sanitizer.sanitize(value)
+        self._sanitize_extra_attributes(record)
 
         # 4. Sanitize exc_text if present
         if record.exc_text:

@@ -35,6 +35,7 @@ def test_outbox_record_defaults_and_lifecycle():
     # Default fields
     assert rec.source == "hexastack"
     assert rec.status == OutboxStatus.PENDING
+    assert rec.status == "PENDING"
     assert rec.retry_count == 0
     assert rec.correlation_id is None
     assert rec.tenant_id is None
@@ -46,18 +47,21 @@ def test_outbox_record_defaults_and_lifecycle():
     # First failure
     rec.mark_failed("Broker connection refused")
     assert rec.status == OutboxStatus.FAILED
+    assert rec.status == "FAILED"
     assert rec.retry_count == 1
     assert rec.last_error == "Broker connection refused"
 
     # Second failure
     rec.mark_failed("Broker timeout retry 2")
     assert rec.status == OutboxStatus.FAILED
+    assert rec.status == "FAILED"
     assert rec.retry_count == 2
     assert rec.last_error == "Broker timeout retry 2"
 
     # Published
     rec.mark_published()
     assert rec.status == OutboxStatus.PUBLISHED
+    assert rec.status == "PUBLISHED"
     assert rec.published_at is not None
     assert rec.last_error is None
     assert rec.retry_count == 2  # retry_count preserved for auditing
@@ -70,3 +74,6 @@ def test_outbox_status_enum_values():
     assert isinstance(OutboxStatus.PENDING, str)
     assert isinstance(OutboxStatus.PUBLISHED, str)
     assert isinstance(OutboxStatus.FAILED, str)
+    assert OutboxStatus("PENDING") == OutboxStatus.PENDING
+    assert OutboxStatus("PUBLISHED") == OutboxStatus.PUBLISHED
+    assert OutboxStatus("FAILED") == OutboxStatus.FAILED

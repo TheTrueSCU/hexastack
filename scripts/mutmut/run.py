@@ -1,42 +1,139 @@
 """Mutation testing runner script for Hexastack packages using mutmut v2.
 
+Notes/Architectural Intent:
+    Automates scoped mutation testing runs across packages or paths, and provides
+    selective cache eviction for individual packages to avoid wiping out workspace-wide
+    mutation results.
+
 Usage:
     # Run a single package
-    uv run python scripts/run_mutation_tests.py --package auth
-    uv run python scripts/run_mutation_tests.py --package cqrs
-    uv run python scripts/run_mutation_tests.py --package core
+    uv run mutmut-run --package ai
+
+    # Clear cache for a package and rerun fresh
+    uv run mutmut-run --package ai --fresh
+
+    # Clear cache only without running
+    uv run mutmut-run --package ai --clear-cache
 
     # Run all packages sequentially
-    uv run python scripts/run_mutation_tests.py --all
-
-    # Inspect a specific surviving mutant diff
-    uv run python scripts/run_mutation_tests.py --show 1
+    uv run mutmut-run --all
 """
 
+from __future__ import annotations
+
 import argparse
+import sqlite3
 import subprocess
 import sys
 
 from scripts._common import VALID_PACKAGES, get_repo_root
 
 ROOT_DIR = get_repo_root()
+CACHE_FILE = ROOT_DIR / ".mutmut-cache"
+
+
+def clear_package_cache(package: str) -> int:
+    """Selectively delete cached mutants for a specific package from SQLite cache.
+
+    Args:
+        package: Short package name (e.g. 'ai', 'db', 'fastapi').
+
+    Returns:
+        Number of mutant rows deleted.
+
+    Notes/Architectural Intent:
+        Directly clears rows in Mutant, Line, and SourceFile for files matching
+        the package path, preserving all other packages' mutation results.
+    """
+    if not CACHE_FILE.exists():
+        return 0
+
+    pkg_clean = package.removeprefix("hexastack_").removeprefix("hexastack-")
+    pattern = f"%hexastack_{pkg_clean}%"
+
+    con = sqlite3.connect(CACHE_FILE)
+    try:
+        cur = con.cursor()
+        # Find matching source file IDs
+        file_rows = cur.execute(
+            "SELECT id FROM SourceFile WHERE filename LIKE ?", (pattern,)
+        ).fetchall()
+        if not file_rows:
+            return 0
+
+        file_ids = [row[0] for row in file_rows]
+        placeholders = ",".join("?" * len(file_ids))
+
+        # Find matching line IDs
+        line_rows = cur.execute(
+            f"SELECT id FROM Line WHERE sourcefile IN ({placeholders})",  # noqa: S608
+            file_ids,
+        ).fetchall()
+        line_ids = [row[0] for row in line_rows]
+
+        deleted_mutants = 0
+        if line_ids:
+            line_placeholders = ",".join("?" * len(line_ids))
+            cur.execute(
+                f"DELETE FROM Mutant WHERE line IN ({line_placeholders})",  # noqa: S608
+                line_ids,
+            )
+            deleted_mutants = cur.rowcount
+            cur.execute(
+                f"DELETE FROM Line WHERE id IN ({line_placeholders})",  # noqa: S608
+                line_ids,
+            )
+
+        cur.execute(
+            f"DELETE FROM SourceFile WHERE id IN ({placeholders})",  # noqa: S608
+            file_ids,
+        )
+        con.commit()
+        return deleted_mutants
+    finally:
+        con.close()
 
 
 def run_command(cmd: list[str]) -> int:
-    """Execute a shell command from project root directory."""
+    """Execute a shell command from project root directory.
+
+    Args:
+        cmd: List of command arguments.
+
+    Returns:
+        Exit code of the process.
+    """
     print(f"Executing: {' '.join(cmd)}")
     result = subprocess.run(cmd, cwd=ROOT_DIR, check=False)
     return result.returncode
 
 
-def run_mutation_test(package: str, path: str | None = None) -> int:
-    """Run mutmut against a designated Hexastack package."""
+def run_mutation_test(
+    package: str,
+    path: str | None = None,
+    fresh: bool = False,
+) -> int:
+    """Run mutmut against a designated Hexastack package.
+
+    Args:
+        package: Target package name.
+        path: Optional explicit path override.
+        fresh: If True, clears cached mutants for this package before running.
+
+    Returns:
+        Exit code from mutmut runner.
+    """
     pkg_clean = package.removeprefix("hexastack_").removeprefix("hexastack-")
     if pkg_clean not in VALID_PACKAGES:
         print(
             f"Error: Unknown package '{package}'. Valid packages: {', '.join(VALID_PACKAGES)}"
         )
         return 1
+
+    if fresh:
+        deleted = clear_package_cache(pkg_clean)
+        if deleted:
+            print(f"Cleared {deleted} cached mutants for hexastack_{pkg_clean}.")
 
     pkg_dir = f"packages/hexastack_{pkg_clean}"
     if not (ROOT_DIR / pkg_dir).exists():
@@ -70,8 +167,15 @@ def run_mutation_test(package: str, path: str | None = None) -> int:
     return code
 
 
-def run_all_mutation_tests() -> int:
-    """Run mutmut sequentially across all Hexastack packages."""
+def run_all_mutation_tests(fresh: bool = False) -> int:
+    """Run mutmut sequentially across all Hexastack packages.
+
+    Args:
+        fresh: If True, clears each package's cache before executing.
+
+    Returns:
+        0 if all packages pass with 0 survivors, 1 otherwise.
+    """
     print("\n========================================================")
     print(f" Running Mutation Testing Across All {len(VALID_PACKAGES)} Packages")
     print("========================================================\n")
@@ -79,7 +183,7 @@ def run_all_mutation_tests() -> int:
     results: dict[str, int] = {}
     for pkg in VALID_PACKAGES:
         print(f"\n>>> Running mutmut for hexastack-{pkg}...")
-        code = run_mutation_test(pkg)
+        code = run_mutation_test(pkg, fresh=fresh)
         results[pkg] = code
 
     print("\n========================================================")
@@ -97,7 +201,14 @@ def run_all_mutation_tests() -> int:
 
 
 def show_mutant(mutant_id: str) -> int:
-    """Display diff for a specific surviving mutant."""
+    """Display diff for a specific surviving mutant.
+
+    Args:
+        mutant_id: Numeric ID of the mutant.
+
+    Returns:
+        Process exit code.
+    """
     return run_command(["uv", "run", "mutmut", "show", mutant_id])
 
 
@@ -110,12 +221,22 @@ def main() -> None:
         "-p",
         "--package",
         default=None,
-        help="Target package to mutate (e.g. core, cqrs, auth).",
+        help="Target package to mutate (e.g. core, cqrs, auth, ai, cli).",
     )
     parser.add_argument(
         "--all",
         action="store_true",
         help="Run mutation testing sequentially across all packages.",
+    )
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Clear cached mutants for the target package(s) before running.",
+    )
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help="Clear cached mutants for the target package without running tests.",
     )
     parser.add_argument(
         "--path",
@@ -133,11 +254,17 @@ def main() -> None:
     if args.show:
         sys.exit(show_mutant(args.show))
 
+    if args.clear_cache:
+        pkg = args.package or "core"
+        deleted = clear_package_cache(pkg)
+        print(f"Cleared {deleted} cached mutant(s) for hexastack_{pkg}.")
+        sys.exit(0)
+
     if args.all or args.package == "all":
-        sys.exit(run_all_mutation_tests())
+        sys.exit(run_all_mutation_tests(fresh=args.fresh))
 
     pkg = args.package or "core"
-    sys.exit(run_mutation_test(pkg, args.path))
+    sys.exit(run_mutation_test(pkg, args.path, fresh=args.fresh))
 
 
 if __name__ == "__main__":

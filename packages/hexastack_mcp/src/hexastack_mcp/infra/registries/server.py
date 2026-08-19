@@ -37,6 +37,25 @@ class McpServerRegistry:
         self._resources: list[McpResourceMetadata] = []
         self._prompts: list[McpPromptMetadata] = []
 
+    async def _dispatch_cqrs_instance(
+        self,
+        instance: Any,
+        target_cls: type[Any],
+        kind: str,
+        container: Container,
+    ) -> Any:
+        """Resolve bus from container and dispatch command/query instance."""
+        if kind == "command" or issubclass(target_cls, Command):
+            cbus = container.resolve(CommandBusPort)
+            result = cbus.dispatch(instance)
+        else:
+            qbus = container.resolve(QueryBusPort)
+            result = qbus.dispatch(instance)
+
+        if inspect.isawaitable(result):
+            result = await result
+        return result
+
     def _create_cqrs_tool_wrapper(
         self,
         target_cls: type[Any],
@@ -44,22 +63,14 @@ class McpServerRegistry:
         container: Container,
     ) -> Callable[..., Any]:
         """Synthesize a typed callable from a Command or Query class for MCP schema generation."""
-        # 1. Extract parameter definitions
         parameters = inspect_model_parameters(target_cls)
 
         async def dynamic_mcp_tool(**kwargs: Any) -> Any:
             try:
                 instance = target_cls(**kwargs)
-                if kind == "command" or issubclass(target_cls, Command):
-                    cbus = container.resolve(CommandBusPort)
-                    result = cbus.dispatch(instance)
-                else:
-                    qbus = container.resolve(QueryBusPort)
-                    result = qbus.dispatch(instance)
-
-                if inspect.isawaitable(result):
-                    result = await result
-                return result
+                return await self._dispatch_cqrs_instance(
+                    instance, target_cls, kind, container
+                )
             except Exception as exc:
                 raise ToolExecutionError(
                     f"Execution of MCP tool '{target_cls.__name__}' failed: {exc}"

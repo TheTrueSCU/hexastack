@@ -34,9 +34,11 @@ dist/
 .eggs/
 
 # Database files & Local State
-*.db
+*.db*
 *.sqlite
 *.sqlite3
+logs/
+*.log
 
 # OS Specific
 .DS_Store

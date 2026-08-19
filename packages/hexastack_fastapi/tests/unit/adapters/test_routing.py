@@ -76,11 +76,25 @@ def test_cqrs_router_command_and_query():
         method="POST",
         status_code=201,
         output_format="json",
+        summary="Custom Register Summary",
+    )
+    # Also test default method / status_code and summary generation
+    router.add_command(
+        "/register-default",
+        RegisterUser,
     )
     router.add_query(
         "/get",
         GetUser,
         method="GET",
+        output_format="json",
+        summary="Custom Get Summary",
+    )
+    # Also test POST query route
+    router.add_query(
+        "/get-post",
+        GetUser,
+        method="POST",
         output_format="json",
     )
 
@@ -90,14 +104,25 @@ def test_cqrs_router_command_and_query():
 
     client = TestClient(app)
 
-    # 1. Execute Command via POST
+    # 1. Execute Command via POST with custom status code
     cmd_res = client.post(
         "/users/register", json={"user_id": "u-1", "username": "Alice"}
     )
     assert cmd_res.status_code == 201
     assert cmd_res.json() == {"id": "u-1", "name": "Alice"}
 
+    # Execute Command via default registration
+    cmd_res_def = client.post(
+        "/users/register-default", json={"user_id": "u-2", "username": "Bob"}
+    )
+    assert cmd_res_def.status_code == 200
+
     # 2. Execute Query via GET
     qry_res = client.get("/users/get?user_id=u-1")
     assert qry_res.status_code == 200
     assert qry_res.json() == {"id": "u-1", "name": "user_u-1"}
+
+    # Execute Query via POST
+    qry_post_res = client.post("/users/get-post", json={"user_id": "u-1"})
+    assert qry_post_res.status_code == 200
+    assert qry_post_res.json() == {"id": "u-1", "name": "user_u-1"}

@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 
 import pytest
@@ -46,12 +47,6 @@ def test_cloudevent_deserialization_failure():
 
 @pytest.mark.snapshot
 def test_cloudevent_serializer_defaults():
-    """Snapshot the full CloudEvent dict shape produced by to_cloudevent defaults.
-
-    Notes/Architectural Intent:
-        Pins event_id and time so the dict is fully deterministic and the
-        snapshot is stable across runs.
-    """
     correlation_id_ctx.set("")
     set_user_context(None)
 
@@ -126,15 +121,15 @@ def test_cloudevent_serializer_roundtrip():
         restored_from_dict = from_cloudevent(d, InvoicePaidEvent)
         assert restored_from_dict.invoice_id == "inv-888"
 
+        # Deserialize where ce.data is string-encoded JSON
+        ce_with_str_data = dict(d)
+        ce_with_str_data["data"] = json.dumps(d["data"])
+        restored_from_str_payload = from_cloudevent(ce_with_str_data, InvoicePaidEvent)
+        assert restored_from_str_payload.invoice_id == "inv-888"
+
 
 @pytest.mark.snapshot
 def test_cloudevent_serializer_with_context():
-    """Snapshot the CloudEvent dict when correlation and tenant context are active.
-
-    Notes/Architectural Intent:
-        Pins event_id and time for determinism. The correlation, tenant, and
-        data payload fields are the meaningful assertions here.
-    """
     event = InvoicePaidEvent(invoice_id="inv-888", amount=2500.0)
 
     with correlation_scope("corr-invoice-1"):
@@ -164,25 +159,37 @@ def test_cloudevent_serializer_with_context():
 
 @pytest.mark.snapshot
 def test_to_envelope_shape():
-    """Snapshot the static Envelope fields produced from an InvoicePaidEvent."""
     correlation_id_ctx.set("")
     set_user_context(None)
 
     event = InvoicePaidEvent(invoice_id="inv-env-1", amount=75.0)
-    envelope = to_envelope(event)
-
-    assert {
-        "source": envelope.source,
-        "type": envelope.type,
-        "specversion": envelope.specversion,
-        "datacontenttype": envelope.datacontenttype,
-        "data": envelope.data,
-    } == snapshot(
-        {
-            "source": "hexastack",
-            "type": "InvoicePaidEvent",
-            "specversion": "1.0",
-            "datacontenttype": "application/json",
-            "data": {"invoice_id": "inv-env-1", "amount": 75.0, "currency": "USD"},
-        }
+    envelope = to_envelope(
+        event,
+        source="custom-src",
+        event_type="custom-type",
+        event_id="custom-id",
     )
+
+    assert envelope.id == "custom-id"
+    assert envelope.source == "custom-src"
+    assert envelope.type == "custom-type"
+    assert envelope.datacontenttype == "application/json"
+    assert envelope.correlationid is None
+    assert envelope.tenantid is None
+    assert isinstance(envelope.time, str)
+    assert envelope.data == {
+        "invoice_id": "inv-env-1",
+        "amount": 75.0,
+        "currency": "USD",
+    }
+
+    # Default to_envelope without explicit kwargs
+    default_env = to_envelope(event)
+    assert default_env.source == "hexastack"
+    assert default_env.type == "InvoicePaidEvent"
+    assert default_env.datacontenttype == "application/json"
+    assert default_env.data == {
+        "invoice_id": "inv-env-1",
+        "amount": 75.0,
+        "currency": "USD",
+    }

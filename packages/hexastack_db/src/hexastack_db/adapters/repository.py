@@ -93,8 +93,8 @@ class SqlAlchemyRepository[T, ID](RepositoryPort[T, ID]):
             for k, v in filters.items():
                 if hasattr(self._model_cls, k):
                     stmt = stmt.where(getattr(self._model_cls, k) == v)
-            result = self._session.execute(stmt).scalar_one()
-            return int(result)
+            result = self._session.scalar(stmt)
+            return int(result or 0)
         except Exception as exc:
             raise DatabaseError(str(exc)) from exc
 

@@ -25,6 +25,44 @@ __all__ = [
 ]
 
 
+def _resolve_cli_input(input_payload: str | None) -> dict[str, Any]:
+    """Parse raw JSON string, file content, or stdin input into a dictionary."""
+    if not input_payload:
+        return {}
+    if input_payload == "-":
+        raw_json = sys.stdin.read()
+    elif Path(input_payload).is_file():
+        with Path(input_payload).open(encoding="utf-8") as f:
+            raw_json = f.read()
+    else:
+        raw_json = input_payload
+    payload_dict = json.loads(raw_json)
+    return payload_dict if isinstance(payload_dict, dict) else {}
+
+
+def _present_cli_result(
+    result: Any,
+    requested_output: str | None,
+    quiet_mode: bool,
+    active_presenter: RichTerminalPresenter,
+    active_console: Console,
+) -> None:
+    """Format and write CLI execution results to stdout or terminal presenter."""
+    if result is None:
+        return
+    if isinstance(result, Generic):
+        active_presenter.present(result, format_mode=requested_output)
+    elif not quiet_mode or requested_output in {"json", "plain"}:
+        if requested_output == "json":
+            sys.stdout.write(json.dumps(result, indent=2, default=str) + "\n")
+            sys.stdout.flush()
+        elif requested_output == "plain":
+            sys.stdout.write(f"{result}\n")
+            sys.stdout.flush()
+        elif not quiet_mode:
+            active_console.print(f"[bold green]{result}[/bold green]")
+
+
 def _build_dynamic_cli_runner(
     model_cls: type[Command] | type[Query],
     pipeline: ExecutionPipeline,
@@ -39,7 +77,6 @@ def _build_dynamic_cli_runner(
     pos_set = set(positional or ())
 
     def runner(**kwargs: Any) -> None:
-        # Extract CLI control flags
         requested_output = kwargs.pop("__output_format__", output_format)
         quiet_mode = kwargs.pop("__quiet__", False)
         debug_mode = kwargs.pop("__debug__", False)
@@ -57,46 +94,19 @@ def _build_dynamic_cli_runner(
             )
 
         try:
-            field_data: dict[str, Any] = {}
-
-            # Read raw JSON/file/stdin payload if --input was specified
-            if input_payload:
-                if input_payload == "-":
-                    raw_json = sys.stdin.read()
-                elif Path(input_payload).is_file():
-                    with Path(input_payload).open(encoding="utf-8") as f:
-                        raw_json = f.read()
-                else:
-                    raw_json = input_payload
-                payload_dict = json.loads(raw_json)
-                if isinstance(payload_dict, dict):
-                    field_data.update(payload_dict)
-
-            # Explicit CLI flags override payload defaults
+            field_data = _resolve_cli_input(input_payload)
             cli_flags = {k: v for k, v in kwargs.items() if v is not None}
             field_data.update(cli_flags)
 
             instance = model_cls(**field_data)
             result = pipeline.execute(instance, output_format=requested_output)
 
-            # Resolve asynchronous handler coroutine if returned
             if inspect.iscoroutine(result):
                 result = asyncio.run(result)
 
-            if result is not None:
-                if isinstance(result, Generic):
-                    active_presenter.present(result, format_mode=requested_output)
-                elif not quiet_mode or requested_output:
-                    if requested_output == "json":
-                        sys.stdout.write(
-                            json.dumps(result, indent=2, default=str) + "\n"
-                        )
-                        sys.stdout.flush()
-                    elif requested_output == "plain":
-                        sys.stdout.write(f"{result}\n")
-                        sys.stdout.flush()
-                    else:
-                        active_console.print(f"[bold green]{result}[/bold green]")
+            _present_cli_result(
+                result, requested_output, quiet_mode, active_presenter, active_console
+            )
         except Exception as exc:
             if debug_mode:
                 active_presenter.print_exception()

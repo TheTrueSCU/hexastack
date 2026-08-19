@@ -2,6 +2,7 @@ import types
 from typing import Any
 
 from pydantic import BaseModel
+from rodi import Container
 
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra import ConfigRegistry, ExceptionRegistry
@@ -70,6 +71,12 @@ def test_autodiscover_cqrs_module():
                 return {"id": instance.order_id, "type": "order"}
             return None
 
+    # Class-based handler resolved via DI
+    @command_handler(CreateOrder)
+    class ClassCommandHandler:
+        def __call__(self, cmd: CreateOrder) -> OrderDTO:
+            return OrderDTO(order_id=f"class-{cmd.order_id}")
+
     @exception_handler(DomainValidationError)
     def handle_validation_error(exc: DomainValidationError) -> dict[str, str]:
         return {"error": str(exc), "status": "bad_request"}
@@ -121,3 +128,20 @@ def test_autodiscover_cqrs_module():
     # 5. Discovered config section
     assert "cqrs.orders" in config_reg
     assert config_reg.get("cqrs.orders") == OrderConfig
+
+    # 6. Autodiscovery with DI container resolution
+    container = Container()
+    container.add_instance(ClassCommandHandler())
+    container.add_instance(OrderJsonPresenter())
+    mod_di = types.ModuleType("dummy_di_mod")
+    setattr(mod_di, "ClassCommandHandler", ClassCommandHandler)  # noqa: B010
+    setattr(mod_di, "OrderJsonPresenter", OrderJsonPresenter)  # noqa: B010
+
+    pipeline_di = ExecutionPipeline(handler_registry=HandlerRegistry())
+    autodiscover_cqrs(
+        packages_or_modules=[mod_di],
+        pipeline=pipeline_di,
+        container=container,
+    )
+    res_di = pipeline_di.execute(CreateOrder(order_id="999"), output_format="json")
+    assert res_di == {"id": "class-999", "type": "order"}

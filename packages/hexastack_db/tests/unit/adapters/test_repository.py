@@ -67,6 +67,11 @@ async def test_async_sqlalchemy_repository():
         results = await repo.list(offset=1, limit=1)
         assert len(results) == 1
 
+        # List with filter
+        filtered = await repo.list(username="eve")
+        assert len(filtered) == 1
+        assert filtered[0].email == "eve@example.com"
+
         # Count with filter
         assert await repo.count(username="eve") == 1
         assert await repo.count(username="none") == 0
@@ -78,14 +83,45 @@ async def test_async_sqlalchemy_repository():
         assert refetched is not None
         assert refetched.email == "dave_updated@example.com"
 
-        # 6. Delete
+        # 6. Aliases (add_async, get_by_id_async, remove_async)
+        user_alias = UserRecord(username="grace", email="grace@example.com")
+        await repo.add_async(user_alias)
+        assert await repo.get_by_id_async(user_alias.id) is not None
+        await repo.remove_async(user_alias.id)
+        assert await repo.get_by_id_async(user_alias.id) is None
+
+        # 7. Delete
         assert await repo.delete(user1.id) is True
         assert await repo.delete(999999) is False
         assert await repo.count() == 2
 
-        # 7. Unique constraint error
+        # 8. Unique constraint errors
+        # Note: repo.add("eve") will fail if "eve" is already in db
+        await repo.add(UserRecord(username="unique_user", email="unique@example.com"))
+        with pytest.raises(UniqueConstraintViolationError) as exc_info:
+            await repo.add(UserRecord(username="unique_user", email="dup@example.com"))
+        assert exc_info.value is not None
+        await session.rollback()
+
+        # Re-add unique_user to test add_many duplicate against it
+        await repo.add(UserRecord(username="unique_user", email="unique@example.com"))
         with pytest.raises(UniqueConstraintViolationError):
-            await repo.add(UserRecord(username="eve", email="duplicate@example.com"))
+            await repo.add_many(
+                [UserRecord(username="unique_user", email="dup2@example.com")]
+            )
+        await session.rollback()
+
+        # Test update causing duplicate username
+        await repo.add(UserRecord(username="user_a", email="a@example.com"))
+        user_b = UserRecord(username="user_b", email="b@example.com")
+        await repo.add(user_b)
+
+        user_b_conflict = UserRecord(
+            id=user_b.id, username="user_a", email="b_updated@example.com"
+        )
+        with pytest.raises(UniqueConstraintViolationError):
+            await repo.update(user_b_conflict)
+        await session.rollback()
 
 
 def test_sqlalchemy_repository_sync():
@@ -135,7 +171,8 @@ def test_sqlalchemy_repository_sync():
 
     # 5. Update
     user1.email = "alice_updated@example.com"
-    repo.update(user1)
+    merged = repo.update(user1)
+    assert merged.email == "alice_updated@example.com"
     refetched = repo.get(user1.id)
     assert refetched is not None
     assert refetched.email == "alice_updated@example.com"
@@ -145,9 +182,29 @@ def test_sqlalchemy_repository_sync():
     assert repo.delete(999999) is False
     assert repo.count() == 2
 
-    # 7. Unique constraint error
+    # 7. Unique constraint errors on add, add_many, and update
+    repo.add(UserRecord(username="sync_unique", email="sync@example.com"))
     with pytest.raises(UniqueConstraintViolationError):
-        repo.add(UserRecord(username="bob", email="duplicate@example.com"))
+        repo.add(UserRecord(username="sync_unique", email="duplicate@example.com"))
+    session.rollback()
+
+    repo.add(UserRecord(username="sync_unique", email="sync@example.com"))
+    with pytest.raises(UniqueConstraintViolationError):
+        repo.add_many(
+            [UserRecord(username="sync_unique", email="duplicate2@example.com")]
+        )
+    session.rollback()
+
+    repo.add(UserRecord(username="user_1", email="1@example.com"))
+    user_2 = UserRecord(username="user_2", email="2@example.com")
+    repo.add(user_2)
+
+    user_2_conflict = UserRecord(
+        id=user_2.id, username="user_1", email="2_mod@example.com"
+    )
+    with pytest.raises(UniqueConstraintViolationError):
+        repo.update(user_2_conflict)
+    session.rollback()
 
     session.close()
     engine.dispose()

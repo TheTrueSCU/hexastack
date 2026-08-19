@@ -1,65 +1,53 @@
-"""Mutmut configuration file for Hexastack.
+"""Configuration hook for mutmut mutation testing.
 
 Notes/Architectural Intent:
-    Filters out non-logical boilerplate, type annotations, logging strings,
-    and registration metadata to eliminate false positives in mutation testing.
+    Filters out non-functional AST mutations such as Pydantic Field(description=...),
+    CLI help text strings, logger formatting literals, and docstring-like metadata
+    to focus mutation testing purely on core business and operational logic.
 """
 
+from __future__ import annotations
+
+import re
 from typing import Any
+
+# Regex patterns identifying non-functional lines that should not be mutated
+SKIP_LINE_PATTERNS = [
+    re.compile(r"^\s*description\s*="),
+    re.compile(r"^\s*help\s*="),
+    re.compile(r"^\s*help_text\s*="),
+    re.compile(r"^\s*instructions\s*="),
+    re.compile(r"Field\([^)]*description\s*="),
+    re.compile(
+        r":\s*(?:bool|str|int|float|Literal|Sequence|list|dict|set)[^=]*=\s*Field\("
+    ),
+    re.compile(r"Option\([^)]*help\s*="),
+    re.compile(r"doc\s*=\s*help_text\s*or"),
+    re.compile(r"__signature__\s*="),
+    re.compile(r"__all__\s*=\s*\["),
+    re.compile(r"^\s*#"),
+]
 
 
 def pre_mutation(context: Any) -> None:
-    """Filter out non-logical mutations before executing test runner.
+    """Mutmut hook executed prior to applying and running each mutation.
 
     Args:
-        context: Mutmut Context object containing filename, source_code, node, etc.
+        context: Mutmut Context object containing `filename`, `current_source_line`,
+            and `skip` attribute.
 
     Returns:
         None.
     """
-    line = getattr(context, "current_source_line", "").strip()
+    line = getattr(context, "current_source_line", "") or ""
 
-    # 1. Skip explicit no-mutate and no-cover directives
-    if "pragma: no mutate" in line or "pragma: no cover" in line:
-        context.skip = True
-        return
+    # 1. Skip lines matching non-functional description or help text patterns
+    for pattern in SKIP_LINE_PATTERNS:
+        if pattern.search(line):
+            context.skip = True
+            return
 
-    # 2. Skip __all__ definitions and module export lists
-    if "__all__" in line or line.startswith("__all__"):
-        context.skip = True
-        return
-
-    # 3. Skip type annotations, TYPE_CHECKING blocks, and import statements
-    if line.startswith(("if TYPE_CHECKING:", "from ", "import ")):
-        context.skip = True
-        return
-
-    # 4. Skip structured logging statements
-    if any(
-        line.startswith(f"logger.{level}") or f"logger.{level}(" in line
-        for level in ("debug", "info", "warning", "trace", "log")
-    ):
-        context.skip = True
-        return
-
-    # 5. Skip decorator headers
-    if (
-        line.startswith("@")
-        or "@config_section" in line
-        or "@command_handler" in line
-        or "@query_handler" in line
-    ):
-        context.skip = True
-        return
-
-    # 6. Skip docstring blocks and pure comments
-    if line.startswith(('"""', "'''", "#")):
-        context.skip = True
-        return
-
-    # 7. Skip Pydantic Field metadata definitions
-    if "Field(" in line and (
-        "description=" in line or "default=" in line or "default_factory=" in line
-    ):
+    # 2. Skip inline pragma directives if present
+    if "# pragma: no mutate" in line or "# no mutate" in line:
         context.skip = True
         return

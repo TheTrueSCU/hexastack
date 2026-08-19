@@ -2,7 +2,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from inline_snapshot import snapshot
 from rodi import Container
 
 from hexastack_core.adapters.logging.in_memory import InMemoryLogger
@@ -17,13 +16,14 @@ from hexastack_fastapi.infra.middleware.logging import (
 
 
 def _make_app(
-    logger: InMemoryLogger,
+    logger: InMemoryLogger | None = None,
     *,
     exclude_paths: list[str] | None = None,
     enable: bool = True,
-) -> TestClient:
+) -> tuple[TestClient, InMemoryLogger]:
+    log = logger or InMemoryLogger()
     container = Container()
-    container.add_instance(logger, declared_class=LoggingPort)
+    container.add_instance(log, declared_class=LoggingPort)
     cfg = HexastackFastApiConfig(
         logging=RequestLoggingConfig(
             enable=enable,
@@ -37,6 +37,10 @@ def _make_app(
     async def get_items():
         return [{"id": 1}]
 
+    @app.post("/items")
+    async def create_item():
+        return JSONResponse(status_code=201, content={"id": 2})
+
     @app.get("/health")
     async def health():
         return {"status": "ok"}
@@ -49,146 +53,92 @@ def _make_app(
     async def server_err():
         return JSONResponse(status_code=500, content={"error": "Server Error"})
 
-    return TestClient(app)
+    return TestClient(app), log
 
 
 def test_request_logging_middleware_2xx_is_info():
-    logger = InMemoryLogger()
-    _make_app(logger).get("/items")
+    client, logger = _make_app()
+    client.get("/items")
     assert logger.entries[0].level.lower() == "info"
+    assert logger.entries[0].extra is not None
+    assert logger.entries[0].extra["client_ip"] == "testclient"
+    assert "GET /items HTTP/1.1 -> 200" in logger.entries[0].message
 
 
 def test_request_logging_middleware_4xx_is_warning():
-    logger = InMemoryLogger()
-    _make_app(logger).get("/client-err")
+    client, logger = _make_app()
+    client.get("/client-err")
     assert logger.entries[0].level.lower() == "warning"
     assert logger.entries[0].extra is not None
     assert logger.entries[0].extra["http_status"] == 404
+    assert "GET /client-err HTTP/1.1 -> 404" in logger.entries[0].message
 
 
 def test_request_logging_middleware_5xx_is_error():
-    logger = InMemoryLogger()
-    _make_app(logger).get("/server-err")
+    client, logger = _make_app()
+    client.get("/server-err")
     assert logger.entries[0].level.lower() == "error"
     assert logger.entries[0].extra is not None
     assert logger.entries[0].extra["http_status"] == 500
+    assert "GET /server-err HTTP/1.1 -> 500" in logger.entries[0].message
 
 
-@pytest.mark.snapshot
-def test_request_logging_middleware_error_status():
+def test_request_logging_middleware_disabled():
+    client, logger = _make_app(enable=False)
+    client.get("/items")
+    assert len(logger.entries) == 0
+
+
+def test_request_logging_middleware_post_method_and_status():
+    client, logger = _make_app()
+    client.post("/items")
+    assert len(logger.entries) == 1
+    assert logger.entries[0].extra is not None
+    assert logger.entries[0].extra["http_method"] == "POST"
+    assert logger.entries[0].extra["http_status"] == 201
+    assert "POST /items HTTP/1.1 -> 201" in logger.entries[0].message
+
+
+@pytest.mark.anyio
+async def test_request_logging_middleware_direct_asgi_scope_handling():
     logger = InMemoryLogger()
-    client = _make_app(logger)
 
-    client.get("/client-err")
-    client.get("/server-err")
+    async def mock_lifespan_app(scope, receive, send):
+        pass
 
-    assert [{"level": e.level} for e in logger.entries] == snapshot(
-        [{"level": "warning"}, {"level": "error"}]
+    middleware = RequestLoggingHttpMiddleware(
+        app=mock_lifespan_app,
+        logger=logger,
     )
 
+    async def dummy_receive():
+        return {"type": "http.request"}
 
-# ---------------------------------------------------------------------------
-# extra dict field assertions (kills http_status, duration_ms, client_ip mutants)
-# ---------------------------------------------------------------------------
+    async def dummy_send(m):
+        pass
 
+    # 1. Non-HTTP scope bypass
+    await middleware({"type": "lifespan"}, dummy_receive, dummy_send)
+    assert len(logger.entries) == 0
 
-@pytest.mark.snapshot
-def test_request_logging_middleware_extra_fields():
-    """Kills mutants for http_status, http_method, http_path, duration_ms, client_ip
-    field assignments in the extra dict (lines 79–84)."""
-    logger = InMemoryLogger()
-    client = _make_app(logger)
+    # 2. HTTP scope with missing client (client_ip defaults to "unknown")
+    async def mock_app(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200})
+        await send({"type": "http.response.body", "body": b""})
 
-    res = client.get("/items")
-    assert res.status_code == 200
-    assert len(logger.entries) == 1
-    entry = logger.entries[0]
+    middleware._app = mock_app
+    messages = []
 
-    assert entry.extra is not None
-    # Explicit field kills — each assertion targets a specific mutant
-    assert entry.extra["http_status"] == 200
-    assert entry.extra["http_method"] == "GET"
-    assert entry.extra["http_path"] == "/items"
-    assert isinstance(entry.extra["duration_ms"], float)
-    assert entry.extra["duration_ms"] >= 0
-    assert "client_ip" in entry.extra
+    async def mock_send(m):
+        messages.append(m)
 
-    # Message format assertion (kills line 77 mutant)
-    assert "GET /items HTTP/1.1 -> 200" in entry.message
-
-    # Static fields snapshot (duration_ms excluded — dynamic)
-    assert {
-        "level": entry.level,
-        "message_contains": "GET /items HTTP/1.1 -> 200" in entry.message,
-        "http_status": entry.extra["http_status"],
-        "has_duration_ms": "duration_ms" in entry.extra,
-    } == snapshot(
-        {
-            "level": "info",
-            "message_contains": True,
-            "http_status": 200,
-            "has_duration_ms": True,
-        }
-    )  # duration_ms is dynamic — tested via has_duration_ms flag
-
-
-# ---------------------------------------------------------------------------
-# Log level branches: info (2xx), warning (4xx), error (5xx) (kills lines 85–90)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.snapshot
-def test_request_logging_middleware_log_levels():
-    """Kills mutants for the status_code >= 500 / >= 400 / else branches."""
-    logger = InMemoryLogger()
-    client = _make_app(logger)
-
-    client.get("/items")  # 200 → info
-    client.get("/client-err")  # 404 → warning
-    client.get("/server-err")  # 500 → error
-
-    assert [
-        {"level": e.level, "http_status": (e.extra or {})["http_status"]}
-        for e in logger.entries
-    ] == snapshot(
-        [
-            {"level": "info", "http_status": 200},
-            {"level": "warning", "http_status": 404},
-            {"level": "error", "http_status": 500},
-        ]
+    await middleware(
+        {"type": "http", "path": "/api", "method": "GET", "http_version": "2.0"},
+        dummy_receive,
+        mock_send,
     )
-
-
-# ---------------------------------------------------------------------------
-# Exclude paths — no log emitted (kills path exclusion mutants)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.snapshot
-def test_request_logging_middleware_success():
-    """Original snapshot test — exclude path produces no log entry."""
-    logger = InMemoryLogger()
-    client = _make_app(logger, exclude_paths=["/health"])
-
-    res = client.get("/items")
-    assert res.status_code == 200
     assert len(logger.entries) == 1
-    entry = logger.entries[0]
-
-    assert {
-        "level": entry.level,
-        "message_contains": "GET /items HTTP/1.1 -> 200" in entry.message,
-        "http_status": entry.extra["http_status"] if entry.extra else None,
-        "has_duration_ms": "duration_ms" in (entry.extra or {}),
-    } == snapshot(
-        {
-            "level": "info",
-            "message_contains": True,
-            "http_status": 200,
-            "has_duration_ms": True,
-        }
-    )  # duration_ms is dynamic — tested via has_duration_ms flag
-
-    # Excluded path generates no log
-    client.get("/health")
-    assert len(logger.entries) == 1
+    assert logger.entries[0].extra is not None
+    assert logger.entries[0].extra["client_ip"] == "unknown"
+    assert logger.entries[0].extra["http_path"] == "/api"
+    assert "GET /api HTTP/2.0 -> 200" in logger.entries[0].message

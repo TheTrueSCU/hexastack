@@ -1,5 +1,8 @@
+from unittest.mock import MagicMock
+
 import pytest
 from sqlalchemy import create_engine, select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -53,14 +56,14 @@ async def test_async_sqlalchemy_unit_of_work():
         assert len(tasks) == 1
         assert tasks[0].title == "Async Task 1"
 
-    # 2. Explicit commit and rollback
+    # 2. Explicit commit and rollback (including commit_async / rollback_async aliases)
     async with async_uow:
         async_uow.session.add(TaskRecord(title="Async Task 2"))
-        await async_uow.commit()
+        await async_uow.commit_async()
 
     async with async_uow:
         async_uow.session.add(TaskRecord(title="Async Task 3 (rolled back)"))
-        await async_uow.rollback()
+        await async_uow.rollback_async()
 
     async with async_factory() as session:
         titles = [
@@ -90,6 +93,31 @@ async def test_async_sqlalchemy_unit_of_work():
     with pytest.raises(UnitOfWorkError):
         async with uow_async_reraise:
             raise ValueError("Async wrapped error")
+
+    # 5. Commit failure in AsyncUnitOfWork raises UnitOfWorkError on exit
+    failing_mock_session = MagicMock()
+
+    async def mock_fail_commit():
+        raise OperationalError("stmt", {}, Exception("mock error"))
+
+    failing_mock_session.commit = mock_fail_commit
+
+    async def mock_noop_rollback():
+        pass
+
+    failing_mock_session.rollback = mock_noop_rollback
+
+    async def mock_noop_close():
+        pass
+
+    failing_mock_session.close = mock_noop_close
+
+    failing_async_uow = AsyncSqlAlchemyUnitOfWork(
+        session_factory=lambda: failing_mock_session
+    )
+    with pytest.raises(UnitOfWorkError):
+        async with failing_async_uow:
+            pass
 
 
 def test_sqlalchemy_unit_of_work_commit_and_rollback():
@@ -145,3 +173,12 @@ def test_sqlalchemy_unit_of_work_commit_and_rollback():
     uow_reraise = SqlAlchemyUnitOfWork(session_factory=session_factory, reraise=True)
     with pytest.raises(UnitOfWorkError), uow_reraise:
         raise ValueError("Wrapped error")
+
+    # 5. Commit failure in sync UnitOfWork raises UnitOfWorkError on exit
+    failing_mock_session = MagicMock()
+    failing_mock_session.commit.side_effect = OperationalError(
+        "stmt", {}, Exception("mock error")
+    )
+    failing_uow = SqlAlchemyUnitOfWork(session_factory=lambda: failing_mock_session)
+    with pytest.raises(UnitOfWorkError), failing_uow:
+        pass

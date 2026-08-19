@@ -9,7 +9,6 @@ from hexastack_logging.infra.config import (
     AsyncQueueConfig,
     FileLoggingConfig,
     HexastackLoggingConfig,
-    SanitizerConfig,
     configure_logging,
     register_logging_config,
 )
@@ -51,6 +50,7 @@ def test_configure_logging_file_and_per_module_levels(tmp_path: Path):
             format="json",
             max_bytes=1024,
             backup_count=2,
+            rotation_type="size",
         ),
         loggers={"noisy.module": "ERROR"},
     )
@@ -73,6 +73,31 @@ def test_configure_logging_file_and_per_module_levels(tmp_path: Path):
     assert "File log test message" in content
     parsed = json.loads(content.strip().splitlines()[-1])
     assert parsed["message"] == "File log test message"
+
+
+def test_configure_logging_file_time_rotation(tmp_path: Path):
+    log_file = tmp_path / "time_rotated.log"
+    logger = logging.getLogger("test_time_file_logger")
+
+    cfg = HexastackLoggingConfig(
+        level="INFO",
+        file=FileLoggingConfig(
+            enable=True,
+            path=str(log_file),
+            format="console",
+            rotation_type="time",
+            when="midnight",
+            backup_count=3,
+        ),
+    )
+    listener = configure_logging(config=cfg, target_logger=logger)
+    assert listener is None
+    assert len(logger.handlers) == 2
+    logger.info("Time rotation test message")
+
+    for h in logger.handlers:
+        h.flush()
+    assert log_file.exists()
 
 
 def test_configure_logging_json():
@@ -100,4 +125,7 @@ def test_sanitizer_config():
     )
     assert cfg.sanitizer.enable is False
     assert cfg.sanitizer.mask_replacement == "[HIDDEN]"
-    assert isinstance(cfg.sanitizer, SanitizerConfig)
+
+    logger = logging.getLogger("test_no_sanitizer")
+    listener = configure_logging(config=cfg, target_logger=logger)
+    assert listener is None
