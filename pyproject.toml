@@ -37,6 +37,7 @@ hexastack-cqrs = { workspace = true }
 hexastack-db = { workspace = true }
 hexastack-events = { workspace = true }
 hexastack-fastapi = { workspace = true }
+hexastack-flags = { workspace = true }
 hexastack-graphql = { workspace = true }
 hexastack-grpc = { workspace = true }
 hexastack-logging = { workspace = true }

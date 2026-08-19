@@ -143,6 +143,7 @@ graph TD
 | [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, pgvector, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
 | [`hexastack-events`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), distributed event buses | `pip install hexastack-events` | `hexastack[events]` |
 | [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
+| [`hexastack-flags`](file:///home/rjdw/Projects/hexastack/packages/hexastack_flags) | CNCF OpenFeature provider adapters (Flagd, In-Memory, Env) and enterprise feature toggling | `pip install hexastack-flags` | `hexastack[flags]` |
 | [`hexastack-graphql`](file:///home/rjdw/Projects/hexastack/packages/hexastack_graphql) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
 | [`hexastack-grpc`](file:///home/rjdw/Projects/hexastack/packages/hexastack_grpc) | High-performance gRPC presentation adapter, interceptors (correlation, logging, timing) | `pip install hexastack-grpc[reflection]` | `hexastack[grpc]` |
 | [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
@@ -185,6 +186,9 @@ pip install hexastack
 
 # Testing toolkit (Archon boundary checks, Hypothesis fuzzing, Schemathesis)
 pip install "hexastack[testing]"
+
+# CNCF OpenFeature flags (Flagd, Unleash, Flipt)
+pip install "hexastack[flags]"
 
 # CLI application development
 pip install "hexastack[cli]"

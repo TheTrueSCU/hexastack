@@ -51,6 +51,9 @@ web = [
     "hexastack-fastapi",
     "uvicorn[standard]>=0.30.0",
 ]
+flags = [
+    "hexastack-flags",
+]
 testing = [
     "hypothesis>=6.100.0",
     "inline-snapshot>=0.35.4",
@@ -64,6 +67,7 @@ all = [
     "hexastack-db",
     "hexastack-events",
     "hexastack-fastapi",
+    "hexastack-flags",
     "hexastack-graphql",
     "hexastack-grpc",
     "hexastack-mcp",
@@ -86,6 +90,7 @@ hexastack-cqrs = { workspace = true }
 hexastack-logging = { workspace = true }
 hexastack-events = { workspace = true }
 hexastack-fastapi = { workspace = true }
+hexastack-flags = { workspace = true }
 hexastack-cli = { workspace = true }
 hexastack-db = { workspace = true }
 hexastack-graphql = { workspace = true }

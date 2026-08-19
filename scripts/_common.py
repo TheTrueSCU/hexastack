@@ -45,6 +45,7 @@ VALID_PACKAGES: list[str] = sorted(
         "db",
         "events",
         "fastapi",
+        "flags",
         "graphql",
         "grpc",
         "hexastack",

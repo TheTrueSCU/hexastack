@@ -45,6 +45,7 @@ graph TD
         MCP["hexastack-mcp (hexastack[mcp])"]
         GRPC["hexastack-grpc (hexastack[grpc])"]
         DB["hexastack-db (hexastack[db])"]
+        FLAGS["hexastack-flags (hexastack[flags])"]
         UVICORN["uvicorn[standard] (hexastack[web])"]
     end
 
@@ -73,6 +74,7 @@ graph TD
 - `[cli]`: Installs `hexastack-cli` for interactive CLI commands.
 - `[db]` / `[sql]`: Installs `hexastack-db` for persistence and Alembic migrations.
 - `[fastapi]`: Installs `hexastack-fastapi`.
+- `[flags]`: Installs `hexastack-flags` for CNCF OpenFeature enterprise feature flag providers (Flagd, Unleash, Flipt).
 - `[graphql]`: Installs `hexastack-graphql`.
 - `[mcp]`: Installs `hexastack-mcp` for Model Context Protocol AI agent tools.
 - `[grpc]`: Installs `hexastack-grpc` for high-performance RPC services.
@@ -90,6 +92,9 @@ pip install hexastack
 
 # Testing toolkit (Archon boundary checks, Hypothesis fuzzing, Schemathesis)
 pip install "hexastack[testing]"
+
+# CNCF OpenFeature flags
+pip install "hexastack[flags]"
 
 # Security & RBAC
 pip install "hexastack[auth]"

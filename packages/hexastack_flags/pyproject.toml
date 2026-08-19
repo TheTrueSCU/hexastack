@@ -1,0 +1,61 @@
+[project]
+name = "hexastack-flags"
+version = "0.1.0"
+description = "CNCF OpenFeature provider adapters and enterprise feature flagging for Hexastack"
+readme = "README.md"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "hexastack-core",
+    "openfeature-sdk>=0.7.1",
+    "pydantic>=2.10.0",
+]
+
+[project.optional-dependencies]
+flagd = [
+    "openfeature-provider-flagd>=0.2.0",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+flags = "hexastack_flags.infra.bootstrap:FeatureFlagBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_flags"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_flags"]
+layers = [
+    "adapters",
+    "ports",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_flags.domain"]
+forbidden_modules = [
+    "hexastack_flags.ports",
+    "hexastack_flags.adapters",
+    "hexastack_flags.infra",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for ports"
+type = "forbidden"
+source_modules = ["hexastack_flags.ports"]
+forbidden_modules = [
+    "hexastack_flags.adapters",
+    "hexastack_flags.infra",
+]
