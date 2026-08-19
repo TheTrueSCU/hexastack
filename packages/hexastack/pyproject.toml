@@ -51,6 +51,12 @@ web = [
     "hexastack-fastapi",
     "uvicorn[standard]>=0.30.0",
 ]
+testing = [
+    "hypothesis>=6.100.0",
+    "inline-snapshot>=0.35.4",
+    "pytest-archon>=0.0.7",
+    "schemathesis>=3.39.0",
+]
 all = [
     "hexastack-ai",
     "hexastack-auth",

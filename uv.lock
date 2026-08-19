@@ -1326,6 +1326,12 @@ otel = [
 sql = [
     { name = "hexastack-db" },
 ]
+testing = [
+    { name = "hypothesis" },
+    { name = "inline-snapshot" },
+    { name = "pytest-archon" },
+    { name = "schemathesis" },
+]
 web = [
     { name = "hexastack-fastapi" },
     { name = "uvicorn", extra = ["standard"] },
@@ -1358,10 +1364,14 @@ requires-dist = [
     { name = "hexastack-mcp", marker = "extra == 'mcp'", editable = "packages/hexastack_mcp" },
     { name = "hexastack-otel", marker = "extra == 'all'", editable = "packages/hexastack_otel" },
     { name = "hexastack-otel", marker = "extra == 'otel'", editable = "packages/hexastack_otel" },
+    { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=6.100.0" },
+    { name = "inline-snapshot", marker = "extra == 'testing'", specifier = ">=0.35.4" },
+    { name = "pytest-archon", marker = "extra == 'testing'", specifier = ">=0.0.7" },
+    { name = "schemathesis", marker = "extra == 'testing'", specifier = ">=3.39.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "auth", "cli", "db", "sql", "events", "fastapi", "graphql", "grpc", "mcp", "otel", "web", "all"]
+provides-extras = ["ai", "auth", "cli", "db", "sql", "events", "fastapi", "graphql", "grpc", "mcp", "otel", "web", "testing", "all"]
 
 [[package]]
 name = "hexastack-ai"

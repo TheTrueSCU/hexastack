@@ -183,6 +183,9 @@ Hexastack can be installed as individual micro-packages or via the scoped `hexas
 # Minimal installation (core + cqrs + logging)
 pip install hexastack
 
+# Testing toolkit (Archon boundary checks, Hypothesis fuzzing, Schemathesis)
+pip install "hexastack[testing]"
+
 # CLI application development
 pip install "hexastack[cli]"
 

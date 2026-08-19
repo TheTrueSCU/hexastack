@@ -77,6 +77,7 @@ graph TD
 - `[mcp]`: Installs `hexastack-mcp` for Model Context Protocol AI agent tools.
 - `[grpc]`: Installs `hexastack-grpc` for high-performance RPC services.
 - `[web]`: Installs `hexastack-fastapi` and `uvicorn[standard]`.
+- `[testing]`: Installs recommended testing tools (`hypothesis`, `inline-snapshot`, `pytest-archon`, `schemathesis`).
 - `[all]`: Complete installation with all adapters and development tools.
 
 ---
@@ -86,6 +87,9 @@ graph TD
 ```bash
 # Minimal installation
 pip install hexastack
+
+# Testing toolkit (Archon boundary checks, Hypothesis fuzzing, Schemathesis)
+pip install "hexastack[testing]"
 
 # Security & RBAC
 pip install "hexastack[auth]"
