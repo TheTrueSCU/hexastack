@@ -63,6 +63,161 @@ def _present_cli_result(
             active_console.print(f"[bold green]{result}[/bold green]")
 
 
+def _build_model_parameters(
+    model_cls: type[Command] | type[Query],
+    pos_set: set[str],
+) -> tuple[list[inspect.Parameter], list[inspect.Parameter]]:
+    """Build positional and keyword parameters matching model_cls fields."""
+    pos_params: list[inspect.Parameter] = []
+    opt_params: list[inspect.Parameter] = []
+
+    for field_name, field_info in model_cls.model_fields.items():
+        annotation = field_info.annotation or str
+        is_pos = field_name in pos_set
+        default = (
+            typer.Argument(None, help=field_info.description)
+            if is_pos
+            else typer.Option(None, help=field_info.description)
+        )
+        param = inspect.Parameter(
+            name=field_name,
+            kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            default=default,
+            annotation=annotation,
+        )
+        if is_pos:
+            pos_params.append(param)
+        else:
+            opt_params.append(param)
+
+    return pos_params, opt_params
+
+
+def _build_control_parameters(
+    model_cls: type[Command] | type[Query],
+    output_format: str | None,
+) -> list[inspect.Parameter]:
+    """Build universal CLI control options (output format, input payload, tracing flags)."""
+    fields = model_cls.model_fields
+    specs: list[tuple[str, str, Any, Any]] = [
+        (
+            "output",
+            "__output_format__",
+            typer.Option(
+                output_format or "table",
+                "--output",
+                "-o",
+                help="Output format: table, json, or plain (CI/pipe friendly).",
+            ),
+            str,
+        ),
+        (
+            "input",
+            "__input__",
+            typer.Option(
+                None,
+                "--input",
+                "-i",
+                help="Input JSON payload string, file path, or '-' for stdin.",
+            ),
+            str | None,
+        ),
+        (
+            "quiet",
+            "__quiet__",
+            typer.Option(
+                False,
+                "--quiet",
+                "-q",
+                help="Quiet mode: suppress decorative terminal output.",
+            ),
+            bool,
+        ),
+        (
+            "debug",
+            "__debug__",
+            typer.Option(
+                False,
+                "--debug",
+                help="Enable debug mode and render formatted error tracebacks.",
+            ),
+            bool,
+        ),
+        (
+            "correlation_id",
+            "__correlation_id__",
+            typer.Option(
+                None,
+                "--correlation-id",
+                help="Explicit correlation ID for request tracing.",
+            ),
+            str | None,
+        ),
+        (
+            "user_id",
+            "__user_id__",
+            typer.Option(
+                None,
+                "--user-id",
+                help="Authenticated user context identifier.",
+            ),
+            str | None,
+        ),
+        (
+            "tenant_id",
+            "__tenant_id__",
+            typer.Option(
+                None,
+                "--tenant-id",
+                help="Tenant isolation identifier for multi-tenancy.",
+            ),
+            str | None,
+        ),
+    ]
+
+    return [
+        inspect.Parameter(
+            name=param_name,
+            kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            default=default_val,
+            annotation=ann,
+        )
+        for field_name, param_name, default_val, ann in specs
+        if field_name not in fields
+    ]
+
+
+def _setup_cli_context(
+    correlation_id: str | None,
+    user_id: str | None,
+    tenant_id: str | None,
+) -> None:
+    """Initialize correlation and user context for CLI command execution."""
+    if correlation_id:
+        set_correlation_id(correlation_id)
+    if user_id or tenant_id:
+        set_user_context(
+            UserContext(user_id=user_id or "cli-user", tenant_id=tenant_id)
+        )
+
+
+def _execute_cli_model(
+    model_cls: type[Command] | type[Query],
+    pipeline: ExecutionPipeline,
+    field_data: dict[str, Any],
+    cli_flags: dict[str, Any],
+    requested_output: str | None,
+) -> Any:
+    """Instantiate and execute CQRS command/query through the pipeline."""
+    payload = dict(field_data)
+    payload.update(cli_flags)
+    instance = model_cls(**payload)
+    result = pipeline.execute(instance, output_format=requested_output)
+    if inspect.iscoroutine(result):
+        result = asyncio.run(result)
+    return result
+
+
 def _build_dynamic_cli_runner(
     model_cls: type[Command] | type[Query],
     pipeline: ExecutionPipeline,
@@ -85,25 +240,14 @@ def _build_dynamic_cli_runner(
         tenant_id = kwargs.pop("__tenant_id__", None)
         input_payload = kwargs.pop("__input__", None)
 
-        if correlation_id:
-            set_correlation_id(correlation_id)
-
-        if user_id or tenant_id:
-            set_user_context(
-                UserContext(user_id=user_id or "cli-user", tenant_id=tenant_id)
-            )
+        _setup_cli_context(correlation_id, user_id, tenant_id)
 
         try:
             field_data = _resolve_cli_input(input_payload)
             cli_flags = {k: v for k, v in kwargs.items() if v is not None}
-            field_data.update(cli_flags)
-
-            instance = model_cls(**field_data)
-            result = pipeline.execute(instance, output_format=requested_output)
-
-            if inspect.iscoroutine(result):
-                result = asyncio.run(result)
-
+            result = _execute_cli_model(
+                model_cls, pipeline, field_data, cli_flags, requested_output
+            )
             _present_cli_result(
                 result, requested_output, quiet_mode, active_presenter, active_console
             )
@@ -114,143 +258,8 @@ def _build_dynamic_cli_runner(
                 active_presenter.print_error(str(exc))
             raise typer.Exit(code=1) from exc
 
-    # Separate parameters into positional arguments and options
-    pos_params: list[inspect.Parameter] = []
-    opt_params: list[inspect.Parameter] = []
-
-    has_output_field = "output" in model_cls.model_fields
-    has_quiet_field = "quiet" in model_cls.model_fields
-    has_debug_field = "debug" in model_cls.model_fields
-    has_cid_field = "correlation_id" in model_cls.model_fields
-    has_user_id_field = "user_id" in model_cls.model_fields
-    has_tenant_id_field = "tenant_id" in model_cls.model_fields
-    has_input_field = "input" in model_cls.model_fields
-
-    for field_name, field_info in model_cls.model_fields.items():
-        annotation = field_info.annotation or str
-        is_pos = field_name in pos_set
-
-        if is_pos:
-            default = typer.Argument(None, help=field_info.description)
-            param = inspect.Parameter(
-                name=field_name,
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=default,
-                annotation=annotation,
-            )
-            pos_params.append(param)
-        else:
-            default = typer.Option(None, help=field_info.description)
-            param = inspect.Parameter(
-                name=field_name,
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=default,
-                annotation=annotation,
-            )
-            opt_params.append(param)
-
-    # Universal CLI control options
-    control_params: list[inspect.Parameter] = []
-    if not has_output_field:
-        control_params.append(
-            inspect.Parameter(
-                name="__output_format__",
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=typer.Option(
-                    output_format or "table",
-                    "--output",
-                    "-o",
-                    help="Output format: table, json, or plain (CI/pipe friendly).",
-                ),
-                annotation=str,
-            )
-        )
-
-    if not has_input_field:
-        control_params.append(
-            inspect.Parameter(
-                name="__input__",
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=typer.Option(
-                    None,
-                    "--input",
-                    "-i",
-                    help="Input JSON payload string, file path, or '-' for stdin.",
-                ),
-                annotation=str | None,
-            )
-        )
-
-    if not has_quiet_field:
-        control_params.append(
-            inspect.Parameter(
-                name="__quiet__",
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=typer.Option(
-                    False,
-                    "--quiet",
-                    "-q",
-                    help="Quiet mode: suppress decorative terminal output.",
-                ),
-                annotation=bool,
-            )
-        )
-
-    if not has_debug_field:
-        control_params.append(
-            inspect.Parameter(
-                name="__debug__",
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=typer.Option(
-                    False,
-                    "--debug",
-                    help="Enable debug mode and render formatted error tracebacks.",
-                ),
-                annotation=bool,
-            )
-        )
-
-    if not has_cid_field:
-        control_params.append(
-            inspect.Parameter(
-                name="__correlation_id__",
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=typer.Option(
-                    None,
-                    "--correlation-id",
-                    help="Explicit correlation ID for request tracing.",
-                ),
-                annotation=str | None,
-            )
-        )
-
-    if not has_user_id_field:
-        control_params.append(
-            inspect.Parameter(
-                name="__user_id__",
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=typer.Option(
-                    None,
-                    "--user-id",
-                    help="Authenticated user context identifier.",
-                ),
-                annotation=str | None,
-            )
-        )
-
-    if not has_tenant_id_field:
-        control_params.append(
-            inspect.Parameter(
-                name="__tenant_id__",
-                kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                default=typer.Option(
-                    None,
-                    "--tenant-id",
-                    help="Tenant isolation identifier for multi-tenancy.",
-                ),
-                annotation=str | None,
-            )
-        )
+    pos_params, opt_params = _build_model_parameters(model_cls, pos_set)
+    control_params = _build_control_parameters(model_cls, output_format)
 
     all_params = pos_params + opt_params + control_params
     sig = inspect.Signature(parameters=all_params)

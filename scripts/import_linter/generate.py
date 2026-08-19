@@ -10,40 +10,36 @@ from scripts._common import (
 )
 
 
-def build_import_linter_toml(pkg_name: str, present_layers: set[str]) -> str:
-    """Generate the TOML block for import-linter contracts based on existing layers."""
-    lines = [
-        "[tool.importlinter]",
-        f'root_packages = ["{pkg_name}"]',
+def _build_layers_contract(pkg_name: str, active_layers: list[str]) -> list[str]:
+    """Generate TOML contract for hexagonal architecture layers hierarchy."""
+    if len(active_layers) < 2:
+        return []
+    formatted_layers = "\n".join(f'    "{layer}",' for layer in active_layers)
+    return [
+        "[[tool.importlinter.contracts]]",
+        'name = "Hexagonal architecture layer hierarchy"',
+        'type = "layers"',
+        f'containers = ["{pkg_name}"]',
+        "layers = [",
+        formatted_layers,
+        "]",
         "",
     ]
 
-    # 1. Main Hexagonal Layers Contract (if at least 2 relevant ordered layers exist)
-    layer_order = ["adapters", "ports", "domain"]
-    active_layers = [layer for layer in layer_order if layer in present_layers]
 
-    if len(active_layers) >= 2:
-        formatted_layers = "\n".join(f'    "{layer}",' for layer in active_layers)
-        lines.extend(
-            [
-                "[[tool.importlinter.contracts]]",
-                'name = "Hexagonal architecture layer hierarchy"',
-                'type = "layers"',
-                f'containers = ["{pkg_name}"]',
-                "layers = [",
-                formatted_layers,
-                "]",
-                "",
-            ]
-        )
-
-    # 2. Layer restrictions for infra, utils, domain, etc.
+def _build_forbidden_contracts(
+    pkg_name: str,
+    present_layers: set[str],
+    active_layers: list[str],
+) -> list[str]:
+    """Generate TOML contracts for forbidden inter-layer import restrictions."""
+    lines: list[str] = []
     for layer, disallowed in LAYER_RESTRICTIONS.items():
         if layer not in present_layers:
             continue
 
         active_disallowed = [d for d in disallowed if d in present_layers]
-        # Avoid duplicate layer rules covered by the 'layers' contract above
+        # Avoid duplicate layer rules covered by the 'layers' contract
         if layer in {"domain", "ports"} and all(
             d in active_layers for d in active_disallowed
         ):
@@ -69,6 +65,22 @@ def build_import_linter_toml(pkg_name: str, present_layers: set[str]) -> str:
                 "",
             ]
         )
+    return lines
+
+
+def build_import_linter_toml(pkg_name: str, present_layers: set[str]) -> str:
+    """Generate the TOML block for import-linter contracts based on existing layers."""
+    lines = [
+        "[tool.importlinter]",
+        f'root_packages = ["{pkg_name}"]',
+        "",
+    ]
+
+    layer_order = ["adapters", "ports", "domain"]
+    active_layers = [layer for layer in layer_order if layer in present_layers]
+
+    lines.extend(_build_layers_contract(pkg_name, active_layers))
+    lines.extend(_build_forbidden_contracts(pkg_name, present_layers, active_layers))
 
     return "\n".join(lines).strip() + "\n"
 

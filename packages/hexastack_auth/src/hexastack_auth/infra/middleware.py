@@ -108,6 +108,36 @@ def _resolve_effective_identity(identity: Any | None) -> Identity:
     )
 
 
+def _check_roles(metadata: AuthMetadata, identity: Identity) -> None:
+    """Verify role requirements against effective identity."""
+    if not metadata.roles:
+        return
+    if metadata.match_all_roles:
+        if not identity.has_all_roles(metadata.roles):
+            raise InsufficientPermissionsError(
+                f"Identity '{identity.user_id}' lacks required roles: {sorted(metadata.roles)}"
+            )
+    elif not identity.has_any_role(metadata.roles):
+        raise InsufficientPermissionsError(
+            f"Identity '{identity.user_id}' lacks any of the required roles: {sorted(metadata.roles)}"
+        )
+
+
+def _check_permissions(metadata: AuthMetadata, identity: Identity) -> None:
+    """Verify permission requirements against effective identity."""
+    if not metadata.permissions:
+        return
+    if metadata.match_all_permissions:
+        if not identity.has_all_permissions(metadata.permissions):
+            raise InsufficientPermissionsError(
+                f"Identity '{identity.user_id}' lacks required permissions: {sorted(metadata.permissions)}"
+            )
+    elif not identity.has_any_permission(metadata.permissions):
+        raise InsufficientPermissionsError(
+            f"Identity '{identity.user_id}' lacks any of the required permissions: {sorted(metadata.permissions)}"
+        )
+
+
 def evaluate_authorization(
     metadata: AuthMetadata,
     identity: Any | None = None,
@@ -128,28 +158,6 @@ def evaluate_authorization(
     if metadata.require_authenticated and not effective_id.is_authenticated:
         raise InvalidCredentialsError("Authentication credentials are required.")
 
-    # 2. Check Roles
-    if metadata.roles:
-        if metadata.match_all_roles:
-            if not effective_id.has_all_roles(metadata.roles):
-                raise InsufficientPermissionsError(
-                    f"Identity '{effective_id.user_id}' lacks required roles: {sorted(metadata.roles)}"
-                )
-        else:
-            if not effective_id.has_any_role(metadata.roles):
-                raise InsufficientPermissionsError(
-                    f"Identity '{effective_id.user_id}' lacks any of the required roles: {sorted(metadata.roles)}"
-                )
-
-    # 3. Check Permissions
-    if metadata.permissions:
-        if metadata.match_all_permissions:
-            if not effective_id.has_all_permissions(metadata.permissions):
-                raise InsufficientPermissionsError(
-                    f"Identity '{effective_id.user_id}' lacks required permissions: {sorted(metadata.permissions)}"
-                )
-        else:
-            if not effective_id.has_any_permission(metadata.permissions):
-                raise InsufficientPermissionsError(
-                    f"Identity '{effective_id.user_id}' lacks any of the required permissions: {sorted(metadata.permissions)}"
-                )
+    # 2. Check Roles & Permissions
+    _check_roles(metadata, effective_id)
+    _check_permissions(metadata, effective_id)

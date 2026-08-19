@@ -31,6 +31,35 @@ class GrpcServiceRegistry:
         """Initialize empty gRPC registry."""
         self._services: list[GrpcServiceRegistration] = []
 
+    def _resolve_servicer_instance(
+        self,
+        servicer_val: Any,
+        container: Container | None,
+    ) -> Any:
+        """Resolve or instantiate servicer instance."""
+        if not isinstance(servicer_val, type):
+            return servicer_val
+        if container is not None:
+            try:
+                return container.resolve(servicer_val)
+            except Exception:  # noqa: BLE001
+                return servicer_val()
+        return servicer_val()
+
+    def _enable_reflection(
+        self,
+        server: grpc.Server,
+        all_service_names: Sequence[str],
+    ) -> None:
+        """Enable gRPC Server Reflection protocol if package is present."""
+        try:
+            from grpc_reflection.v1alpha import reflection
+
+            names = tuple(all_service_names) + (reflection.SERVICE_NAME,)
+            reflection.enable_server_reflection(names, server)
+        except ImportError:
+            pass
+
     def build_server(
         self,
         config: HexastackGrpcConfig,
@@ -56,17 +85,7 @@ class GrpcServiceRegistry:
         all_service_names: list[str] = []
 
         for reg in self._services:
-            servicer_val = reg.servicer
-            if isinstance(servicer_val, type):
-                if container is not None:
-                    try:
-                        servicer_instance = container.resolve(servicer_val)
-                    except Exception:  # noqa: BLE001
-                        servicer_instance = servicer_val()
-                else:
-                    servicer_instance = servicer_val()
-            else:
-                servicer_instance = servicer_val
+            servicer_instance = self._resolve_servicer_instance(reg.servicer, container)
 
             try:
                 reg.add_to_server_fn(servicer_instance, server)
@@ -77,13 +96,7 @@ class GrpcServiceRegistry:
                 ) from e
 
         if config.enable_reflection:
-            try:
-                from grpc_reflection.v1alpha import reflection
-
-                names = tuple(all_service_names) + (reflection.SERVICE_NAME,)
-                reflection.enable_server_reflection(names, server)
-            except ImportError:
-                pass
+            self._enable_reflection(server, all_service_names)
 
         server.add_insecure_port(f"{config.host}:{config.port}")
         return server

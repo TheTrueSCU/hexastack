@@ -1,6 +1,8 @@
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import strawberry
+from strawberry.extensions import SchemaExtension
 from strawberry.types import Info
 
 from hexastack_graphql.domain.context import GraphQLContext
@@ -23,79 +25,64 @@ class GraphQLSchemaRegistry:
         self._mutation_fields: dict[str, Any] = {}
         self._custom_schema: strawberry.Schema | None = None
 
+    def _build_query_root(self) -> type[Any]:
+        """Assemble composite or fallback GraphQL Query root type."""
+        if self._query_types:
+            if len(self._query_types) == 1 and not self._query_fields:
+                return self._query_types[0]
+            bases = tuple(self._query_types)
+            fields = dict(self._query_fields)
+            QueryType = type("Query", bases, fields)
+            return strawberry.type(QueryType)
+
+        if self._query_fields:
+            QueryType = type("Query", (), dict(self._query_fields))
+            return strawberry.type(QueryType)
+
+        @strawberry.type
+        class DefaultQuery:
+            @strawberry.field
+            def ping(self, info: Info[GraphQLContext, Any]) -> str:
+                return "pong"
+
+        return DefaultQuery
+
+    def _build_mutation_root(self) -> type[Any] | None:
+        """Assemble composite GraphQL Mutation root type if any mutations registered."""
+        if self._mutation_types:
+            if len(self._mutation_types) == 1 and not self._mutation_fields:
+                return self._mutation_types[0]
+            bases = tuple(self._mutation_types)
+            MutationType = type("Mutation", bases, dict(self._mutation_fields))
+            return strawberry.type(MutationType)
+
+        if self._mutation_fields:
+            MutationType = type("Mutation", (), dict(self._mutation_fields))
+            return strawberry.type(MutationType)
+
+        return None
+
     def build_schema(
         self,
-        extensions: list[Any] | None = None,
+        extensions: Sequence[type[SchemaExtension] | Callable[[], SchemaExtension]]
+        | None = None,
     ) -> strawberry.Schema:
-        """Compile all registered types and fields into a Strawberry Schema.
-
-        Notes/Architectural Intent:
-            If a custom schema was registered, returns it directly. Otherwise,
-            synthesizes root Query and Mutation types from registered classes
-            and field definitions.
+        """Assemble all registered types and fields into a strawberry.Schema.
 
         Args:
-            extensions: Optional list of Strawberry SchemaExtension instances.
+            extensions: Optional list of strawberry SchemaExtension classes or instances.
 
         Returns:
-            Compiled strawberry.Schema instance.
+            The compiled strawberry.Schema instance.
 
         Raises:
-            SchemaBuildingError: If schema compilation fails.
+            SchemaBuildingError: If schema assembly or validation fails.
         """
         if self._custom_schema is not None:
             return self._custom_schema
 
-        # 1. Assemble Query Root
-        query_cls: type[Any]
-        if self._query_types:
-            # If multiple query classes registered, create a composite inheriting from them
-            if len(self._query_types) == 1 and not self._query_fields:
-                query_cls = self._query_types[0]
-            else:
-                bases = tuple(self._query_types)
-                fields = dict(self._query_fields)
-
-                # If no fields and bases, provide ping
-                if not fields and not bases:
-
-                    @strawberry.field
-                    def ping(info: Info[GraphQLContext, Any]) -> str:
-                        return "pong"
-
-                    fields["ping"] = ping
-
-                composite_dict = dict(fields)
-                QueryType = type("Query", bases, composite_dict)
-                query_cls = strawberry.type(QueryType)
-        elif self._query_fields:
-            composite_dict = dict(self._query_fields)
-            QueryType = type("Query", (), composite_dict)
-            query_cls = strawberry.type(QueryType)
-        else:
-            # Default fallback query root
-            @strawberry.type
-            class DefaultQuery:
-                @strawberry.field
-                def ping(self, info: Info[GraphQLContext, Any]) -> str:
-                    return "pong"
-
-            query_cls = DefaultQuery
-
-        # 2. Assemble Mutation Root (if any registered)
-        mutation_cls: type[Any] | None = None
-        if self._mutation_types:
-            if len(self._mutation_types) == 1 and not self._mutation_fields:
-                mutation_cls = self._mutation_types[0]
-            else:
-                bases = tuple(self._mutation_types)
-                composite_dict = dict(self._mutation_fields)
-                MutationType = type("Mutation", bases, composite_dict)
-                mutation_cls = strawberry.type(MutationType)
-        elif self._mutation_fields:
-            composite_dict = dict(self._mutation_fields)
-            MutationType = type("Mutation", (), composite_dict)
-            mutation_cls = strawberry.type(MutationType)
+        query_cls = self._build_query_root()
+        mutation_cls = self._build_mutation_root()
 
         try:
             return strawberry.Schema(

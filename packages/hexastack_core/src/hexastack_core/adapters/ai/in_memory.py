@@ -55,8 +55,28 @@ class InMemoryLlmProvider(LlmProviderPort):
         self._structured_responses.clear()
         self._simulated_error = None
 
+    def _synthesize_mock_instance(self, response_schema: type[BaseModel]) -> BaseModel:
+        """Synthesize mock field values for a required Pydantic model schema."""
+        try:
+            return response_schema()
+        except Exception:  # noqa: BLE001
+            init_data = {}
+            for name, field_info in response_schema.model_fields.items():
+                if field_info.annotation is str:
+                    init_data[name] = f"Mock {name}"
+                elif field_info.annotation in (int, float):
+                    init_data[name] = 1
+                elif field_info.annotation is bool:
+                    init_data[name] = True
+                else:
+                    init_data[name] = None
+            return response_schema.model_validate(init_data)
+
     def generate_structured(
-        self, prompt: str, response_schema: type[BaseModel]
+        self,
+        prompt: str,
+        response_schema: type[BaseModel],
+        system_prompt: str | None = None,
     ) -> BaseModel:
         """Generate a structured Pydantic model response."""
         if self._simulated_error is not None:
@@ -70,22 +90,7 @@ class InMemoryLlmProvider(LlmProviderPort):
         ):
             res = self._default_structured
         else:
-            # Construct default instance from schema if possible
-            try:
-                res = response_schema()
-            except Exception:  # noqa: BLE001
-                # If schema has required fields, synthesize mock values
-                init_data = {}
-                for name, field_info in response_schema.model_fields.items():
-                    if field_info.annotation is str:
-                        init_data[name] = f"Mock {name}"
-                    elif field_info.annotation in (int, float):
-                        init_data[name] = 1
-                    elif field_info.annotation is bool:
-                        init_data[name] = True
-                    else:
-                        init_data[name] = None
-                res = response_schema.model_validate(init_data)
+            res = self._synthesize_mock_instance(response_schema)
 
         record = LlmCallRecord(
             prompt=prompt,

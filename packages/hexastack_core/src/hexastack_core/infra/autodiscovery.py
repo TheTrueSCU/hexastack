@@ -25,12 +25,11 @@ def _scan_module_recursive(
         return
     visited.add(mod_name)
 
-    # 1. Inspect classes and functions in the module
-    for _, obj in inspect.getmembers(
-        mod, lambda m: inspect.isclass(m) or inspect.isfunction(m)
-    ):
-        for visitor in visitors:
-            visitor(obj, mod)
+    # 1. Inspect classes, functions, and decorated members in the module
+    for _, obj in inspect.getmembers(mod):
+        if obj is not None and not inspect.ismodule(obj):
+            for visitor in visitors:
+                visitor(obj, mod)
 
     # 2. If it is a package with __path__, recurse over child submodules
     if hasattr(mod, "__path__"):

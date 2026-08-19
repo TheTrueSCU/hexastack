@@ -144,3 +144,49 @@ def test_autodiscover_cli_commands_nested_subgroups_and_aliases():
     res_nested = runner.invoke(app, ["user", "profile", "set-bio", "--bio", "Engineer"])
     assert res_nested.exit_code == 0
     assert "Updated bio to: Engineer" in res_nested.stdout
+
+
+def test_cli_autodiscovery_internal_helpers():
+    from hexastack_cli.infra.autodiscovery import (
+        _normalize_group_path,
+        _resolve_targets,
+        _SubgroupManager,
+    )
+    from hexastack_cli.infra.decorators import CliMetadata
+
+    # 1. _normalize_group_path
+    assert _normalize_group_path(None) == []
+    assert _normalize_group_path("") == []
+    assert _normalize_group_path("user.profile.details") == [
+        "user",
+        "profile",
+        "details",
+    ]
+    assert _normalize_group_path("user/admin profile") == ["user", "admin", "profile"]
+    assert _normalize_group_path([" user ", " profile "]) == ["user", "profile"]
+
+    # 2. _resolve_targets
+    meta = CliMetadata(
+        name="custom-name",
+        kind="command",
+        group="admin.users",
+        aliases=("add", "/root-create", "super/admin/make"),
+        help="Custom help",
+    )
+    targets = _resolve_targets(meta, default_name="fallback-name")
+    assert targets == [
+        (["admin", "users"], "custom-name", "Custom help"),
+        (["admin", "users"], "add", "Custom help"),
+        ([], "root-create", "Custom help"),
+        (["super", "admin"], "make", "Custom help"),
+    ]
+
+    # 3. _SubgroupManager
+    root_app = create_cli_app()
+    manager = _SubgroupManager(root_app)
+    assert manager.get_or_create([]) is root_app
+
+    sub_app = manager.get_or_create(["billing", "invoices"])
+    assert sub_app is not None
+    # Idempotent retrieval
+    assert manager.get_or_create(["billing", "invoices"]) is sub_app

@@ -134,3 +134,37 @@ def test_jwt_issuer_and_audience_claims(sample_identity: Identity):
     )
     with pytest.raises(InvalidTokenError):
         bad_aud_adapter.verify_token(token)
+
+
+def test_jwt_ttl_variations_and_expiry(sample_identity: Identity):
+    from datetime import timedelta
+
+    from hexastack_auth.domain.exceptions import AuthError, TokenExpiredError
+
+    adapter = JwtSecurityAdapter(
+        secret_key="secret-key-1234567890-thirty-two-bytes-key",
+        default_ttl_seconds=3600,
+    )
+
+    # 1. Custom integer ttl
+    token_int = adapter.create_token(sample_identity, ttl=7200)
+    payload_int = jwt.decode(token_int, options={"verify_signature": False})
+    assert payload_int["exp"] - payload_int["iat"] == 7200
+
+    # 2. Custom timedelta ttl
+    token_td = adapter.create_token(sample_identity, ttl=timedelta(minutes=15))
+    payload_td = jwt.decode(token_td, options={"verify_signature": False})
+    assert payload_td["exp"] - payload_td["iat"] == 900
+
+    # 3. Expired token raises TokenExpiredError
+    token_expired = adapter.create_token(sample_identity, ttl=-10)
+    with pytest.raises(TokenExpiredError, match="JWT token expired"):
+        adapter.verify_token(token_expired)
+
+    # 4. Signing failure raises AuthError
+    bad_adapter = JwtSecurityAdapter(
+        secret_key="secret-key-1234567890-thirty-two-bytes-key",
+        algorithm="UNSUPPORTED_ALG",
+    )
+    with pytest.raises(AuthError, match="JWT signing failed"):
+        bad_adapter.create_token(sample_identity)

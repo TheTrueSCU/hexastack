@@ -38,6 +38,20 @@ def get_available_packages() -> set[str]:
     }
 
 
+def _extract_known_packages(raw_deps: list[str]) -> set[str]:
+    """Filter list of raw requirement strings for known internal hexastack packages."""
+    matched = set()
+    for dep in raw_deps:
+        for known in ALL_KNOWN_PACKAGES:
+            if (
+                dep == known
+                or dep.startswith(f"{known}[")
+                or dep.startswith(f"{known}>=")
+            ):
+                matched.add(known)
+    return matched
+
+
 def get_declared_dependencies(package_name: str) -> set[str]:
     """Parse dependencies (main + optional) from package pyproject.toml."""
     pyproject_path = PACKAGES_ROOT / package_name / "pyproject.toml"
@@ -47,30 +61,12 @@ def get_declared_dependencies(package_name: str) -> set[str]:
     with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
 
-    deps = set()
     project_data = data.get("project", {})
+    deps = _extract_known_packages(project_data.get("dependencies", []))
 
-    # Main dependencies
-    for dep in project_data.get("dependencies", []):
-        for known in ALL_KNOWN_PACKAGES:
-            if (
-                dep == known
-                or dep.startswith(f"{known}[")
-                or dep.startswith(f"{known}>=")
-            ):
-                deps.add(known)
-
-    # Optional / extra dependencies
     optional_deps = project_data.get("optional-dependencies", {})
     for _, extra_list in optional_deps.items():
-        for dep in extra_list:
-            for known in ALL_KNOWN_PACKAGES:
-                if (
-                    dep == known
-                    or dep.startswith(f"{known}[")
-                    or dep.startswith(f"{known}>=")
-                ):
-                    deps.add(known)
+        deps.update(_extract_known_packages(extra_list))
 
     return deps
 

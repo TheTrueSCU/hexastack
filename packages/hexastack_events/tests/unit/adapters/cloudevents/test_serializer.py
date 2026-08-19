@@ -188,8 +188,20 @@ def test_to_envelope_shape():
     assert default_env.source == "hexastack"
     assert default_env.type == "InvoicePaidEvent"
     assert default_env.datacontenttype == "application/json"
+    assert default_env.correlationid is None
+    assert default_env.tenantid is None
     assert default_env.data == {
         "invoice_id": "inv-env-1",
         "amount": 75.0,
         "currency": "USD",
     }
+
+    # to_envelope with active context
+    with correlation_scope("env-corr-101"):
+        set_user_context(UserContext(user_id="usr-env", tenant_id="tenant-env"))
+        env_ctx = to_envelope(event)
+        assert env_ctx.correlationid == "env-corr-101"
+        assert env_ctx.tenantid == "tenant-env"
+        assert env_ctx.datacontenttype == "application/json"
+        assert isinstance(env_ctx.time, str)
+        assert len(env_ctx.time) > 0

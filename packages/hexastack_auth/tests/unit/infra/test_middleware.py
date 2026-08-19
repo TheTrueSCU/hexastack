@@ -221,3 +221,48 @@ def test_resolve_effective_identity_variations():
     assert "duck_perm" in resolved_duck.permissions
     assert resolved_duck.tenant_id == "tenant_duck"
     assert resolved_duck.is_authenticated is True
+
+
+def test_check_roles_and_permissions_helpers():
+    from hexastack_auth.infra.middleware import _check_permissions, _check_roles
+
+    ident = Identity(
+        user_id="usr-1",
+        roles=frozenset(["manager"]),
+        permissions=frozenset(["read:data"]),
+        is_authenticated=True,
+    )
+
+    # Empty metadata skips without error
+    _check_roles(AuthMetadata(), ident)
+    _check_permissions(AuthMetadata(), ident)
+
+    # Roles all vs any
+    meta_roles_all = AuthMetadata(roles=("manager", "admin"), match_all_roles=True)
+    with pytest.raises(InsufficientPermissionsError, match="lacks required roles"):
+        _check_roles(meta_roles_all, ident)
+
+    meta_roles_any = AuthMetadata(roles=("manager", "admin"), match_all_roles=False)
+    _check_roles(meta_roles_any, ident)
+
+    # Permissions all vs any
+    meta_perms_all = AuthMetadata(
+        permissions=("read:data", "write:data"), match_all_permissions=True
+    )
+    with pytest.raises(
+        InsufficientPermissionsError, match="lacks required permissions"
+    ):
+        _check_permissions(meta_perms_all, ident)
+
+    meta_perms_any = AuthMetadata(
+        permissions=("read:data", "write:data"), match_all_permissions=False
+    )
+    _check_permissions(meta_perms_any, ident)
+
+    meta_perms_fail = AuthMetadata(
+        permissions=("delete:data",), match_all_permissions=False
+    )
+    with pytest.raises(
+        InsufficientPermissionsError, match="lacks any of the required permissions"
+    ):
+        _check_permissions(meta_perms_fail, ident)

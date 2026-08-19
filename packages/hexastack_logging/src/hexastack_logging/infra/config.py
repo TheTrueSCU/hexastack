@@ -114,6 +114,47 @@ def _get_formatter(
     )
 
 
+def _prepare_file_handler(
+    cfg: HexastackLoggingConfig,
+    level_num: int,
+    correlation_filter: CorrelationIdFilter,
+    sanitizer_filter: SanitizerFilter | None,
+) -> logging.Handler:
+    """Create and configure rotating file handler."""
+    log_file_path = Path(cfg.file.path)
+    log_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    file_formatter = _get_formatter(
+        fmt=cfg.file.format,
+        colorize=False,
+        datefmt=cfg.datefmt,
+        include_context=cfg.include_context,
+    )
+
+    file_handler: logging.Handler
+    if cfg.file.rotation_type == "time":
+        file_handler = TimedRotatingFileHandler(
+            filename=str(log_file_path),
+            when=cfg.file.when,
+            backupCount=cfg.file.backup_count,
+            encoding="utf-8",
+        )
+    else:
+        file_handler = RotatingFileHandler(
+            filename=str(log_file_path),
+            maxBytes=cfg.file.max_bytes,
+            backupCount=cfg.file.backup_count,
+            encoding="utf-8",
+        )
+
+    file_handler.setLevel(level_num)
+    file_handler.setFormatter(file_formatter)
+    file_handler.addFilter(correlation_filter)
+    if sanitizer_filter:
+        file_handler.addFilter(sanitizer_filter)
+    return file_handler
+
+
 def configure_logging(
     config: HexastackLoggingConfig | None = None,
     target_logger: logging.Logger | None = None,
@@ -171,38 +212,9 @@ def configure_logging(
 
     # 5. Prepare File Handler if enabled
     if cfg.file.enable:
-        log_file_path = Path(cfg.file.path)
-        log_file_path.parent.mkdir(parents=True, exist_ok=True)
-
-        file_formatter = _get_formatter(
-            fmt=cfg.file.format,
-            colorize=False,
-            datefmt=cfg.datefmt,
-            include_context=cfg.include_context,
+        sink_handlers.append(
+            _prepare_file_handler(cfg, level_num, correlation_filter, sanitizer_filter)
         )
-
-        file_handler: logging.Handler
-        if cfg.file.rotation_type == "time":
-            file_handler = TimedRotatingFileHandler(
-                filename=str(log_file_path),
-                when=cfg.file.when,
-                backupCount=cfg.file.backup_count,
-                encoding="utf-8",
-            )
-        else:
-            file_handler = RotatingFileHandler(
-                filename=str(log_file_path),
-                maxBytes=cfg.file.max_bytes,
-                backupCount=cfg.file.backup_count,
-                encoding="utf-8",
-            )
-
-        file_handler.setLevel(level_num)
-        file_handler.setFormatter(file_formatter)
-        file_handler.addFilter(correlation_filter)
-        if sanitizer_filter:
-            file_handler.addFilter(sanitizer_filter)
-        sink_handlers.append(file_handler)
 
     # 6. Apply Async Queue or Direct Handlers
     logger.handlers.clear()

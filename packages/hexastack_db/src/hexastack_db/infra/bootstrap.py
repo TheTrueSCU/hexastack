@@ -56,6 +56,97 @@ class DatabaseBootstrapper(BootstrapperPort):
     name: str = "db"
     order: int = 15
 
+    def _configure_async_db(
+        self,
+        di: Any,
+        db_config: HexastackDatabaseConfig,
+    ) -> tuple[
+        AsyncEngine, async_sessionmaker[AsyncSession], AsyncSqlAlchemyUnitOfWork, Any
+    ]:
+        """Initialize async database engine, session factory, UoW, and vector store."""
+        async_engine = create_async_db_engine(db_config)
+        async_factory = create_async_session_factory(async_engine)
+        async_uow = AsyncSqlAlchemyUnitOfWork(session_factory=async_factory)
+
+        if AsyncEngine not in di:
+            di.add_instance(async_engine, declared_class=AsyncEngine)
+        if AsyncSqlAlchemyUnitOfWork not in di:
+            di.add_instance(async_uow, declared_class=AsyncSqlAlchemyUnitOfWork)
+
+        vector_store = None
+        if db_config.vector.enabled:
+            from hexastack_db.adapters.vector import AsyncPgVectorStoreAdapter
+
+            async_vector_store = AsyncPgVectorStoreAdapter(
+                session_factory=async_factory,
+                config=db_config.vector,
+            )
+            if AsyncPgVectorStoreAdapter not in di:
+                di.add_instance(
+                    async_vector_store, declared_class=AsyncPgVectorStoreAdapter
+                )
+            vector_store = async_vector_store
+
+        return async_engine, async_factory, async_uow, vector_store
+
+    def _configure_sync_db(
+        self,
+        di: Any,
+        db_config: HexastackDatabaseConfig,
+    ) -> tuple[Engine, sessionmaker[Session], UnitOfWorkPort, Any]:
+        """Initialize sync database engine, session factory, UoW, and vector store."""
+        sync_engine = create_db_engine(db_config)
+        sync_factory = create_session_factory(sync_engine)
+        sync_uow = SqlAlchemyUnitOfWork(session_factory=sync_factory)
+
+        if Engine not in di:
+            di.add_instance(sync_engine, declared_class=Engine)
+        if UnitOfWorkPort not in di:
+            di.add_instance(sync_uow, declared_class=UnitOfWorkPort)
+        if SqlAlchemyUnitOfWork not in di:
+            di.add_instance(sync_uow, declared_class=SqlAlchemyUnitOfWork)
+
+        uow = di.resolve(UnitOfWorkPort) if UnitOfWorkPort in di else sync_uow
+
+        vector_store = None
+        if db_config.vector.enabled:
+            from hexastack_db.adapters.vector import PgVectorStoreAdapter
+
+            sync_vector_store = PgVectorStoreAdapter(
+                session_factory=sync_factory,
+                config=db_config.vector,
+            )
+            if db_config.auto_create_tables:
+                sync_vector_store.create_table()
+            di.add_instance(sync_vector_store, declared_class=VectorStorePort)
+            di.add_instance(sync_vector_store, declared_class=PgVectorStoreAdapter)
+            vector_store = sync_vector_store
+
+        return sync_engine, sync_factory, uow, vector_store
+
+    def _auto_create_tables(
+        self,
+        engine: Engine | AsyncEngine,
+        async_mode: bool,
+    ) -> None:
+        """Create database tables across all registered metadata definitions."""
+        registered = get_registered_metadata()
+        if not registered:
+            return
+
+        if async_mode:
+            sync_url = str(engine.url).replace("+aiosqlite", "").replace("+asyncpg", "")
+            from sqlalchemy import create_engine as _ce
+            from sqlalchemy.pool import NullPool
+
+            _sync = _ce(sync_url, poolclass=NullPool)
+            for metadata in registered:
+                metadata.create_all(_sync)
+            _sync.dispose()
+        elif isinstance(engine, Engine):
+            for metadata in registered:
+                metadata.create_all(engine)
+
     def configure(self, context: BootstrapContext) -> None:
         """Phase 2: Assemble database engine, sessionmaker, and UnitOfWork in DI container.
 
@@ -70,91 +161,19 @@ class DatabaseBootstrapper(BootstrapperPort):
         else:
             db_config = context.get_config("db", HexastackDatabaseConfig)
 
-        engine: Engine | AsyncEngine
-        session_factory: Any
-        uow: SqlAlchemyUnitOfWork | AsyncSqlAlchemyUnitOfWork | UnitOfWorkPort
-        vector_store: Any = None
-
         # 2. Build Engine & Session Factory based on async_mode
         if db_config.async_mode:
-            async_engine = create_async_db_engine(db_config)
-            async_factory = create_async_session_factory(async_engine)
-            async_uow = AsyncSqlAlchemyUnitOfWork(session_factory=async_factory)
-
-            if AsyncEngine not in di:
-                di.add_instance(async_engine, declared_class=AsyncEngine)
-            if AsyncSqlAlchemyUnitOfWork not in di:
-                di.add_instance(async_uow, declared_class=AsyncSqlAlchemyUnitOfWork)
-
-            engine = async_engine
-            session_factory = async_factory
-            uow = async_uow
-
-            if db_config.vector.enabled:
-                from hexastack_db.adapters.vector import (
-                    AsyncPgVectorStoreAdapter,
-                )
-
-                async_vector_store = AsyncPgVectorStoreAdapter(
-                    session_factory=async_factory,
-                    config=db_config.vector,
-                )
-                if AsyncPgVectorStoreAdapter not in di:
-                    di.add_instance(
-                        async_vector_store, declared_class=AsyncPgVectorStoreAdapter
-                    )
-                vector_store = async_vector_store
+            engine, session_factory, uow, vector_store = self._configure_async_db(
+                di, db_config
+            )
         else:
-            sync_engine = create_db_engine(db_config)
-            sync_factory = create_session_factory(sync_engine)
-            sync_uow = SqlAlchemyUnitOfWork(session_factory=sync_factory)
-
-            if Engine not in di:
-                di.add_instance(sync_engine, declared_class=Engine)
-            if UnitOfWorkPort not in di:
-                di.add_instance(sync_uow, declared_class=UnitOfWorkPort)
-            if SqlAlchemyUnitOfWork not in di:
-                di.add_instance(sync_uow, declared_class=SqlAlchemyUnitOfWork)
-
-            engine = sync_engine
-            session_factory = sync_factory
-            uow = di.resolve(UnitOfWorkPort) if UnitOfWorkPort in di else sync_uow
-
-            if db_config.vector.enabled:
-                from hexastack_db.adapters.vector import (
-                    PgVectorStoreAdapter,
-                )
-
-                sync_vector_store = PgVectorStoreAdapter(
-                    session_factory=sync_factory,
-                    config=db_config.vector,
-                )
-                if db_config.auto_create_tables:
-                    sync_vector_store.create_table()
-                di.add_instance(sync_vector_store, declared_class=VectorStorePort)
-                di.add_instance(sync_vector_store, declared_class=PgVectorStoreAdapter)
-                vector_store = sync_vector_store
+            engine, session_factory, uow, vector_store = self._configure_sync_db(
+                di, db_config
+            )
 
         # 3. Run create_all on registered metadata if configured
         if db_config.auto_create_tables:
-            registered = get_registered_metadata()
-            if registered:
-                if db_config.async_mode:
-                    sync_url = (
-                        str(engine.url)
-                        .replace("+aiosqlite", "")
-                        .replace("+asyncpg", "")
-                    )
-                    from sqlalchemy import create_engine as _ce
-                    from sqlalchemy.pool import NullPool
-
-                    _sync = _ce(sync_url, poolclass=NullPool)
-                    for metadata in registered:
-                        metadata.create_all(_sync)
-                    _sync.dispose()
-                elif isinstance(engine, Engine):
-                    for metadata in registered:
-                        metadata.create_all(engine)
+            self._auto_create_tables(engine, db_config.async_mode)
 
         # 4. Store result in context properties
         db_result = DatabaseBootstrapResult(
@@ -164,9 +183,13 @@ class DatabaseBootstrapper(BootstrapperPort):
             uow=uow,
             vector_store=vector_store,
         )
+        context.properties["db_result"] = db_result
         context.properties["database_result"] = db_result
+        context.properties["engine"] = engine
         context.properties["db_engine"] = engine
+        context.properties["session_factory"] = session_factory
         context.properties["db_session_factory"] = session_factory
+        context.properties["uow"] = uow
         context.properties["db_uow"] = uow
         if vector_store is not None:
             context.properties["db_vector_store"] = vector_store

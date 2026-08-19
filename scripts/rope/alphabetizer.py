@@ -37,6 +37,35 @@ def collect_python_files(target_path: Path) -> list[Path]:
     return []
 
 
+def _resolve_targets(args: argparse.Namespace) -> list[Path]:
+    """Resolve target Python files to alphabetize based on CLI arguments."""
+    if args.path:
+        explicit_path = Path(args.path).resolve()
+        if explicit_path.is_file():
+            _handle_sort_methods(file_path=explicit_path, root_dir=ROOT_DIR)
+            return []
+        if explicit_path.is_dir():
+            return collect_python_files(explicit_path)
+        sys.stderr.write(f"Error: Path not found: {args.path}\n")
+        sys.exit(1)
+
+    if args.package:
+        if args.package not in VALID_PACKAGES:
+            sys.stderr.write(
+                f"Error: Unknown package '{args.package}'. Valid options: {', '.join(VALID_PACKAGES)}\n"
+            )
+            sys.exit(1)
+        return collect_python_files(get_package_directory(args.package))
+
+    if args.all:
+        target_files: list[Path] = []
+        for pkg in VALID_PACKAGES:
+            target_files.extend(collect_python_files(get_package_directory(pkg)))
+        return target_files
+
+    return []
+
+
 def main() -> None:
     """CLI entrypoint for batch alphabetization."""
     parser = argparse.ArgumentParser(
@@ -62,42 +91,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    target_files: list[Path] = []
-
-    # 1. Explicit path (resolved against CWD)
-    if args.path:
-        explicit_path = Path(args.path).resolve()
-        if explicit_path.is_file():
-            _handle_sort_methods(file_path=explicit_path, root_dir=ROOT_DIR)
-            return
-
-        if explicit_path.is_dir():
-            target_files.extend(collect_python_files(explicit_path))
-        else:
-            sys.stderr.write(f"Error: Path not found: {args.path}\n")
-            sys.exit(1)
-
-    # 2. Single package via common helper
-    elif args.package:
-        if args.package not in VALID_PACKAGES:
-            sys.stderr.write(
-                f"Error: Unknown package '{args.package}'. Valid options: {', '.join(VALID_PACKAGES)}\n"
-            )
-            sys.exit(1)
-
-        pkg_dir = get_package_directory(args.package)
-        target_files.extend(collect_python_files(pkg_dir))
-
-    # 3. All packages across the repo
-    elif args.all:
-        for pkg in VALID_PACKAGES:
-            pkg_dir = get_package_directory(pkg)
-            target_files.extend(collect_python_files(pkg_dir))
-
-    else:
+    if not (args.all or args.package or args.path):
         parser.print_help()
         sys.exit(1)
 
+    target_files = _resolve_targets(args)
     if not target_files:
         print("No Python files found matching the criteria.")
         return

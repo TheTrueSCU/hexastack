@@ -87,26 +87,11 @@ class McpServerRegistry:
         dynamic_mcp_tool.__doc__ = target_cls.__doc__
         return dynamic_mcp_tool
 
-    def build_server(
-        self,
-        config: HexastackMcpConfig,
-        container: Container,
-    ) -> McpServer:
-        """Construct and populate an McpServer instance from registered elements.
+    def _register_diagnostic_resources(
+        self, server: McpServer, config: HexastackMcpConfig
+    ) -> None:
+        """Register built-in system and registry diagnostic resources."""
 
-        Args:
-            config: HexastackMcpConfig options.
-            container: Active rodi DI container for dependency resolution.
-
-        Returns:
-            Configured McpServer instance.
-        """
-        server = McpServer(
-            name=config.server_name,
-            instructions=config.instructions,
-        )
-
-        # 1. Built-in Diagnostic Resources
         @server.resource(
             uri="hexastack://info",
             name="system_info",
@@ -159,7 +144,8 @@ class McpServerRegistry:
                 indent=2,
             )
 
-        # 2. Register Tools
+    def _mount_tools(self, server: McpServer, container: Container) -> None:
+        """Register all tool wrappers onto McpServer instance."""
         for tool_meta in self._tools:
             if inspect.isclass(tool_meta.target):
                 tool_fn = self._create_cqrs_tool_wrapper(
@@ -179,7 +165,8 @@ class McpServerRegistry:
                     description=tool_meta.description or tool_meta.target.__doc__,
                 )
 
-        # 3. Register Resources
+    def _mount_resources(self, server: McpServer) -> None:
+        """Register all resource endpoints onto McpServer instance."""
         for res_meta in self._resources:
             if res_meta.handler is not None:
                 server.resource(
@@ -189,13 +176,38 @@ class McpServerRegistry:
                     mime_type=res_meta.mime_type,
                 )(res_meta.handler)
 
-        # 4. Register Prompts
+    def _mount_prompts(self, server: McpServer) -> None:
+        """Register all prompt templates onto McpServer instance."""
         for prompt_meta in self._prompts:
             if prompt_meta.handler is not None:
                 server.prompt(
                     name=prompt_meta.name,
                     description=prompt_meta.description,
                 )(prompt_meta.handler)
+
+    def build_server(
+        self,
+        config: HexastackMcpConfig,
+        container: Container,
+    ) -> McpServer:
+        """Construct and populate an McpServer instance from registered elements.
+
+        Args:
+            config: HexastackMcpConfig options.
+            container: Active rodi DI container for dependency resolution.
+
+        Returns:
+            Configured McpServer instance.
+        """
+        server = McpServer(
+            name=config.server_name,
+            instructions=config.instructions,
+        )
+
+        self._register_diagnostic_resources(server, config)
+        self._mount_tools(server, container)
+        self._mount_resources(server)
+        self._mount_prompts(server)
 
         return server
 

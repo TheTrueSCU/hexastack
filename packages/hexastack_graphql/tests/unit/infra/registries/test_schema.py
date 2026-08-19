@@ -139,3 +139,39 @@ def test_schema_registry_clear():
     schema = reg.build_schema()
     res = schema.execute_sync("{ ping }")
     assert res.data == {"ping": "pong"}
+
+
+def test_schema_registry_composite_with_extra_fields():
+    reg = GraphQLSchemaRegistry()
+
+    @strawberry.type
+    class BaseQ:
+        @strawberry.field
+        def base(self) -> str:
+            return "base"
+
+    @strawberry.field
+    def extra(info: Info[GraphQLContext, None]) -> str:
+        return "extra"
+
+    reg.register_query_type(BaseQ)
+    reg.register_query_field("extra", extra)
+
+    schema = reg.build_schema()
+    res = schema.execute_sync("{ base extra }")
+    assert res.data == {"base": "base", "extra": "extra"}
+
+
+def test_schema_building_error_handling(monkeypatch):
+    import pytest
+
+    from hexastack_graphql.domain.exceptions import SchemaBuildingError
+
+    reg = GraphQLSchemaRegistry()
+
+    def bad_schema(*args, **kwargs):
+        raise ValueError("Invalid schema config")
+
+    monkeypatch.setattr(strawberry, "Schema", bad_schema)
+    with pytest.raises(SchemaBuildingError, match="Failed to build GraphQL schema"):
+        reg.build_schema()

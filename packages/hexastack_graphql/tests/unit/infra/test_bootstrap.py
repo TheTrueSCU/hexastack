@@ -31,3 +31,26 @@ def test_graphql_bootstrapper_initialization():
     gql_res = result.get("graphql_result")
     assert isinstance(gql_res, GraphQLBootstrapResult)
     assert gql_res.schema is schema
+    assert gql_res.router is None
+    assert GraphQLBootstrapper.name == "graphql"
+    assert GraphQLBootstrapper.order == 35
+
+
+def test_graphql_bootstrapper_with_fastapi_app():
+    from hexastack_fastapi.infra.bootstrap import FastApiBootstrapper
+
+    @graphql_query_type
+    class AppQuery2:
+        @strawberry.field
+        def hello(self) -> str:
+            return "WORLD"
+
+    result = bootstrap(
+        bootstrappers=[FastApiBootstrapper(), GraphQLBootstrapper()],
+        auto_discover=False,
+    )
+
+    gql_res = result.get("graphql_result")
+    assert isinstance(gql_res, GraphQLBootstrapResult)
+    assert gql_res.router is not None
+    assert result.properties.get("graphql_router") is gql_res.router

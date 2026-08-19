@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from typing import Any
 
 import pytest
 from mcp.types import TextContent
@@ -67,6 +68,37 @@ class AsyncEchoQuery(Query):
 class AsyncEchoHandler:
     async def __call__(self, qry: AsyncEchoQuery) -> str:
         return f"Async echo: {qry.text}"
+
+
+async def _assert_diagnostic_resources(server: Any) -> None:
+    """Verify built-in diagnostic resources and manifest payload."""
+    resources = await server.list_resources()
+    resource_uris = [str(r.uri) for r in resources]
+    assert "hexastack://info" in resource_uris
+    assert "hexastack://registry" in resource_uris
+    assert "hexastack://status" in resource_uris
+
+    info_raw = await server.read_resource("hexastack://info")
+    info_text = str(info_raw[0].content if isinstance(info_raw, list) else info_raw)
+    info_json = json.loads(info_text)
+    assert info_json["server_name"] == "Hexastack-Test-Server"
+    assert "python_version" in info_json
+    assert "platform" in info_json
+    assert info_json["tools_count"] >= 5
+    assert info_json["resources_count"] >= 1
+    assert info_json["prompts_count"] >= 1
+
+    manifest_raw = await server.read_resource("hexastack://registry")
+    manifest_text = str(
+        manifest_raw[0].content if isinstance(manifest_raw, list) else manifest_raw
+    )
+    manifest_json = json.loads(manifest_text)
+    assert len(manifest_json["tools"]) >= 5
+    assert all("name" in t and "kind" in t for t in manifest_json["tools"])
+    assert len(manifest_json["resources"]) >= 1
+    assert all("uri" in r and "name" in r for r in manifest_json["resources"])
+    assert len(manifest_json["prompts"]) >= 1
+    assert all("name" in p and "description" in p for p in manifest_json["prompts"])
 
 
 @pytest.mark.anyio
@@ -146,36 +178,18 @@ async def test_mcp_server_registry_tools_execution():
 
     # 6. Failing tool wrapper directly raises ToolExecutionError
     cqrs_wrapper = reg._create_cqrs_tool_wrapper(FailCmd, "command", runtime.container)
+    assert getattr(cqrs_wrapper, "__name__", None) == "FailCmd"
+    assert getattr(cqrs_wrapper, "__doc__", None) == FailCmd.__doc__
+    assert getattr(cqrs_wrapper, "__annotations__", {}).get("message") is str
     with pytest.raises(ToolExecutionError) as exc_info:
         await cqrs_wrapper(message="boom")
     assert "Execution of MCP tool 'FailCmd' failed: Failing explicitly: boom" in str(
         exc_info.value
     )
 
-    # 7. Built-in diagnostic resources
-    resources = await server.list_resources()
-    resource_uris = [str(r.uri) for r in resources]
-    assert "hexastack://info" in resource_uris
-    assert "hexastack://registry" in resource_uris
-    assert "hexastack://status" in resource_uris
+    # 7. Built-in diagnostic resources & Prompts
+    await _assert_diagnostic_resources(server)
 
-    info_raw = await server.read_resource("hexastack://info")
-    info_text = str(info_raw[0].content if isinstance(info_raw, list) else info_raw)
-    info_json = json.loads(info_text)
-    assert info_json["server_name"] == "Hexastack-Test-Server"
-    assert "python_version" in info_json
-    assert info_json["tools_count"] >= 5
-
-    manifest_raw = await server.read_resource("hexastack://registry")
-    manifest_text = str(
-        manifest_raw[0].content if isinstance(manifest_raw, list) else manifest_raw
-    )
-    manifest_json = json.loads(manifest_text)
-    assert len(manifest_json["tools"]) >= 5
-    assert len(manifest_json["resources"]) >= 1
-    assert len(manifest_json["prompts"]) >= 1
-
-    # 8. Prompts listing and properties
     prompts = await server.list_prompts()
     prompt_names = [p.name for p in prompts]
     assert "greet_user" in prompt_names

@@ -54,6 +54,33 @@ def autodiscover_graphql_schema(
     return registry
 
 
+def _register_graphql_type(
+    obj: type[Any],
+    registry: GraphQLSchemaRegistry,
+) -> None:
+    """Register decorated GraphQL query or mutation type."""
+    type_meta: GraphQLTypeMetadata | None = getattr(obj, _GRAPHQL_TYPE_ATTR, None)
+    if type_meta is not None:
+        if type_meta.kind == "query":
+            registry.register_query_type(obj)
+        elif type_meta.kind == "mutation":
+            registry.register_mutation_type(obj)
+
+
+def _register_graphql_field(
+    obj: Any,
+    registry: GraphQLSchemaRegistry,
+) -> None:
+    """Register decorated GraphQL query or mutation field."""
+    field_meta: GraphQLFieldMetadata | None = getattr(obj, _GRAPHQL_FIELD_ATTR, None)
+    if field_meta is not None:
+        field_name = field_meta.name or getattr(obj, "__name__", "field")
+        if field_meta.kind == "query":
+            registry.register_query_field(field_name, obj)
+        elif field_meta.kind == "mutation":
+            registry.register_mutation_field(field_name, obj)
+
+
 def create_graphql_visitor(
     registry: GraphQLSchemaRegistry,
 ) -> DiscoveryVisitor:
@@ -73,23 +100,7 @@ def create_graphql_visitor(
 
     def visitor(obj: Any, module: ModuleType) -> None:
         if inspect.isclass(obj):
-            type_meta: GraphQLTypeMetadata | None = getattr(
-                obj, _GRAPHQL_TYPE_ATTR, None
-            )
-            if type_meta is not None:
-                if type_meta.kind == "query":
-                    registry.register_query_type(obj)
-                elif type_meta.kind == "mutation":
-                    registry.register_mutation_type(obj)
-
-        field_meta: GraphQLFieldMetadata | None = getattr(
-            obj, _GRAPHQL_FIELD_ATTR, None
-        )
-        if field_meta is not None:
-            field_name = field_meta.name or getattr(obj, "__name__", "field")
-            if field_meta.kind == "query":
-                registry.register_query_field(field_name, obj)
-            elif field_meta.kind == "mutation":
-                registry.register_mutation_field(field_name, obj)
+            _register_graphql_type(obj, registry)
+        _register_graphql_field(obj, registry)
 
     return visitor

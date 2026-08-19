@@ -20,6 +20,7 @@ from hexastack_cqrs.infra.decorators import (
 )
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
+from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 
 
 class CreateOrder(Command):
@@ -145,3 +146,50 @@ def test_autodiscover_cqrs_module():
     )
     res_di = pipeline_di.execute(CreateOrder(order_id="999"), output_format="json")
     assert res_di == {"id": "class-999", "type": "order"}
+
+
+def test_cqrs_autodiscovery_isolated_helpers():
+    from hexastack_core.infra.decorators import (
+        ConfigMetadata,
+        ExceptionMetadata,
+    )
+    from hexastack_cqrs.infra.autodiscovery import (
+        _register_config,
+        _register_exception,
+        _register_handler,
+        _register_presenter,
+    )
+    from hexastack_cqrs.infra.decorators import (
+        HandlerMetadata,
+        PresenterMetadata,
+    )
+
+    handler_reg = HandlerRegistry()
+    pres_reg = PresenterRegistry()
+    exc_reg = ExceptionRegistry()
+    pipeline = ExecutionPipeline(
+        handler_registry=handler_reg,
+        presenter_registry=pres_reg,
+        exception_registry=exc_reg,
+    )
+
+    # 1. _register_handler
+    cmd_meta = HandlerMetadata(kind="command", target_cls=CreateOrder)
+    _register_handler(lambda cmd: "handled", cmd_meta, pipeline, None)
+    assert CreateOrder in handler_reg
+
+    # 2. _register_presenter
+    pres_meta = PresenterMetadata(target_cls=OrderDTO, output_format="text")
+    _register_presenter(lambda x: str(x), pres_meta, pipeline, None)
+    assert pres_reg.get(OrderDTO, "text") is not None
+
+    # 3. _register_exception
+    exc_meta = ExceptionMetadata(target_cls=DomainValidationError)
+    _register_exception(lambda e: "caught", exc_meta, pipeline, None)
+    assert DomainValidationError in exc_reg
+
+    # 4. _register_config
+    cfg_reg = ConfigRegistry()
+    cfg_meta = ConfigMetadata(section_name="custom.test")
+    _register_config(OrderConfig, cfg_meta, cfg_reg)
+    assert "custom.test" in cfg_reg

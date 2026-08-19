@@ -22,13 +22,32 @@ def test_console_formatter_uncolorized():
         args=(),
         exc_info=None,
     )
+    record.created = 1700000000.0  # 2023-11-14 22:13:20 UTC
     record.correlation_id = "cid-88889999"
 
     out = formatter.format(record)
-    assert "[INFO    ]" in out
-    assert "[corr:cid-8888]" in out
-    assert "Service initialized" in out
-    assert _RESET not in out
+    assert out == "[2023-11-14 22:13:20] [INFO    ] [corr:cid-8888] Service initialized"
+
+
+def test_console_formatter_default_constructor():
+    formatter = ConsoleFormatter()
+    record = logging.LogRecord(
+        name="console_test",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=30,
+        msg="Default run",
+        args=(),
+        exc_info=None,
+    )
+    record.created = 1700000000.0
+    record.correlation_id = "cid-88889999"
+
+    out = formatter.format(record)
+    assert (
+        out
+        == f"{_MUTED}[2023-11-14 22:13:20]{_RESET} \033[32m[INFO    ]{_RESET} {_MUTED}[corr:cid-8888]{_RESET} Default run"
+    )
 
 
 def test_console_formatter_no_context():

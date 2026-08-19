@@ -64,6 +64,108 @@ def autodiscover_cli_commands(
     scan_modules(packages_or_modules, [visitor])
 
 
+def _resolve_targets(
+    meta: CliMetadata, default_name: str
+) -> list[tuple[list[str], str, str | None]]:
+    """Resolve all (group_parts, cmd_name, help) targets including aliases."""
+    primary_group = _normalize_group_path(meta.group)
+    primary_name = meta.name or default_name
+    targets: list[tuple[list[str], str, str | None]] = [
+        (primary_group, primary_name, meta.help)
+    ]
+
+    for alias in meta.aliases:
+        if alias.startswith("/"):
+            targets.append(([], alias.lstrip("/"), meta.help))
+        elif any(sep in alias for sep in (".", "/", " ")):
+            parts = _normalize_group_path(alias)
+            targets.append((parts[:-1], parts[-1], meta.help))
+        else:
+            targets.append((primary_group, alias, meta.help))
+
+    return targets
+
+
+def _register_model_target(
+    target_app: typer.Typer,
+    obj: type[Any],
+    meta: CliMetadata,
+    cmd_name: str,
+    help_text: str | None,
+    pipeline: ExecutionPipeline,
+    console: Console | None,
+) -> None:
+    """Register command or query class on the target Typer app."""
+    if meta.kind == "command" and issubclass(obj, Command):
+        register_cqrs_command(
+            app=target_app,
+            command_cls=obj,
+            pipeline=pipeline,
+            name=cmd_name,
+            positional=meta.positional,
+            help_text=help_text,
+            output_format=meta.output_format,
+            console=console,
+        )
+    elif meta.kind == "query" and issubclass(obj, Query):
+        register_cqrs_query(
+            app=target_app,
+            query_cls=obj,
+            pipeline=pipeline,
+            name=cmd_name,
+            positional=meta.positional,
+            help_text=help_text,
+            output_format=meta.output_format,
+            console=console,
+        )
+
+
+class _SubgroupManager:
+    """Manages creation and nested mounting of Typer subgroups."""
+
+    def __init__(self, root_app: typer.Typer) -> None:
+        self.root_app = root_app
+        self.subgroups: dict[tuple[str, ...], typer.Typer] = {}
+        self.group_docs: dict[tuple[str, ...], str] = {}
+
+    def register_group_metadata(self, obj: type[Any]) -> None:
+        """Extract and cache group documentation from @cli_group."""
+        grp_meta: GroupMetadata | None = getattr(obj, _CLI_GROUP_ATTR, None)
+        if grp_meta is not None:
+            parts = _normalize_group_path(grp_meta.name)
+            if parts and grp_meta.help:
+                self.group_docs[tuple(parts)] = grp_meta.help
+
+    def get_or_create(self, group_parts: list[str]) -> typer.Typer:
+        """Get or create nested subgroup Typer application."""
+        if not group_parts:
+            return self.root_app
+
+        current_app = self.root_app
+        current_path: list[str] = []
+        for part in group_parts:
+            current_path.append(part)
+            key = tuple(current_path)
+            if key not in self.subgroups:
+                help_text = self.group_docs.get(
+                    key, f"{part.title()} management commands"
+                )
+                sub_app = typer.Typer(
+                    name=part,
+                    help=help_text,
+                    no_args_is_help=True,
+                )
+
+                @sub_app.callback()
+                def _sub_cb() -> None:
+                    pass
+
+                current_app.add_typer(sub_app, name=part)
+                self.subgroups[key] = sub_app
+            current_app = self.subgroups[key]
+        return current_app
+
+
 def create_cli_visitor(
     app: typer.Typer,
     pipeline: ExecutionPipeline,
@@ -87,66 +189,13 @@ def create_cli_visitor(
     Raises:
         None.
     """
-    subgroups: dict[tuple[str, ...], typer.Typer] = {}
-    group_docs: dict[tuple[str, ...], str] = {}
-
-    def _get_or_create_subgroup(group_parts: list[str]) -> typer.Typer:
-        current_app = app
-        current_path: list[str] = []
-        for part in group_parts:
-            current_path.append(part)
-            key = tuple(current_path)
-            if key not in subgroups:
-                help_text = group_docs.get(key, f"{part.title()} management commands")
-                sub_app = typer.Typer(
-                    name=part,
-                    help=help_text,
-                    no_args_is_help=True,
-                )
-
-                @sub_app.callback()
-                def _sub_cb() -> None:
-                    pass
-
-                current_app.add_typer(sub_app, name=part)
-                subgroups[key] = sub_app
-            current_app = subgroups[key]
-        return current_app
-
-    def _resolve_targets(
-        meta: CliMetadata, default_name: str
-    ) -> list[tuple[list[str], str, str | None]]:
-        """Resolve all (group_parts, cmd_name, help) targets including aliases."""
-        primary_group = _normalize_group_path(meta.group)
-        primary_name = meta.name or default_name
-        targets: list[tuple[list[str], str, str | None]] = [
-            (primary_group, primary_name, meta.help)
-        ]
-
-        for alias in meta.aliases:
-            if alias.startswith("/"):
-                # Root level alias
-                targets.append(([], alias.lstrip("/"), meta.help))
-            elif any(sep in alias for sep in (".", "/", " ")):
-                # Cross-group nested alias (e.g. "account.new" or "admin/user/create")
-                parts = _normalize_group_path(alias)
-                targets.append((parts[:-1], parts[-1], meta.help))
-            else:
-                # Intra-group alias in the same group as primary command
-                targets.append((primary_group, alias, meta.help))
-
-        return targets
+    manager = _SubgroupManager(root_app=app)
 
     def visitor(obj: Any, module: ModuleType) -> None:
         if not inspect.isclass(obj):
             return
 
-        # Check for group customization metadata
-        grp_meta: GroupMetadata | None = getattr(obj, _CLI_GROUP_ATTR, None)
-        if grp_meta is not None:
-            parts = _normalize_group_path(grp_meta.name)
-            if parts and grp_meta.help:
-                group_docs[tuple(parts)] = grp_meta.help
+        manager.register_group_metadata(obj)
 
         meta: CliMetadata | None = getattr(obj, _CLI_METADATA_ATTR, None)
         if meta is None:
@@ -156,29 +205,9 @@ def create_cli_visitor(
         targets = _resolve_targets(meta, default_name)
 
         for group_parts, cmd_name, help_text in targets:
-            target_app = _get_or_create_subgroup(group_parts) if group_parts else app
-
-            if meta.kind == "command" and issubclass(obj, Command):
-                register_cqrs_command(
-                    app=target_app,
-                    command_cls=obj,
-                    pipeline=pipeline,
-                    name=cmd_name,
-                    positional=meta.positional,
-                    help_text=help_text,
-                    output_format=meta.output_format,
-                    console=console,
-                )
-            elif meta.kind == "query" and issubclass(obj, Query):
-                register_cqrs_query(
-                    app=target_app,
-                    query_cls=obj,
-                    pipeline=pipeline,
-                    name=cmd_name,
-                    positional=meta.positional,
-                    help_text=help_text,
-                    output_format=meta.output_format,
-                    console=console,
-                )
+            target_app = manager.get_or_create(group_parts)
+            _register_model_target(
+                target_app, obj, meta, cmd_name, help_text, pipeline, console
+            )
 
     return visitor

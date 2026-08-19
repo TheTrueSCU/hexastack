@@ -136,6 +136,62 @@ def _clean_req_name(req_str: str) -> tuple[str, bool]:
     return clean, is_extra
 
 
+def _discover_installed_hexastack(
+    known_packages: list[str],
+) -> tuple[dict[str, str], set[str]]:
+    """Discover installed 1st-party Hexastack distributions and versions."""
+    installed_hexastack: dict[str, str] = {}
+    installed_package_names: set[str] = set()
+
+    for pkg in known_packages:
+        try:
+            ver = importlib.metadata.version(pkg)
+            installed_hexastack[pkg] = ver
+            installed_package_names.add(pkg)
+        except importlib.metadata.PackageNotFoundError:
+            installed_hexastack[pkg] = "not installed"
+
+    return installed_hexastack, installed_package_names
+
+
+def _classify_3rd_party_deps(
+    installed_package_names: set[str],
+) -> tuple[set[str], set[str]]:
+    """Classify 3rd-party dependencies into required vs optional."""
+    required_3rd_party: set[str] = set()
+    optional_3rd_party: set[str] = set()
+
+    for pkg in installed_package_names:
+        try:
+            requirements = importlib.metadata.requires(pkg) or []
+        except importlib.metadata.PackageNotFoundError:
+            requirements = []
+
+        for req_str in requirements:
+            req_name, is_extra = _clean_req_name(req_str)
+            if not req_name or req_name in _DEFAULT_KNOWN_PACKAGES:
+                continue
+
+            if is_extra:
+                optional_3rd_party.add(req_name)
+            else:
+                required_3rd_party.add(req_name)
+
+    optional_3rd_party -= required_3rd_party
+    return required_3rd_party, optional_3rd_party
+
+
+def _evaluate_extras_status(known_extras: dict[str, list[str]]) -> dict[str, bool]:
+    """Check umbrella extras availability."""
+    extras_status: dict[str, bool] = {}
+    for extra_name in known_extras:
+        mod_name = f"hexastack_{extra_name}"
+        extras_status[extra_name] = importlib.util.find_spec(
+            mod_name
+        ) is not None or _is_module_available(extra_name)
+    return extras_status
+
+
 @query_handler(GetSystemInfoQuery)
 class GetSystemInfoHandler:
     """Handler executing GetSystemInfoQuery with dynamic dependency classification.
@@ -157,57 +213,14 @@ class GetSystemInfoHandler:
         """
         known_packages, known_extras = _parse_pyproject_metadata()
 
-        # 1. Discover installed 1st-party Hexastack distributions
-        installed_hexastack: dict[str, str] = {}
-        installed_package_names: set[str] = set()
+        installed_hexastack, installed_names = _discover_installed_hexastack(
+            known_packages
+        )
+        req_deps, opt_deps = _classify_3rd_party_deps(installed_names)
 
-        for pkg in known_packages:
-            try:
-                ver = importlib.metadata.version(pkg)
-                installed_hexastack[pkg] = ver
-                installed_package_names.add(pkg)
-            except importlib.metadata.PackageNotFoundError:
-                installed_hexastack[pkg] = "not installed"
-
-        # 2. Inspect dependencies of currently installed Hexastack packages
-        required_3rd_party: set[str] = set()
-        optional_3rd_party: set[str] = set()
-
-        for pkg in installed_package_names:
-            try:
-                requirements = importlib.metadata.requires(pkg) or []
-            except importlib.metadata.PackageNotFoundError:
-                requirements = []
-
-            for req_str in requirements:
-                req_name, is_extra = _clean_req_name(req_str)
-                if not req_name or req_name in _DEFAULT_KNOWN_PACKAGES:
-                    continue
-
-                if is_extra:
-                    optional_3rd_party.add(req_name)
-                else:
-                    required_3rd_party.add(req_name)
-
-        # A dependency required by any installed package takes precedence over optional
-        optional_3rd_party -= required_3rd_party
-
-        # 3. Build status dictionaries
-        required_status: dict[str, bool] = {
-            dep: _is_module_available(dep) for dep in sorted(required_3rd_party)
-        }
-        optional_status: dict[str, bool] = {
-            dep: _is_module_available(dep) for dep in sorted(optional_3rd_party)
-        }
-
-        # 4. Check umbrella extras availability
-        extras_status: dict[str, bool] = {}
-        if known_extras:
-            for extra_name in known_extras:
-                mod_name = f"hexastack_{extra_name}"
-                extras_status[extra_name] = importlib.util.find_spec(
-                    mod_name
-                ) is not None or _is_module_available(extra_name)
+        required_status = {dep: _is_module_available(dep) for dep in sorted(req_deps)}
+        optional_status = {dep: _is_module_available(dep) for dep in sorted(opt_deps)}
+        extras_status = _evaluate_extras_status(known_extras)
 
         sorted_installed = {
             k: installed_hexastack[k] for k in sorted(installed_hexastack)

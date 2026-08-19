@@ -52,7 +52,7 @@ def test_retries_on_transient_error_and_logs_debug():
         nonlocal attempts
         attempts += 1
         if attempts < 3:
-            raise RuntimeError("transient")
+            raise RuntimeError("transient error occurred")
         return cmd.val + 10
 
     result = middleware(_DummyCommand(val=5), flaky_handler)
@@ -60,6 +60,29 @@ def test_retries_on_transient_error_and_logs_debug():
     assert attempts == 3
     assert len(logger.entries) == 2  # logged debug on retry 1 and 2
     assert all(entry.level == "debug" for entry in logger.entries)
+
+    # Validate structured extra metadata and log message contents
+    entry1 = logger.entries[0]
+    assert (
+        "Retrying _DummyCommand (attempt 1/3) after error: transient error occurred"
+        in entry1.message
+    )
+    assert entry1.extra == {
+        "message_type": "_DummyCommand",
+        "attempt": 1,
+        "max_attempts": 3,
+    }
+
+    entry2 = logger.entries[1]
+    assert (
+        "Retrying _DummyCommand (attempt 2/3) after error: transient error occurred"
+        in entry2.message
+    )
+    assert entry2.extra == {
+        "message_type": "_DummyCommand",
+        "attempt": 2,
+        "max_attempts": 3,
+    }
 
 
 def test_retry_middleware_defaults():

@@ -10,6 +10,20 @@ __all__ = [
 ]
 
 
+def _extract_target_attributes(source: Any, target_cls: type[Any]) -> dict[str, Any]:
+    """Extract attributes from source based on target class field definitions."""
+    data: dict[str, Any] = {}
+    if is_dataclass(target_cls):
+        for f in target_cls.__dataclass_fields__:  # type: ignore[attr-defined]
+            if hasattr(source, f):
+                data[f] = getattr(source, f)
+    elif isinstance(target_cls, type) and issubclass(target_cls, BaseModel):
+        for f in target_cls.model_fields:
+            if hasattr(source, f):
+                data[f] = getattr(source, f)
+    return data
+
+
 def extract_dto_fields(source: Any, target_cls: type[Any]) -> dict[str, Any]:
     """Extract matching fields from an arbitrary source object, dictionary, or protobuf message.
 
@@ -23,26 +37,14 @@ def extract_dto_fields(source: Any, target_cls: type[Any]) -> dict[str, Any]:
     Returns:
         Dictionary of extracted field key-value pairs matching target_cls.
     """
-    data: dict[str, Any] = {}
-
     if hasattr(source, "DESCRIPTOR"):
-        # Protobuf Message object
-        for field in source.DESCRIPTOR.fields:
-            data[field.name] = getattr(source, field.name)
-    elif isinstance(source, dict):
-        data = dict(source)
-    else:
-        # Fallback attribute copy
-        if is_dataclass(target_cls):
-            for f in target_cls.__dataclass_fields__:  # type: ignore[attr-defined]
-                if hasattr(source, f):
-                    data[f] = getattr(source, f)
-        elif isinstance(target_cls, type) and issubclass(target_cls, BaseModel):
-            for f in target_cls.model_fields:
-                if hasattr(source, f):
-                    data[f] = getattr(source, f)
-
-    return data
+        return {
+            field.name: getattr(source, field.name)
+            for field in source.DESCRIPTOR.fields
+        }
+    if isinstance(source, dict):
+        return dict(source)
+    return _extract_target_attributes(source, target_cls)
 
 
 def inspect_model_parameters(model_cls: type[Any]) -> list[inspect.Parameter]:

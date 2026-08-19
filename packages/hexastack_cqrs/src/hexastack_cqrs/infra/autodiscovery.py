@@ -65,6 +65,73 @@ def autodiscover_cqrs(
     scan_modules(packages_or_modules, [visitor])
 
 
+def _register_handler(
+    obj: Any,
+    meta: HandlerMetadata,
+    pipeline: ExecutionPipeline,
+    container: Container | None,
+) -> None:
+    """Register discovered command, query, or event handler."""
+    handler_fn = _resolve_callable(obj, container)
+    if meta.kind == "command":
+        pipeline._handler_registry.register(meta.target_cls, handler_fn)
+        pipeline._command_registry.register(meta.target_cls)
+    elif meta.kind == "query":
+        pipeline._handler_registry.register(meta.target_cls, handler_fn)
+        pipeline._query_registry.register(meta.target_cls)
+    elif meta.kind == "event":
+        event_bus: Any = pipeline._event_bus
+        if hasattr(event_bus, "subscribe"):
+            event_bus.subscribe(meta.target_cls, handler_fn)
+
+
+def _register_presenter(
+    obj: Any,
+    meta: PresenterMetadata,
+    pipeline: ExecutionPipeline,
+    container: Container | None,
+) -> None:
+    """Register discovered CQRS presenter instance."""
+    if inspect.isclass(obj) and container is not None:
+        if obj not in container:
+            container.register(obj)
+        presenter_inst = cast("PresenterPort", container.resolve(obj))
+    elif inspect.isclass(obj):
+        presenter_inst = cast("PresenterPort", obj())
+    else:
+        presenter_inst = cast("PresenterPort", obj)
+
+    pipeline._presenter_registry.register(
+        meta.target_cls, meta.output_format, presenter_inst
+    )
+
+
+def _register_exception(
+    obj: Any,
+    meta: ExceptionMetadata,
+    pipeline: ExecutionPipeline,
+    container: Container | None,
+) -> None:
+    """Register discovered domain exception handler."""
+    if pipeline._exception_registry is not None:
+        handler_fn = _resolve_callable(obj, container)
+        pipeline._exception_registry.register(meta.target_cls, handler_fn)
+
+
+def _register_config(
+    obj: Any,
+    meta: ConfigMetadata,
+    config_registry: ConfigRegistry | None,
+) -> None:
+    """Register discovered config section."""
+    if (
+        config_registry is not None
+        and inspect.isclass(obj)
+        and issubclass(obj, BaseModel)
+    ):
+        config_registry.register_config_section(meta.section_name, obj)
+
+
 def create_cqrs_visitor(
     pipeline: ExecutionPipeline,
     container: Container | None = None,
@@ -95,41 +162,12 @@ def create_cqrs_visitor(
 
         meta = getattr(obj, "__hexastack_handler__", None)
         if isinstance(meta, HandlerMetadata):
-            handler_fn = _resolve_callable(obj, container)
-            if meta.kind == "command":
-                pipeline._handler_registry.register(meta.target_cls, handler_fn)
-                pipeline._command_registry.register(meta.target_cls)
-            elif meta.kind == "query":
-                pipeline._handler_registry.register(meta.target_cls, handler_fn)
-                pipeline._query_registry.register(meta.target_cls)
-            elif meta.kind == "event":
-                event_bus: Any = pipeline._event_bus
-                if hasattr(event_bus, "subscribe"):
-                    event_bus.subscribe(meta.target_cls, handler_fn)
+            _register_handler(obj, meta, pipeline, container)
         elif isinstance(meta, PresenterMetadata):
-            presenter_inst: PresenterPort
-            if inspect.isclass(obj) and container is not None:
-                if obj not in container:
-                    container.register(obj)
-                presenter_inst = cast("PresenterPort", container.resolve(obj))
-            elif inspect.isclass(obj):
-                presenter_inst = cast("PresenterPort", obj())
-            else:
-                presenter_inst = cast("PresenterPort", obj)
-
-            pipeline._presenter_registry.register(
-                meta.target_cls, meta.output_format, presenter_inst
-            )
+            _register_presenter(obj, meta, pipeline, container)
         elif isinstance(meta, ExceptionMetadata):
-            if pipeline._exception_registry is not None:
-                handler_fn = _resolve_callable(obj, container)
-                pipeline._exception_registry.register(meta.target_cls, handler_fn)
+            _register_exception(obj, meta, pipeline, container)
         elif isinstance(meta, ConfigMetadata):
-            if (
-                config_registry is not None
-                and inspect.isclass(obj)
-                and issubclass(obj, BaseModel)
-            ):
-                config_registry.register_config_section(meta.section_name, obj)
+            _register_config(obj, meta, config_registry)
 
     return visitor

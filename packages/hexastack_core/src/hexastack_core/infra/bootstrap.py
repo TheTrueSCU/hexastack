@@ -118,6 +118,23 @@ def _discover_bootstrappers() -> list[BootstrapperPort]:
     return discovered
 
 
+def _collect_and_sort_bootstrappers(
+    bootstrappers: list[BootstrapperPort] | None,
+    auto_discover: bool,
+) -> list[BootstrapperPort]:
+    """Collect, deduplicate, and sort all configured and discovered bootstrappers."""
+    collected: list[BootstrapperPort] = list(bootstrappers or [])
+    if auto_discover:
+        auto_list = _discover_bootstrappers()
+        existing_types = {type(b) for b in collected}
+        for auto_b in auto_list:
+            if type(auto_b) not in existing_types:
+                collected.append(auto_b)
+                existing_types.add(type(auto_b))
+
+    return sorted(collected, key=lambda b: getattr(b, "order", 50))
+
+
 def bootstrap(
     config_path: str | Path | None = None,
     bootstrappers: list[BootstrapperPort] | None = None,
@@ -146,17 +163,7 @@ def bootstrap(
     di = container or Container()
 
     # 1. Collect & deduplicate bootstrappers
-    collected: list[BootstrapperPort] = list(bootstrappers or [])
-    if auto_discover:
-        auto_list = _discover_bootstrappers()
-        existing_types = {type(b) for b in collected}
-        for auto_b in auto_list:
-            if type(auto_b) not in existing_types:
-                collected.append(auto_b)
-                existing_types.add(type(auto_b))
-
-    # Sort bootstrappers by order ascending
-    sorted_bootstrappers = sorted(collected, key=lambda b: getattr(b, "order", 50))
+    sorted_bootstrappers = _collect_and_sort_bootstrappers(bootstrappers, auto_discover)
 
     # 2. Phase 1: Config Registration
     config_reg = ConfigRegistry()

@@ -106,3 +106,43 @@ def test_rich_terminal_presenter_no_color():
     with patch.dict(os.environ, {"NO_COLOR": "1"}):
         presenter = RichTerminalPresenter()
         assert presenter._console.no_color is True
+        assert presenter._stderr.no_color is True
+
+    with patch.dict(os.environ, {}, clear=True):
+        presenter_default = RichTerminalPresenter()
+        assert presenter_default._console is not None
+        assert presenter_default._stderr is not None
+
+
+def test_rich_terminal_presenter_nested_structures_and_defaults():
+    buf = StringIO()
+    console = Console(file=buf, color_system=None, width=80)
+    presenter = RichTerminalPresenter(console=console)
+
+    # 1. Table with nested dict/list in fields
+    item = SampleOutput(name="Complex", age=99)
+    nested_data = {
+        "metadata": {"role": "admin", "groups": ["eng", "sec"]},
+        "tags": ["a", "b"],
+        "scalar": 123,
+    }
+    presenter._present_table(item, nested_data)
+    rendered = buf.getvalue()
+    assert "admin" in rendered
+    assert "eng" in rendered
+    assert "tags" in rendered
+    assert "scalar" in rendered
+
+    # 2. Table with scalar data
+    buf_scalar = StringIO()
+    console_scalar = Console(file=buf_scalar, color_system=None, width=80)
+    presenter_scalar = RichTerminalPresenter(console=console_scalar)
+    presenter_scalar._present_table(item, "raw_string_data")
+    assert "raw_string_data" in buf_scalar.getvalue()
+
+    # 3. Default format mode is table
+    buf_def = StringIO()
+    console_def = Console(file=buf_def, color_system=None, width=80)
+    presenter_def = RichTerminalPresenter(console=console_def)
+    presenter_def.present(item)  # format_mode=None -> 'table'
+    assert "Complex" in buf_def.getvalue()
