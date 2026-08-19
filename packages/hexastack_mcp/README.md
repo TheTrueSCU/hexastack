@@ -38,10 +38,10 @@ hexastack_mcp/
 
 | Category | Exports |
 |---|---|
+| **Adapters** | `run_stdio_server`, `create_sse_router`, `mount_mcp_sse` |
+| **Bootstrap** | `McpBootstrapper` (order=40), `HexastackMcpConfig` |
 | **Decorators** | `@mcp_tool`, `@mcp_resource`, `@mcp_prompt` |
 | **Registries** | `McpServerRegistry`, `get_mcp_registry` |
-| **Bootstrap** | `McpBootstrapper` (order=40), `HexastackMcpConfig` |
-| **Adapters** | `run_stdio_server`, `create_sse_router`, `mount_mcp_sse` |
 
 ---
 

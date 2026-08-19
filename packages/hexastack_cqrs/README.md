@@ -37,12 +37,12 @@ hexastack_cqrs/
 
 | Category | Exports |
 |---|---|
-| **Domain** | `Command`, `Query`, `Event`, `CommandHandler`, `QueryHandler`, `EventHandler` |
-| **Ports** | `CommandBusPort`, `QueryBusPort`, `EventBusPort`, `MiddlewarePort` |
 | **Adapters** | `SynchronousCommandBus`, `SynchronousQueryBus`, `SynchronousEventBus`, `HueyCommandBus`, `HueyEventBus` |
-| **Middlewares** | `CorrelationMiddleware`, `TimingMiddleware`, `LoggingMiddleware`, `TenacityRetryMiddleware`, `UnitOfWorkMiddleware`, `ConditionalFeatureFlagMiddleware`, `ExecutionPipeline` |
-| **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@feature_flag`, `@presenter` |
 | **Bootstrap** | `CqrsBootstrapper` (order=20), `CqrsConfig` |
+| **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@feature_flag`, `@presenter` |
+| **Domain** | `Command`, `Query`, `Event`, `CommandHandler`, `QueryHandler`, `EventHandler` |
+| **Middlewares** | `CorrelationMiddleware`, `TimingMiddleware`, `LoggingMiddleware`, `TenacityRetryMiddleware`, `UnitOfWorkMiddleware`, `ConditionalFeatureFlagMiddleware`, `ExecutionPipeline` |
+| **Ports** | `CommandBusPort`, `QueryBusPort`, `EventBusPort`, `MiddlewarePort` |
 
 ---
 

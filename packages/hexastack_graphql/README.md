@@ -39,11 +39,11 @@ hexastack_graphql/
 
 | Category | Exports |
 |---|---|
+| **Bootstrap** | `GraphQLBootstrapper` (order=35), `HexastackGraphQLConfig` |
 | **Context & Domain** | `GraphQLContext`, `GraphQLError`, `SchemaBuildingError` |
 | **Decorators** | `@graphql_query`, `@graphql_mutation`, `@graphql_query_type`, `@graphql_mutation_type`, `@feature_flag_field` |
-| **Registries** | `GraphQLSchemaRegistry`, `get_schema_registry` |
 | **FastAPI Adapters** | `create_graphql_router`, `mount_graphql_router` |
-| **Bootstrap** | `GraphQLBootstrapper` (order=35), `HexastackGraphQLConfig` |
+| **Registries** | `GraphQLSchemaRegistry`, `get_schema_registry` |
 
 ---
 

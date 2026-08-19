@@ -19,6 +19,11 @@ class AuthMetadata:
     require_authenticated: bool = True
     match_all_roles: bool = True
     match_all_permissions: bool = True
+    policy: str | None = None
+    relation: str | None = None
+    object_type: str | None = None
+    object_id_field: str | None = None
+    spiffe_ids: tuple[str, ...] = ()
 
 
 __all__ = [
@@ -47,17 +52,29 @@ def authorize[T: Any](
     require_authenticated: bool = True,
     match_all_roles: bool = True,
     match_all_permissions: bool = True,
+    policy: str | None = None,
+    relation: str | None = None,
+    object_type: str | None = None,
+    object_id_field: str | None = None,
+    spiffe_ids: Sequence[str] = (),
 ) -> Callable[[T], T]:
     """Decorator marking a Command, Query, or Handler with authorization requirements.
 
     Notes/Architectural Intent:
-        Enforces declarative Role-Based Access Control (RBAC) and granular permission
-        policies across any execution channel (REST, GraphQL, gRPC, CLI, MCP).
+        Enforces declarative Role-Based Access Control (RBAC), granular permission
+        policies, OPA policy-as-code, OpenFGA relationship checks, and SPIFFE workload trust.
 
     Args:
         roles: Sequence of required role names.
         permissions: Sequence of required permission strings.
         require_authenticated: Whether caller must be authenticated (default True).
+        match_all_roles: Whether all specified roles must match.
+        match_all_permissions: Whether all specified permissions must match.
+        policy: Optional OPA policy path (e.g. 'v1/data/policies/finance/approve').
+        relation: Optional OpenFGA relation name (e.g. 'can_edit', 'viewer').
+        object_type: Optional OpenFGA object type (e.g. 'document', 'project').
+        object_id_field: Optional field name on the message containing the object ID.
+        spiffe_ids: Sequence of allowed SPIFFE workload identities.
         match_all_roles: If True, requires all roles; if False, requires at least one.
         match_all_permissions: If True, requires all permissions; if False, requires at least one.
 
@@ -72,6 +89,11 @@ def authorize[T: Any](
             require_authenticated=require_authenticated,
             match_all_roles=match_all_roles,
             match_all_permissions=match_all_permissions,
+            policy=policy,
+            relation=relation,
+            object_type=object_type,
+            object_id_field=object_id_field,
+            spiffe_ids=tuple(spiffe_ids),
         )
         setattr(target, _AUTH_METADATA_ATTR, meta)
         return target

@@ -33,9 +33,9 @@ hexastack_logging/
 | Category | Exports |
 |---|---|
 | **Adapters** | `StructuredLogger`, `LoguruAdapter`, `RichAdapter`, `StructlogAdapter` |
+| **Bootstrap** | `LoggingBootstrapper` (order=10), `HexastackLoggingConfig` |
 | **Formatters** | `JsonFormatter`, `ConsoleFormatter` |
 | **Sanitization** | `SanitizerFilter`, `mask_sensitive_data` |
-| **Bootstrap** | `LoggingBootstrapper` (order=10), `HexastackLoggingConfig` |
 
 ---
 

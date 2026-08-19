@@ -14,6 +14,24 @@ dependencies = [
     "pyjwt>=2.8.0",
 ]
 
+[project.optional-dependencies]
+fastapi = [
+    "fastapi>=0.115.0",
+]
+grpc = [
+    "grpcio>=1.62.0",
+]
+opa = [
+    "httpx>=0.27.0",
+]
+openfga = [
+    "openfga-sdk>=0.6.0",
+]
+spiffe = [
+    "cryptography>=43.0.0",
+    "spiffe>=0.3.0",
+]
+
 [project.entry-points."hexastack.bootstrappers"]
 auth = "hexastack_auth.infra.bootstrap:AuthBootstrapper"
 

@@ -289,13 +289,11 @@ def _to_kebab_case(name: str) -> str:
     """Convert PascalCase class name to kebab-case CLI command name."""
     s = re.sub(r"(.)([A-Z][a-z]+)", r"\1-\2", name)
     s = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", s)
-    return (
-        s.lower()
-        .removesuffix("-command")
-        .removesuffix("-query")
-        .removesuffix("-cmd")
-        .removesuffix("-qry")
-    )
+    kebab = s.lower()
+    for suffix in ("-command", "-query", "-cmd", "-qry"):
+        while kebab.endswith(suffix) and len(kebab) > len(suffix):
+            kebab = kebab[: -len(suffix)]
+    return kebab
 
 
 def register_cqrs_command(

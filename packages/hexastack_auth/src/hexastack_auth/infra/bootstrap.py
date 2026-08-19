@@ -7,7 +7,9 @@ from hexastack_auth.adapters.password import Pbkdf2PasswordHasher
 from hexastack_auth.infra.config import HexastackAuthConfig, register_auth_config
 from hexastack_auth.infra.middleware import AuthorizationMiddleware
 from hexastack_auth.ports.password import PasswordHasherPort
+from hexastack_auth.ports.policy import AuthorizationPolicyPort
 from hexastack_auth.ports.security import SecurityPort
+from hexastack_auth.ports.workload import WorkloadIdentityPort
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
@@ -60,15 +62,48 @@ class AuthBootstrapper(BootstrapperPort):
                 default_ttl_seconds=cfg.token_expire_minutes * 60,
             )
 
-        # 4. Register Ports in DI Container
+        # 4. Instantiate Policy and Workload Adapters if configured
+        policy_adapter: AuthorizationPolicyPort | None = None
+        if cfg.opa.enabled:
+            from hexastack_auth.adapters.opa.policy import OpaPolicyAdapter
+
+            policy_adapter = OpaPolicyAdapter(
+                base_url=cfg.opa.url,
+                default_policy_path=cfg.opa.policy_path,
+                timeout=cfg.opa.timeout,
+            )
+            di.add_instance(policy_adapter, declared_class=AuthorizationPolicyPort)
+        elif cfg.openfga.enabled:
+            from hexastack_auth.adapters.openfga.policy import OpenFgaPolicyAdapter
+
+            policy_adapter = OpenFgaPolicyAdapter(
+                api_url=cfg.openfga.api_url,
+                store_id=cfg.openfga.store_id,
+                model_id=cfg.openfga.model_id,
+            )
+            di.add_instance(policy_adapter, declared_class=AuthorizationPolicyPort)
+
+        if cfg.spiffe.enabled:
+            from hexastack_auth.adapters.spiffe.workload import SpiffeWorkloadAdapter
+
+            workload_adapter = SpiffeWorkloadAdapter(
+                socket_path=cfg.spiffe.socket_path,
+                trust_domain=cfg.spiffe.trust_domain,
+            )
+            di.add_instance(workload_adapter, declared_class=WorkloadIdentityPort)
+
+        # 5. Register Ports in DI Container
         di.add_instance(hasher, declared_class=PasswordHasherPort)
         di.add_instance(security_svc, declared_class=SecurityPort)
 
-        # 5. Instantiate & Register Authorization Middleware
-        auth_middleware = AuthorizationMiddleware(enabled=cfg.enabled)
+        # 6. Instantiate and Register CQRS Authorization Middleware
+        auth_middleware = AuthorizationMiddleware(
+            enabled=cfg.enabled,
+            policy_adapter=policy_adapter,
+        )
         di.add_instance(auth_middleware, declared_class=AuthorizationMiddleware)
 
-        # 6. Store in context properties
+        # 7. Store in context properties
         context.properties["auth_config"] = cfg
         context.properties["security_service"] = security_svc
         context.properties["password_hasher"] = hasher

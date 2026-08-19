@@ -13,6 +13,11 @@ dependencies = [
     "hexastack-cqrs",
 ]
 
+[project.optional-dependencies]
+auth = [
+    "hexastack-auth",
+]
+
 [project.entry-points."hexastack.bootstrappers"]
 fastapi = "hexastack_fastapi.infra.bootstrap:FastApiBootstrapper"
 
@@ -21,6 +26,7 @@ requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
 
 [tool.uv.sources]
+hexastack-auth = { workspace = true }
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 

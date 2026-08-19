@@ -40,12 +40,12 @@ hexastack_db/
 
 | Category | Exports |
 |---|---|
+| **Bootstrap** | `DatabaseBootstrapper` (order=15), `HexastackDatabaseConfig` |
+| **Migrations** | `init_migrations`, `get_alembic_config`, `run_upgrade`, `run_downgrade`, `run_revision`, `run_current`, `run_history`, `stamp` |
+| **Mixins & Base** | `HexastackBase`, `UuidPrimaryKeyMixin`, `TimestampMixin` |
+| **Registries** | `register_metadata`, `get_registered_metadata`, `clear_metadata_registry` |
 | **Repositories** | `SqlAlchemyRepository`, `AsyncSqlAlchemyRepository` |
 | **Unit of Work** | `SqlAlchemyUnitOfWork`, `AsyncSqlAlchemyUnitOfWork` |
-| **Mixins & Base** | `HexastackBase`, `UuidPrimaryKeyMixin`, `TimestampMixin` |
-| **Migrations** | `init_migrations`, `get_alembic_config`, `run_upgrade`, `run_downgrade`, `run_revision`, `run_current`, `run_history`, `stamp` |
-| **Registries** | `register_metadata`, `get_registered_metadata`, `clear_metadata_registry` |
-| **Bootstrap** | `DatabaseBootstrapper` (order=15), `HexastackDatabaseConfig` |
 
 ---
 

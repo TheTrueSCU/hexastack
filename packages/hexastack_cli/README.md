@@ -31,8 +31,8 @@ hexastack_cli/
 
 | Category | Exports |
 |---|---|
-| **Decorators** | `@cli_command`, `@cli_query`, `@cli_group`, `@feature_flag_command` |
 | **Application Factory** | `create_cli_app`, `CliBootstrapper` (order=30) |
+| **Decorators** | `@cli_command`, `@cli_query`, `@cli_group`, `@feature_flag_command` |
 | **Presenters** | `RichTerminalPresenter`, `ConsolePresenter`, `TablePresenter`, `JsonPresenter` |
 
 ---

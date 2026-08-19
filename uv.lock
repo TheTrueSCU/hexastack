@@ -1478,13 +1478,38 @@ dependencies = [
     { name = "pyjwt" },
 ]
 
+[package.optional-dependencies]
+fastapi = [
+    { name = "fastapi" },
+]
+grpc = [
+    { name = "grpcio" },
+]
+opa = [
+    { name = "httpx" },
+]
+openfga = [
+    { name = "openfga-sdk" },
+]
+spiffe = [
+    { name = "cryptography" },
+    { name = "spiffe" },
+]
+
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", marker = "extra == 'spiffe'", specifier = ">=43.0.0" },
+    { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.115.0" },
+    { name = "grpcio", marker = "extra == 'grpc'", specifier = ">=1.62.0" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "httpx", marker = "extra == 'opa'", specifier = ">=0.27.0" },
+    { name = "openfga-sdk", marker = "extra == 'openfga'", specifier = ">=0.6.0" },
     { name = "pydantic", specifier = ">=2.10.0" },
     { name = "pyjwt", specifier = ">=2.8.0" },
+    { name = "spiffe", marker = "extra == 'spiffe'", specifier = ">=0.3.0" },
 ]
+provides-extras = ["fastapi", "grpc", "opa", "openfga", "spiffe"]
 
 [[package]]
 name = "hexastack-cli"
@@ -1634,12 +1659,19 @@ dependencies = [
     { name = "hexastack-cqrs" },
 ]
 
+[package.optional-dependencies]
+auth = [
+    { name = "hexastack-auth" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "hexastack-auth", marker = "extra == 'auth'", editable = "packages/hexastack_auth" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
 ]
+provides-extras = ["auth"]
 
 [[package]]
 name = "hexastack-flags"
@@ -2887,6 +2919,21 @@ wheels = [
 ]
 
 [[package]]
+name = "openfga-sdk"
+version = "0.10.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "opentelemetry-api" },
+    { name = "python-dateutil" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/94/56/e83a75eae64d75aec96a6cced80bb5bbe4d74837bb6409692debb14b10cb/openfga_sdk-0.10.4.tar.gz", hash = "sha256:f5a681af3adb11249ebe33d5977286bb385a5c448edb47d71583e2a04b546e4c", size = 348682, upload-time = "2026-06-29T10:28:29.154Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/a6/a55854a9ee7aadf2b32eaed16211075bf7667309775e53e01756eacf02ca/openfga_sdk-0.10.4-py3-none-any.whl", hash = "sha256:7daa358ff669f47a094045f01235bb2733cbcfef84b9783e2deb6b64f5611176", size = 267237, upload-time = "2026-06-29T10:28:27.467Z" },
+]
+
+[[package]]
 name = "opentelemetry-api"
 version = "1.44.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3050,6 +3097,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/30/4b/90c937815137d43ce71ba043cd3566221e9df6b9c805f24b5d138c9d40a7/parso-0.8.7.tar.gz", hash = "sha256:eaaac4c9fdd5e9e8852dc778d2d7405897ec510f2a298071453e5e3a07914bb1", size = 401824, upload-time = "2026-05-01T23:13:02.138Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/99/5d/8268b644392ee874ee82a635cd0df1773de230bde356c38de28e298392cc/parso-0.8.7-py2.py3-none-any.whl", hash = "sha256:a8926eb2a1b915486941fdbd31e86a4baf88fe8c210f25f2f35ecec5b574ca1c", size = 107025, upload-time = "2026-05-01T23:12:58.867Z" },
+]
+
+[[package]]
+name = "pem"
+version = "23.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/86/16c0b6789816f8d53f2f208b5a090c9197da8a6dae4d490554bb1bedbb09/pem-23.1.0.tar.gz", hash = "sha256:06503ff2441a111f853ce4e8b9eb9d5fedb488ebdbf560115d3dd53a1b4afc73", size = 43796, upload-time = "2023-06-21T10:24:40.539Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/97/8299a481ae6c08494b5d53511e6a4746775d8a354c685c69d8796b2ed482/pem-23.1.0-py3-none-any.whl", hash = "sha256:78bbb1e75b737891350cb9499cbba31da5d59545f360f44163c0bc751cad55d3", size = 9195, upload-time = "2023-06-21T10:24:39.164Z" },
 ]
 
 [[package]]
@@ -4084,6 +4140,24 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594, upload-time = "2021-05-16T22:03:42.897Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
+]
+
+[[package]]
+name = "spiffe"
+version = "0.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "grpcio" },
+    { name = "pem" },
+    { name = "protobuf" },
+    { name = "pyasn1" },
+    { name = "pyasn1-modules" },
+    { name = "pyjwt", extra = ["crypto"] },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/85/87/b7e9e103d370960c045b8b9f87ffce579ff159325da081c552d7f3468285/spiffe-0.3.1.tar.gz", hash = "sha256:61ce83f4af7d41fed1e68f8c67081f169c963a8640a6abc813a7752f7aabbcaf", size = 40960, upload-time = "2026-08-08T19:02:31.291Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/af/5a71d12a49ae5e0dfd3829645ee1dc26db7d9ec29a150e6245b0dccd6442/spiffe-0.3.1-py3-none-any.whl", hash = "sha256:f5d0e7c7a517c270296ec17c7d03a7737fa2ea9ff2dc8bb79e94e8fffcbd165d", size = 59077, upload-time = "2026-08-08T19:02:30.059Z" },
 ]
 
 [[package]]

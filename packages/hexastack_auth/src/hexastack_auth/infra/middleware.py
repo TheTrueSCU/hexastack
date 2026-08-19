@@ -17,16 +17,23 @@ class AuthorizationMiddleware:
 
     Notes/Architectural Intent:
         Intercepts Command and Query execution before reaching handlers.
-        Enforces security invariants centrally regardless of driving transport.
+        Enforces security invariants centrally (RBAC, OPA, OpenFGA, SPIFFE)
+        regardless of driving transport.
     """
 
-    def __init__(self, enabled: bool = True) -> None:
+    def __init__(
+        self,
+        enabled: bool = True,
+        policy_adapter: Any | None = None,
+    ) -> None:
         """Initialize authorization middleware.
 
         Args:
             enabled: Whether authorization checks are active.
+            policy_adapter: Optional AuthorizationPolicyPort for OPA/OpenFGA evaluations.
         """
         self._enabled = enabled
+        self._policy_adapter = policy_adapter
 
     def __call__[G: Generic, R](
         self,
@@ -44,12 +51,16 @@ class AuthorizationMiddleware:
 
         Raises:
             InvalidCredentialsError: If caller is not authenticated.
-            InsufficientPermissionsError: If caller lacks roles or permissions.
+            InsufficientPermissionsError: If caller lacks roles, permissions, or policy grant.
         """
         if self._enabled:
             meta = get_auth_metadata(instance)
             if meta is not None:
-                evaluate_authorization(meta)
+                evaluate_authorization(
+                    meta,
+                    instance=instance,
+                    policy_adapter=self._policy_adapter,
+                )
 
         result = next_call(instance)
         if inspect.isawaitable(result):
@@ -141,16 +152,21 @@ def _check_permissions(metadata: AuthMetadata, identity: Identity) -> None:
 def evaluate_authorization(
     metadata: AuthMetadata,
     identity: Any | None = None,
+    *,
+    instance: Any | None = None,
+    policy_adapter: Any | None = None,
 ) -> None:
     """Evaluate AuthMetadata against the current or provided Identity.
 
     Args:
         metadata: AuthMetadata defining the security requirements.
         identity: Optional explicit Identity or UserContext.
+        instance: Optional Command/Query message instance for contextual checks.
+        policy_adapter: Optional AuthorizationPolicyPort for OPA/OpenFGA evaluation.
 
     Raises:
         InvalidCredentialsError: If caller is unauthenticated when required.
-        InsufficientPermissionsError: If caller lacks required roles or permissions.
+        InsufficientPermissionsError: If caller lacks required roles, permissions, or policy grant.
     """
     effective_id = _resolve_effective_identity(identity)
 
@@ -158,6 +174,53 @@ def evaluate_authorization(
     if metadata.require_authenticated and not effective_id.is_authenticated:
         raise InvalidCredentialsError("Authentication credentials are required.")
 
-    # 2. Check Roles & Permissions
+    # 2. Check SPIFFE workload identity restrictions
+    if metadata.spiffe_ids:
+        caller_spiffe = effective_id.claims.get("spiffe_id") or effective_id.claims.get(
+            "sub"
+        )
+        if caller_spiffe not in metadata.spiffe_ids:
+            raise InsufficientPermissionsError(
+                f"Caller SPIFFE identity '{caller_spiffe}' is not authorized. Allowed: {metadata.spiffe_ids}"
+            )
+
+    # 3. Check Roles & Permissions
     _check_roles(metadata, effective_id)
     _check_permissions(metadata, effective_id)
+
+    # 4. Check OPA Policy if specified
+    if metadata.policy and policy_adapter is not None:
+        action = metadata.policy
+        resource = (
+            getattr(instance, "__class__", type(instance)).__name__
+            if instance
+            else "default"
+        )
+        payload_ctx = dict(getattr(instance, "__dict__", {})) if instance else {}
+        allowed = policy_adapter.is_authorized(
+            identity=effective_id,
+            action=action,
+            resource=resource,
+            context=payload_ctx,
+        )
+        if not allowed:
+            raise InsufficientPermissionsError(
+                f"Identity '{effective_id.user_id}' denied by policy '{metadata.policy}'"
+            )
+
+    # 5. Check OpenFGA ReBAC relation if specified
+    if metadata.relation and policy_adapter is not None:
+        relation = metadata.relation
+        obj_id = "default"
+        if instance and metadata.object_id_field:
+            obj_id = str(getattr(instance, metadata.object_id_field, "default"))
+        resource = f"{metadata.object_type or 'object'}:{obj_id}"
+        allowed = policy_adapter.is_authorized(
+            identity=effective_id,
+            action=relation,
+            resource=resource,
+        )
+        if not allowed:
+            raise InsufficientPermissionsError(
+                f"Identity '{effective_id.user_id}' lacks relation '{metadata.relation}' on '{resource}'"
+            )

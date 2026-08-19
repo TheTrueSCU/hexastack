@@ -6,6 +6,32 @@ from hexastack_core.infra.decorators import config_section
 from hexastack_core.infra.registries.config import ConfigRegistry
 
 
+class OpaConfig(BaseModel):
+    """Configuration options for Open Policy Agent integration."""
+
+    enabled: bool = False
+    url: str = "http://localhost:8181"
+    policy_path: str = "v1/data/authz/allow"
+    timeout: float = 3.0
+
+
+class OpenFgaConfig(BaseModel):
+    """Configuration options for OpenFGA ReBAC integration."""
+
+    enabled: bool = False
+    api_url: str = "http://localhost:8080"
+    store_id: str = ""
+    model_id: str | None = None
+
+
+class SpiffeConfig(BaseModel):
+    """Configuration options for SPIFFE / SPIRE Workload Identity integration."""
+
+    enabled: bool = False
+    socket_path: str = "unix:///tmp/spire-agent/public/api.sock"
+    trust_domain: str = "example.org"
+
+
 @config_section("auth")
 class HexastackAuthConfig(BaseModel):
     """Pydantic configuration model for Hexastack security and authentication subsystem.
@@ -43,6 +69,9 @@ class HexastackAuthConfig(BaseModel):
         default="pbkdf2",
         description="Password hashing backend ('pbkdf2' or 'memory').",
     )
+    opa: OpaConfig = Field(default_factory=OpaConfig)
+    openfga: OpenFgaConfig = Field(default_factory=OpenFgaConfig)
+    spiffe: SpiffeConfig = Field(default_factory=SpiffeConfig)
     enabled: bool = Field(
         default=True,
         description="Master flag to enable authentication middleware enforcement.",
@@ -51,6 +80,9 @@ class HexastackAuthConfig(BaseModel):
 
 __all__ = [
     "HexastackAuthConfig",
+    "OpaConfig",
+    "OpenFgaConfig",
+    "SpiffeConfig",
     "register_auth_config",
 ]
 
