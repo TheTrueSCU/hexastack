@@ -1,6 +1,16 @@
+"""Umbrella CLI application commands and dynamic subcommands registration.
+
+Notes/Architectural Intent:
+    Provides root CLI command surface for Hexastack, exposing core diagnostic queries,
+    system info, and dynamic subcommand groups (`db`, `grpc`, `mcp`, `ui`, `serve`)
+    based on installed optional extras.
+"""
+
+from __future__ import annotations
+
 import importlib.util
 import os
-from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -17,16 +27,16 @@ from hexastack_cli.infra.decorators import (
 from hexastack_core.domain.exceptions import MissingDependencyError
 
 
-@cli_group("inspect", help="Introspect registered CQRS handlers, routes, and config")
-class InspectGroupDocs:
-    """CLI group documentation container for inspect commands."""
+@cli_group("demo", help="Interactive demonstration commands")
+class DemoGroupDocs:
+    """CLI group documentation container for demo commands."""
 
     pass
 
 
-@cli_group("demo", help="Interactive demonstration commands")
-class DemoGroupDocs:
-    """CLI group documentation container for demo commands."""
+@cli_group("inspect", help="Introspect registered CQRS handlers, routes, and config")
+class InspectGroupDocs:
+    """CLI group documentation container for inspect commands."""
 
     pass
 
@@ -52,12 +62,12 @@ cli_command(
     help="Send a test ping command through the CQRS execution pipeline.",
 )(PingDemoCommand)
 
-
 __all__ = [
     "add_db_commands",
     "add_grpc_commands",
     "add_mcp_commands",
     "add_serve_command",
+    "add_ui_commands",
     "DemoGroupDocs",
     "InspectGroupDocs",
 ]
@@ -82,9 +92,7 @@ def add_db_commands(app: typer.Typer) -> None:
                 "Install via 'pip install hexastack-db[migrations]'."
             )
 
-    def _get_config(migrations_dir: str, url: str | None):
-        import os
-
+    def _get_config(migrations_dir: str, url: str | None) -> Any:
         from hexastack_db.infra.migrations import get_alembic_config
 
         db_url = url or os.environ.get("DATABASE_URL", "sqlite:///hexastack.db")
@@ -98,29 +106,20 @@ def add_db_commands(app: typer.Typer) -> None:
         directory: str = typer.Argument(
             "migrations", help="Path to create the migrations directory."
         ),
-        url: str | None = typer.Option(
-            None, "--url", help="Database URL (overrides DATABASE_URL env var)."
-        ),
     ) -> None:
         _require_migrations()
-        from hexastack_db.infra.config import HexastackDatabaseConfig
         from hexastack_db.infra.migrations import init_migrations
 
-        db_url = url or os.environ.get("DATABASE_URL", "sqlite:///hexastack.db")
-        cfg = HexastackDatabaseConfig(url=db_url)
-        try:
-            init_migrations(migrations_dir=directory, db_config=cfg)
-            typer.echo(f"Initialized migrations directory: {Path(directory).resolve()}")
-        except FileExistsError as e:
-            typer.echo(f"Error: {e}", err=True)
-            raise typer.Exit(1) from e
+        init_migrations(directory)
 
-    @db_app.command(name="upgrade", help="Upgrade the database to a revision.")
-    def db_upgrade(
+    @db_app.command(
+        name="migrate", help="Apply pending database migrations (upgrade to head)."
+    )
+    def db_migrate(
         directory: str = typer.Option(
             "migrations", "--dir", help="Migrations directory."
         ),
-        revision: str = typer.Argument("head", help="Target revision (default: head)."),
+        revision: str = typer.Option("head", "--revision", help="Target revision."),
         url: str | None = typer.Option(
             None, "--url", help="Database URL (overrides DATABASE_URL env var)."
         ),
@@ -128,24 +127,9 @@ def add_db_commands(app: typer.Typer) -> None:
         _require_migrations()
         from hexastack_db.infra.migrations import run_upgrade
 
-        run_upgrade(_get_config(directory, url), revision)
+        run_upgrade(_get_config(directory, url), revision=revision)
 
-    @db_app.command(name="downgrade", help="Downgrade the database to a revision.")
-    def db_downgrade(
-        directory: str = typer.Option(
-            "migrations", "--dir", help="Migrations directory."
-        ),
-        revision: str = typer.Argument("-1", help="Target revision (default: -1)."),
-        url: str | None = typer.Option(
-            None, "--url", help="Database URL (overrides DATABASE_URL env var)."
-        ),
-    ) -> None:
-        _require_migrations()
-        from hexastack_db.infra.migrations import run_downgrade
-
-        run_downgrade(_get_config(directory, url), revision)
-
-    @db_app.command(name="revision", help="Generate a new migration revision.")
+    @db_app.command(name="revision", help="Generate a new migration revision script.")
     def db_revision(
         message: str = typer.Argument(..., help="Short description of the migration."),
         directory: str = typer.Option(
@@ -274,6 +258,41 @@ def add_mcp_commands(app: typer.Typer) -> None:
         runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
         server = runtime.container.resolve(McpServer)
         run_stdio_server(server)
+
+
+def add_ui_commands(app: typer.Typer) -> None:
+    """Register 'ui' command to launch the interactive DevTools web dashboard."""
+
+    @app.command(
+        name="ui",
+        help="Launch the Hexastack DevTools interactive web UI (requires hexastack[ui]).",
+    )
+    def ui_command(
+        host: str = typer.Option("127.0.0.1", "--host", "-h", help="Bind host."),
+        port: int = typer.Option(8000, "--port", "-p", help="Bind port."),
+        reload: bool = typer.Option(
+            False, "--reload/--no-reload", help="Enable auto-reloading."
+        ),
+    ) -> None:
+        if importlib.util.find_spec("nicegui") is None:
+            raise MissingDependencyError(
+                "NiceGUI is required to launch the interactive UI. "
+                "Install via 'pip install hexastack[ui]' or 'pip install hexastack-fastapi[ui]'."
+            )
+
+        if importlib.util.find_spec("uvicorn") is None:
+            raise MissingDependencyError(
+                "uvicorn is required to run the web server. "
+                "Install via 'pip install hexastack[web]' or 'pip install uvicorn[standard]'."
+            )
+
+        import uvicorn
+
+        from hexastack.adapters.fastapi import create_demo_app
+
+        typer.echo(f"Starting Hexastack DevTools at http://{host}:{port}/_devtools ...")
+        demo_app = create_demo_app()
+        uvicorn.run(demo_app, host=host, port=port, reload=reload)
 
 
 def add_serve_command(app: typer.Typer) -> None:

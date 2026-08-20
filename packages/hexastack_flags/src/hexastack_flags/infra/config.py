@@ -34,6 +34,10 @@ class HexastackFlagsConfig(BaseModel):
     timeout_ms: int = Field(
         default=5000, description="Evaluation timeout in milliseconds"
     )
+    flags: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Static in-memory feature flags mapping (key -> bool/value)",
+    )
     options: dict[str, Any] = Field(
         default_factory=dict,
         description="Additional provider-specific configuration options",

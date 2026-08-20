@@ -40,6 +40,31 @@ class OpenFeatureFlagAdapter(FeatureFlagPort):
     ) -> None:
         self._client = client or openfeature.api.get_client(client_name)
 
+    def get_all_flags(self) -> dict[str, Any]:
+        """Introspect active flags from the underlying OpenFeature provider if supported.
+
+        Returns:
+            Dictionary mapping flag keys to their configured status/values.
+        """
+        flags: dict[str, Any] = {}
+        try:
+            provider: Any = openfeature.api.provider_registry.get_provider(None)
+            provider_flags = getattr(provider, "_flags", None)
+            if isinstance(provider_flags, dict):
+                for k, v in provider_flags.items():
+                    # If InMemoryFlag object, resolve current variant/value
+                    if hasattr(v, "variants") and hasattr(v, "default_variant"):
+                        flags[str(k)] = v.variants.get(
+                            v.default_variant, v.default_variant
+                        )
+                    elif hasattr(v, "state"):
+                        flags[str(k)] = str(v.state)
+                    else:
+                        flags[str(k)] = v
+        except Exception:
+            pass
+        return flags
+
     def get_boolean_details(
         self,
         flag_key: str,

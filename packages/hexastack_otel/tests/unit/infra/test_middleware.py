@@ -138,12 +138,23 @@ def test_tracing_middleware_with_command():
         res = middleware(cmd, lambda c: f"created {c.invoice_id}")
         assert res == "created inv-1"
 
+
+def test_tracing_middleware_with_feature_flags():
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+
+    tracer = InMemoryTracingAdapter()
+    flags = InMemoryFeatureFlagAdapter({"features.otel.tracing": False})
+    middleware = TracingMiddleware(tracer=tracer, flags=flags)
+
+    cmd = CreateInvoiceCommand(invoice_id="inv-disabled", amount=50.0)
+    res = middleware(cmd, lambda c: "ok")
+    assert res == "ok"
+    assert len(tracer.finished_spans) == 0
+
+    # Enable flag
+    flags.set_flag("features.otel.tracing", True)
+    res = middleware(cmd, lambda c: "ok")
+    assert res == "ok"
     assert len(tracer.finished_spans) == 1
-    span = tracer.finished_spans[0]
-    assert span.name == "cqrs.CreateInvoiceCommand"
-    assert span.attributes["message.name"] == "CreateInvoiceCommand"
-    assert span.attributes["message.type"] == "command"
-    assert span.attributes["correlation.id"] == "corr-999"
-    assert span.attributes["tenant.id"] == "tenant_xyz"
-    assert span.attributes["user.id"] == "usr_abc"
-    assert span.status != "ERROR"

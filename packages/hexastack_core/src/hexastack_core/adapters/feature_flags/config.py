@@ -34,6 +34,21 @@ class ConfigFeatureFlagAdapter(FeatureFlagPort):
         self._config = config
         self._overrides: dict[str, Any] = dict(overrides or {})
 
+    def get_all_flags(self) -> dict[str, Any]:
+        """Return a dictionary of all active flags and overrides for UI introspection.
+
+        Returns:
+            Dictionary mapping flag keys to their configured values.
+        """
+        flags: dict[str, Any] = dict(self._overrides)
+        if self._config is not None and hasattr(self._config, "_core"):
+            for attr in dir(self._config._core):
+                if not attr.startswith("_"):
+                    val = getattr(self._config._core, attr)
+                    if isinstance(val, (bool, str, int, float)):
+                        flags[f"core.{attr}"] = val
+        return flags
+
     def _lookup_config_path(self, path: str) -> Any:
         """Lookup nested attribute or dictionary key in config."""
         if self._config is None:

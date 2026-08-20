@@ -17,6 +17,9 @@ dependencies = [
 auth = [
     "hexastack-auth",
 ]
+ui = [
+    "nicegui>=2.0.0",
+]
 
 [project.entry-points."hexastack.bootstrappers"]
 fastapi = "hexastack_fastapi.infra.bootstrap:FastApiBootstrapper"

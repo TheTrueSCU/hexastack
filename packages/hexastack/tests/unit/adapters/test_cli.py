@@ -42,3 +42,12 @@ def test_cli_diagnostics_integration():
         res_serve = runner.invoke(cli_app, ["serve", "--no-reload", "--port", "9000"])
         assert res_serve.exit_code == 0
         assert mock_run.called
+
+    # 5. Test ui command with mocked uvicorn
+    from hexastack.adapters.cli import add_ui_commands
+
+    add_ui_commands(cli_app)
+    with patch("uvicorn.run") as mock_run_ui:
+        res_ui = runner.invoke(cli_app, ["ui", "--port", "8080"])
+        assert res_ui.exit_code == 0
+        assert mock_run_ui.called

@@ -40,6 +40,8 @@ def create_demo_app() -> Any:
     Raises:
         None.
     """
+    import importlib.util
+
     import hexastack.application.diagnostics
 
     current_module = sys.modules[__name__]
@@ -49,4 +51,20 @@ def create_demo_app() -> Any:
             current_module,
         ],
     )
-    return result.get("app")
+    app = result.get("app")
+
+    # Automatically mount NiceGUI DevTools dashboard if UI dependencies installed
+    if app is not None and importlib.util.find_spec("nicegui") is not None:
+        try:
+            from hexastack_fastapi.adapters.ui import mount_devtools_dashboard
+
+            mount_devtools_dashboard(
+                app,
+                container=result.container,
+                pipeline=result.properties.get("pipeline"),
+                path="/_devtools",
+            )
+        except Exception:
+            pass
+
+    return app

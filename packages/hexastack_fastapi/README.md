@@ -13,6 +13,7 @@
 - **Standardized Exception Handlers**: Automatically translates domain exceptions (`EntityNotFoundError`, `UniqueConstraintViolationError`, `HexastackError`) into appropriate HTTP status codes (404, 409, 500) and structured JSON error envelopes.
 - **Observability & Correlation Middleware**: Injects `X-Correlation-ID` headers and logs HTTP request lifecycles.
 - **Built-in Health Checks**: Configurable `/health` and `/ready` endpoints verifying container and subsystem readiness.
+- **NiceGUI Reactive UI & DevTools Dashboard**: Optional `[ui]` presentation adapter providing `ui_page`, `dispatch_command`, `dispatch_query`, and a zero-config interactive developer console (`mount_devtools_dashboard`) for inspecting CQRS buses, feature flags, and DI services.
 
 ---
 
@@ -21,7 +22,7 @@
 ```
 hexastack_fastapi/
 ├── domain/          # HealthStatus, HTTP error envelope models
-├── adapters/        # create_app, routing decorators, health endpoints, db_session middleware, dependencies
+├── adapters/        # create_app, routing decorators, health endpoints, db_session middleware, dependencies, NiceGUI UI adapter
 └── infra/           # FastApiBootstrapper (order=30), exception handlers, correlation/logging middlewares
 ```
 
@@ -34,6 +35,7 @@ hexastack_fastapi/
 | **Dependencies** | `get_container`, `get_pipeline`, `get_feature_flags`, `require_feature` |
 | **Exception Handlers** | `register_exception_handlers`, `domain_exception_handler` |
 | **Middlewares** | `DbSessionMiddleware`, `AsyncDbSessionMiddleware`, `add_db_session_middleware`, `CorrelationMiddleware`, `HttpLoggingMiddleware` |
+| **Reactive UI (NiceGUI)** | `dispatch_command`, `dispatch_query`, `mount_devtools_dashboard`, `mount_ui_app`, `ui_page` |
 | **Routing** | `CqrsRouter`, `autodiscover_routes` |
 | **Testing & Conformance** | `create_test_client`, `check_openapi_conformance` (Schemathesis contract checks) |
 

@@ -29,6 +29,14 @@ class InMemoryFeatureFlagAdapter(FeatureFlagPort):
         """Clear all registered flags."""
         self._flags.clear()
 
+    def get_all_flags(self) -> dict[str, Any]:
+        """Return a copy of all registered flags for debugging and UI introspection.
+
+        Returns:
+            Dictionary mapping flag keys to their configured values.
+        """
+        return dict(self._flags)
+
     def get_boolean_details(
         self,
         flag_key: str,

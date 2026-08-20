@@ -9,6 +9,13 @@ from hexastack_fastapi.adapters.dependencies import (
 )
 from hexastack_fastapi.adapters.health import create_health_router
 from hexastack_fastapi.adapters.routing import CqrsRouter
+from hexastack_fastapi.adapters.ui import (
+    dispatch_command,
+    dispatch_query,
+    mount_devtools_dashboard,
+    mount_ui_app,
+    ui_page,
+)
 
 __all__ = [
     "check_openapi_conformance",
@@ -16,8 +23,13 @@ __all__ = [
     "create_fastapi_app",
     "create_health_router",
     "create_test_client",
+    "dispatch_command",
+    "dispatch_query",
     "get_container",
     "get_feature_flags",
     "get_pipeline",
+    "mount_devtools_dashboard",
+    "mount_ui_app",
     "require_feature",
+    "ui_page",
 ]

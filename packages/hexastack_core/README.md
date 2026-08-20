@@ -48,7 +48,7 @@ hexastack_core/
 | **Feature Flags** | `EvaluationContext`, `FlagEvaluationDetails`, `InMemoryFeatureFlagAdapter`, `ConfigFeatureFlagAdapter` |
 | **Ports** | `BootstrapperPort`, `Repository`, `AsyncRepository`, `UnitOfWork`, `AsyncUnitOfWork`, `LoggerPort`, `PresenterPort`, `FeatureFlagPort` |
 | **Registries** | `GenericTypeRegistry`, `ExceptionRegistry` |
-| **Testing** | `assert_clean_architecture`, `create_test_runtime`, `TestRuntime`, `cqrs_strategy`, `flag_scope`, `parametrize_flags`, `@require_extra`, `@require_feature`, `isolate_registries` |
+| **Testing** | `assert_clean_architecture`, `create_test_runtime`, `TestRuntime`, `cqrs_strategy`, `faker_strategy`, `flag_scope`, `generate_synthetic_payload`, `isolate_registries`, `parametrize_flags`, `@require_extra`, `@require_feature`, `seeded_faker` |
 
 ---
 

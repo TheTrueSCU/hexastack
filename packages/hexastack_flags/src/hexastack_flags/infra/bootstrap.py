@@ -40,6 +40,7 @@ class FeatureFlagBootstrapper(BootstrapperPort):
         initialize_openfeature_provider(
             provider_type=config.provider,
             options=options,
+            in_memory_flags=config.flags,
         )
 
         adapter = OpenFeatureFlagAdapter()
