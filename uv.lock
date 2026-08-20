@@ -1951,6 +1951,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },
+    { name = "openfeature-provider-flagd" },
 ]
 
 [package.dev-dependencies]
@@ -1986,7 +1987,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "hexastack", extras = ["all"], editable = "packages/hexastack" }]
+requires-dist = [
+    { name = "hexastack", extras = ["all"], editable = "packages/hexastack" },
+    { name = "openfeature-provider-flagd", specifier = ">=0.2.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [

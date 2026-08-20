@@ -1,8 +1,11 @@
-"""Provider factories and initialization for OpenFeature backends.
+"""Factory for initializing OpenFeature provider backends.
 
 Notes/Architectural Intent:
-    Encapsulates setup for Flagd, In-Memory, Environment, and Custom OpenFeature providers.
+    Decouples application setup from concrete OpenFeature provider implementations
+    (Flagd, In-Memory, etc.), dynamically importing optional dependencies on demand.
 """
+
+from __future__ import annotations
 
 from typing import Any
 
@@ -10,23 +13,21 @@ import openfeature.api
 from openfeature.provider.in_memory_provider import InMemoryFlag, InMemoryProvider
 
 from hexastack_core.domain.exceptions import MissingDependencyError
-from hexastack_flags.domain.models import FeatureFlagProviderType, FlagProviderOptions
-
-__all__ = [
-    "initialize_openfeature_provider",
-]
+from hexastack_flags.domain.models import (
+    FeatureFlagProviderType,
+    FlagProviderOptions,
+)
 
 
 def initialize_openfeature_provider(
-    provider_type: FeatureFlagProviderType | str,
+    provider_type: FeatureFlagProviderType | str = FeatureFlagProviderType.IN_MEMORY,
     options: FlagProviderOptions | None = None,
-    *,
     in_memory_flags: dict[str, Any] | None = None,
 ) -> None:
-    """Initialize and set the global OpenFeature provider.
+    """Initialize and register an OpenFeature provider backend globally.
 
     Args:
-        provider_type: Type of provider to configure (flagd, in_memory, env).
+        provider_type: Target backend ("flagd", "in_memory", "env", etc.).
         options: Configuration options (host, port, cache, etc.).
         in_memory_flags: Initial flags dict when using in_memory provider.
 
@@ -41,12 +42,19 @@ def initialize_openfeature_provider(
             import importlib
 
             flagd_mod = importlib.import_module("openfeature.contrib.provider.flagd")
+            config_mod = importlib.import_module(
+                "openfeature.contrib.provider.flagd.config"
+            )
             flagd_cls = flagd_mod.FlagdProvider
+            cache_type_cls = config_mod.CacheType
+
+            cache_val = cache_type_cls.LRU if opts.cache else cache_type_cls.DISABLED
+
             provider = flagd_cls(
                 host=opts.host,
                 port=opts.port,
-                cache=opts.cache,
-                timeout_ms=opts.timeout_ms,
+                cache=cache_val,
+                timeout=opts.timeout_ms,
             )
             openfeature.api.set_provider(provider)
         except (ImportError, AttributeError) as e:
@@ -71,10 +79,10 @@ def initialize_openfeature_provider(
                         default_variant="default",
                         variants={"default": v},
                     )
-        provider = InMemoryProvider(flags=flags_dict)
+        provider = InMemoryProvider(flags_dict)
         openfeature.api.set_provider(provider)
 
-    else:
-        # Default fallback to in-memory provider
-        provider = InMemoryProvider(flags={})
-        openfeature.api.set_provider(provider)
+
+__all__ = [
+    "initialize_openfeature_provider",
+]
