@@ -1,8 +1,4 @@
-"""Compatibility module for CLI adapter commands.
-
-Notes/Architectural Intent:
-    Re-exports commands from hexastack.adapters.cli.demo and hexastack.adapters.cli.scaffolding.
-"""
+"""Demo showcase and diagnostic CLI commands."""
 
 from hexastack.adapters.cli.demo.commands import (
     DemoGroupDocs,
@@ -13,13 +9,11 @@ from hexastack.adapters.cli.demo.commands import (
     add_serve_command,
     add_ui_commands,
 )
-from hexastack.adapters.cli.scaffolding.commands import add_scaffold_commands
 
 __all__ = [
     "add_db_commands",
     "add_grpc_commands",
     "add_mcp_commands",
-    "add_scaffold_commands",
     "add_serve_command",
     "add_ui_commands",
     "DemoGroupDocs",

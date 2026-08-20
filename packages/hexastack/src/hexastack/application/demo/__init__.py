@@ -1,8 +1,4 @@
-"""Compatibility module for diagnostics handlers.
-
-Notes/Architectural Intent:
-    Delegates to hexastack.application.demo.diagnostics for backward compatibility.
-"""
+"""Interactive demonstration and diagnostics application layer."""
 
 from hexastack.application.demo.diagnostics import (
     GetSystemInfoHandler,

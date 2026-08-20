@@ -1,7 +1,8 @@
-"""Compatibility module for CLI adapter commands.
+"""CLI adapters for Hexastack umbrella package.
 
-Notes/Architectural Intent:
-    Re-exports commands from hexastack.adapters.cli.demo and hexastack.adapters.cli.scaffolding.
+Sub-packages:
+    scaffolding: Project creation and initialization commands (`new`, `init`).
+    demo: Showcase, diagnostics, server, and UI commands (`demo`, `ui`, `serve`, `db`, `grpc`, `mcp`).
 """
 
 from hexastack.adapters.cli.demo.commands import (

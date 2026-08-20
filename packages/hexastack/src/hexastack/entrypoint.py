@@ -11,6 +11,7 @@ def main() -> None:
         add_db_commands,
         add_grpc_commands,
         add_mcp_commands,
+        add_scaffold_commands,
         add_serve_command,
         add_ui_commands,
     )
@@ -23,6 +24,7 @@ def main() -> None:
     )
     cli_app = result.get("cli_app")
     if cli_app is not None:
+        add_scaffold_commands(cli_app)
         add_serve_command(cli_app)
         add_ui_commands(cli_app)
         add_db_commands(cli_app)
