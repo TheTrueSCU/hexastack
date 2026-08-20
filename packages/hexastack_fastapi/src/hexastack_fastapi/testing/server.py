@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import http.client
+import os
 import socket
 import subprocess
 import sys
@@ -22,15 +23,22 @@ def find_free_port() -> int:
 class EphemeralServer:
     """Manages lifecycle of an ephemeral Uvicorn web server running in background."""
 
-    def __init__(self, app_factory_code: str, port: int | None = None) -> None:
+    def __init__(
+        self,
+        app_factory_code: str,
+        port: int | None = None,
+        env: dict[str, str] | None = None,
+    ) -> None:
         """Initialize ephemeral server with Python factory script code.
 
         Args:
             app_factory_code: Python code string that creates and runs the ASGI app.
             port: Optional fixed port. If omitted, finds an ephemeral free port.
+            env: Optional environment variables dictionary for subprocess.
         """
         self.port = port or find_free_port()
         self.app_factory_code = app_factory_code
+        self.env = env
         self.proc: subprocess.Popen[Any] | None = None
         self.base_url = f"http://127.0.0.1:{self.port}"
 
@@ -52,8 +60,15 @@ class EphemeralServer:
             "-c",
             self.app_factory_code.format(port=self.port),
         ]
+        proc_env = dict(os.environ)
+        if self.env:
+            proc_env.update(self.env)
+
         self.proc = subprocess.Popen(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            env=proc_env,
         )
 
         start_time = time.time()
@@ -84,9 +99,13 @@ class EphemeralServer:
 
 
 @contextmanager
-def ephemeral_server(app_factory_code: str, ready_path: str = "/") -> Generator[str]:
+def ephemeral_server(
+    app_factory_code: str,
+    ready_path: str = "/",
+    env: dict[str, str] | None = None,
+) -> Generator[str]:
     """Context manager launching an ephemeral server on a free port."""
-    server = EphemeralServer(app_factory_code)
+    server = EphemeralServer(app_factory_code, env=env)
     try:
         url = server.start(ready_path=ready_path)
         yield url

@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-otel"
-version = "0.1.0"
+version = "0.0.0"
 description = "OpenTelemetry distributed tracing, OTLP exporter integration, and CQRS tracing middleware for Hexastack"
 readme = "README.md"
 authors = [

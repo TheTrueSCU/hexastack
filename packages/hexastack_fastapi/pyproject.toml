@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-fastapi"
-version = "0.1.0"
+version = "0.0.0"
 description = "FastAPI presentation adapter for Hexastack"
 readme = "README.md"
 authors = [

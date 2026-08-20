@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-cqrs"
-version = "0.1.0"
+version = "0.0.0"
 description = "CQRS commands, queries, events, buses, and execution pipeline for Hexastack"
 readme = "README.md"
 authors = [

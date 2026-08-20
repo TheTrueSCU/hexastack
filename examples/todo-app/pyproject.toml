@@ -42,6 +42,12 @@ show_missing = true
 
 [tool.pytest.ini_options]
 addopts = "-n auto --import-mode=importlib --cov=src --cov-fail-under=90 --cov-report=term-missing"
+markers = [
+    "ch01: Tests belonging to Chapter 1 (In-Memory Core & CQRS)",
+    "ch02: Tests belonging to Chapter 2 (SQLite Persistence & Migrations)",
+    "ch03: Tests belonging to Chapter 3 (JWT Auth & RBAC Security)",
+    "ch04: Tests belonging to Chapter 4 (Transactional Outbox & Events)",
+]
 
 [tool.ruff.lint]
 select = ["B", "D", "E", "F", "I", "S", "SIM", "UP", "W"]

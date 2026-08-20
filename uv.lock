@@ -1394,7 +1394,7 @@ wheels = [
 
 [[package]]
 name = "hexastack"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1516,7 +1516,7 @@ provides-extras = ["ai", "auth", "cli", "db", "sql", "docs", "events", "fastapi"
 
 [[package]]
 name = "hexastack-ai"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_ai" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1539,7 +1539,7 @@ requires-dist = [
 
 [[package]]
 name = "hexastack-auth"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_auth" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1583,7 +1583,7 @@ provides-extras = ["fastapi", "grpc", "opa", "openfga", "spiffe"]
 
 [[package]]
 name = "hexastack-cli"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_cli" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1609,7 +1609,7 @@ provides-extras = ["testing"]
 
 [[package]]
 name = "hexastack-core"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_core" }
 dependencies = [
     { name = "pydantic" },
@@ -1637,7 +1637,7 @@ provides-extras = ["testing"]
 
 [[package]]
 name = "hexastack-cqrs"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_cqrs" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1659,7 +1659,7 @@ provides-extras = ["huey"]
 
 [[package]]
 name = "hexastack-db"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_db" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1711,7 +1711,7 @@ provides-extras = ["sqlite", "postgresql", "pgvector", "migrations", "all"]
 
 [[package]]
 name = "hexastack-events"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_events" }
 dependencies = [
     { name = "cloudevents" },
@@ -1741,7 +1741,7 @@ provides-extras = ["huey", "sql"]
 
 [[package]]
 name = "hexastack-fastapi"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_fastapi" }
 dependencies = [
     { name = "fastapi" },
@@ -1779,7 +1779,7 @@ provides-extras = ["auth", "docs", "testing", "ui"]
 
 [[package]]
 name = "hexastack-flags"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_flags" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1803,7 +1803,7 @@ provides-extras = ["flagd"]
 
 [[package]]
 name = "hexastack-graphql"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_graphql" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1829,7 +1829,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-grpc"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_grpc" }
 dependencies = [
     { name = "grpcio" },
@@ -1855,7 +1855,7 @@ provides-extras = ["reflection"]
 
 [[package]]
 name = "hexastack-logging"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_logging" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1891,7 +1891,7 @@ provides-extras = ["loguru", "rich", "structlog", "all"]
 
 [[package]]
 name = "hexastack-mcp"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_mcp" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1917,7 +1917,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-otel"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "packages/hexastack_otel" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1947,7 +1947,7 @@ provides-extras = ["otlp"]
 
 [[package]]
 name = "hexastack-workspace"
-version = "0.1.0"
+version = "0.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },

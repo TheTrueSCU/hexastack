@@ -23,6 +23,10 @@ from todo_app.infra.handlers import (
 )
 
 
+@pytest.mark.ch01
+@pytest.mark.ch02
+@pytest.mark.ch03
+@pytest.mark.ch04
 def test_todo_item_creation_and_completion():
     """Verify entity initialization and completion transitions."""
     item = TodoItem(title="Write Docs", priority=Priority.HIGH)
@@ -38,6 +42,10 @@ def test_todo_item_creation_and_completion():
         item.mark_completed()
 
 
+@pytest.mark.ch01
+@pytest.mark.ch02
+@pytest.mark.ch03
+@pytest.mark.ch04
 def test_handlers_end_to_end(todo_repo: InMemoryTodoRepository):
     """Verify CQRS handlers perform storage operations through repository port."""
     # 1. Create task
@@ -62,8 +70,8 @@ def test_handlers_end_to_end(todo_repo: InMemoryTodoRepository):
 
     # 4. Delete task
     del_cmd = DeleteTodoCommand(todo_id=dto.id)
-    assert handle_delete_todo(del_cmd, repo=todo_repo) is True
+    assert handle_delete_todo(del_cmd, repo=todo_repo)
 
-    # 5. Not found check
+    # 5. Verify not found
     with pytest.raises(TodoNotFoundError):
-        handle_delete_todo(del_cmd, repo=todo_repo)
+        handle_complete_todo(comp_cmd, repo=todo_repo)

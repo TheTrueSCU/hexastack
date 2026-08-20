@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import concurrent.futures
 import html
+import json
 import re
 import shutil
 from pathlib import Path
@@ -141,28 +143,14 @@ def _strip_ansi(text: str) -> str:
     return ansi_escape.sub("", text)
 
 
-def render_cli_demo_video(
+def _render_in_clean_thread(
     events: list[TerminalEvent],
     output_path: Path,
-    title: str = "Hexastack CLI",
-    width: int = 1280,
-    height: int = 720,
+    title: str,
+    width: int,
+    height: int,
 ) -> tuple[Path, Path]:
-    """Render a sequence of TerminalEvents into synchronized .webm video and .vtt subtitle track.
-
-    Args:
-        events: Chronological sequence of input, output, and step narrative events.
-        output_path: Destination Path for .webm video file.
-        title: Window title text for terminal banner.
-        width: Video frame width in pixels.
-        height: Video frame height in pixels.
-
-    Returns:
-        Tuple of (video_path, vtt_path).
-
-    Raises:
-        MissingDependencyError: If `playwright` is not installed.
-    """
+    """Execute Playwright video recording in a fresh thread with its own event loop."""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as e:
@@ -204,12 +192,12 @@ def render_cli_demo_video(
                 current_step_start = current_time
                 current_step_text = ev.payload
 
-                safe_text = html.escape(ev.payload).replace("'", "\\'")
+                json_text = json.dumps(ev.payload)
                 page.evaluate(
                     f"""(() => {{
                         const banner = document.getElementById('banner');
                         if (banner) {{
-                            banner.innerText = '{safe_text}';
+                            banner.innerText = {json_text};
                             banner.style.display = 'block';
                         }}
                     }})();"""
@@ -221,13 +209,14 @@ def render_cli_demo_video(
                 char_str = html.escape(ev.payload)
                 if char_str == "\n":
                     char_str = "<br/>"
+                json_html = json.dumps(char_str)
                 page.evaluate(
                     f"""(() => {{
                         const terminal = document.getElementById('terminal-content');
                         const cursor = terminal.querySelector('.cursor');
                         const span = document.createElement('span');
                         span.className = 'command';
-                        span.innerHTML = '{char_str}';
+                        span.innerHTML = {json_html};
                         terminal.insertBefore(span, cursor);
                         terminal.scrollTop = terminal.scrollHeight;
                     }})();"""
@@ -238,6 +227,7 @@ def render_cli_demo_video(
             elif ev.event_type == "output":
                 clean_text = _strip_ansi(ev.payload)
                 escaped_output = html.escape(clean_text).replace("\n", "<br/>")
+                json_output = json.dumps(escaped_output)
                 page.evaluate(
                     f"""(() => {{
                         const terminal = document.getElementById('terminal-content');
@@ -245,7 +235,7 @@ def render_cli_demo_video(
                         const div = document.createElement('div');
                         div.style.color = '#c9d1d9';
                         div.style.margin = '4px 0 12px 0';
-                        div.innerHTML = '{escaped_output}';
+                        div.innerHTML = {json_output};
                         terminal.insertBefore(div, cursor);
                         terminal.scrollTop = terminal.scrollHeight;
                     }})();"""
@@ -282,6 +272,40 @@ def render_cli_demo_video(
     vtt_path.write_text("\n".join(vtt_lines), encoding="utf-8")
 
     return output_path, vtt_path
+
+
+def render_cli_demo_video(
+    events: list[TerminalEvent],
+    output_path: Path,
+    title: str = "Hexastack CLI",
+    width: int = 1280,
+    height: int = 720,
+) -> tuple[Path, Path]:
+    """Render a sequence of TerminalEvents into synchronized .webm video and .vtt subtitle track.
+
+    Args:
+        events: Chronological sequence of input, output, and step narrative events.
+        output_path: Destination Path for .webm video file.
+        title: Window title text for terminal banner.
+        width: Video frame width in pixels.
+        height: Video frame height in pixels.
+
+    Returns:
+        Tuple of (video_path, vtt_path).
+
+    Raises:
+        MissingDependencyError: If `playwright` is not installed.
+    """
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(
+            _render_in_clean_thread,
+            events=events,
+            output_path=output_path,
+            title=title,
+            width=width,
+            height=height,
+        )
+        return future.result()
 
 
 def _format_vtt_time(seconds: float) -> str:

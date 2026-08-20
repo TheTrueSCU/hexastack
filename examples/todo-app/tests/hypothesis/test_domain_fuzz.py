@@ -1,11 +1,16 @@
 """Property-based fuzzing tests for TodoItem domain invariants."""
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
 from todo_app.domain.models import Priority, TodoItem
 
 
+@pytest.mark.ch01
+@pytest.mark.ch02
+@pytest.mark.ch03
+@pytest.mark.ch04
 @given(
     title=st.text(min_size=1, max_size=200),
     description=st.text(max_size=500),

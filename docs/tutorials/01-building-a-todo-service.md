@@ -31,6 +31,11 @@ Run the following command in your terminal to scaffold our To-Do service:
 uvx hexastack new web-api todo-app --description "Hexagonal To-Do Microservice" --db in-memory
 ```
 
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="../assets/demos/todo-ch01-cli-demo.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch01-cli-demo.vtt" default>
+</video>
+
 Let's navigate into the newly created service:
 
 ```bash
@@ -416,16 +421,14 @@ Expected output:
 ============================== 3 passed in 0.45s ===============================
 ```
 
-### Enforce Architectural Boundary Guarantees
+### Interactive OpenAPI Testing & Swagger UI
 
-```bash
-uv run lint-imports
-```
+Watch the auto-generated Swagger UI in action:
 
-If any developer accidentally attempts to import FastAPI or SQLAlchemy inside `domain/`, `import-linter` instantly fails:
-```text
-Contracts: 3 kept, 0 broken.
-```
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="../assets/demos/todo-ch01-browser-demo.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch01-browser-demo.vtt" default>
+</video>
 
 ---
 
