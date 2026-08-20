@@ -1,24 +1,94 @@
-name: Release
+name: Release & Publish
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
-    name: Semantic Release
+    name: Semantic Release & Version Bump
     runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.psr.outputs.released }}
+      version: ${{ steps.psr.outputs.version }}
+      tag: ${{ steps.psr.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Python Semantic Release
-        uses: python-semantic-release/python-semantic-release@v9.8.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Run Python Semantic Release
+        id: psr
+        uses: python-semantic-release/python-semantic-release@v9.16.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Build & Publish to PyPI
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/hexastack
+    steps:
+      - name: Checkout Tagged Release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Build All Monorepo Distribution Packages
+        run: |
+          mkdir -p dist
+          uv build --package hexastack --out-dir dist/
+          uv build --package hexastack-core --out-dir dist/
+          uv build --package hexastack-cqrs --out-dir dist/
+          uv build --package hexastack-logging --out-dir dist/
+          uv build --package hexastack-fastapi --out-dir dist/
+          uv build --package hexastack-cli --out-dir dist/
+          uv build --package hexastack-db --out-dir dist/
+          uv build --package hexastack-auth --out-dir dist/
+          uv build --package hexastack-events --out-dir dist/
+          uv build --package hexastack-ai --out-dir dist/
+          uv build --package hexastack-mcp --out-dir dist/
+          uv build --package hexastack-flags --out-dir dist/
+          uv build --package hexastack-graphql --out-dir dist/
+          uv build --package hexastack-grpc --out-dir dist/
+          uv build --package hexastack-otel --out-dir dist/
+
+      - name: Publish Distribution Packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          skip-existing: true
