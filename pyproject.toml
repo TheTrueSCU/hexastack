@@ -73,6 +73,7 @@ dev = [
     "ruff>=0.16.2",
     "schemathesis>=3.39.0",
     "ty>=0.0.69",
+    "zensical>=0.0.56",
 ]
 
 [tool.complexipy]
@@ -108,6 +109,7 @@ format-command = "uv run ruff format --stdin-filename {filename} -"
 addopts = "-n auto --import-mode=importlib --ignore=tests/e2e --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
 markers = [
     "e2e: End-to-end browser and UI tests (run with uv run pytest tests/e2e)",
+    "demo: Feature demo recording test (run with RECORD_DEMO=1 uv run pytest tests/e2e -m demo)",
 ]
 
 [tool.ruff]

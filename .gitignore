@@ -43,3 +43,8 @@ logs/
 # OS Specific
 .DS_Store
 Thumbs.db
+docs/assets/demos/*.webm
+docs/assets/demos/*.vtt
+docs/assets/demos/*.cast
+docs/assets/demos/*.tape
+site/

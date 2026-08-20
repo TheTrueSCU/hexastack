@@ -34,6 +34,7 @@ hexastack_cli/
 | **Application Factory** | `create_cli_app`, `CliBootstrapper` (order=30) |
 | **Decorators** | `@cli_command`, `@cli_query`, `@cli_group`, `@feature_flag_command` |
 | **Presenters** | `RichTerminalPresenter`, `ConsolePresenter`, `TablePresenter`, `JsonPresenter` |
+| **Testing & Demo Narration** | `CliNarrator`, `TerminalEvent` |
 
 ---
 

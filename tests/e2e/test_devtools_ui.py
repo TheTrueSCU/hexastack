@@ -1,63 +1,10 @@
-import socket
-import subprocess
-import sys
-import time
-from collections.abc import Generator
+"""Playwright End-to-End browser tests and feature demo recording for Hexastack DevTools."""
 
 import pytest
 from playwright.sync_api import Page, expect
 
-
-def _get_free_port() -> int:
-    """Find a dynamically available free TCP port on localhost."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return int(s.getsockname()[1])
-
-
-@pytest.fixture(scope="module")
-def devtools_server() -> Generator[str]:
-    """Spawn ephemeral background Hexastack FastAPI + NiceGUI server on random open port."""
-    port = _get_free_port()
-    server_url = f"http://127.0.0.1:{port}/_devtools"
-
-    cmd = [
-        sys.executable,
-        "-c",
-        f"""
-import uvicorn
-from hexastack.adapters.fastapi import create_demo_app
-
-app = create_demo_app()
-uvicorn.run(app, host="127.0.0.1", port={port}, log_level="warning")
-""",
-    ]
-    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    import urllib.error
-    import urllib.request
-
-    ready = False
-    for _ in range(40):
-        try:
-            with urllib.request.urlopen(server_url, timeout=1) as resp:
-                if resp.status == 200:
-                    ready = True
-                    break
-        except Exception:
-            time.sleep(0.25)
-
-    if not ready:
-        proc.kill()
-        raise RuntimeError(f"DevTools server failed to start at {server_url}")
-
-    yield server_url
-
-    proc.terminate()
-    try:
-        proc.wait(timeout=3)
-    except subprocess.TimeoutExpired:
-        proc.kill()
+from hexastack_fastapi.testing.cursor import smart_click
+from hexastack_fastapi.testing.recorder import DemoNarrator
 
 
 @pytest.mark.e2e
@@ -80,28 +27,39 @@ def test_devtools_page_rendering_and_tabs(devtools_server: str, page: Page) -> N
     expect(page.get_by_text("Handler Execution")).to_be_visible()
 
     # 4. Click Feature Flags tab
-    page.get_by_text("Feature Flags").click()
+    smart_click(page, page.get_by_text("Feature Flags"))
     expect(page.get_by_text("Active Feature Flags")).to_be_visible()
 
     # 5. Click DI Container tab
-    page.get_by_text("DI Container").click()
+    smart_click(page, page.get_by_text("DI Container"))
     expect(page.get_by_text("Dependency Injection Services")).to_be_visible()
 
 
 @pytest.mark.e2e
-def test_devtools_interactive_ping_dispatcher(devtools_server: str, page: Page) -> None:
-    """Verify live command execution runner dispatches PingDemoCommand and shows log."""
-    page.goto(devtools_server)
+@pytest.mark.demo
+def test_devtools_interactive_ping_dispatcher(
+    devtools_server: str, page: Page, demo: DemoNarrator
+) -> None:
+    """Narrated feature demo: Inspect CQRS pipeline & live dispatch PingDemoCommand."""
+    demo.goto(devtools_server, caption="Welcome to Hexastack Interactive DevTools")
 
-    # Switch to CQRS Registry tab if not default
-    page.get_by_text("CQRS Registry").click()
+    # Step 1: Switch to CQRS Registry tab
+    demo.click(
+        page.get_by_text("CQRS Registry"),
+        caption="Navigating to the CQRS Registry & Pipeline visualizer",
+    )
 
-    # Locate and click Dispatch Ping Command button
+    # Step 2: Locate and dispatch the ping demo command
     dispatch_button = page.get_by_role("button", name="Dispatch Ping Command")
     expect(dispatch_button).to_be_visible()
-    dispatch_button.click()
 
-    # Verify execution result logged in DOM
+    demo.click(
+        dispatch_button,
+        caption="Dispatching PingDemoCommand through the middleware pipeline",
+    )
+
+    # Step 3: Verify execution result logged in DOM
+    demo.step("Observing live handler response and execution logs")
     expect(page.get_by_text("➡️ [DISPATCH] PingDemoCommand")).to_be_visible(timeout=5000)
     expect(page.get_by_text("✅ [SUCCESS] Result: reply='PONG:")).to_be_visible(
         timeout=5000

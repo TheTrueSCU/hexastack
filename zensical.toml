@@ -1,0 +1,28 @@
+[project]
+site_name = "Hexastack"
+site_description = "The Enterprise Hexagonal Architecture Monorepo Framework for Python"
+site_url = "https://hexastack.dev"
+
+nav = [
+    { "Overview" = "index.md" },
+    { "Quickstart & Demos" = "demos.md" },
+    { "Tutorials" = [
+        "tutorials/01-building-a-todo-service.md",
+        "tutorials/02-sqlite-persistence-and-migrations.md",
+        "tutorials/03-jwt-authentication-and-rbac.md",
+        "tutorials/04-events-outbox-and-notifications.md"
+    ]},
+    { "Architecture" = "architecture.md" },
+    { "Packages" = "packages.md" }
+]
+
+[project.markdown_extensions]
+admonition = {}
+tables = {}
+toc = { permalink = true }
+"pymdownx.highlight" = { anchor_linenums = true, line_spans = "__span", pygments_lang_class = true }
+"pymdownx.inlinehilite" = {}
+"pymdownx.snippets" = {}
+"pymdownx.superfences" = { custom_fences = [
+    { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }
+] }

@@ -434,6 +434,6 @@ Contracts: 3 kept, 0 broken.
 Congratulations! You now have a complete, fully tested hexagonal microservice.
 
 Choose what to build next:
-- **[Tutorial 2: Adding SQLite Persistence & Alembic Migrations](./02-sqlite-migrations.md)**
-- **[Tutorial 3: Role-Based Access Control (RBAC) & JWT Auth](./03-jwt-authentication.md)**
-- **[Tutorial 4: Event-Driven Architecture with Outbox & CloudEvents](./04-events-outbox.md)**
+- **[Tutorial 2: Adding SQLite Persistence & Alembic Migrations](./02-sqlite-persistence-and-migrations.md)**
+- **[Tutorial 3: Role-Based Access Control (RBAC) & JWT Auth](./03-jwt-authentication-and-rbac.md)**
+- **[Tutorial 4: Event-Driven Architecture with Outbox & CloudEvents](./04-events-outbox-and-notifications.md)**

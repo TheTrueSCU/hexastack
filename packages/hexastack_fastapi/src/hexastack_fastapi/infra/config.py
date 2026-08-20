@@ -49,13 +49,26 @@ class RequestLoggingConfig(BaseModel):
     )
 
 
+class ZensicalDocsConfig(BaseModel):
+    """Configuration schema for mounting pre-built Zensical documentation onto FastAPI.
+
+    Notes/Architectural Intent:
+        Controls automatic mounting of Zensical static documentation site.
+        Default mount path is `/guide` to prevent collision with OpenAPI Swagger UI at `/docs`.
+    """
+
+    enable: bool = Field(default=False)
+    path: str = Field(default="/guide")
+    site_dir: str = Field(default="site")
+
+
 @config_section("fastapi")
 class HexastackFastApiConfig(BaseModel):
     """Configuration schema for FastAPI HTTP presentation adapter.
 
     Notes/Architectural Intent:
         Controls OpenAPI metadata, documentation routes, CORS policy, header identifiers,
-        access logging, health probes, and automatic route autodiscovery.
+        access logging, health probes, Zensical docs mounting, and automatic route autodiscovery.
     """
 
     title: str = Field(default="Hexastack API")
@@ -70,6 +83,7 @@ class HexastackFastApiConfig(BaseModel):
     cors: CorsConfig = Field(default_factory=CorsConfig)
     health: HealthConfig = Field(default_factory=HealthConfig)
     logging: RequestLoggingConfig = Field(default_factory=RequestLoggingConfig)
+    zensical: ZensicalDocsConfig = Field(default_factory=ZensicalDocsConfig)
     auto_register_routes: bool = Field(default=True)
     packages_to_scan: list[str] = Field(default_factory=list)
 
@@ -80,6 +94,7 @@ __all__ = [
     "HexastackFastApiConfig",
     "register_fastapi_config",
     "RequestLoggingConfig",
+    "ZensicalDocsConfig",
 ]
 
 

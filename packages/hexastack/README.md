@@ -11,6 +11,7 @@
 `hexastack` acts as the umbrella distribution for the entire Hexastack monorepo, offering:
 
 - **Scoped Extras**: Single-command installs for scoped use cases (e.g., `pip install hexastack[cli]`, `pip install hexastack[web]`, `pip install hexastack[graphql]`, `pip install hexastack[mcp]`, `pip install hexastack[grpc]`, `pip install hexastack[db]`).
+- **Zero-Install Project Scaffolding**: `hexastack new <template> <name>` instantly scaffolds production-grade microservices adhering strictly to Hexagonal Architecture, complete with tiered CI, import-linter contracts, and passing test suites.
 - **Interactive Diagnostic CLI**: The `hexastack` terminal command provides system health checks, package inspection, CQRS message route exploration, local FastAPI dev server launching, MCP server execution, gRPC daemon hosting, and Alembic database migration management.
 
 ---
@@ -79,7 +80,8 @@ graph TD
 - `[mcp]`: Installs `hexastack-mcp` for Model Context Protocol AI agent tools.
 - `[grpc]`: Installs `hexastack-grpc` for high-performance RPC services.
 - `[web]`: Installs `hexastack-fastapi` and `uvicorn[standard]`.
-- `[testing]`: Installs recommended testing tools (`hypothesis`, `inline-snapshot`, `pytest-archon`, `schemathesis`).
+- `[docs]`: Installs `zensical` for static documentation generation and hosting.
+- `[testing]`: Installs recommended testing tools (`hypothesis`, `inline-snapshot`, `playwright`, `pytest-archon`, `schemathesis`).
 - `[all]`: Complete installation with all adapters and development tools.
 
 ---

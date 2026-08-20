@@ -7,6 +7,10 @@ from hexastack_fastapi.adapters.dependencies import (
     get_pipeline,
     require_feature,
 )
+from hexastack_fastapi.adapters.docs import (
+    DocumentationNotFoundError,
+    mount_zensical_docs,
+)
 from hexastack_fastapi.adapters.health import create_health_router
 from hexastack_fastapi.adapters.routing import CqrsRouter
 from hexastack_fastapi.adapters.ui import (
@@ -25,11 +29,13 @@ __all__ = [
     "create_test_client",
     "dispatch_command",
     "dispatch_query",
+    "DocumentationNotFoundError",
     "get_container",
     "get_feature_flags",
     "get_pipeline",
     "mount_devtools_dashboard",
     "mount_ui_app",
+    "mount_zensical_docs",
     "require_feature",
     "ui_page",
 ]

@@ -7,6 +7,7 @@ from rodi import Container
 from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+from hexastack_fastapi.adapters.docs import mount_zensical_docs
 from hexastack_fastapi.adapters.health import create_health_router
 from hexastack_fastapi.infra.config import HexastackFastApiConfig
 from hexastack_fastapi.infra.exception_handlers import (
@@ -34,8 +35,8 @@ def create_fastapi_app(
 
     Notes/Architectural Intent:
         Assembles FastAPI instance with OpenAPI documentation metadata, CORS middleware,
-        Correlation ID ASGI middleware, access logging, health check probes, unified
-        exception mapping, and DI container lifecycle management.
+        Correlation ID ASGI middleware, access logging, health check probes, Zensical docs mounting,
+        unified exception mapping, and DI container lifecycle management.
 
     Args:
         config: Optional HexastackFastApiConfig instance.
@@ -105,5 +106,13 @@ def create_fastapi_app(
     if cfg.health.enable:
         health_router = create_health_router(container=container, config=cfg.health)
         app.include_router(health_router)
+
+    # Mount Zensical documentation site if enabled
+    if cfg.zensical.enable:
+        mount_zensical_docs(
+            app=app,
+            path=cfg.zensical.path,
+            site_dir=cfg.zensical.site_dir,
+        )
 
     return app

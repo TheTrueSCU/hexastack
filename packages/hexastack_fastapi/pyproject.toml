@@ -17,6 +17,13 @@ dependencies = [
 auth = [
     "hexastack-auth",
 ]
+docs = [
+    "zensical>=0.0.56",
+]
+testing = [
+    "playwright>=1.49.0",
+    "schemathesis>=3.39.0",
+]
 ui = [
     "nicegui>=2.0.0",
 ]
