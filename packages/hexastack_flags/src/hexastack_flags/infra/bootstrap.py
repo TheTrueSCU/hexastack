@@ -44,7 +44,8 @@ class FeatureFlagBootstrapper(BootstrapperPort):
         )
 
         adapter = OpenFeatureFlagAdapter()
-        context.container.add_instance(adapter, declared_class=FeatureFlagPort)
+        if FeatureFlagPort not in context.container:
+            context.container.add_instance(adapter, declared_class=FeatureFlagPort)
         context.flags = adapter
 
     def register_config(self, registry: ConfigRegistry) -> None:

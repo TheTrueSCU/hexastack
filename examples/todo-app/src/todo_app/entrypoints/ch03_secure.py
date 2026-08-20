@@ -1,0 +1,49 @@
+"""Chapter 3 Entrypoint: Secure To-Do Service with JWT Auth & RBAC.
+
+Run with:
+    uv run python -m todo_app.entrypoints.ch03_secure
+"""
+
+from __future__ import annotations
+
+import uvicorn
+from fastapi import FastAPI
+from rodi import Container
+
+from hexastack_core.adapters.notification import InMemoryNotificationAdapter
+from hexastack_core.infra.bootstrap import bootstrap
+from hexastack_core.ports.notification import NotificationPort
+
+import todo_app.infra.handlers
+from todo_app.adapters.driven.sqlite import (
+    SqliteTodoRepository,
+    create_sqlite_session_factory,
+)
+from todo_app.adapters.driving.http import router
+from todo_app.ports.repositories import TodoRepositoryPort
+
+
+def build_app(db_url: str = "sqlite:///todos_ch03.db") -> FastAPI:
+    """Build FastAPI app with SQLite repository adapter and security policies."""
+    di = Container()
+    session_factory = create_sqlite_session_factory(db_url=db_url)
+    repo = SqliteTodoRepository(session_factory=session_factory)
+    notifier = InMemoryNotificationAdapter()
+    di.add_instance(repo, declared_class=TodoRepositoryPort)
+    di.add_instance(notifier, declared_class=NotificationPort)
+
+    res = bootstrap(
+        container=di,
+        packages_to_scan=[
+            todo_app.infra.handlers,
+        ],
+    )
+    app = res.container.resolve(FastAPI)
+    app.include_router(router)
+    return app
+
+
+app = build_app()
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

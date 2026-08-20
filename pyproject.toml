@@ -111,6 +111,12 @@ addopts = "-n auto --import-mode=importlib --ignore=tests/e2e --cov=packages --c
 markers = [
     "e2e: End-to-end browser and UI tests (run with uv run pytest tests/e2e)",
     "demo: Feature demo recording test (run with RECORD_DEMO=1 uv run pytest tests/e2e -m demo)",
+    "ch01: Tutorial Chapter 1 tests",
+    "ch02: Tutorial Chapter 2 tests",
+    "ch03: Tutorial Chapter 3 tests",
+    "ch04: Tutorial Chapter 4 tests",
+    "ch05: Tutorial Chapter 5 tests",
+    "ch06: Tutorial Chapter 6 tests",
 ]
 
 [tool.ruff]

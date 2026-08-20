@@ -47,6 +47,8 @@ markers = [
     "ch02: Tests belonging to Chapter 2 (SQLite Persistence & Migrations)",
     "ch03: Tests belonging to Chapter 3 (JWT Auth & RBAC Security)",
     "ch04: Tests belonging to Chapter 4 (Transactional Outbox & Events)",
+    "ch05: Tests belonging to Chapter 5 (AI Assistant, MCP & Feature Flags)",
+    "ch06: Tests belonging to Chapter 6 (Production Observability & Logging)",
 ]
 
 [tool.ruff.lint]

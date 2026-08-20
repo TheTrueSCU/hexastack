@@ -189,9 +189,13 @@ Watch the persistent REST endpoints executing live in Chromium:
   <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch02-browser-demo.vtt" default>
 </video>
 
----
+## 6. Next Steps: The Security Dilemma
 
-## 6. Next Steps
+We now have persistent storage across server restarts! But notice a critical vulnerability: **any caller can delete any To-Do item by ID**.
+
+> *"What is stopping Bob from deleting Alice's tasks, or modifying tasks he doesn't own?"*
+
+In Chapter 3, we introduce Hexastack's authentication kernel, JWT verification, and Role-Based Access Control (RBAC) to enforce task ownership and grant admin escalation privileges:
 
 - **[Tutorial 3: Role-Based Access Control (RBAC) & JWT Auth](./03-jwt-authentication-and-rbac.md)**
 - **[Tutorial 4: Event-Driven Architecture with Outbox & CloudEvents](./04-events-outbox-and-notifications.md)**

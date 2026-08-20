@@ -54,7 +54,8 @@ class AiBootstrapper(BootstrapperPort):
             di.add_instance(llm_provider, declared_class=LiteLlmAdapter)
 
         # 3. Register in DI container
-        di.add_instance(llm_provider, declared_class=LlmProviderPort)
+        if LlmProviderPort not in di:
+            di.add_instance(llm_provider, declared_class=LlmProviderPort)
 
         # 4. Store result in context properties
         ai_result = AiBootstrapResult(

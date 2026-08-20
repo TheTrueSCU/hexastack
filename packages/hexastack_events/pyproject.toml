@@ -15,6 +15,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+apprise = [
+    "apprise>=1.9.0",
+]
 huey = [
     "huey>=3.3.4",
 ]
@@ -62,5 +65,13 @@ type = "forbidden"
 source_modules = ["hexastack_events.ports"]
 forbidden_modules = [
     "hexastack_events.adapters",
+    "hexastack_events.infra",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for adapters"
+type = "forbidden"
+source_modules = ["hexastack_events.adapters"]
+forbidden_modules = [
     "hexastack_events.infra",
 ]

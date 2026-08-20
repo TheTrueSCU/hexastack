@@ -16,6 +16,11 @@ from hexastack_core.adapters.logging import (
     LogEntry,
     StandardLogger,
 )
+from hexastack_core.adapters.notification import (
+    InMemoryNotificationAdapter,
+    NotificationRecord,
+    StdoutNotificationAdapter,
+)
 from hexastack_core.adapters.repository import (
     AsyncInMemoryRepository,
     InMemoryRepository,
@@ -34,10 +39,13 @@ __all__ = [
     "InMemoryClock",
     "InMemoryLlmProvider",
     "InMemoryLogger",
+    "InMemoryNotificationAdapter",
     "InMemoryRepository",
     "InMemoryUnitOfWork",
     "InMemoryVectorStore",
     "LlmCallRecord",
     "LogEntry",
+    "NotificationRecord",
     "StandardLogger",
+    "StdoutNotificationAdapter",
 ]

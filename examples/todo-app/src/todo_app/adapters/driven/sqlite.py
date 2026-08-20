@@ -17,10 +17,18 @@ class TodoItemModel(Base):
     __tablename__ = "todos"
 
     id = Column(String(36), primary_key=True)
+    owner_id = Column(String(100), default="alice", nullable=False)
     title = Column(String(255), nullable=False)
     description = Column(String(1000), default="", nullable=False)
     completed = Column(Boolean, default=False, nullable=False)
     priority = Column(String(20), default="medium", nullable=False)
+
+
+def create_sqlite_session_factory(db_url: str = "sqlite:///todos.db") -> sessionmaker:
+    """Create configured SQLite SQLAlchemy session factory and create schema tables."""
+    engine = create_engine(db_url, connect_args={"check_same_thread": False})
+    Base.metadata.create_all(engine)
+    return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class SqliteTodoRepository(TodoRepositoryPort):
@@ -38,10 +46,15 @@ class SqliteTodoRepository(TodoRepositoryPort):
         """Persist or update To-Do entity in SQLite database."""
         with self._session_factory() as session:
             model = session.query(TodoItemModel).filter_by(id=item.id).first()
-            priority_str = item.priority.value if hasattr(item.priority, "value") else str(item.priority)
+            priority_str = (
+                item.priority.value
+                if hasattr(item.priority, "value")
+                else str(item.priority)
+            )
             if model is None:
                 model = TodoItemModel(
                     id=item.id,
+                    owner_id=item.owner_id,
                     title=item.title,
                     description=item.description or "",
                     completed=item.completed,
@@ -49,6 +62,7 @@ class SqliteTodoRepository(TodoRepositoryPort):
                 )
                 session.add(model)
             else:
+                model.owner_id = item.owner_id
                 model.title = item.title
                 model.description = item.description or ""
                 model.completed = item.completed
@@ -64,15 +78,16 @@ class SqliteTodoRepository(TodoRepositoryPort):
             return self._to_entity(model)
 
     def list_all(self, completed: bool | None = None) -> list[TodoItem]:
-        """List all To-Do entities from SQLite database with optional completion filter."""
+        """List all To-Do entities optionally filtered by completion status."""
         with self._session_factory() as session:
             query = session.query(TodoItemModel)
             if completed is not None:
                 query = query.filter_by(completed=completed)
-            return [self._to_entity(m) for m in query.all()]
+            models = query.all()
+            return [self._to_entity(m) for m in models]
 
     def delete(self, todo_id: str) -> bool:
-        """Delete To-Do entity from SQLite database. Returns True if deleted."""
+        """Delete To-Do entity by identifier."""
         with self._session_factory() as session:
             model = session.query(TodoItemModel).filter_by(id=todo_id).first()
             if model is None:
@@ -83,25 +98,18 @@ class SqliteTodoRepository(TodoRepositoryPort):
 
     @staticmethod
     def _to_entity(model: TodoItemModel) -> TodoItem:
-        """Map SQLAlchemy ORM row model to pure domain entity."""
         return TodoItem(
-            id=str(model.id),
-            title=str(model.title),
-            description=str(model.description) if model.description else "",
-            completed=bool(model.completed),
-            priority=Priority(str(model.priority)),
+            id=model.id,
+            owner_id=getattr(model, "owner_id", "alice"),
+            title=model.title,
+            description=model.description,
+            priority=Priority(model.priority),
+            completed=model.completed,
         )
 
 
-def create_sqlite_session_factory(db_url: str = "sqlite:///todos.db") -> sessionmaker:
-    """Create and initialize a SQLite SQLAlchemy engine, tables, and sessionmaker."""
-    engine = create_engine(db_url, connect_args={"check_same_thread": False})
-    Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine, autoflush=False, autocommit=False)
-
-
 __all__ = [
-    "create_sqlite_session_factory",
     "SqliteTodoRepository",
     "TodoItemModel",
+    "create_sqlite_session_factory",
 ]

@@ -47,7 +47,17 @@ def register_exception_handlers(
             status_code = 404
         elif "conflict" in exc_name or "duplicate" in exc_name:
             status_code = 409
-        elif "unauthorized" in exc_name or "forbidden" in exc_name:
+        elif (
+            "permission" in exc_name
+            or "forbidden" in exc_name
+            or "accessdenied" in exc_name
+        ):
+            status_code = 403
+        elif (
+            "unauthorized" in exc_name
+            or "unauthenticated" in exc_name
+            or "invalidcredential" in exc_name
+        ):
             status_code = 401
         elif "validation" in exc_name:
             status_code = 422

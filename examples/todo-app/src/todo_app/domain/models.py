@@ -2,7 +2,7 @@
 
 Notes/Architectural Intent:
     100% Pure Python with zero framework dependencies (no FastAPI, SQLAlchemy, or HTTP models).
-    Enforces domain invariants, entity identity, and completion transitions.
+    Enforces domain invariants, entity identity, owner association, and completion transitions.
 """
 
 from __future__ import annotations
@@ -49,6 +49,7 @@ class TodoItem:
     """Core domain entity representing a task in the To-Do list."""
 
     title: str
+    owner_id: str = "alice"
     description: str = ""
     priority: Priority = Priority.MEDIUM
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -58,22 +59,17 @@ class TodoItem:
         """Transition task state to completed.
 
         Raises:
-            TodoAlreadyCompletedError: If the task is already completed.
+            TodoAlreadyCompletedError: If the item was already completed.
         """
         if self.completed:
             raise TodoAlreadyCompletedError(self.id)
         self.completed = True
 
-    def update_details(
-        self,
-        title: str | None = None,
-        description: str | None = None,
-        priority: Priority | None = None,
-    ) -> None:
-        """Update mutable task fields."""
-        if title is not None and title.strip():
-            self.title = title.strip()
-        if description is not None:
-            self.description = description.strip()
-        if priority is not None:
-            self.priority = priority
+
+__all__ = [
+    "Priority",
+    "TodoAlreadyCompletedError",
+    "TodoDomainError",
+    "TodoItem",
+    "TodoNotFoundError",
+]

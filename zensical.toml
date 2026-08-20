@@ -10,7 +10,9 @@ nav = [
         "tutorials/01-building-a-todo-service.md",
         "tutorials/02-sqlite-persistence-and-migrations.md",
         "tutorials/03-jwt-authentication-and-rbac.md",
-        "tutorials/04-events-outbox-and-notifications.md"
+        "tutorials/04-events-outbox-and-notifications.md",
+        "tutorials/05-experimental-ai-and-mcp.md",
+        "tutorials/06-production-observability-and-tracing.md"
     ]},
     { "Architecture" = "architecture.md" },
     { "Packages" = "packages.md" }
