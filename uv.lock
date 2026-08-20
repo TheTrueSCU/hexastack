@@ -923,6 +923,18 @@ wheels = [
 ]
 
 [[package]]
+name = "faker"
+version = "40.36.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/98/d2/026af1e002bbc6df534d1f8262b18ec79a974f928e9290bfbfdfe7c7b2af/faker-40.36.0.tar.gz", hash = "sha256:754048c76c03afa7de83eee8f4bcee3cf668cbb7d995f54a4e9678db7f110308", size = 2025903, upload-time = "2026-07-24T21:11:33.088Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/9a/b947ed175ce9a0dcb070ccf3607f0ce8720cfb5ed1a36166a150b2acd5af/faker-40.36.0-py3-none-any.whl", hash = "sha256:82b9497d9cfe017048075bcf969298a74b1b6e39f5e4dad1211085d1133f7b62", size = 2062829, upload-time = "2026-07-24T21:11:31.37Z" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.141.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1396,6 +1408,7 @@ sql = [
     { name = "hexastack-db" },
 ]
 testing = [
+    { name = "faker" },
     { name = "hypothesis" },
     { name = "inline-snapshot" },
     { name = "pytest-archon" },
@@ -1408,6 +1421,7 @@ web = [
 
 [package.metadata]
 requires-dist = [
+    { name = "faker", marker = "extra == 'testing'", specifier = ">=33.0.0" },
     { name = "hexastack-ai", marker = "extra == 'ai'", editable = "packages/hexastack_ai" },
     { name = "hexastack-ai", marker = "extra == 'all'", editable = "packages/hexastack_ai" },
     { name = "hexastack-auth", marker = "extra == 'all'", editable = "packages/hexastack_auth" },
@@ -1539,11 +1553,24 @@ dependencies = [
     { name = "rodi" },
 ]
 
+[package.optional-dependencies]
+testing = [
+    { name = "faker" },
+    { name = "hypothesis" },
+    { name = "inline-snapshot" },
+    { name = "pytest-archon" },
+]
+
 [package.metadata]
 requires-dist = [
+    { name = "faker", marker = "extra == 'testing'", specifier = ">=33.0.0" },
+    { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=6.100.0" },
+    { name = "inline-snapshot", marker = "extra == 'testing'", specifier = ">=0.35.4" },
     { name = "pydantic", specifier = ">=2.13.4" },
+    { name = "pytest-archon", marker = "extra == 'testing'", specifier = ">=0.0.7" },
     { name = "rodi", specifier = ">=2.1.0" },
 ]
+provides-extras = ["testing"]
 
 [[package]]
 name = "hexastack-cqrs"
@@ -1854,6 +1881,7 @@ dev = [
     { name = "alembic" },
     { name = "complexipy" },
     { name = "dirty-equals" },
+    { name = "faker" },
     { name = "grpcio-reflection" },
     { name = "httpx" },
     { name = "huey" },
@@ -1884,6 +1912,7 @@ dev = [
     { name = "alembic", specifier = ">=1.19.1" },
     { name = "complexipy", specifier = ">=7.0.1" },
     { name = "dirty-equals", specifier = ">=0.11" },
+    { name = "faker", specifier = ">=33.0.0" },
     { name = "grpcio-reflection", specifier = ">=1.68.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "huey", specifier = ">=3.3.4" },

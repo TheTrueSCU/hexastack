@@ -12,6 +12,14 @@ dependencies = [
     "rodi>=2.1.0",
 ]
 
+[project.optional-dependencies]
+testing = [
+    "faker>=33.0.0",
+    "hypothesis>=6.100.0",
+    "inline-snapshot>=0.35.4",
+    "pytest-archon>=0.0.7",
+]
+
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"

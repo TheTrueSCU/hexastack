@@ -55,6 +55,7 @@ flags = [
     "hexastack-flags",
 ]
 testing = [
+    "faker>=33.0.0",
     "hypothesis>=6.100.0",
     "inline-snapshot>=0.35.4",
     "pytest-archon>=0.0.7",
