@@ -11,7 +11,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-TemplateType = Literal["minimal", "web-api", "event-driven", "mcp-agent", "enterprise"]
+TemplateType = Literal[
+    "minimal",
+    "web-api",
+    "event-driven",
+    "mcp-agent",
+    "enterprise",
+    "grpc-service",
+    "graphql-service",
+]
 
 
 @dataclass(frozen=True)
@@ -25,6 +33,8 @@ class ScaffoldConfig:
     db_type: str = "in-memory"  # in-memory, sqlite, postgres
     include_events: bool = False
     include_mcp: bool = False
+    include_grpc: bool = False
+    include_graphql: bool = False
 
 
 class ProjectScaffolder:
@@ -92,6 +102,10 @@ class ProjectScaffolder:
     def _render_pyproject_toml(self) -> str:
         if self.config.template in ("web-api", "enterprise"):
             extras = "[fastapi,db,ui]"
+        elif self.config.template == "grpc-service" or self.config.include_grpc:
+            extras = "[grpc,db,cli]"
+        elif self.config.template == "graphql-service" or self.config.include_graphql:
+            extras = "[graphql,fastapi,db,cli]"
         elif self.config.template == "mcp-agent" or self.config.include_mcp:
             extras = "[mcp,ai,cli]"
         elif self.config.template == "event-driven" or self.config.include_events:
@@ -457,7 +471,10 @@ def main() -> None:
 """,
         )
 
-        if self.config.template in ("web-api", "enterprise"):
+        if (
+            self.config.template in ("web-api", "enterprise", "graphql-service")
+            or self.config.include_graphql
+        ):
             self._write_file(
                 f"src/{self.package_name}/adapters/driving/http.py",
                 f"""\"\"\"FastAPI REST routing adapters.\"\"\"
@@ -466,6 +483,82 @@ from hexastack_fastapi.infra.decorators import api_command
 from {self.package_name}.domain.commands import CreateItemCommand
 
 api_command("/items", method="POST", summary="Create a new Item")(CreateItemCommand)
+""",
+            )
+
+        if self.config.template == "grpc-service" or self.config.include_grpc:
+            self._write_file(
+                f"src/{self.package_name}/adapters/driving/grpc.py",
+                f"""\"\"\"High-performance gRPC driving adapter with inline @proto_schema contract.\"\"\"
+
+from dataclasses import dataclass
+from hexastack_grpc.infra.decorators import proto_schema
+from {self.package_name}.domain.commands import CreateItemCommand
+
+
+@proto_schema(
+    schema=\"\"\"
+    syntax = "proto3";
+    package {self.package_name}.v1;
+
+    message CreateItemRequest {{
+        string title = 1;
+        string description = 2;
+    }}
+
+    message CreateItemResponse {{
+        string id = 1;
+        string title = 2;
+    }}
+
+    service ItemService {{
+        rpc CreateItem (CreateItemRequest) returns (CreateItemResponse);
+    }}
+    \"\"\",
+    message_name="CreateItemRequest",
+    service_name="{self.package_name}.v1.ItemService",
+    rpc_name="CreateItem",
+)
+@dataclass
+class CreateItemRpcCommand(CreateItemCommand):
+    \"\"\"gRPC Inbound Command contract.\"\"\"
+""",
+            )
+
+        if self.config.template == "graphql-service" or self.config.include_graphql:
+            self._write_file(
+                f"src/{self.package_name}/adapters/driving/graphql.py",
+                f"""\"\"\"Strawberry GraphQL driving schema and query/mutation resolvers.\"\"\"
+
+import strawberry
+from hexastack_cqrs.ports.buses import CommandBusPort
+from {self.package_name}.domain.commands import CreateItemCommand
+
+
+@strawberry.type
+class ItemGqlType:
+    id: str
+    title: str
+
+
+@strawberry.type
+class Query:
+    @strawberry.field
+    def health(self) -> str:
+        return "OK"
+
+
+@strawberry.type
+class Mutation:
+    @strawberry.mutation
+    def create_item(self, info: strawberry.Info, title: str, description: str = "") -> ItemGqlType:
+        bus = info.context["command_bus"]
+        cmd = CreateItemCommand(title=title, description=description)
+        result = bus.dispatch(cmd)
+        return ItemGqlType(id=result.id, title=result.title)
+
+
+schema = strawberry.Schema(query=Query, mutation=Mutation)
 """,
             )
 
@@ -545,19 +638,25 @@ def handle_create_item(cmd: CreateItemCommand, repo: ItemRepositoryPort) -> Item
         )
 
         scan_packages = [f"{self.package_name}.adapters.driving.cli"]
-        if self.config.template in ("web-api", "enterprise"):
+        extra_imports = []
+
+        if (
+            self.config.template in ("web-api", "enterprise", "graphql-service")
+            or self.config.include_graphql
+        ):
             scan_packages.append(f"{self.package_name}.adapters.driving.http")
+            extra_imports.append(f"import {self.package_name}.adapters.driving.http")
+        if self.config.template == "grpc-service" or self.config.include_grpc:
+            scan_packages.append(f"{self.package_name}.adapters.driving.grpc")
+            extra_imports.append(f"import {self.package_name}.adapters.driving.grpc")
+        if self.config.template == "graphql-service" or self.config.include_graphql:
+            scan_packages.append(f"{self.package_name}.adapters.driving.graphql")
+            extra_imports.append(f"import {self.package_name}.adapters.driving.graphql")
         if self.config.template == "mcp-agent" or self.config.include_mcp:
             scan_packages.append(f"{self.package_name}.adapters.driving.mcp")
-
-        packages_list_str = ",\n            ".join(scan_packages)
-
-        extra_imports = []
-        if self.config.template in ("web-api", "enterprise"):
-            extra_imports.append(f"import {self.package_name}.adapters.driving.http")
-        if self.config.template == "mcp-agent" or self.config.include_mcp:
             extra_imports.append(f"import {self.package_name}.adapters.driving.mcp")
 
+        packages_list_str = ",\n            ".join(scan_packages)
         extra_imports_str = "\n".join(extra_imports)
 
         self._write_file(
@@ -660,6 +759,8 @@ def scaffold_project(
     db_type: str = "in-memory",
     include_events: bool = False,
     include_mcp: bool = False,
+    include_grpc: bool = False,
+    include_graphql: bool = False,
     output_dir: Path | None = None,
 ) -> Path:
     """Convenience helper to scaffold a new Hexastack project."""
@@ -670,6 +771,8 @@ def scaffold_project(
         db_type=db_type,
         include_events=include_events,
         include_mcp=include_mcp,
+        include_grpc=include_grpc,
+        include_graphql=include_graphql,
     )
     scaffolder = ProjectScaffolder(config, output_dir=output_dir)
     return scaffolder.generate()

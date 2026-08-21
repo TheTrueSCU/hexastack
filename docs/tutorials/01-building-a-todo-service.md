@@ -20,9 +20,12 @@ Hexastack comes with an opinionated scaffolding engine that sets up a full proje
 
 The `hexastack new` command provides dedicated subcommands for each microservice archetype:
 - `hexastack new web-api <name>`: Full REST API service with FastAPI, unit-of-work, and DevTools UI.
-- `hexastack new minimal <name>`: Lightweight CLI or worker service (Core + CQRS + Logging).
+- `hexastack new grpc-service <name>`: High-performance gRPC binary microservice (Protobuf + Reflection).
+- `hexastack new graphql-service <name>`: GraphQL data-graph gateway with Strawberry and GraphiQL IDE.
 - `hexastack new event-driven <name>`: Event-streaming service with CloudEvents and Outbox pattern.
 - `hexastack new mcp-agent <name>`: AI Model Context Protocol server and agent tool executor.
+- `hexastack new minimal <name>`: Lightweight CLI or worker service (Core + CQRS + Logging).
+- `hexastack init`: Interactive questionnaire wizard prompting for architecture, database, and transport options.
 
 Run the following command in your terminal to scaffold our To-Do service:
 

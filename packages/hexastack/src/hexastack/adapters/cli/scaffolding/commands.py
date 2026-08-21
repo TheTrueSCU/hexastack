@@ -129,6 +129,62 @@ def add_scaffold_commands(app: typer.Typer) -> None:
         typer.echo(f"🎉 Created new MCP Agent Hexastack project at '{target_path}'")
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
 
+    @new_app.command(
+        name="grpc-service",
+        help="Scaffold a high-performance gRPC microservice (Protobuf + Server Reflection).",
+    )
+    def new_grpc_service(
+        name: str = typer.Argument(..., help="Name of the new microservice project."),
+        description: str = typer.Option(
+            "A high-performance gRPC microservice powered by Hexastack.",
+            "--description",
+            "-d",
+            help="Project description.",
+        ),
+        db: str = typer.Option(
+            "in-memory",
+            "--db",
+            help="Database driver: in-memory, sqlite, postgres.",
+        ),
+    ) -> None:
+        target_path = scaffold_project(
+            name=name,
+            template="grpc-service",
+            description=description,
+            db_type=db,
+            include_grpc=True,
+        )
+        typer.echo(f"🎉 Created new gRPC Hexastack project at '{target_path}'")
+        typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
+
+    @new_app.command(
+        name="graphql-service",
+        help="Scaffold a GraphQL data-graph gateway microservice (Strawberry + GraphiQL).",
+    )
+    def new_graphql_service(
+        name: str = typer.Argument(..., help="Name of the new microservice project."),
+        description: str = typer.Option(
+            "A modern GraphQL microservice powered by Hexastack.",
+            "--description",
+            "-d",
+            help="Project description.",
+        ),
+        db: str = typer.Option(
+            "in-memory",
+            "--db",
+            help="Database driver: in-memory, sqlite, postgres.",
+        ),
+    ) -> None:
+        target_path = scaffold_project(
+            name=name,
+            template="graphql-service",
+            description=description,
+            db_type=db,
+            include_graphql=True,
+        )
+        typer.echo(f"🎉 Created new GraphQL Hexastack project at '{target_path}'")
+        typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
+
     @app.command(
         name="init",
         help="Initialize a new Hexastack microservice in the current working directory.",
@@ -183,6 +239,8 @@ def add_scaffold_commands(app: typer.Typer) -> None:
                     "web-api",
                     "event-driven",
                     "mcp-agent",
+                    "grpc-service",
+                    "graphql-service",
                     "minimal",
                     "enterprise",
                 ],

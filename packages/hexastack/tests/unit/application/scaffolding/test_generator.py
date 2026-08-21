@@ -84,3 +84,36 @@ def test_scaffold_mcp_agent_project():
         assert (
             "adapters.driving.mcp" in (src_dir / "infra" / "bootstrap.py").read_text()
         )
+
+
+def test_scaffold_grpc_service():
+    """Verify scaffolder generates gRPC service with @proto_schema inline contract."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest_dir = Path(tmpdir)
+        proj_dir = scaffold_project(
+            name="rpc-service",
+            template="grpc-service",
+            output_dir=dest_dir,
+        )
+        src_dir = proj_dir / "src" / "rpc_service"
+        assert (src_dir / "adapters" / "driving" / "grpc.py").exists()
+        grpc_code = (src_dir / "adapters" / "driving" / "grpc.py").read_text()
+        assert "@proto_schema" in grpc_code
+        assert "package rpc_service.v1;" in grpc_code
+
+
+def test_scaffold_graphql_service():
+    """Verify scaffolder generates Strawberry GraphQL schema and resolvers."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest_dir = Path(tmpdir)
+        proj_dir = scaffold_project(
+            name="gql-service",
+            template="graphql-service",
+            output_dir=dest_dir,
+        )
+        src_dir = proj_dir / "src" / "gql_service"
+        assert (src_dir / "adapters" / "driving" / "graphql.py").exists()
+        gql_code = (src_dir / "adapters" / "driving" / "graphql.py").read_text()
+        assert "@strawberry.type" in gql_code
+        assert "@strawberry.mutation" in gql_code
+        assert "schema = strawberry.Schema" in gql_code

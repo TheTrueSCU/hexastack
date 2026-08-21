@@ -35,5 +35,35 @@ def test_cli_scaffold_subcommands():
             assert result_min.exit_code == 0
             assert "Created new Minimal Hexastack project" in result_min.output
             assert Path(tmpdir, "worker-service", "pyproject.toml").exists()
+
+            # Test `new grpc-service` subcommand
+            result_grpc = runner.invoke(app, ["new", "grpc-service", "rpc-service"])
+            assert result_grpc.exit_code == 0
+            assert "Created new gRPC Hexastack project" in result_grpc.output
+            assert Path(
+                tmpdir,
+                "rpc-service",
+                "src",
+                "rpc_service",
+                "adapters",
+                "driving",
+                "grpc.py",
+            ).exists()
+
+            # Test `new graphql-service` subcommand
+            result_gql = runner.invoke(
+                app, ["new", "graphql-service", "gateway-service"]
+            )
+            assert result_gql.exit_code == 0
+            assert "Created new GraphQL Hexastack project" in result_gql.output
+            assert Path(
+                tmpdir,
+                "gateway-service",
+                "src",
+                "gateway_service",
+                "adapters",
+                "driving",
+                "graphql.py",
+            ).exists()
         finally:
             os.chdir(orig_cwd)

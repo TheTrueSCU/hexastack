@@ -53,13 +53,22 @@ graph TD
 
 ---
 
-## 🚀 Instant Scaffolding
+## 🚀 Instant Scaffolding & Developer Tools
 
-Generate a standardized, production-ready hexagonal microservice with zero local dependencies using `uvx`:
+Generate a standardized, production-ready hexagonal microservice with zero local dependencies using `uvx`, or run the interactive terminal wizard:
 
 ```bash
+# Launch interactive terminal setup wizard
+uvx hexastack init
+
 # REST Web API service with FastAPI and SQLite
 uvx hexastack new web-api billing-service --db sqlite
+
+# High-performance gRPC microservice with Protobuf & Reflection
+uvx hexastack new grpc-service rpc-service
+
+# Strawberry GraphQL data-graph gateway & GraphiQL playground
+uvx hexastack new graphql-service gateway-service
 
 # Event-driven streaming microservice with CloudEvents & Transactional Outbox
 uvx hexastack new event-driven order-service
@@ -69,6 +78,13 @@ uvx hexastack new mcp-agent agent-service
 
 # Minimal CLI or background worker
 uvx hexastack new minimal worker-service
+```
+
+Launch all transports concurrently during development:
+
+```bash
+# Launch REST (8000), gRPC (50051), and Outbox relay in one command
+uv run hexastack dev
 ```
 
 ---
