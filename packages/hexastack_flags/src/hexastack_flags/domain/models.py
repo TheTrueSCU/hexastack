@@ -22,6 +22,8 @@ class FeatureFlagProviderType(StrEnum):
     FLAGD = "flagd"
     IN_MEMORY = "in_memory"
     ENV = "env"
+    UNLEASH = "unleash"
+    FLIPT = "flipt"
     CUSTOM = "custom"
 
 

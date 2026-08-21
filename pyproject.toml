@@ -52,6 +52,7 @@ dev = [
     "dirty-equals>=0.11",
     "faker>=33.0.0",
     "grpcio-reflection>=1.68.0",
+    "grpcio-tools>=1.83.0",
     "httpx>=0.27.0",
     "huey>=3.3.4",
     "hypothesis>=6.100.0",
@@ -146,6 +147,7 @@ select = [
 ignore = [
     "ARG001", # Unused function argument (framework interfaces, visitors, listeners)
     "ARG002", # Unused method argument (framework interfaces and resolvers)
+    "B008",   # Do not perform function call in argument defaults (standard for FastAPI Depends / Typer Option)
     "D100",   # Missing docstring in public module
     "D102",   # Missing docstring in public method
     "D103",   # Missing docstring in public function

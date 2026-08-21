@@ -12,7 +12,8 @@ nav = [
         "tutorials/03-jwt-authentication-and-rbac.md",
         "tutorials/04-events-outbox-and-notifications.md",
         "tutorials/05-experimental-ai-and-mcp.md",
-        "tutorials/06-production-observability-and-tracing.md"
+        "tutorials/06-production-observability-and-tracing.md",
+        "tutorials/07-high-performance-grpc-and-microservices.md"
     ]},
     { "Architecture" = "architecture.md" },
     { "Packages" = "packages.md" }

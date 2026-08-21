@@ -28,6 +28,19 @@ class LiteLlmAdapter(LlmProviderPort):
         """
         self._config = config or HexastackAiConfig()
 
+    @property
+    def _resolved_model(self) -> str:
+        """Resolve full model identifier ensuring provider prefix like 'gemini/' is handled."""
+        model = self._config.model
+        provider = self._config.provider.lower()
+        if provider == "gemini" and not model.startswith("gemini/"):
+            return f"gemini/{model}"
+        if provider == "anthropic" and not model.startswith("anthropic/"):
+            return f"anthropic/{model}"
+        if provider == "ollama" and not model.startswith("ollama/"):
+            return f"ollama/{model}"
+        return model
+
     def generate_structured[T: BaseModel](
         self, prompt: str, response_schema: type[T]
     ) -> T:
@@ -51,7 +64,7 @@ class LiteLlmAdapter(LlmProviderPort):
         client = instructor.from_litellm(litellm.completion)
 
         kwargs: dict[str, Any] = {
-            "model": self._config.model,
+            "model": self._resolved_model,
             "messages": [{"role": "user", "content": prompt}],
             "response_model": response_schema,
             "temperature": self._config.temperature,
@@ -86,7 +99,7 @@ class LiteLlmAdapter(LlmProviderPort):
         client = instructor.from_litellm(litellm.acompletion)
 
         kwargs: dict[str, Any] = {
-            "model": self._config.model,
+            "model": self._resolved_model,
             "messages": [{"role": "user", "content": prompt}],
             "response_model": response_schema,
             "temperature": self._config.temperature,
@@ -136,7 +149,7 @@ class LiteLlmAdapter(LlmProviderPort):
         messages.append({"role": "user", "content": prompt})
 
         kwargs: dict[str, Any] = {
-            "model": self._config.model,
+            "model": self._resolved_model,
             "messages": messages,
             "temperature": self._config.temperature,
             "max_tokens": self._config.max_tokens,
@@ -184,7 +197,7 @@ class LiteLlmAdapter(LlmProviderPort):
         messages.append({"role": "user", "content": prompt})
 
         kwargs: dict[str, Any] = {
-            "model": self._config.model,
+            "model": self._resolved_model,
             "messages": messages,
             "temperature": self._config.temperature,
             "max_tokens": self._config.max_tokens,

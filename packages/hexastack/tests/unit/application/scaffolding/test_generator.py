@@ -61,3 +61,26 @@ def test_scaffold_project_raises_if_directory_exists():
 
         with pytest.raises(FileExistsError, match="already exists and is not empty"):
             scaffolder.generate()
+
+
+def test_scaffold_mcp_agent_project():
+    """Verify scaffolder generates mcp driving adapter and mcp.json config."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest_dir = Path(tmpdir)
+        proj_dir = scaffold_project(
+            name="agent-toolset",
+            template="mcp-agent",
+            description="Agent toolset microservice",
+            output_dir=dest_dir,
+        )
+
+        assert proj_dir.exists()
+        assert (proj_dir / "mcp.json").exists()
+        assert "gemini" in (proj_dir / "mcp.json").read_text()
+
+        src_dir = proj_dir / "src" / "agent_toolset"
+        assert (src_dir / "adapters" / "driving" / "mcp.py").exists()
+        assert "mcp_tool" in (src_dir / "adapters" / "driving" / "mcp.py").read_text()
+        assert (
+            "adapters.driving.mcp" in (src_dir / "infra" / "bootstrap.py").read_text()
+        )

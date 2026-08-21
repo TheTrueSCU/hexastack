@@ -90,11 +90,14 @@ class ProjectScaffolder:
         self._write_file("README.md", self._render_readme())
 
     def _render_pyproject_toml(self) -> str:
-        extras = (
-            "[fastapi,db,ui]"
-            if self.config.template in ("web-api", "enterprise")
-            else "[cli]"
-        )
+        if self.config.template in ("web-api", "enterprise"):
+            extras = "[fastapi,db,ui]"
+        elif self.config.template == "mcp-agent" or self.config.include_mcp:
+            extras = "[mcp,ai,cli]"
+        elif self.config.template == "event-driven" or self.config.include_events:
+            extras = "[events,cli]"
+        else:
+            extras = "[cli]"
         return f"""[project]
 name = "{self.config.name}"
 version = "0.1.0"
@@ -466,6 +469,39 @@ api_command("/items", method="POST", summary="Create a new Item")(CreateItemComm
 """,
             )
 
+        if self.config.template == "mcp-agent" or self.config.include_mcp:
+            self._write_file(
+                f"src/{self.package_name}/adapters/driving/mcp.py",
+                f"""\"\"\"Model Context Protocol (MCP) tool exposure for Gemini, Antigravity, and Claude.\"\"\"
+
+from hexastack_mcp.infra.decorators import mcp_tool
+from {self.package_name}.domain.commands import CreateItemCommand
+
+# Expose CreateItemCommand as an MCP tool for AI agents
+mcp_tool(
+    name="create_item",
+    description="Create a new Item in the system with title and description",
+    kind="command",
+)(CreateItemCommand)
+""",
+            )
+            self._write_file(
+                "mcp.json",
+                f"""{{
+  "mcpServers": {{
+    "{self.config.name}": {{
+      "command": "uv",
+      "args": ["run", "{self.config.name}", "mcp", "run"],
+      "env": {{
+        "HEXASTACK_AI__PROVIDER": "gemini",
+        "PYTHONUNBUFFERED": "1"
+      }}
+    }}
+  }}
+}}
+""",
+            )
+
     # ----------------------------------------------------------------------
     # Infra Layer (Kernel, Handlers, Bootstrap)
     # ----------------------------------------------------------------------
@@ -511,8 +547,18 @@ def handle_create_item(cmd: CreateItemCommand, repo: ItemRepositoryPort) -> Item
         scan_packages = [f"{self.package_name}.adapters.driving.cli"]
         if self.config.template in ("web-api", "enterprise"):
             scan_packages.append(f"{self.package_name}.adapters.driving.http")
+        if self.config.template == "mcp-agent" or self.config.include_mcp:
+            scan_packages.append(f"{self.package_name}.adapters.driving.mcp")
 
         packages_list_str = ",\n            ".join(scan_packages)
+
+        extra_imports = []
+        if self.config.template in ("web-api", "enterprise"):
+            extra_imports.append(f"import {self.package_name}.adapters.driving.http")
+        if self.config.template == "mcp-agent" or self.config.include_mcp:
+            extra_imports.append(f"import {self.package_name}.adapters.driving.mcp")
+
+        extra_imports_str = "\n".join(extra_imports)
 
         self._write_file(
             f"src/{self.package_name}/infra/bootstrap.py",
@@ -522,7 +568,7 @@ from typing import Any
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_cqrs.infra.decorators import command_handler
 import {self.package_name}.adapters.driving.cli
-{"import " + self.package_name + ".adapters.driving.http" if self.config.template in ("web-api", "enterprise") else ""}
+{extra_imports_str}
 from {self.package_name}.adapters.driven.database import InMemoryItemRepository
 from {self.package_name}.domain.commands import CreateItemCommand
 from {self.package_name}.infra.handlers import handle_create_item

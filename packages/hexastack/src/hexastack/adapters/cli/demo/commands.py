@@ -27,8 +27,11 @@ from hexastack_core.domain.exceptions import MissingDependencyError
 
 __all__ = [
     "add_db_commands",
+    "add_fastapi_commands",
+    "add_graphql_commands",
     "add_grpc_commands",
     "add_mcp_commands",
+    "add_outbox_commands",
     "add_serve_command",
     "add_ui_commands",
     "DemoGroupDocs",
@@ -199,6 +202,171 @@ def add_db_commands(app: typer.Typer) -> None:
         stamp(_get_config(directory, url), revision)
 
 
+def add_fastapi_commands(app: typer.Typer) -> None:
+    """Register 'fastapi' subcommand group for REST route introspection."""
+    if importlib.util.find_spec("hexastack_fastapi") is None:
+        return
+
+    fastapi_app = typer.Typer(
+        name="fastapi",
+        help="FastAPI REST routes and OpenAPI introspection (requires hexastack[fastapi]).",
+        no_args_is_help=True,
+    )
+    app.add_typer(fastapi_app, name="fastapi")
+
+    @fastapi_app.command(
+        name="routes",
+        help="List all registered REST endpoints and CQRS bindings.",
+    )
+    def fastapi_routes() -> None:
+        from hexastack.adapters.fastapi import create_demo_app
+
+        demo_app = create_demo_app()
+        typer.echo("🌐 [bold cyan]Registered FastAPI REST Endpoints[/bold cyan]\n")
+
+        for route in demo_app.routes:
+            methods = getattr(route, "methods", None)
+            path = getattr(route, "path", None)
+            name = getattr(route, "name", None)
+            if methods and path:
+                methods_str = ", ".join(methods - {"HEAD", "OPTIONS"})
+                if methods_str:
+                    typer.echo(
+                        f"   • [bold green]{methods_str:<6}[/bold green] [yellow]{path}[/yellow] ({name})"
+                    )
+
+
+def add_graphql_commands(app: typer.Typer) -> None:
+    """Register 'graphql' subcommand group for schema introspection."""
+    if importlib.util.find_spec("hexastack_graphql") is None:
+        return
+
+    graphql_app = typer.Typer(
+        name="graphql",
+        help="GraphQL schema SDL and introspection (requires hexastack[graphql]).",
+        no_args_is_help=True,
+    )
+    app.add_typer(graphql_app, name="graphql")
+
+    @graphql_app.command(
+        name="schema",
+        help="Export or print the complete GraphQL Schema Definition (SDL).",
+    )
+    def graphql_schema() -> None:
+        import strawberry
+
+        import hexastack.application.diagnostics
+        from hexastack_core.infra.bootstrap import bootstrap
+
+        runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+        try:
+            schema = runtime.container.resolve(strawberry.Schema)
+            typer.echo(schema.as_str())
+        except Exception:
+            typer.echo(
+                "⚠️  No Strawberry GraphQL Schema currently registered in container."
+            )
+
+
+def _exec_grpc_serve(host: str, port: int) -> None:
+    import grpc
+
+    import hexastack.application.diagnostics
+    from hexastack_core.infra.bootstrap import bootstrap
+    from hexastack_grpc.adapters.server import run_grpc_server
+
+    runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+    server = runtime.container.resolve(grpc.Server)
+    typer.echo(f"Starting gRPC server on {host}:{port}...")
+    run_grpc_server(server, block=True)
+
+
+def _exec_grpc_compile(out_dir: str, proto_file: list[str] | None) -> None:
+    from pathlib import Path
+
+    from hexastack_grpc.infra.compiler import ProtoCompiler
+    from hexastack_grpc.infra.registries.proto import get_proto_registry
+
+    registry = get_proto_registry()
+    entries = registry.entries
+
+    if proto_file:
+        generated = ProtoCompiler.compile_files(
+            proto_files=proto_file,
+            output_dir=Path(out_dir),
+        )
+    elif entries:
+        generated = ProtoCompiler.compile_metadata(
+            entries=entries,
+            output_dir=Path(out_dir),
+        )
+    else:
+        default_proto_dir = Path("protos")
+        if default_proto_dir.exists():
+            found_files = list(default_proto_dir.glob("**/*.proto"))
+            if found_files:
+                generated = ProtoCompiler.compile_files(
+                    proto_files=found_files,
+                    include_dirs=[default_proto_dir],
+                    output_dir=Path(out_dir),
+                )
+            else:
+                typer.echo(
+                    "⚠️  No @proto_schema annotations, @proto_file decorators, or .proto files found."
+                )
+                return
+        else:
+            typer.echo(
+                "⚠️  No @proto_schema annotations, @proto_file decorators, or .proto files found."
+            )
+            return
+
+    typer.echo(
+        f"✨ Successfully compiled {len(generated)} protobuf stubs into '{out_dir}':"
+    )
+    for g in generated:
+        typer.echo(f"   • {g.name}")
+
+
+def _exec_grpc_list() -> None:
+    from hexastack_grpc.infra.decorators import get_grpc_registry
+    from hexastack_grpc.infra.registries.proto import get_proto_registry
+
+    proto_reg = get_proto_registry()
+    grpc_reg = get_grpc_registry()
+
+    typer.echo(
+        "🔍 [bold cyan]Registered gRPC Services & Protobuf Schemas[/bold cyan]\n"
+    )
+
+    if not proto_reg.entries and not grpc_reg._services:
+        typer.echo("   (No gRPC services or protobuf schemas registered)")
+        return
+
+    if proto_reg.entries:
+        typer.echo("📜 [bold]Protobuf Schemas & Models:[/bold]")
+        for entry in proto_reg.entries:
+            src_type = (
+                "inline @proto_schema" if entry.schema else f"file: {entry.file_path}"
+            )
+            rpc_info = (
+                f" -> {entry.service_name}/{entry.rpc_name}"
+                if entry.service_name
+                else ""
+            )
+            typer.echo(
+                f"   • [green]{entry.message_name}[/green] ({src_type}){rpc_info}"
+            )
+        typer.echo("")
+
+    if grpc_reg._services:
+        typer.echo("⚡ [bold]gRPC Servicers:[/bold]")
+        for svc in grpc_reg._services:
+            servicer_name = getattr(svc.servicer, "__name__", str(svc.servicer))
+            names = ", ".join(svc.service_names) if svc.service_names else "default"
+            typer.echo(f"   • [yellow]{servicer_name}[/yellow] (Services: {names})")
+
+
 def add_grpc_commands(app: typer.Typer) -> None:
     """Register 'grpc' subcommand group for RPC services."""
     if importlib.util.find_spec("hexastack_grpc") is None:
@@ -211,24 +379,117 @@ def add_grpc_commands(app: typer.Typer) -> None:
     )
     app.add_typer(grpc_app, name="grpc")
 
-    @grpc_app.command(
-        name="serve",
-        help="Launch the gRPC server daemon.",
-    )
+    @grpc_app.command(name="serve", help="Launch the gRPC server daemon.")
     def grpc_serve(
         host: str = typer.Option("0.0.0.0", "--host", "-h", help="Bind host."),
         port: int = typer.Option(50051, "--port", "-p", help="Bind port."),
     ) -> None:
-        import grpc
+        _exec_grpc_serve(host, port)
 
-        import hexastack.application.diagnostics
-        from hexastack_core.infra.bootstrap import bootstrap
-        from hexastack_grpc.adapters.server import run_grpc_server
+    @grpc_app.command(
+        name="compile",
+        help="Compile discovered @proto_schema inline strings and @proto_file definitions into Python stubs.",
+    )
+    def grpc_compile(
+        out_dir: str = typer.Option(
+            "src/generated/grpc",
+            "--out-dir",
+            "-o",
+            help="Target output directory for generated protobuf stubs.",
+        ),
+        proto_file: list[str] | None = typer.Option(
+            None,
+            "--file",
+            "-f",
+            help="Optional explicit .proto file path(s) to compile.",
+        ),
+    ) -> None:
+        _exec_grpc_compile(out_dir, proto_file)
 
-        runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
-        server = runtime.container.resolve(grpc.Server)
-        typer.echo(f"Starting gRPC server on {host}:{port}...")
-        run_grpc_server(server, block=True)
+    @grpc_app.command(
+        name="list",
+        help="Inspect and list registered gRPC services, RPC methods, and protobuf schemas.",
+    )
+    def grpc_list() -> None:
+        _exec_grpc_list()
+
+
+def _exec_mcp_config(
+    client: str, server_name: str, command_override: str | None
+) -> None:
+    import json
+
+    cmd = command_override or "uv"
+    args = ["run", "hexastack", "mcp", "run"] if command_override is None else []
+    client_key = client.lower().strip()
+
+    if client_key in ("antigravity", "gemini", "agy"):
+        config = {
+            "mcpServers": {
+                server_name: {
+                    "command": cmd,
+                    "args": args,
+                    "env": {
+                        "HEXASTACK_AI__PROVIDER": "gemini",
+                        "PYTHONUNBUFFERED": "1",
+                    },
+                }
+            }
+        }
+    elif client_key == "claude":
+        config = {
+            "mcpServers": {
+                server_name: {
+                    "command": cmd,
+                    "args": args,
+                    "env": {
+                        "PYTHONUNBUFFERED": "1",
+                    },
+                }
+            }
+        }
+    else:
+        config = {
+            "mcpServers": {
+                server_name: {
+                    "command": cmd,
+                    "args": args,
+                }
+            }
+        }
+
+    typer.echo(json.dumps(config, indent=2))
+
+
+def _exec_mcp_list() -> None:
+    from hexastack_mcp.infra.decorators import get_mcp_registry
+
+    registry = get_mcp_registry()
+    typer.echo("🤖 [bold cyan]Model Context Protocol (MCP) Capabilities[/bold cyan]\n")
+
+    typer.echo(f"🔧 [bold]Registered Tools ({len(registry.tools)}):[/bold]")
+    if not registry.tools:
+        typer.echo("   (No tools registered)")
+    else:
+        for t in registry.tools:
+            desc = f" - {t.description}" if t.description else ""
+            typer.echo(f"   • [green]{t.name}[/green] ({t.kind}){desc}")
+    typer.echo("")
+
+    typer.echo(f"📝 [bold]Prompts ({len(registry.prompts)}):[/bold]")
+    if not registry.prompts:
+        typer.echo("   (No prompt templates registered)")
+    else:
+        for p in registry.prompts:
+            typer.echo(f"   • [yellow]{p.name}[/yellow]: {p.description}")
+    typer.echo("")
+
+    typer.echo(f"📦 [bold]Resources ({len(registry.resources)}):[/bold]")
+    if not registry.resources:
+        typer.echo("   (No resources registered)")
+    else:
+        for r in registry.resources:
+            typer.echo(f"   • [magenta]{r.name}[/magenta] ({r.uri})")
 
 
 def add_mcp_commands(app: typer.Typer) -> None:
@@ -245,7 +506,7 @@ def add_mcp_commands(app: typer.Typer) -> None:
 
     @mcp_app.command(
         name="run",
-        help="Launch the MCP server in stdio mode (for Claude, Cursor, Antigravity).",
+        help="Launch the MCP server in stdio mode (for Claude, Cursor, Gemini, Antigravity).",
     )
     def mcp_run() -> None:
         from mcp.server.fastmcp import FastMCP as McpServer
@@ -257,6 +518,113 @@ def add_mcp_commands(app: typer.Typer) -> None:
         runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
         server = runtime.container.resolve(McpServer)
         run_stdio_server(server)
+
+    @mcp_app.command(
+        name="config",
+        help="Generate MCP JSON configuration for Gemini / Antigravity, Claude Desktop, or Cursor.",
+    )
+    def mcp_config(
+        client: str = typer.Option(
+            "antigravity",
+            "--client",
+            "-c",
+            help="Target client: 'antigravity', 'gemini', 'claude', 'cursor'.",
+        ),
+        server_name: str = typer.Option(
+            "hexastack",
+            "--name",
+            "-n",
+            help="Server name in the MCP client config.",
+        ),
+        command_override: str | None = typer.Option(
+            None,
+            "--command",
+            help="Custom executable command (defaults to 'uv run hexastack mcp run').",
+        ),
+    ) -> None:
+        _exec_mcp_config(client, server_name, command_override)
+
+    @mcp_app.command(
+        name="list",
+        help="Inspect and list registered MCP tools, prompt templates, and resources.",
+    )
+    def mcp_list() -> None:
+        _exec_mcp_list()
+
+
+def add_outbox_commands(app: typer.Typer) -> None:
+    """Register 'outbox' subcommand group for outbox relay daemon management."""
+    if importlib.util.find_spec("hexastack_events") is None:
+        return
+
+    outbox_app = typer.Typer(
+        name="outbox",
+        help="Transactional Outbox background relay daemon (requires hexastack[events]).",
+        no_args_is_help=True,
+    )
+    app.add_typer(outbox_app, name="outbox")
+
+    @outbox_app.command(
+        name="relay",
+        help="Run the outbox relay background worker to drain and publish pending events.",
+    )
+    def outbox_relay(
+        poll_interval: float = typer.Option(
+            1.0,
+            "--interval",
+            "-i",
+            help="Polling interval in seconds between sweeps.",
+        ),
+        batch_size: int = typer.Option(
+            50,
+            "--batch-size",
+            "-b",
+            help="Maximum number of outbox events to drain per sweep.",
+        ),
+        once: bool = typer.Option(
+            False,
+            "--once",
+            help="Drain pending events once and exit immediately.",
+        ),
+    ) -> None:
+        import asyncio
+
+        from hexastack_cqrs.adapters.buses.event.synchronous import SynchronousEventBus
+        from hexastack_events.adapters.outbox.asyncio import AsyncioOutboxRelay
+        from hexastack_events.adapters.outbox.in_memory import InMemoryOutboxStorage
+
+        storage = InMemoryOutboxStorage()
+        bus = SynchronousEventBus()
+        relay = AsyncioOutboxRelay(
+            storage=storage,
+            bus=bus,
+            poll_interval_seconds=poll_interval,
+            batch_size=batch_size,
+        )
+
+        if once:
+            count = relay.publish_pending_batch(limit=batch_size)
+            typer.echo(f"✨ Drained and published {count} pending outbox events.")
+            return
+
+        typer.echo(
+            f"🚀 Starting Outbox Relay Daemon (polling every {poll_interval}s, batch size {batch_size})..."
+        )
+        typer.echo("   Press Ctrl+C to stop.")
+
+        async def _run() -> None:
+            relay.start()
+            try:
+                while True:
+                    await asyncio.sleep(1.0)
+            except (asyncio.CancelledError, KeyboardInterrupt):
+                relay.stop()
+                typer.echo("\n🛑 Stopped Outbox Relay Daemon.")
+
+        try:
+            asyncio.run(_run())
+        except KeyboardInterrupt:
+            typer.echo("\n🛑 Stopped Outbox Relay Daemon.")
 
 
 def add_ui_commands(app: typer.Typer) -> None:

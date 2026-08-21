@@ -17,8 +17,13 @@ class RpcExecutionError(GrpcError):
     """Exception raised when an RPC handler execution fails during dispatch."""
 
 
+class ProtoCompilationError(GrpcError):
+    """Exception raised when protobuf compilation via grpc_tools fails."""
+
+
 __all__ = [
     "GrpcError",
+    "ProtoCompilationError",
     "RpcExecutionError",
     "ServiceRegistrationError",
 ]
