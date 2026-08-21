@@ -3,7 +3,7 @@
 import typer
 from typer.testing import CliRunner
 
-from hexastack.adapters.cli.demo.commands import (
+from hexastack.adapters.cli.devtools.commands import (
     add_db_commands,
     add_fastapi_commands,
     add_graphql_commands,

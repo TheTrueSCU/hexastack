@@ -198,7 +198,17 @@ if __name__ == "__main__":
 
 ---
 
-## 6. Scaffolding & Terminal Experience
+## 6. Running the Distributed Outbox Relay Daemon
+
+Hexastack provides a dedicated background outbox relay worker command:
+
+```bash
+# 1. Run the outbox relay daemon in background polling mode
+uv run hexastack outbox relay --interval 1.0 --batch-size 50
+
+# 2. Or drain all pending outbox events once (ideal for cron jobs & CI)
+uv run hexastack outbox relay --once
+```
 
 Watch the CLI setup for an event-driven microservice:
 

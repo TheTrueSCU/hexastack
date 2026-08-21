@@ -1,11 +1,11 @@
 """Hexastack umbrella application layer.
 
 Sub-packages:
-    demo: Interactive showcase and diagnostics application.
+    diagnostics: Interactive architecture diagnostics and registry introspection.
     scaffolding: Developer microservice project scaffolding generator.
 """
 
-from hexastack.application.demo.diagnostics import (
+from hexastack.application.diagnostics.handlers import (
     GetSystemInfoHandler,
     InspectRegistryHandler,
     PingDemoHandler,

@@ -5,7 +5,7 @@ Sub-packages:
     demo: Showcase, diagnostics, server, and UI commands (`demo`, `ui`, `serve`, `db`, `grpc`, `mcp`).
 """
 
-from hexastack.adapters.cli.demo.commands import (
+from hexastack.adapters.cli.devtools.commands import (
     DemoGroupDocs,
     InspectGroupDocs,
     add_db_commands,

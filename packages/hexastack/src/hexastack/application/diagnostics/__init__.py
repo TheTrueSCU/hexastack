@@ -1,6 +1,6 @@
-"""Interactive demonstration and diagnostics application layer."""
+"""Hexastack architecture diagnostics and system inspection application handlers."""
 
-from hexastack.application.demo.diagnostics import (
+from hexastack.application.diagnostics.handlers import (
     GetSystemInfoHandler,
     InspectRegistryHandler,
     PingDemoHandler,

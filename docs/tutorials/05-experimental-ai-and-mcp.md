@@ -186,7 +186,21 @@ if __name__ == "__main__":
 
 ---
 
-## 5. Scaffolding & Terminal Experience
+## 5. MCP Server Launch & Introspection Tooling
+
+Hexastack includes first-class Model Context Protocol tooling:
+
+```bash
+# 1. Inspect registered MCP AI tools, prompts, and resources
+uv run hexastack mcp list
+
+# 2. Generate client JSON config for Gemini / Antigravity, Claude, or Cursor
+uv run hexastack mcp config --client antigravity
+uv run hexastack mcp config --client claude
+
+# 3. Launch the MCP server in stdio mode for AI agents
+uv run hexastack mcp run
+```
 
 Watch the CLI setup for an agent-native MCP microservice:
 

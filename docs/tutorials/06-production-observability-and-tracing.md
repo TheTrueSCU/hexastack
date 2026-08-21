@@ -130,7 +130,17 @@ if __name__ == "__main__":
 
 ---
 
-## 4. Scaffolding & Terminal Experience
+## 4. Interactive DevTools Dashboard & Observability UI
+
+Launch the Hexastack interactive telemetry and diagnostics dashboard:
+
+```bash
+# 1. Launch the interactive DevTools web dashboard
+uv run hexastack ui --port 8000
+
+# 2. Inspect active runtime handlers, registered routes, and telemetry middleware
+uv run hexastack inspect registry
+```
 
 Watch the CLI setup for a production-grade microservice:
 

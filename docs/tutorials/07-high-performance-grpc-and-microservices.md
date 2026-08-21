@@ -166,9 +166,13 @@ class TodoGrpcServicer(pb2_grpc.TodoServiceServicer):
 
 ## 5. Live Server Launch & Server Reflection
 
-Start the gRPC daemon:
+Hexastack allows inspecting registered gRPC services directly via CLI:
 
 ```bash
+# 1. Introspect registered gRPC servicers, RPC endpoints, and Protobuf schemas
+uv run hexastack grpc list
+
+# 2. Launch the gRPC daemon
 uv run hexastack grpc serve --host 0.0.0.0 --port 50051
 ```
 

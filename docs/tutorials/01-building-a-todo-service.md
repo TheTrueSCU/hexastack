@@ -421,7 +421,28 @@ Expected output:
 ============================== 3 passed in 0.45s ===============================
 ```
 
+### Inspect Architecture & Registered Routes
+
+Ensure your CQRS commands and REST endpoints are correctly bound and discovered:
+
+```bash
+# 1. Inspect registered CQRS commands, queries, and handlers
+uv run hexastack inspect registry
+
+# 2. Introspect registered FastAPI REST routes and HTTP methods
+uv run hexastack fastapi routes
+
+# 3. Verify environment and installed Hexastack packages
+uv run hexastack inspect info
+```
+
 ### Interactive OpenAPI Testing & Swagger UI
+
+Launch the dev server to explore the Swagger UI:
+
+```bash
+uv run hexastack serve --port 8000
+```
 
 Watch the auto-generated Swagger UI in action:
 

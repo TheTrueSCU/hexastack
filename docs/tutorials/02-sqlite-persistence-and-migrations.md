@@ -169,7 +169,20 @@ if __name__ == "__main__":
 
 ---
 
-## 4. Scaffolding & Terminal Experience
+## 4. Database Migrations & Scaffolding Tooling
+
+Hexastack includes built-in database migration and schema management tooling:
+
+```bash
+# 1. Generate an initial Alembic migration revision
+uv run hexastack db revision "create todos table"
+
+# 2. Apply pending database migrations
+uv run hexastack db migrate
+
+# 3. Launch the development server with the persistent SQLite backend
+uv run hexastack serve --port 8000
+```
 
 Watch the CLI setup for a persistent SQLite service:
 
