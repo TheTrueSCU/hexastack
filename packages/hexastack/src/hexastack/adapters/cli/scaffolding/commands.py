@@ -7,6 +7,7 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import cast
 
@@ -133,24 +134,80 @@ def add_scaffold_commands(app: typer.Typer) -> None:
         help="Initialize a new Hexastack microservice in the current working directory.",
     )
     def init(
-        name: str = typer.Option(
+        name: str | None = typer.Option(
             None,
             "--name",
             "-n",
             help="Project name (defaults to current directory name).",
         ),
-        template: str = typer.Option(
-            "web-api",
+        template: str | None = typer.Option(
+            None,
             "--template",
             "-t",
             help="Project template: minimal, web-api, event-driven, mcp-agent, enterprise.",
         ),
+        db: str | None = typer.Option(
+            None,
+            "--db",
+            help="Database driver: in-memory, sqlite, postgres.",
+        ),
+        interactive: bool = typer.Option(
+            False,
+            "--interactive",
+            "-i",
+            help="Prompt with interactive questionnaire wizard.",
+        ),
     ) -> None:
         current_dir = Path.cwd()
         proj_name = name or current_dir.name
+
+        selected_template = template or "web-api"
+        selected_db = db or "in-memory"
+        include_events = False
+        include_mcp = False
+
+        # If interactive mode requested or no template explicitly specified and running in a tty
+        if interactive or (template is None and sys.stdin.isatty()):
+            from rich.console import Console
+            from rich.prompt import Confirm, Prompt
+
+            console = Console()
+            console.print(
+                "🧙 [bold cyan]Hexastack Microservice Initialization Wizard[/bold cyan]\n"
+            )
+
+            proj_name = Prompt.ask("Project name", default=proj_name)
+            selected_template = Prompt.ask(
+                "Select architecture template",
+                choices=[
+                    "web-api",
+                    "event-driven",
+                    "mcp-agent",
+                    "minimal",
+                    "enterprise",
+                ],
+                default=selected_template,
+            )
+            selected_db = Prompt.ask(
+                "Select database driver",
+                choices=["in-memory", "sqlite", "postgres"],
+                default=selected_db,
+            )
+            include_events = Confirm.ask(
+                "Enable transactional outbox & CloudEvents 1.0?",
+                default=(selected_template in ("event-driven", "enterprise")),
+            )
+            include_mcp = Confirm.ask(
+                "Enable Model Context Protocol (MCP) AI agent tools?",
+                default=(selected_template in ("mcp-agent", "enterprise")),
+            )
+
         target_path = scaffold_project(
             name=proj_name,
-            template=cast("TemplateType", template),
+            template=cast("TemplateType", selected_template),
+            db_type=selected_db,
+            include_events=include_events,
+            include_mcp=include_mcp,
             output_dir=current_dir.parent,
         )
         typer.echo(f"🎉 Initialized Hexastack project in '{target_path}'")

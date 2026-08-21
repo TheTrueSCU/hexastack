@@ -59,12 +59,16 @@ class CliNarrator:
         self._current_step_start: float | None = None
         self._current_step_text: str | None = None
 
-    def step(self, title: str) -> None:
+    def step(self, title: str, *, record: bool = True) -> None:
         """Mark a new narrative step in the CLI demo recording.
 
         Args:
             title: Human-readable narrative explanation shown in subtitle banner.
+            record: Whether to emit the step subtitle and recording marker (defaults to True).
         """
+        if not record:
+            return
+
         now = time.time() - self.start_time
         if self._current_step_start is not None and self._current_step_text is not None:
             self.captions.append(
@@ -84,6 +88,7 @@ class CliNarrator:
         args: list[str],
         env: dict[str, str] | None = None,
         input: str | None = None,
+        record: bool = True,
     ) -> Result:
         """Execute a CLI command within the active Typer application.
 
@@ -91,13 +96,14 @@ class CliNarrator:
             args: Command-line argument strings.
             env: Optional environment variables.
             input: Optional stdin input string.
+            record: Whether to record this command invocation and output (defaults to True).
 
         Returns:
             CliRunner Result containing exit code, stdout, and stderr.
         """
         cmd_str = f"hexastack {' '.join(args)}"
 
-        if self.record_mode:
+        if self.record_mode and record:
             # 1. Record input command string
             now = time.time() - self.start_time
             self.events.append(
@@ -111,7 +117,7 @@ class CliNarrator:
         # Execute command in-memory
         res = self.runner.invoke(self.app, args, input=input, env=env)
 
-        if self.record_mode:
+        if self.record_mode and record:
             # 2. Record command output text
             now = time.time() - self.start_time
             output_text = res.stdout if res.stdout else ""

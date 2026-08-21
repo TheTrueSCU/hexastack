@@ -10,33 +10,25 @@ In this final chapter, you will instrument the To-Do microservice for **producti
 
 Hexastack provides an ambient correlation context that propagates across threads, async coroutines, and transport boundaries without manual parameter passing:
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. Inbound Request (HTTP / CLI / MCP)                                       │
-│    └─ CorrelationHttpMiddleware creates Correlation ID [corr: 8fdf00bd]     │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 2. CQRS Execution Pipeline                                                  │
-│    ├─ Span: "CQRS: CreateTodoCommand"                                       │
-│    ├─ Metric: cqrs_handler_duration_seconds (p95, p99)                      │
-│    └─ Structured Log: {"event": "cmd_started", "corr": "8fdf00bd"}         │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 3. Database Persistence & Outbox                                            │
-│    ├─ Span: "SQLite: INSERT INTO todos"                                     │
-│    └─ Span: "SQLite: INSERT INTO outbox_events"                             │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 4. Outbox Event Relay & Notification Dispatch                               │
-│    ├─ Span: "Outbox: Publish AdminDeletedUserTodoEvent"                     │
-│    └─ Span: "Notification: Apprise Webhook / ntfy"                          │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Stage1["1. Inbound Request (HTTP / CLI / MCP)"]
+        S1_1["CorrelationHttpMiddleware<br/><i>Assigns Correlation ID [corr: 8fdf00bd]</i>"]
+    end
+
+    subgraph Stage2["2. CQRS Execution Pipeline"]
+        S2_1["Span: 'CQRS: CreateTodoCommand'"] ~~~ S2_2["Metric: cqrs_handler_duration_seconds"] ~~~ S2_3["Structured Log: {'event': 'cmd_started', 'corr': '8fdf00bd'}"]
+    end
+
+    subgraph Stage3["3. Database Persistence & Outbox"]
+        S3_1["Span: 'SQLite: INSERT INTO todos'"] ~~~ S3_2["Span: 'SQLite: INSERT INTO outbox_events'"]
+    end
+
+    subgraph Stage4["4. Outbox Event Relay & Notification Dispatch"]
+        S4_1["Span: 'Outbox: Publish AdminDeletedUserTodoEvent'"] ~~~ S4_2["Notification: Apprise Webhook / ntfy"]
+    end
+
+    Stage1 --> Stage2 --> Stage3 --> Stage4
 ```
 
 ---

@@ -9,6 +9,7 @@ from hexastack.adapters.cli.devtools.commands import (
     DemoGroupDocs,
     InspectGroupDocs,
     add_db_commands,
+    add_dev_command,
     add_fastapi_commands,
     add_graphql_commands,
     add_grpc_commands,
@@ -21,6 +22,7 @@ from hexastack.adapters.cli.scaffolding.commands import add_scaffold_commands
 
 __all__ = [
     "add_db_commands",
+    "add_dev_command",
     "add_fastapi_commands",
     "add_graphql_commands",
     "add_grpc_commands",

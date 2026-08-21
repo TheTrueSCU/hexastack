@@ -5,6 +5,7 @@ from typer.testing import CliRunner
 
 from hexastack.adapters.cli.devtools.commands import (
     add_db_commands,
+    add_dev_command,
     add_fastapi_commands,
     add_graphql_commands,
     add_grpc_commands,
@@ -19,6 +20,7 @@ def test_add_demo_commands_registration():
     """Verify demo subcommands register on Typer instance without error."""
     app = typer.Typer()
     add_db_commands(app)
+    add_dev_command(app)
     add_fastapi_commands(app)
     add_graphql_commands(app)
     add_grpc_commands(app)
@@ -30,6 +32,7 @@ def test_add_demo_commands_registration():
     runner = CliRunner()
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
+    assert "dev" in result.output
     assert "fastapi" in result.output
     assert "grpc" in result.output
     assert "mcp" in result.output

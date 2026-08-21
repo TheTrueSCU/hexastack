@@ -10,27 +10,21 @@ In this chapter, you will add a high-throughput **gRPC binary protocol adapter**
 
 In Hexagonal Architecture, gRPC is simply another **driving presentation adapter** that translates incoming Protocol Buffer messages into standard CQRS commands and queries:
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            Concurrent Inbound Adapters                      │
-│                                                                             │
-│   🌐 REST (FastAPI)     💻 CLI (Typer)     🤖 AI (MCP)     ⚡ RPC (gRPC)    │
-│     @api_command        @cli_command        @mcp_tool      @proto_schema    │
-└──────────┬───────────────────┬───────────────────┬───────────────┬──────────┘
-           │                   │                   │               │
-           └───────────────────┼───────────────────┴───────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      CQRS Execution Pipeline & Middleware                   │
-│         (Authentication -> RBAC AuthZ -> Telemetry Spans -> Validation)     │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                               Pure Domain Core                              │
-│              (Item Entity, Invariants, Storage & Notification Ports)        │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Inbound["Concurrent Inbound Adapters"]
+        REST["🌐 REST (FastAPI)<br/><i>@api_command</i>"]
+        CLI["💻 CLI (Typer)<br/><i>@cli_command</i>"]
+        MCP["🤖 AI (MCP)<br/><i>@mcp_tool</i>"]
+        GRPC["⚡ RPC (gRPC)<br/><i>@proto_schema</i>"]
+    end
+
+    REST --> Pipeline["CQRS Execution Pipeline & Middleware<br/><i>(AuthN -> RBAC AuthZ -> Telemetry Spans -> Validation)</i>"]
+    CLI --> Pipeline
+    MCP --> Pipeline
+    GRPC --> Pipeline
+
+    Pipeline --> Core["Pure Domain Core<br/><i>(TodoItem Entity, Invariants, Storage & Notification Ports)</i>"]
 ```
 
 ---

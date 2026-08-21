@@ -1,4 +1,4 @@
-"""Feature demo recordings for Tutorial Chapter 6: Production Observability & DevTools."""
+"""Feature demo recordings for Tutorial Chapter 6: Production Observability."""
 
 from __future__ import annotations
 
@@ -8,20 +8,48 @@ from pathlib import Path
 
 import pytest
 import typer
-from playwright.sync_api import Page, expect
 
+from hexastack.adapters.cli.devtools.commands import (
+    add_db_commands,
+    add_dev_command,
+    add_fastapi_commands,
+    add_grpc_commands,
+    add_mcp_commands,
+    add_outbox_commands,
+    add_serve_command,
+    add_ui_commands,
+)
 from hexastack.adapters.cli.scaffolding.commands import add_scaffold_commands
 from hexastack_cli.testing.narrator import CliNarrator
-from hexastack_fastapi.testing.recorder import DemoNarrator
-from hexastack_fastapi.testing.server import ephemeral_server
+from tests.e2e.tutorials.helpers import (
+    step_ch01_scaffold_minimal,
+    step_ch02_configure_sqlite,
+    step_ch03_configure_jwt_auth,
+    step_ch04_configure_events_outbox,
+    step_ch05_configure_ai_mcp,
+    step_ch06_configure_observability,
+)
+
+
+def _build_cli_app() -> typer.Typer:
+    app = typer.Typer(name="hexastack")
+    add_scaffold_commands(app)
+    add_serve_command(app)
+    add_dev_command(app)
+    add_ui_commands(app)
+    add_db_commands(app)
+    add_fastapi_commands(app)
+    add_grpc_commands(app)
+    add_mcp_commands(app)
+    add_outbox_commands(app)
+    return app
 
 
 @pytest.mark.demo
 @pytest.mark.ch06
 def test_todo_ch06_cli_demo() -> None:
-    """Record Chapter 6 Production Observability & DevTools in terminal video."""
-    app = typer.Typer(name="hexastack")
-    add_scaffold_commands(app)
+    """Record Chapter 6 Production Observability (replaying Chapters 1-5 silently)."""
+    app = _build_cli_app()
     repo_root = Path.cwd()
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -34,24 +62,17 @@ def test_todo_ch06_cli_demo() -> None:
                 output_dir=repo_root / "docs" / "assets" / "demos",
             )
 
-            # Step 1: Scaffold production microservice
-            narrator.step("Tutorial Chapter 6: Production Observability & DevTools")
-            res_new = narrator.run_command(
-                ["new", "web-api", "todo-production-service", "--db", "sqlite"]
-            )
-            assert res_new.exit_code == 0
-            assert Path(tmpdir, "todo-production-service", "pyproject.toml").exists()
+            # Replay steps 1-5 silently
+            step_ch01_scaffold_minimal(narrator, record=False)
+            step_ch02_configure_sqlite(narrator, record=False)
+            step_ch03_configure_jwt_auth(narrator, record=False)
+            step_ch04_configure_events_outbox(narrator, record=False)
+            step_ch05_configure_ai_mcp(narrator, record=False)
 
-            # Step 2: Show CLI help
-            narrator.step(
-                "Configuring OpenTelemetry, JSON Logs & Correlation Propagation"
-            )
-            narrator.run_command(["new", "--help"])
+            # Record step 6
+            step_ch06_configure_observability(narrator, record=True)
 
-            # Step 3: Conclude CLI section
-            narrator.step(
-                "Full 6-Chapter curriculum complete: Pure Domain to Production Observability!"
-            )
+            narrator.step("DevTools visualizer and distributed tracing active")
             artifacts = narrator.finish()
 
             if os.environ.get("RECORD_DEMO") == "1":
@@ -59,50 +80,3 @@ def test_todo_ch06_cli_demo() -> None:
                 assert "webm" in artifacts and artifacts["webm"].exists()
         finally:
             os.chdir(orig_cwd)
-
-
-TODO_CH06_FACTORY = """
-import uvicorn
-from todo_app.entrypoints.ch06_observability import build_app
-app = build_app(db_url="sqlite:///todos_ch06_demo.db")
-uvicorn.run(app, host="127.0.0.1", port={port})
-"""
-
-
-@pytest.mark.e2e
-@pytest.mark.demo
-@pytest.mark.ch06
-def test_todo_ch06_browser_demo(page: Page, demo: DemoNarrator) -> None:
-    """Record Chapter 6 interactive browser experience (Production Observability)."""
-    env = dict(os.environ)
-    env["PYTHONPATH"] = f"examples/todo-app/src:{env.get('PYTHONPATH', '')}"
-
-    with ephemeral_server(app_factory_code=TODO_CH06_FACTORY, env=env) as server_url:
-        demo.output_name = "todo-ch06-browser-demo"
-
-        # 1. Open Swagger Docs
-        docs_url = f"{server_url}/docs"
-        demo.goto(docs_url, caption="Tutorial 6: Production-Ready To-Do Service")
-
-        # 2. Verify endpoints
-        post_endpoint = page.locator(".opblock-post").first
-        expect(post_endpoint).to_be_visible()
-
-        # 3. Expand POST /todos
-        demo.click(
-            post_endpoint, caption="Executing requests with ambient X-Correlation-ID"
-        )
-        page.wait_for_timeout(800)
-
-        # 4. Expand GET /todos
-        get_endpoint = page.locator(".opblock-get").first
-        if get_endpoint.is_visible():
-            demo.click(
-                get_endpoint, caption="Distributed Tracing & Structured JSON Telemetry"
-            )
-            page.wait_for_timeout(800)
-
-        # 5. Finish demo
-        demo.step("Hexastack Tutorial completed: Congratulations!")
-        page.wait_for_timeout(1200)
-        demo.finish()

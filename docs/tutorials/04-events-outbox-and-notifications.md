@@ -14,25 +14,23 @@ When a domain command executes, writing changes to the database and sending a ne
 
 The **Transactional Outbox Pattern** solves this by saving the domain event **atomically in the same database transaction** as the entity change:
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. Atomic Database Transaction                                              │
-│                                                                             │
-│   DELETE FROM todos WHERE id = 'task-123';                                  │
-│   INSERT INTO outbox_events (event_name, payload, status)                   │
-│   VALUES ('AdminDeletedUserTodoEvent', '{...}', 'PENDING');                 │
-│                                                                             │
-│   COMMIT;  <── Guarantee: Outbox record exists if and only if delete worked │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 2. Asynchronous Outbox Relay Worker                                         │
-│                                                                             │
-│   • Polls/Streams 'PENDING' outbox records                                  │
-│   • Dispatches to NotificationPort (Stdout, File, or Apprise/ntfy/Discord)  │
-│   • Marks event as 'PUBLISHED'                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Transaction["1. Atomic Database Transaction"]
+        SQL1["DELETE FROM todos WHERE id = 'task-123';"]
+        SQL2["INSERT INTO outbox_events (event_name, payload, status)<br/>VALUES ('AdminDeletedUserTodoEvent', '{...}', 'PENDING');"]
+        Commit["COMMIT TRANSACTION"]
+        SQL1 --> SQL2 --> Commit
+    end
+
+    subgraph Relay["2. Asynchronous Outbox Relay Worker"]
+        Poll["Poll / Stream PENDING outbox records"]
+        Dispatch["Dispatch to NotificationPort<br/><i>(Stdout, Apprise, ntfy, Discord)</i>"]
+        Mark["Mark event as PUBLISHED"]
+        Poll --> Dispatch --> Mark
+    end
+
+    Commit -.->|"Atomically Persisted"| Poll
 ```
 
 ---

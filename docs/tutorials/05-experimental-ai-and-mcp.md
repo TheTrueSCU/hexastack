@@ -10,34 +10,17 @@ In this chapter, you will turn the To-Do microservice into an **agent-native AI 
 
 Because Hexastack cleanly separates domain CQRS handlers from driving transports, exposing our application to an LLM requires **zero rewrites** of business logic:
 
-```text
-                                  ┌───────────────────────────────┐
-                                  │      Feature Flag Router      │
-                                  │   (OpenFeature / Flagd / InMem)│
-                                  └───────────────┬───────────────┘
-                                                  │
-                 ┌────────────────────────────────┴────────────────────────────────┐
-                 │                                                                 │
-          [Flags: Enabled]                                                  [Flags: Disabled]
-                 │                                                                 │
-                 ▼                                                                 ▼
-   ┌───────────────────────────┐                                     ┌───────────────────────────┐
-   │    MCP Server Transport   │                                     │     Standard HTTP REST    │
-   │  (@mcp_tool decorators)   │                                     │  (FastAPI endpoints only) │
-   └─────────────┬─────────────┘                                     └───────────────────────────┘
-                 │
-                 ▼
-   ┌───────────────────────────┐
-   │     Autonomous AI Agent   │
-   │   (LlmProviderPort AI)    │
-   └─────────────┬─────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│                             UNIFIED CQRS PIPELINE & DOMAIN                                   │
-│                                                                                             │
-│      • CreateTodoCommand       • CompleteTodoCommand        • ListTodosQuery                │
-└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Router["Feature Flag Router<br/><i>(OpenFeature / Flagd / InMemory)</i>"]
+
+    Router -- "Flags: Enabled" --> MCP["MCP Server Transport<br/><i>(@mcp_tool decorators)</i>"]
+    Router -- "Flags: Disabled" --> HTTP["Standard HTTP REST<br/><i>(FastAPI endpoints only)</i>"]
+
+    MCP --> AI["Autonomous AI Agent<br/><i>(LlmProviderPort AI)</i>"]
+
+    AI --> CQRS["UNIFIED CQRS PIPELINE & DOMAIN<br/><b>CreateTodoCommand • CompleteTodoCommand • ListTodosQuery</b>"]
+    HTTP --> CQRS
 ```
 
 ---

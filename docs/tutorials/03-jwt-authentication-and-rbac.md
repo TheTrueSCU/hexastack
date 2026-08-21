@@ -16,34 +16,16 @@ We enforce two distinct security tiers:
 2. **Administrators (`role="admin"`)**:
    - Possess elevated privileges to inspect and delete **any** user's To-Do item.
 
-```text
-                  ┌───────────────────────────────┐
-                  │   DELETE /todos/{todo_id}     │
-                  └───────────────┬───────────────┘
-                                  │
-                  ┌───────────────▼───────────────┐
-                  │    Extract User Context       │
-                  │    (user_id, roles)           │
-                  └───────────────┬───────────────┘
-                                  │
-         ┌────────────────────────┴────────────────────────┐
-         │                                                 │
-   [is_admin == True]                           [is_admin == False]
-         │                                                 │
-         ▼                                                 ▼
-┌──────────────────┐                             ┌───────────────────┐
-│ Delete Any Item  │                             │ owner_id == user? │
-│    (200 OK)      │                             └─────────┬─────────┘
-└──────────────────┘                                       │
-                                              ┌────────────┴────────────┐
-                                              │                         │
-                                            [YES]                      [NO]
-                                              │                         │
-                                              ▼                         ▼
-                                     ┌──────────────────┐      ┌─────────────────┐
-                                     │ Delete Own Item  │      │  403 Forbidden  │
-                                     │    (200 OK)      │      │ (Access Denied) │
-                                     └──────────────────┘      └─────────────────┘
+```mermaid
+flowchart TD
+    Req["DELETE /todos/{todo_id}"] --> Ctx["Extract User Context<br/><i>(user_id, roles)</i>"]
+    Ctx --> CheckAdmin{"is_admin == True?"}
+
+    CheckAdmin -- Yes --> AdminDel["Delete Any Item<br/><b>200 OK</b>"]
+    CheckAdmin -- No --> CheckOwner{"owner_id == current_user.user_id?"}
+
+    CheckOwner -- Yes --> UserDel["Delete Own Item<br/><b>200 OK</b>"]
+    CheckOwner -- No --> Forbidden["Access Denied<br/><b>403 Forbidden</b>"]
 ```
 
 ---

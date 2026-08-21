@@ -9,6 +9,7 @@ def main() -> None:
     import hexastack.application.diagnostics
     from hexastack.adapters.cli import (
         add_db_commands,
+        add_dev_command,
         add_grpc_commands,
         add_mcp_commands,
         add_scaffold_commands,
@@ -26,6 +27,7 @@ def main() -> None:
     if cli_app is not None:
         add_scaffold_commands(cli_app)
         add_serve_command(cli_app)
+        add_dev_command(cli_app)
         add_ui_commands(cli_app)
         add_db_commands(cli_app)
         add_mcp_commands(cli_app)

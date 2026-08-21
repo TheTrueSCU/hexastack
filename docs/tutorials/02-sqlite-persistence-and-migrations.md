@@ -8,16 +8,14 @@ In this chapter, you will transition the To-Do microservice from the ephemeral `
 
 Because our application handlers in `src/todo_app/infra/handlers.py` only depend on the abstract `TodoRepositoryPort`, swapping the database adapter requires zero changes to your domain entities, CQRS commands, or HTTP routes:
 
-```text
-               ┌──────────────────────┐
-               │  TodoRepositoryPort  │ (Interface in ports/)
-               └──────────▲───────────┘
-                          │
-         ┌────────────────┴────────────────┐
-         │                                 │
-┌─────────────────────────┐     ┌─────────────────────────┐
-│ InMemoryTodoRepository  │     │   SqliteTodoRepository  │ (Adapter in adapters/driven/)
-└─────────────────────────┘     └─────────────────────────┘
+```mermaid
+graph TD
+    Port["TodoRepositoryPort<br/><i>(Interface in ports/)</i>"]
+    InMem["InMemoryTodoRepository<br/><i>(Adapter in adapters/driven/)</i>"]
+    Sqlite["SqliteTodoRepository<br/><i>(Adapter in adapters/driven/)</i>"]
+
+    InMem -.->|"implements"| Port
+    Sqlite -.->|"implements"| Port
 ```
 
 ---
