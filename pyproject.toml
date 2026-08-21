@@ -118,6 +118,7 @@ markers = [
     "ch04: Tutorial Chapter 4 tests",
     "ch05: Tutorial Chapter 5 tests",
     "ch06: Tutorial Chapter 6 tests",
+    "ch07: Tutorial Chapter 7 tests",
 ]
 
 [tool.ruff]
@@ -221,7 +222,7 @@ tag_format = "v{version}"
 commit_parser = "angular"
 major_on_zero = false
 allow_zero_version = true
-build_command = "uv build --all-packages"
+build_command = ""
 
 [tool.semantic_release.commit_parser_options]
 allowed_tags = [

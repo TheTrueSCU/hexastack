@@ -88,7 +88,7 @@ def _build_app(*error_routes: tuple) -> tuple[FastAPI, TestClient]:
             401,
             "UnauthorizedAccessError",
         ),
-        (ForbiddenActionError, "/forbidden", "No access", 401, "ForbiddenActionError"),
+        (ForbiddenActionError, "/forbidden", "No access", 403, "ForbiddenActionError"),
         (PayloadValidationError, "/val", "Bad payload", 422, "PayloadValidationError"),
         (GenericDomainError, "/generic", "Something broke", 400, "GenericDomainError"),
     ],

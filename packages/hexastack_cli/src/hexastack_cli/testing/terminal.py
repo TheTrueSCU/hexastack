@@ -251,12 +251,12 @@ def _render_in_clean_thread(
         page.wait_for_timeout(1500)
         video = page.video
         page.close()
-        context.close()
-        browser.close()
 
         if video:
-            video_src = Path(video.path())
-            shutil.copy2(video_src, output_path)
+            video.save_as(output_path)
+
+        context.close()
+        browser.close()
 
     shutil.rmtree(temp_dir, ignore_errors=True)
 
