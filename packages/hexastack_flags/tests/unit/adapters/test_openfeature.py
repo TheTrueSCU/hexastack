@@ -35,8 +35,27 @@ def test_openfeature_adapter_in_memory():
     # 4. JSON Object
     assert adapter.get_object_value("json_flag", default={}) == {"key": "val"}
 
-    # 5. Details
-    ctx = EvaluationContext(user_id="u-123", tenant_id="tenant-alpha")
+    # 5. Details & Reason Mapping
+    ctx = EvaluationContext(
+        user_id="u-123",
+        tenant_id="tenant-alpha",
+        targeting_key="target-override",
+        roles=frozenset({"admin", "beta_tester"}),
+        attributes={"country": "US"},
+    )
     details = adapter.get_boolean_details("bool_flag", default=False, context=ctx)
     assert details.flag_key == "bool_flag"
     assert details.value is True
+    assert details.variant == "on"
+
+    # 6. Introspection / get_all_flags
+    all_flags = adapter.get_all_flags()
+    assert "bool_flag" in all_flags
+    assert "string_flag" in all_flags
+    assert all_flags["int_flag"] == 42
+    assert all_flags["float_flag"] == 3.14
+
+    # 7. Non-dict fallback in get_object_value
+    assert adapter.get_object_value("missing_obj", default={"k": "default"}) == {
+        "k": "default"
+    }

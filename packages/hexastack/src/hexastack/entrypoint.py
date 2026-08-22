@@ -11,7 +11,9 @@ def main() -> None:
         add_db_commands,
         add_dev_command,
         add_grpc_commands,
+        add_load_command,
         add_mcp_commands,
+        add_profile_command,
         add_scaffold_commands,
         add_serve_command,
         add_ui_commands,
@@ -32,6 +34,8 @@ def main() -> None:
         add_db_commands(cli_app)
         add_mcp_commands(cli_app)
         add_grpc_commands(cli_app)
+        add_profile_command(cli_app)
+        add_load_command(cli_app)
         cli_app()
     else:
         sys.stderr.write(

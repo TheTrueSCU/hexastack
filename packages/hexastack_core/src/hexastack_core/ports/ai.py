@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, TypeAlias
 
 from pydantic import BaseModel
 
-type Metadata = dict[str, Any]
+Metadata: TypeAlias = dict[str, Any]
 
 
 class LlmProviderPort(ABC):

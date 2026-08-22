@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -333,3 +334,65 @@ def test_spiffe_workload_middleware_denied():
         with pytest.raises(InsufficientPermissionsError) as exc:
             mw(cmd, lambda c: "ok")
         assert "Caller SPIFFE identity" in str(exc.value)
+
+
+def test_spiffe_workload_middleware_allowed():
+    identity = Identity(
+        user_id="billing-service",
+        claims={"spiffe_id": "spiffe://example.org/billing"},
+        is_authenticated=True,
+    )
+    meta = AuthMetadata(spiffe_ids=("spiffe://example.org/billing",))
+    evaluate_authorization(meta, identity=identity)
+
+
+def test_authorization_middleware_match_all_branches():
+    # 1. Match all roles - Pass & Fail
+    meta_all_roles = AuthMetadata(roles=("admin", "auditor"), match_all_roles=True)
+    id_one_role = Identity(
+        user_id="alice", roles=frozenset({"admin"}), is_authenticated=True
+    )
+    id_both_roles = Identity(
+        user_id="bob", roles=frozenset({"admin", "auditor"}), is_authenticated=True
+    )
+
+    with pytest.raises(InsufficientPermissionsError):
+        evaluate_authorization(meta_all_roles, identity=id_one_role)
+    evaluate_authorization(meta_all_roles, identity=id_both_roles)  # Should not raise
+
+    # 2. Match any roles - Pass & Fail
+    meta_any_roles = AuthMetadata(roles=("admin", "auditor"), match_all_roles=False)
+    id_no_roles = Identity(
+        user_id="charlie", roles=frozenset({"guest"}), is_authenticated=True
+    )
+    with pytest.raises(InsufficientPermissionsError):
+        evaluate_authorization(meta_any_roles, identity=id_no_roles)
+    evaluate_authorization(meta_any_roles, identity=id_one_role)
+
+    # 3. Match all permissions - Pass & Fail
+    meta_all_perms = AuthMetadata(
+        permissions=("read", "write"), match_all_permissions=True
+    )
+    id_one_perm = Identity(
+        user_id="alice", permissions=frozenset({"read"}), is_authenticated=True
+    )
+    id_both_perms = Identity(
+        user_id="bob", permissions=frozenset({"read", "write"}), is_authenticated=True
+    )
+
+    with pytest.raises(InsufficientPermissionsError):
+        evaluate_authorization(meta_all_perms, identity=id_one_perm)
+    evaluate_authorization(meta_all_perms, identity=id_both_perms)
+
+    # 4. OpenFGA missing object_id_field fallback to 'default'
+    mock_policy = MagicMock()
+    mock_policy.is_authorized.return_value = True
+    meta_rebac = AuthMetadata(relation="viewer", object_type="file")
+    evaluate_authorization(
+        meta_rebac, identity=id_both_roles, instance=None, policy_adapter=mock_policy
+    )
+    mock_policy.is_authorized.assert_called_with(
+        identity=id_both_roles,
+        action="viewer",
+        resource="file:default",
+    )

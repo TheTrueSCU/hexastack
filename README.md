@@ -257,9 +257,77 @@ print(query_bus.dispatch(GetUserQuery(user_id="u-123")))
 
 ---
 
-## 6. Monorepo Development & Quality Gates
+## 6. 360° Quality & Rigor Matrix
 
-Hexastack maintains a tiered quality hierarchy enforcing static typing, architectural boundary rules, property-based invariants, and mutation testing:
+Hexastack maintains a comprehensive quality hierarchy to ensure any project—whether handwritten or "vibe-coded" with AI—starts from a foundation of uncompromising rigor:
+
+| Capability / Inspection | Engine / Tool | Pre-Commit | CI Gate | Provided / Scaffolded for Users |
+| :--- | :--- | :---: | :---: | :--- |
+| **Dead Code Elimination** | `vulture` | ✅ | ✅ | Scaffolded in `pyproject.toml` + `.pre-commit-config.yaml` |
+| **Duplicate Code Detection** | `cpd` | ✅ | ✅ | Monorepo CI check + golden standards |
+| **Cognitive Complexity Guard** | `complexipy` | ✅ | ✅ | Scaffolded in `[tool.complexipy]` (max 25 score cap) |
+| **Lint & Idiomatic Code Style** | `ruff` (UP/D/S/B/SIM) | ✅ | ✅ | Scaffolded in `pyproject.toml` + `.pre-commit-config.yaml` |
+| **Strict Static Type Checking** | `ty` / `mypy` | ✅ | ✅ | Pre-configured in scaffolded `[dependency-groups]` |
+| **Hexagonal Boundary Enforcement** | `import-linter` | ✅ | ✅ | Auto-generated `.importlinter` contract rules |
+| **Architecture-as-Code Invariants** | `pytest-archon` | — | ✅ | Abstract port checks & domain purity rules |
+| **Public API Surface Integrity** | AST Visitor | ✅ | ✅ | `scripts/check_api_surface.py` port validation |
+| **Secret & Key Leak Prevention** | `detect-secrets` | ✅ | ✅ | Automated `.secrets.baseline` in pre-commit |
+| **Dependency Vulnerability Audit** | `pip-audit` | ✅ | ✅ | Scaffolded `pip-audit --local` pre-commit gate |
+| **Database Schema Drift Check** | `alembic check` | ✅ | ✅ | CLI command: `hexastack db check` |
+| **Unit & Transport Integration** | `pytest` + `anyio` | — | ✅ | Golden-path test fixtures in `tests/conftest.py` |
+| **Realistic Synthetic Test Data** | `faker` | — | ✅ | Pre-configured `faker` pytest fixture support |
+| **Property-Based Invariant Fuzzing** | `hypothesis` | — | ✅ | Scaffolded sample in `tests/hypothesis/` |
+| **Negative API Contract Fuzzing** | `schemathesis` | — | ✅ | OpenAPI negative payload fuzzing integration |
+| **Golden Master Output Assertion** | `inline-snapshot` | — | ✅ | Diagnostic & JSON payload snapshot testing |
+| **Statement & Branch Coverage** | `coverage.py` | — | ✅ | Pre-configured `fail_under = 90` threshold |
+| **Mutation Testing** | `mutmut` | — | — | `scripts/run_mutation_tests.py` suite |
+| **Load & Concurrency Benchmarking** | `locust` | — | — | CLI command: `hexastack load` + default `locustfile.py` |
+| **CPU Flamegraph Profiling** | `py-spy` | — | — | CLI command: `hexastack profile cpu --pid <PID>` |
+| **Memory Allocation Flamegraph** | `memray` | — | — | CLI command: `hexastack profile memory --bin <FILE>` |
+| **End-to-End Browser & UI Testing** | `playwright` | — | ✅ | Pre-configured headless browser fixtures |
+
+```mermaid
+mindmap
+  root((Hexastack Fortified Pipeline))
+    Code Hygiene & Static Analysis
+      Dead Code (vulture)
+      Duplicate Code (cpd)
+      Cognitive Complexity (complexipy)
+      Code Style & Upgrades (ruff UP/D/S)
+      Strict Static Types (ty / mypy)
+    Architectural Integrity
+      Layer Hierarchy (import-linter)
+      Pure Domain Purity (pytest-archon)
+      Public API Integrity (AST visitor)
+    Security & Supply Chain
+      Hardcoded Secrets (detect-secrets)
+      Private Key Leaks (detect-private-key)
+      Dependency CVEs (pip-audit + OSV)
+    Data & State Evolution
+      ORM Schema Drift (alembic check)
+      Database Invariants (hypothesis DB tests)
+    Behavioral & Functional Correctness
+      Async Transports (pytest + anyio)
+      Realistic Fixtures (faker)
+      Payload Regressions (inline-snapshot)
+      Negative Contract Fuzzing (schemathesis)
+      Browser & E2E Testing (playwright)
+    Test Suite Veracity
+      Branch Coverage 90%+ (coverage.py)
+      Mutation Testing (mutmut)
+    Performance & Concurrency
+      Load & Stress (locust)
+      CPU Bottlenecks (py-spy flamegraphs)
+      Memory Leaks (memray)
+    Developer Ergonomics
+      Zero-Config Scaffolding (hexastack new/init)
+      Multi-Transport Dev Server (hexastack dev)
+      Built-in DevTools Web UI (hexastack ui)
+```
+
+---
+
+## 7. Monorepo Development & Quality Gates
 
 ### Fast Quality Checks & Linters
 
@@ -267,17 +335,17 @@ Hexastack maintains a tiered quality hierarchy enforcing static typing, architec
 # Install all dependencies with uv
 uv sync --all-extras
 
-# Run full pre-commit pipeline (Ruff, Ty, Import-Linter 15/15 contracts)
+# Run full pre-commit pipeline (23 hooks across Ruff, Ty, Vulture, Detect-Secrets, Import-Linter)
 uv run pre-commit run --all-files
 
 # Run full test suite with statement coverage (>90% gate)
 uv run pytest
 
 # Run static type checking with Ty
-uv run ty check
+uv run ty check packages
 
 # Validate hexagonal architecture import boundaries
-uv run import-linter
+uv run import-linter-run
 ```
 
 ### Mutation Testing (`mutmut`)

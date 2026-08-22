@@ -3,9 +3,9 @@ import inspect
 import pkgutil
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import Any
+from typing import Any, TypeAlias
 
-type DiscoveryVisitor = Callable[[Any, ModuleType], None]
+DiscoveryVisitor: TypeAlias = Callable[[Any, ModuleType], None]
 
 
 __all__ = [

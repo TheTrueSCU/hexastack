@@ -49,6 +49,7 @@ hexastack-otel = { workspace = true }
 dev = [
     "alembic>=1.19.1",
     "complexipy>=7.0.1",
+    "detect-secrets>=1.5.0",
     "dirty-equals>=0.11",
     "faker>=33.0.0",
     "grpcio-reflection>=1.68.0",
@@ -59,11 +60,15 @@ dev = [
     "import-linter>=2.13",
     "inline-snapshot>=0.35.4",
     "libcst>=1.9.0",
+    "locust>=2.46.3",
+    "memray>=1.20.0",
     "mutmut<3",
     "nicegui>=2.0.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
+    "pip-audit>=2.10.1",
     "playwright>=1.49.0",
     "pre-commit>=3.8.0",
+    "py-spy>=0.4.2",
     "pydeps>=3.0.7",
     "pytest>=8.0.0",
     "pytest-archon>=0.0.7",
@@ -75,6 +80,7 @@ dev = [
     "ruff>=0.16.2",
     "schemathesis>=3.39.0",
     "ty>=0.0.69",
+    "vulture>=2.16",
     "zensical>=0.0.56",
 ]
 
@@ -163,6 +169,7 @@ ignore = [
     "S110",   # try-except-pass detected (intentional silent fallback blocks)
     "S603",   # Subprocess call with dynamic inputs (already verified safe with shell=False)
     "S607",   # Starting process with partial path (required for portable git CLI execution)
+    "UP040",  # Type alias uses TypeAlias instead of type keyword (required for mutmut/parso parser compatibility)
     "TC001",  # Move application import into type-checking block (breaks Pydantic runtime introspection)
     "TC002",  # Move third-party import into type-checking block (breaks FastAPI/Strawberry reflection)
     "TC003",  # Move standard library import into type-checking block (breaks runtime reflection)
@@ -244,4 +251,21 @@ patch_tags = ["fix", "perf"]
 changelog_file = "CHANGELOG.md"
 exclude_commit_patterns = [
     "chore\\(release\\):.*",
+]
+
+[tool.mutmut]
+runner = "pytest --import-mode=importlib -n 0 -x -q --no-cov -o addopts=\"\""
+
+[tool.vulture]
+min_confidence = 80
+paths = ["packages"]
+exclude = ["tests/", "*/tests/*", "docs/", ".venv/"]
+ignore_names = [
+    "module",
+    "connection_record",
+    "message_path",
+    "model_config",
+    "visit_*",
+    "on_connect",
+    "Huey",
 ]

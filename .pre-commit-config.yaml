@@ -20,6 +20,13 @@ repos:
         args: [--autofix, --indent=4, --no-sort-keys]
       - id: trailing-whitespace
 
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: ^(\.venv|docs|_build|\.mutmut-cache)/
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.2
     hooks:
@@ -76,4 +83,16 @@ repos:
         entry: uv run ty check packages
         language: system
         types: [python]
+        pass_filenames: false
+      - id: vulture
+        name: vulture (dead code detector)
+        entry: uv run vulture
+        language: system
+        files: ^packages/.*\.py$
+        pass_filenames: false
+
+      - id: pip-audit
+        name: pip-audit (dependency vulnerability scan)
+        entry: uv run pip-audit --local --vulnerability-service osv --timeout 30
+        language: system
         pass_filenames: false

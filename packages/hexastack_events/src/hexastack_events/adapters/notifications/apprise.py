@@ -25,15 +25,13 @@ def _get_apprise_module() -> Any:
 
 def _map_priority_to_apprise(priority: NotificationPriority, apprise_mod: Any) -> Any:
     """Map Hexastack NotificationPriority to Apprise NotifyType."""
-    match priority:
-        case NotificationPriority.LOW:
-            return apprise_mod.NotifyType.INFO
-        case NotificationPriority.NORMAL:
-            return apprise_mod.NotifyType.SUCCESS
-        case NotificationPriority.HIGH:
-            return apprise_mod.NotifyType.WARNING
-        case NotificationPriority.EMERGENCY:
-            return apprise_mod.NotifyType.FAILURE
+    priority_map = {
+        NotificationPriority.LOW: apprise_mod.NotifyType.INFO,
+        NotificationPriority.NORMAL: apprise_mod.NotifyType.SUCCESS,
+        NotificationPriority.HIGH: apprise_mod.NotifyType.WARNING,
+        NotificationPriority.EMERGENCY: apprise_mod.NotifyType.FAILURE,
+    }
+    return priority_map.get(priority, apprise_mod.NotifyType.INFO)
 
 
 class AppriseNotificationAdapter(NotificationPort):

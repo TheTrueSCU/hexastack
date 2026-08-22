@@ -132,15 +132,22 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "complexipy>=7.0.1",
+    "detect-secrets>=1.5.0",
+    "faker>=33.0.0",
     "hypothesis>=6.100.0",
     "import-linter>=2.13",
+    "locust>=2.31.0",
+    "memray>=1.13.0",
+    "pip-audit>=2.8.0",
     "pre-commit>=3.8.0",
+    "py-spy>=0.3.14",
     "pytest>=8.0.0",
     "pytest-cov>=5.0.0",
     "pytest-randomly>=4.1.0",
     "pytest-xdist>=3.8.0",
     "ruff>=0.16.2",
     "ty>=0.0.69",
+    "vulture>=2.11",
 ]
 
 [tool.complexipy]
@@ -203,7 +210,7 @@ modules =
 """
 
     def _render_precommit(self) -> str:
-        return """repos:
+        return r"""repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
@@ -211,6 +218,13 @@ modules =
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: ^(\.venv|docs|_build)/
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
@@ -232,6 +246,19 @@ modules =
         entry: uv run ty check
         language: system
         types: [python]
+        pass_filenames: false
+
+      - id: vulture
+        name: vulture (dead code detector)
+        entry: uv run vulture
+        language: system
+        files: ^src/.*\.py$
+        pass_filenames: false
+
+      - id: pip-audit
+        name: pip-audit (dependency vulnerability scan)
+        entry: uv run pip-audit --local
+        language: system
         pass_filenames: false
 """
 

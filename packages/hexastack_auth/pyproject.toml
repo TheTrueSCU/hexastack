@@ -25,6 +25,7 @@ opa = [
     "httpx>=0.27.0",
 ]
 openfga = [
+    "httpx>=0.27.0",
     "openfga-sdk>=0.6.0",
 ]
 spiffe = [

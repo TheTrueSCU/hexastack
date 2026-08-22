@@ -138,12 +138,14 @@ def _resolve_effective_identity(identity: Any | None) -> Identity:
     roles = frozenset(getattr(identity, "roles", []))
     permissions = frozenset(getattr(identity, "permissions", []))
     tenant_id = getattr(identity, "tenant_id", None)
+    claims = dict(getattr(identity, "claims", {}))
     is_auth = bool(getattr(identity, "is_authenticated", True))
 
     return Identity(
         user_id=str(user_id),
         roles=roles,
         permissions=permissions,
+        claims=claims,
         tenant_id=str(tenant_id) if tenant_id is not None else None,
         is_authenticated=is_auth,
     )

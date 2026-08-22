@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 __all__ = [
     "get_alembic_config",
     "init_migrations",
+    "run_check",
     "run_current",
     "run_downgrade",
     "run_history",
@@ -198,6 +199,25 @@ def init_migrations(
     # Overwrite env.py with hexastack-aware version
     url = db_config.url if db_config else "sqlite:///hexastack.db"
     (migrations_dir / "env.py").write_text(_env_py_template(url))
+
+
+def run_check(config: AlembicConfig) -> None:
+    """Check if there are any ungenerated schema revisions or unapplied migrations.
+
+    Notes/Architectural Intent:
+        Executes alembic's check command to guarantee that DeclarativeBase metadata
+        matches the migration history, raising an error if drift is detected.
+
+    Args:
+        config: Configured AlembicConfig instance.
+
+    Raises:
+        MissingDependencyError: If alembic is not installed.
+    """
+    _require_alembic()
+    from alembic import command
+
+    command.check(config)
 
 
 def run_current(config: AlembicConfig) -> None:

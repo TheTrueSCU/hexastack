@@ -124,16 +124,14 @@ def initialize_openfeature_provider(
     opts = options or FlagProviderOptions()
     p_type = str(provider_type).lower()
 
-    provider: AbstractProvider
-    match p_type:
-        case FeatureFlagProviderType.FLAGD:
-            provider = _build_flagd_provider(opts)
-        case FeatureFlagProviderType.UNLEASH:
-            provider = _build_unleash_provider(opts)
-        case FeatureFlagProviderType.FLIPT:
-            provider = _build_flipt_provider(opts)
-        case FeatureFlagProviderType.IN_MEMORY | FeatureFlagProviderType.ENV | _:
-            provider = _build_in_memory_provider(in_memory_flags)
+    if p_type == FeatureFlagProviderType.FLAGD:
+        provider = _build_flagd_provider(opts)
+    elif p_type == FeatureFlagProviderType.UNLEASH:
+        provider = _build_unleash_provider(opts)
+    elif p_type == FeatureFlagProviderType.FLIPT:
+        provider = _build_flipt_provider(opts)
+    else:
+        provider = _build_in_memory_provider(in_memory_flags)
 
     openfeature.api.set_provider(provider)
 

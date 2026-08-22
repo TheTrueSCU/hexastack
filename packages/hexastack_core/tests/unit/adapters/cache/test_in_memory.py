@@ -1,20 +1,22 @@
-import pytest
+import asyncio
 
 from hexastack_core.adapters.cache import AsyncInMemoryCache, InMemoryCache
 from hexastack_core.adapters.clock import FrozenClock
 
 
-@pytest.mark.anyio
-async def test_async_in_memory_cache():
-    cache = AsyncInMemoryCache()
-    assert await cache.has_async("item") is False
+def test_async_in_memory_cache():
+    async def _run():
+        cache = AsyncInMemoryCache()
+        assert await cache.has_async("item") is False
 
-    await cache.set_async("item", 100)
-    assert await cache.get_async("item") == 100
-    assert await cache.has_async("item") is True
+        await cache.set_async("item", 100)
+        assert await cache.get_async("item") == 100
+        assert await cache.has_async("item") is True
 
-    assert await cache.delete_async("item") is True
-    assert await cache.has_async("item") is False
+        assert await cache.delete_async("item") is True
+        assert await cache.has_async("item") is False
+
+    asyncio.run(_run())
 
 
 def test_in_memory_cache_basic_crud():
