@@ -1,1 +1,1 @@
-"""Tests for interceptors in hexastack-grpc."""
+"""gRPC interceptors unit tests."""

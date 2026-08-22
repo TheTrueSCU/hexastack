@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.testclient import TestClient
 from rodi import Container
 
+from hexastack_core.domain import Command, Generic, Query
 from hexastack_core.domain.exceptions import DependencyResolutionError
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,
@@ -20,10 +21,14 @@ from hexastack_cqrs.infra.registries.command import CommandRegistry
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
 from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 from hexastack_cqrs.infra.registries.query import QueryRegistry
+from hexastack_fastapi.adapters.app import create_fastapi_app
 from hexastack_fastapi.adapters.dependencies import (
+    check_openapi_conformance,
     get_container,
     get_pipeline,
 )
+from hexastack_fastapi.adapters.routing import CqrsRouter
+from hexastack_fastapi.infra.config import HexastackFastApiConfig
 
 
 def test_get_container_and_pipeline_success():
@@ -147,3 +152,64 @@ def test_get_pipeline_resolved_from_container():
     res = client.get("/pipeline-from-di")
     assert res.status_code == 200
     assert res.json() == {"resolved": True}
+
+
+class _TestCreateItem(Command):
+    name: str
+    amount: int
+
+
+class _TestGetItem(Query):
+    item_id: str
+
+
+class _TestItemDTO(Generic):
+    status: str
+    name: str
+
+
+def test_check_openapi_conformance_smoke() -> None:
+    handler_reg = HandlerRegistry()
+    presenter_reg = PresenterRegistry()
+
+    handler_reg.register(
+        _TestCreateItem, lambda cmd: _TestItemDTO(status="created", name=cmd.name)
+    )
+    handler_reg.register(
+        _TestGetItem, lambda q: _TestItemDTO(status="found", name=q.item_id)
+    )
+
+    cmd_reg = CommandRegistry()
+    query_reg = QueryRegistry()
+
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=cmd_reg,
+        query_registry=query_reg,
+        handler_registry=handler_reg,
+        presenter_registry=presenter_reg,
+    )
+
+    container = Container()
+    container.add_instance(pipeline)
+
+    router = CqrsRouter(prefix="/items")
+    router.add_command("/create", _TestCreateItem, summary="Create item")
+    router.add_query("/get", _TestGetItem, summary="Get item")
+
+    config = HexastackFastApiConfig(title="FuzzTestAPI", version="1.0.0")
+    app = create_fastapi_app(config=config, container=container, pipeline=pipeline)
+    app.include_router(router)
+
+    # 1. Structural OpenAPI Schema Conformance
+    check_openapi_conformance(app)
+
+    # 2. Schemathesis operation discovery validation
+    import schemathesis
+
+    schema = schemathesis.openapi.from_asgi("/openapi.json", app)
+    paths = set(schema)
+    assert "/items/create" in paths
+    assert "/items/get" in paths

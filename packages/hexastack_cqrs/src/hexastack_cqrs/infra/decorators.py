@@ -54,7 +54,9 @@ class FeatureFlagMetadata:
 
 
 __all__ = [
+    "cached_query",
     "command_handler",
+    "CommandInvalidationMetadata",
     "config_section",
     "ConfigMetadata",
     "event_listener",
@@ -63,9 +65,11 @@ __all__ = [
     "feature_flag",
     "FeatureFlagMetadata",
     "HandlerMetadata",
+    "invalidates_cache",
     "presenter",
     "PresenterMetadata",
     "query_handler",
+    "QueryCacheMetadata",
 ]
 
 
@@ -222,5 +226,103 @@ def query_handler(
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         _tag_object(fn, HandlerMetadata(kind="query", target_cls=target_cls))
         return fn
+
+    return decorator
+
+
+_QUERY_CACHE_META_ATTR = "__hexastack_query_cache__"
+_COMMAND_INVALIDATION_META_ATTR = "__hexastack_cache_invalidation__"
+
+
+@dataclass(frozen=True)
+class QueryCacheMetadata:
+    """Metadata tag attached to Query models for declarative result caching.
+
+    Notes/Architectural Intent:
+        Encapsulates TTL, custom key fields, cache tag invalidation groups, and
+        optional key builder callables without coupling queries to cache storage.
+    """
+
+    ttl_seconds: float | None = None
+    key_fields: tuple[str, ...] | None = None
+    tags: tuple[str, ...] = ()
+    key_builder: Callable[[Any], str] | None = None
+
+
+@dataclass(frozen=True)
+class CommandInvalidationMetadata:
+    """Metadata tag attached to Command models for declarative cache purging.
+
+    Notes/Architectural Intent:
+        Declares cache tags to invalidate when a mutating command executes successfully.
+    """
+
+    tags: tuple[str, ...] = ()
+
+
+def cached_query[Q: type](
+    ttl_seconds: float | None = 300.0,
+    key_fields: list[str] | tuple[str, ...] | None = None,
+    tags: list[str] | tuple[str, ...] = (),
+    key_builder: Callable[[Any], str] | None = None,
+) -> Callable[[Q], Q]:
+    """Decorate a Query class to enable automatic declarative result caching.
+
+    Args:
+        ttl_seconds: Time-to-live expiration duration in seconds (default: 300s).
+        key_fields: Optional list of query field names to incorporate in the deterministic key.
+        tags: Optional cache tags for group-based cache invalidation.
+        key_builder: Optional custom callable to build the cache key from the query instance.
+
+    Returns:
+        Decorator function attaching QueryCacheMetadata.
+
+    Notes/Architectural Intent:
+        Allows queries to express caching intent declaratively on the contract without
+        polluting query handlers with cache store lookups or mutations.
+    """
+    normalized_key_fields = tuple(key_fields) if key_fields is not None else None
+    normalized_tags = tuple(tags)
+
+    def decorator(cls: Q) -> Q:
+        setattr(
+            cls,
+            _QUERY_CACHE_META_ATTR,
+            QueryCacheMetadata(
+                ttl_seconds=ttl_seconds,
+                key_fields=normalized_key_fields,
+                tags=normalized_tags,
+                key_builder=key_builder,
+            ),
+        )
+        return cls
+
+    return decorator
+
+
+def invalidates_cache[C: type](
+    tags: list[str] | tuple[str, ...] = (),
+) -> Callable[[C], C]:
+    """Decorate a Command class to automatically purge tagged cache entries upon success.
+
+    Args:
+        tags: List of cache tags to invalidate (e.g. ['products', 'user:{user_id}']).
+
+    Returns:
+        Decorator function attaching CommandInvalidationMetadata.
+
+    Notes/Architectural Intent:
+        Provides declarative cache invalidation on domain commands without manual
+        cache purging boilerplate inside command handlers.
+    """
+    normalized_tags = tuple(tags)
+
+    def decorator(cls: C) -> C:
+        setattr(
+            cls,
+            _COMMAND_INVALIDATION_META_ATTR,
+            CommandInvalidationMetadata(tags=normalized_tags),
+        )
+        return cls
 
     return decorator

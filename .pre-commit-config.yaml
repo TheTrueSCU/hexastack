@@ -51,13 +51,19 @@ repos:
     hooks:
       - id: api-surface
         name: api surface & __all__ integrity
-        entry: uv run python scripts/check_api_surface.py
+        entry: uv run python scripts/pre-commit/check_api_surface.py
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: test-parity
+        name: test parity (src <-> unit test & __init__.py)
+        entry: uv run python scripts/pre-commit/check_test_parity.py
         language: system
         types: [python]
         pass_filenames: false
       - id: complexipy
         name: complexipy
-        entry: uv run complexipy packages --staged --max-complexity-allowed 25
+        entry: uv run complexipy packages --max-complexity-allowed 25
         language: system
         types: [python]
         pass_filenames: false

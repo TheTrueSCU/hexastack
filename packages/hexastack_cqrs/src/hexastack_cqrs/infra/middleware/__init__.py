@@ -1,3 +1,7 @@
+from hexastack_cqrs.infra.middleware.caching import (
+    CommandCacheInvalidationMiddleware,
+    QueryCachingMiddleware,
+)
 from hexastack_cqrs.infra.middleware.correlation import (
     CorrelationMiddleware,
 )
@@ -8,9 +12,11 @@ from hexastack_cqrs.infra.middleware.timing import TimingMiddleware
 from hexastack_cqrs.infra.middleware.unit_of_work import UnitOfWorkMiddleware
 
 __all__ = [
+    "CommandCacheInvalidationMiddleware",
     "CorrelationMiddleware",
     "GenericMiddleware",
     "LoggingMiddleware",
+    "QueryCachingMiddleware",
     "TenacityRetryMiddleware",
     "TimingMiddleware",
     "UnitOfWorkMiddleware",

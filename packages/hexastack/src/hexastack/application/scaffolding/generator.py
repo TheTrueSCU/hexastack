@@ -98,6 +98,66 @@ class ProjectScaffolder:
         self._write_file(".pre-commit-config.yaml", self._render_precommit())
         self._write_file(".github/workflows/ci.yml", self._render_github_ci())
         self._write_file("README.md", self._render_readme())
+        self._write_file("Dockerfile", self._render_dockerfile())
+        self._write_file(".dockerignore", self._render_dockerignore())
+
+    def _render_dockerfile(self) -> str:
+        return f"""# Multi-stage ultra-fast uv Dockerfile
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+
+WORKDIR /app
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+
+# Install dependencies in isolated layer
+RUN --mount=type=cache,target=/root/.cache/uv \\
+    --mount=type=bind,source=uv.lock,target=uv.lock \\
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \\
+    uv sync --frozen --no-install-project --no-dev
+
+# Copy application source and build final virtualenv
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \\
+    uv sync --frozen --no-dev
+
+# Final rootless production runtime stage
+FROM python:3.13-slim-bookworm AS runtime
+
+WORKDIR /app
+ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
+
+# Create non-root system user
+RUN groupadd -r -g 10001 appuser && \\
+    useradd -r -u 10001 -g appuser -d /app -s /sbin/nologin appuser
+
+# Copy virtualenv and application from builder
+COPY --from=builder --chown=appuser:appuser /app /app
+
+USER appuser:appuser
+EXPOSE 8000 50051
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 \\
+    CMD curl -f http://localhost:8000/health || exit 1
+
+ENTRYPOINT ["{self.config.name}"]
+CMD ["dev"]
+"""
+
+    def _render_dockerignore(self) -> str:
+        return """.git
+.gitignore
+.venv
+.pytest_cache
+.coverage
+.mutmut-cache
+.secrets.baseline
+htmlcov
+dist
+build
+tests
+docs
+__pycache__
+*.pyc
+"""
 
     def _render_pyproject_toml(self) -> str:
         if self.config.template in ("web-api", "enterprise"):

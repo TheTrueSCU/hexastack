@@ -1,0 +1,1 @@
+"""Flags domain unit tests."""

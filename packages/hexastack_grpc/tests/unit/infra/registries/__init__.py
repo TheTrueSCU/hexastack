@@ -1,1 +1,1 @@
-"""Tests for registries in hexastack-grpc."""
+"""gRPC registries unit tests."""

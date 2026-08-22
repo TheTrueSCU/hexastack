@@ -384,3 +384,31 @@ uv run python scripts/inspect_mutants.py --package db --limit 25
 # Inspect surviving mutants matching a specific filename
 uv run python scripts/inspect_mutants.py --file engine.py
 ```
+
+### Deep Testing & Invariant Verification
+
+Hexastack enforces testing rigor across 5 complementary verification layers:
+
+```mermaid
+mindmap
+  root((Hexastack Verification Hierarchy))
+    Deterministic Verification
+      Unit & Integration (pytest + anyio)
+      Golden Master Locks (inline-snapshot)
+      Synthetic Fixtures (faker)
+    Invariant & Property Verification
+      Stateless Invariants (hypothesis properties)
+      State Machine Invariants (hypothesis RuleBasedStateMachine)
+    Negative & Security Fuzzing
+      API Schema Negative Fuzzing (schemathesis asgi)
+      Coverage-Guided Binary Fuzzing (atheris libfuzzer)
+      ReDoS Vulnerability Auditing (hypothesis unicode)
+```
+
+| Engine | Primary Scope | Core Value |
+| :--- | :--- | :--- |
+| **`hypothesis`** | Algebraic properties & state machines | Proves outbox zero-loss & domain invariants under arbitrary concurrency. |
+| **`schemathesis`** | ASGI API contract fuzzing | Guarantees zero unhandled 500 server crashes on malformed HTTP inputs. |
+| **`inline-snapshot`** | JSON & SDL contract locks | Instant, immutable golden-master contract assertions. |
+| **`faker`** | Synthetic test data generation | Eliminates hardcoded magic strings and fragile test coupling. |
+| **`atheris`** | Coverage-guided binary fuzzing | Verifies 100% ReDoS immunity in PII sanitizers and regex engines. |
