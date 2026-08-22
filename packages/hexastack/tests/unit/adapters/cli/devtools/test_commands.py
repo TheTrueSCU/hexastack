@@ -65,3 +65,9 @@ def test_add_demo_commands_registration():
     load_help = runner.invoke(app, ["load", "--help"])
     assert load_help.exit_code == 0
     assert "--users" in load_help.output
+
+    # Test grpc lint & breaking help
+    grpc_help = runner.invoke(app, ["grpc", "--help"])
+    assert grpc_help.exit_code == 0
+    assert "lint" in grpc_help.output
+    assert "breaking" in grpc_help.output

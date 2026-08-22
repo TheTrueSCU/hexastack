@@ -58,3 +58,21 @@ jobs:
 
       - name: Run Property-Based Fuzzing
         run: uv run pytest packages/*/tests/properties
+
+  buf-governance:
+    name: Protobuf Governance (Buf Lint & Breaking)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Buf
+        uses: bufbuild/buf-setup-action@v1.34.0
+
+      - name: Run Buf Lint
+        uses: bufbuild/buf-lint-action@v1
+
+      - name: Run Buf Breaking Change Detection
+        if: github.event_name == 'pull_request'
+        uses: bufbuild/buf-breaking-action@v1
+        with:
+          against: 'https://github.com/${{ github.repository }}.git#branch=main'

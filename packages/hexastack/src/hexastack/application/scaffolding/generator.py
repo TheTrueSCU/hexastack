@@ -226,6 +226,12 @@ modules =
         args: ['--baseline', '.secrets.baseline']
         exclude: ^(\.venv|docs|_build)/
 
+  - repo: https://github.com/bufbuild/buf
+    rev: v1.34.0
+    hooks:
+      - id: buf-lint
+        files: ^.*\.proto$
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:
@@ -549,6 +555,40 @@ from {self.package_name}.domain.commands import CreateItemCommand
 @dataclass
 class CreateItemRpcCommand(CreateItemCommand):
     \"\"\"gRPC Inbound Command contract.\"\"\"
+""",
+            )
+            self._write_file(
+                "buf.yaml",
+                """version: v2
+modules:
+  - path: protos
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE
+""",
+            )
+            self._write_file(
+                f"protos/{self.package_name}/v1/item.proto",
+                f"""syntax = "proto3";
+
+package {self.package_name}.v1;
+
+message CreateItemRequest {{
+  string title = 1;
+  string description = 2;
+}}
+
+message CreateItemResponse {{
+  string id = 1;
+  string title = 2;
+}}
+
+service ItemService {{
+  rpc CreateItem(CreateItemRequest) returns (CreateItemResponse);
+}}
 """,
             )
 

@@ -41,6 +41,12 @@ repos:
     hooks:
       - id: validate-pyproject
 
+  - repo: https://github.com/bufbuild/buf
+    rev: v1.34.0
+    hooks:
+      - id: buf-lint
+        files: ^.*\.proto$
+
   - repo: local
     hooks:
       - id: api-surface

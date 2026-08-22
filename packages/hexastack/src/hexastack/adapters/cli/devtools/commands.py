@@ -439,6 +439,68 @@ def add_grpc_commands(app: typer.Typer) -> None:
     def grpc_list() -> None:
         _exec_grpc_list()
 
+    @grpc_app.command(
+        name="lint",
+        help="Lint Protobuf schemas using Buf (requires buf CLI in PATH).",
+    )
+    def grpc_buf_lint(
+        path: str = typer.Option(
+            ".", "--path", "-p", help="Path to proto files or buf.yaml workspace."
+        ),
+    ) -> None:
+        import shutil
+        import subprocess
+
+        buf_bin = shutil.which("buf")
+        if not buf_bin:
+            typer.echo(
+                "❌ 'buf' CLI not found in PATH. Install from https://buf.build/docs/installation"
+            )
+            raise typer.Exit(code=1)
+
+        typer.echo(f"🔍 Running 'buf lint' against {path}...")
+        res = subprocess.run([buf_bin, "lint", path], check=False)
+        if res.returncode == 0:
+            typer.echo("✅ All Protobuf schemas passed Buf linting.")
+        else:
+            raise typer.Exit(code=res.returncode)
+
+    @grpc_app.command(
+        name="breaking",
+        help="Detect backwards-incompatible Protobuf breaking changes against a git reference.",
+    )
+    def grpc_buf_breaking(
+        against: str = typer.Option(
+            ".git#branch=main",
+            "--against",
+            "-a",
+            help="Git reference or branch to compare against (e.g. .git#branch=main).",
+        ),
+        path: str = typer.Option(
+            ".", "--path", "-p", help="Path to current proto workspace."
+        ),
+    ) -> None:
+        import shutil
+        import subprocess
+
+        buf_bin = shutil.which("buf")
+        if not buf_bin:
+            typer.echo(
+                "❌ 'buf' CLI not found in PATH. Install from https://buf.build/docs/installation"
+            )
+            raise typer.Exit(code=1)
+
+        typer.echo(f"🛡️ Checking Protobuf breaking changes against {against}...")
+        res = subprocess.run(
+            [buf_bin, "breaking", path, "--against", against], check=False
+        )
+        if res.returncode == 0:
+            typer.echo(
+                "✅ No breaking changes detected! Schemas are backwards-compatible."
+            )
+        else:
+            raise typer.Exit(code=res.returncode)
+
 
 def _exec_mcp_config(
     client: str, server_name: str, command_override: str | None

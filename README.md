@@ -284,6 +284,7 @@ Hexastack maintains a comprehensive quality hierarchy to ensure any project—wh
 | **Load & Concurrency Benchmarking** | `locust` | — | — | CLI command: `hexastack load` + default `locustfile.py` |
 | **CPU Flamegraph Profiling** | `py-spy` | — | — | CLI command: `hexastack profile cpu --pid <PID>` |
 | **Memory Allocation Flamegraph** | `memray` | — | — | CLI command: `hexastack profile memory --bin <FILE>` |
+| **Protobuf Linting & Breaking Changes** | `buf` | — | ✅ | Scaffolded `buf.yaml` + CLI: `hexastack grpc lint/breaking` |
 | **End-to-End Browser & UI Testing** | `playwright` | — | ✅ | Pre-configured headless browser fixtures |
 
 ```mermaid
@@ -306,6 +307,7 @@ mindmap
     Data & State Evolution
       ORM Schema Drift (alembic check)
       Database Invariants (hypothesis DB tests)
+      Protobuf Compatibility (buf breaking)
     Behavioral & Functional Correctness
       Async Transports (pytest + anyio)
       Realistic Fixtures (faker)
