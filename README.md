@@ -5,10 +5,29 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type checker: ty](https://img.shields.io/badge/type%20checker-ty-blueviolet.svg)](https://github.com/astral-sh/ty)
+[![PyPI: hexastack](https://img.shields.io/pypi/v/hexastack.svg)](https://pypi.org/project/hexastack/)
+[![Pre-Commit: 26 Hooks](https://img.shields.io/badge/pre--commit-26%20hooks%20passing-brightgreen.svg)](https://github.com/pre-commit/pre-commit)
 
 ---
 
-## 1. Architectural Philosophy
+## 1. Why Hexastack? (Engineering Rigor vs. "AI Slop")
+
+In the era of AI-accelerated programming and vibe-coding, it is trivial to scaffold thousands of lines of code in minutes. Without structural discipline, unconstrained AI generation quickly devolves into **architectural rot**: monolithic files, tangled singletons, database models leaking into HTTP routes, and shallow tests that pass without actually asserting behavior.
+
+Hexastack was designed from the ground up to **turn vibe-coding into an unfair superpower** by embedding automated, hardware-enforced guardrails that dictate the architecture for both humans and autonomous agents:
+
+| Dimension | Typical "AI Slop" / Vibe-Coded Repos | What Hexastack Actually Has |
+|---|---|---|
+| **Architectural Boundaries** | Massive files, circular imports, domain models importing FastAPI `Request` or SQLAlchemy `Session`. | **Hardware-enforced by `import-linter` in pre-commit.** Domain code has **0** framework dependencies. If a domain entity imports Typer, FastAPI, or gRPC, the commit is physically blocked. |
+| **Dependency Injection** | Global variables, singleton decorators with module-level state, tangled lifecycles. | **True dynamic DI with `rodi` & single-pass visitor scanning.** Bootstrapping is explicit, composable, and swappable in unit tests without monkey-patching. |
+| **Test Parity & Veracity** | Mocks asserting that mocks were called; 90% "line coverage" with zero branch assertions; orphaned test suites. | **Tiered testing with 100% test symmetry (`check_test_parity.py`), `ty` static typing, Hypothesis property fuzzing, Schemathesis ASGI contract tests, and `mutmut` mutation kill audits.** |
+| **Multi-Transport Parity** | Manual boilerplate, copy-pasting DTOs, running `protoc` with 14 flags manually. | **Write once, dispatch everywhere.** A single `@command_handler` or `@query_handler` serves FastAPI REST, Typer CLI, Claude/Gemini MCP tools, and binary gRPC over HTTP/2 simultaneously. |
+| **Observability & Caching** | Scattered `print()` calls or manual span passing across async coroutines. | **Ambient Context Engine & Declarative Caching.** Correlation IDs and OpenTelemetry traces propagate ambiently; `@cached_query` provides zero-latency in-memory / Redis cache hits with tag-group invalidation. |
+| **Supply Chain & Production Scaffolding** | Outdated Dockerfiles running as `root`, hardcoded API keys. | **Golden-Path Scaffolding (`hexastack new/init`).** Emits multi-stage `uv` Dockerfiles, rootless execution (`appuser:10001`), `detect-secrets`, and `pip-audit` OSV vulnerability scanning out of the box. |
+
+---
+
+## 2. Architectural Philosophy
 
 Hexastack is engineered around the principles of **Hexagonal Architecture (Ports and Adapters)** and **Command Query Responsibility Segregation (CQRS)** to build decoupled, maintainable, and highly testable Python systems.
 

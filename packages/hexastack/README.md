@@ -134,7 +134,55 @@ pip install "hexastack[all]"
 
 ---
 
-## 4. CLI Diagnostic Commands
+## 4. Project Scaffolding & Archetypes (`hexastack new` & `hexastack init`)
+
+Hexastack includes a production-grade scaffolding engine that creates fully functioning, decoupled microservices adhering strictly to Hexagonal Architecture, complete with pre-configured `.importlinter` boundaries, GitHub Actions CI workflows, multi-stage rootless Dockerfiles, passing test suites, and secret scanning.
+
+### Interactive Scaffolding Wizard (`hexastack init`)
+
+Launch an interactive terminal wizard that guides you through template selection, database drivers, auth, transports, and telemetry:
+
+```bash
+hexastack init
+```
+
+### Direct Archetype Scaffolding (`hexastack new`)
+
+Generate microservices in a single command using one of the pre-built blueprints:
+
+```bash
+# Web API service with FastAPI, SQLite/Postgres, and OpenAPI specs
+hexastack new web-api order-service
+
+# High-throughput gRPC binary RPC microservice with in-process ProtoCompiler and Buf linting
+hexastack new grpc-service payment-gateway
+
+# AI Agent service equipped with Model Context Protocol (MCP) server & tools
+hexastack new mcp-agent customer-assistant
+
+# GraphQL presentation service with Strawberry schema and CQRS bus
+hexastack new graphql-service analytics-service
+
+# Asynchronous event-driven microservice with CloudEvents 1.0 and Transactional Outbox
+hexastack new event-driven billing-worker
+
+# Enterprise grade multi-transport service (FastAPI + gRPC + GraphQL + MCP + Outbox + Auth)
+hexastack new enterprise core-platform
+
+# Ultra-minimal CQRS microservice
+hexastack new minimal lightweight-worker
+```
+
+### Scaffolded Service Anatomy
+
+Every scaffolded service immediately includes:
+1. **Strict Layer Isolation**: `domain/` (0 framework dependencies), `ports/` (abstract protocols), `adapters/driving/` (FastAPI / gRPC / CLI / MCP), `adapters/driven/` (SQLAlchemy / InMemory / Outbox), and `infra/` (bootstrappers & configuration).
+2. **Golden-Path Multi-Stage Dockerfile**: Ultra-fast `uv`-cached builder layer, rootless non-root runtime user (`appuser:10001`), `/health` probe `HEALTHCHECK`, and `.dockerignore`.
+3. **Automated Quality Gates**: `.importlinter` rules enforcing directional purity, pre-commit config with `detect-secrets`, `pip-audit`, and `ruff`, plus a complete `pytest` unit test suite.
+
+---
+
+## 5. CLI Diagnostic Commands
 
 When installed with `hexastack[all]` or `hexastack[cli]`:
 
