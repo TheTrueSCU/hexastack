@@ -48,4 +48,3 @@ docs/assets/demos/*.vtt
 docs/assets/demos/*.cast
 docs/assets/demos/*.tape
 site/
-scripts/publish_remaining_pypi.sh
