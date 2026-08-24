@@ -82,7 +82,7 @@ dev = [
     "rope>=1.14.0",
     "ruff>=0.16.2",
     "schemathesis>=3.39.0",
-    "ty>=0.0.69",
+    "ty>=0.0.73",
     "vulture>=2.16",
     "zensical>=0.0.56",
 ]
