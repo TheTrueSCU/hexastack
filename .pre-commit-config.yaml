@@ -51,13 +51,7 @@ repos:
     hooks:
       - id: api-surface
         name: api surface & __all__ integrity
-        entry: uv run python scripts/pre-commit/check_api_surface.py
-        language: system
-        types: [python]
-        pass_filenames: false
-      - id: test-parity
-        name: test parity (src <-> unit test & __init__.py)
-        entry: uv run python scripts/pre-commit/check_test_parity.py
+        entry: uv run check-api-surface
         language: system
         types: [python]
         pass_filenames: false
@@ -90,6 +84,17 @@ repos:
         language: system
         files: ^packages/.*(\.py|pyproject\.toml)$
         pass_filenames: true
+      - id: pip-audit
+        name: pip-audit (dependency vulnerability scan)
+        entry: uv run pip-audit --local --vulnerability-service osv --timeout 30
+        language: system
+        pass_filenames: false
+      - id: test-parity
+        name: test parity (src <-> unit test & __init__.py)
+        entry: uv run check-test-parity
+        language: system
+        types: [python]
+        pass_filenames: false
       - id: ty-check
         name: ty check
         entry: uv run ty check packages
@@ -101,10 +106,4 @@ repos:
         entry: uv run vulture
         language: system
         files: ^packages/.*\.py$
-        pass_filenames: false
-
-      - id: pip-audit
-        name: pip-audit (dependency vulnerability scan)
-        entry: uv run pip-audit --local --vulnerability-service osv --timeout 30
-        language: system
         pass_filenames: false

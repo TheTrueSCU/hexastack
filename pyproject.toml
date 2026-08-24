@@ -9,6 +9,9 @@ dependencies = [
 
 [project.scripts]
 alphabetizer = "scripts.rope.alphabetizer:main"
+check-api-surface = "scripts.pre_commit.check_api_surface:main"
+check-test-parity = "scripts.pre_commit.check_test_parity:main"
+format-all-statements = "scripts.pre_commit.format_all_statements:main"
 import-linter-generate = "scripts.import_linter.generate:main"
 import-linter-run = "scripts.import_linter.run:main"
 inline-snapshot-update = "scripts.inline_snapshot.update:main"
