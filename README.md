@@ -1,3 +1,5 @@
+![Hexastack Logo](docs/assets/static/logos/hexastack.png)
+
 # Hexastack
 
 > High-performance, modular Hexagonal Architecture & CQRS Framework for Python 3.13+.
@@ -168,6 +170,8 @@ graph TD
 | [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
 | [`hexastack-mcp`](file:///home/rjdw/Projects/hexastack/packages/hexastack_mcp) | Model Context Protocol adapter, AI agent CQRS tools, resources, prompts, and SSE transport | `pip install hexastack-mcp[fastapi]` | `hexastack[mcp]` |
 | [`hexastack-otel`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel) | OpenTelemetry distributed tracing, OTLP gRPC/HTTP export, and CQRS telemetry middleware | `pip install hexastack-otel` | `hexastack[otel]` |
+
+![Hexastack Packages](docs/assets/static/logos/hexastack_packages.png)
 
 ---
 

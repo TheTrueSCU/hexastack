@@ -1,3 +1,5 @@
+![hexastack-events](../../docs/assets/static/logos/packages/hexastack-events.png)
+
 # hexastack-events
 
 **CNCF CloudEvents 1.0 serialization, Transactional Outbox pattern, and distributed event streaming for Hexastack.**

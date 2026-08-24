@@ -1,3 +1,5 @@
+![hexastack](../../docs/assets/static/logos/packages/hexastack.png)
+
 # hexastack
 
 > The unified distribution package and diagnostic CLI for the Hexastack framework.

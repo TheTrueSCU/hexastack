@@ -1,3 +1,5 @@
+![hexastack-auth](../../docs/assets/static/logos/packages/hexastack-auth.png)
+
 # Hexastack Auth
 
 **`hexastack-auth`** is the security, identity, and authorization engine for the Hexastack framework. It provides protocol-agnostic identity primitives, JWT token creation/verification, PBKDF2 password hashing, and declarative `@authorize` access control across CQRS pipelines (RBAC, OPA Policy-as-Code, OpenFGA ReBAC, and SPIFFE Workload Identity).

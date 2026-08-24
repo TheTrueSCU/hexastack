@@ -1,3 +1,5 @@
+![hexastack-grpc](../../docs/assets/static/logos/packages/hexastack-grpc.png)
+
 # hexastack-grpc
 
 > High-performance gRPC presentation adapter, interceptors, and CQRS service integration for Hexastack.

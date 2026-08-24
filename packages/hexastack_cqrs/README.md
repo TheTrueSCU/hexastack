@@ -1,3 +1,5 @@
+![hexastack-cqrs](../../docs/assets/static/logos/packages/hexastack-cqrs.png)
+
 # hexastack-cqrs
 
 > Command Query Responsibility Segregation (CQRS) buses, execution pipelines, and middleware for Hexastack.

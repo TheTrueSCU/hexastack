@@ -1,3 +1,5 @@
+![hexastack-mcp](../../docs/assets/static/logos/packages/hexastack-mcp.png)
+
 # hexastack-mcp
 
 > Model Context Protocol (MCP) adapter and AI agent tool integration for Hexastack.

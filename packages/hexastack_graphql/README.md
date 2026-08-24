@@ -1,3 +1,5 @@
+![hexastack-graphql](../../docs/assets/static/logos/packages/hexastack-graphql.png)
+
 # hexastack-graphql
 
 > Strawberry GraphQL presentation adapter and CQRS integration for Hexastack.

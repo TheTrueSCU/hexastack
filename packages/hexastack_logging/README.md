@@ -1,3 +1,5 @@
+![hexastack-logging](../../docs/assets/static/logos/packages/hexastack-logging.png)
+
 # hexastack-logging
 
 > Structured logging, security sanitization, and adapter integrations (Loguru, Rich, Structlog) for Hexastack.

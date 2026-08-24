@@ -1,3 +1,5 @@
+![hexastack-core](../../docs/assets/static/logos/packages/hexastack-core.png)
+
 # hexastack-core
 
 > The foundational kernel of Hexastack: dependency injection, abstract ports, domain abstractions, configuration registry, and the modular bootstrap lifecycle.

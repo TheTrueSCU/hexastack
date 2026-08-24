@@ -1,3 +1,5 @@
+![hexastack-otel](../../docs/assets/static/logos/packages/hexastack-otel.png)
+
 # hexastack-otel
 
 **Vendor-agnostic OpenTelemetry distributed tracing and CQRS telemetry middleware for Hexastack.**

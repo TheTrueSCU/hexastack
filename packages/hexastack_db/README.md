@@ -1,3 +1,5 @@
+![hexastack-db](../../docs/assets/static/logos/packages/hexastack-db.png)
+
 # hexastack-db
 
 > SQLAlchemy 2.0+ persistence layer, generic repositories, Unit of Work, declarative mixins, and Alembic migrations for Hexastack.

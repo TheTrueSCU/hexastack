@@ -1,3 +1,5 @@
+![hexastack-cli](../../docs/assets/static/logos/packages/hexastack-cli.png)
+
 # hexastack-cli
 
 > Typer and Rich presentation adapter for Hexastack: nested commands, aliases, piped outputs, and CQRS dispatching.

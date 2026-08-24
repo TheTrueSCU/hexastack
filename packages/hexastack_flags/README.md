@@ -1,3 +1,5 @@
+![hexastack-flags](../../docs/assets/static/logos/packages/hexastack-flags.png)
+
 # hexastack-flags
 
 **CNCF OpenFeature provider adapters and enterprise feature flagging for Hexastack.**

@@ -1,3 +1,5 @@
+![hexastack-fastapi](../../docs/assets/static/logos/packages/hexastack-fastapi.png)
+
 # hexastack-fastapi
 
 > FastAPI presentation adapter for Hexastack: automatic CQRS routing, database session middleware, exception mapping, and health check endpoints.

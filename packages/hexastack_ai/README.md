@@ -1,3 +1,5 @@
+![hexastack-ai](../../docs/assets/static/logos/packages/hexastack-ai.png)
+
 # hexastack-ai
 
 AI engine, LLM provider integration (LiteLLM, Instructor, PydanticAI), and CQRS agent tool reflection for the **Hexastack** hexagonal architecture framework.
