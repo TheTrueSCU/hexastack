@@ -1,4 +1,4 @@
-![hexastack-auth](../../docs/assets/static/logos/packages/hexastack-auth.png)
+![hexastack-auth](../../docs/assets/static/logos/packages/hexastack_auth.png)
 
 # Hexastack Auth
 

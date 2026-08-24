@@ -1,4 +1,4 @@
-![hexastack-ai](../../docs/assets/static/logos/packages/hexastack-ai.png)
+![hexastack-ai](../../docs/assets/static/logos/packages/hexastack_ai.png)
 
 # hexastack-ai
 

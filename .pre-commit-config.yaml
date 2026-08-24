@@ -49,9 +49,9 @@ repos:
 
   - repo: local
     hooks:
-      - id: api-surface
-        name: api surface & __all__ integrity
-        entry: uv run check-api-surface
+      - id: all-statements
+        name: __all__ integrity (check-all-statements)
+        entry: uv run check-all-statements
         language: system
         types: [python]
         pass_filenames: false

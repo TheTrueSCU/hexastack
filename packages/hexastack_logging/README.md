@@ -1,4 +1,4 @@
-![hexastack-logging](../../docs/assets/static/logos/packages/hexastack-logging.png)
+![hexastack-logging](../../docs/assets/static/logos/packages/hexastack_logging.png)
 
 # hexastack-logging
 

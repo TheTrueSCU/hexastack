@@ -1,4 +1,4 @@
-![hexastack-cqrs](../../docs/assets/static/logos/packages/hexastack-cqrs.png)
+![hexastack-cqrs](../../docs/assets/static/logos/packages/hexastack_cqrs.png)
 
 # hexastack-cqrs
 

@@ -35,6 +35,15 @@ jobs:
       - name: Run Unit & Integration Tests
         run: uv run pytest packages/ --ignore-glob="packages/*/tests/properties/*"
 
+      - name: Install Graphviz
+        run: sudo apt-get install -y graphviz
+
+      - name: Check pydeps diagrams are up to date
+        run: |
+          uv run pydeps-generate
+          git diff --exit-code docs/assets/pydeps/ || \
+            (echo "::error::Architecture diagrams are stale. Run 'pydeps-generate' locally and commit the updated SVGs." && exit 1)
+
   hypothesis:
     name: Property-Based Fuzzing
     needs: check

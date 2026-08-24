@@ -1,4 +1,4 @@
-![hexastack-graphql](../../docs/assets/static/logos/packages/hexastack-graphql.png)
+![hexastack-graphql](../../docs/assets/static/logos/packages/hexastack_graphql.png)
 
 # hexastack-graphql
 

@@ -1,4 +1,4 @@
-![hexastack-core](../../docs/assets/static/logos/packages/hexastack-core.png)
+![hexastack-core](../../docs/assets/static/logos/packages/hexastack_core.png)
 
 # hexastack-core
 

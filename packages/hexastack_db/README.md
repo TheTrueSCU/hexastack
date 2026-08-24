@@ -1,4 +1,4 @@
-![hexastack-db](../../docs/assets/static/logos/packages/hexastack-db.png)
+![hexastack-db](../../docs/assets/static/logos/packages/hexastack_db.png)
 
 # hexastack-db
 

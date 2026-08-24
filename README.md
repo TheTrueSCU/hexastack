@@ -293,7 +293,7 @@ Hexastack maintains a comprehensive quality hierarchy to ensure any project—wh
 | **Strict Static Type Checking** | `ty` / `mypy` | ✅ | ✅ | Pre-configured in scaffolded `[dependency-groups]` |
 | **Hexagonal Boundary Enforcement** | `import-linter` | ✅ | ✅ | Auto-generated `.importlinter` contract rules |
 | **Architecture-as-Code Invariants** | `pytest-archon` | — | ✅ | Abstract port checks & domain purity rules |
-| **Public API Surface Integrity** | AST Visitor | ✅ | ✅ | `scripts/check_api_surface.py` port validation |
+| **Public API Surface Integrity** | AST Visitor | ✅ | ✅ | `scripts/pre_commit/all_statements.py` (`check-all-statements` / `fix-all-statements`) |
 | **Secret & Key Leak Prevention** | `detect-secrets` | ✅ | ✅ | Automated `.secrets.baseline` in pre-commit |
 | **Dependency Vulnerability Audit** | `pip-audit` | ✅ | ✅ | Scaffolded `pip-audit --local` pre-commit gate |
 | **Database Schema Drift Check** | `alembic check` | ✅ | ✅ | CLI command: `hexastack db check` |

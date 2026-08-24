@@ -1,4 +1,4 @@
-![hexastack-flags](../../docs/assets/static/logos/packages/hexastack-flags.png)
+![hexastack-flags](../../docs/assets/static/logos/packages/hexastack_flags.png)
 
 # hexastack-flags
 

@@ -1,4 +1,4 @@
-![hexastack-grpc](../../docs/assets/static/logos/packages/hexastack-grpc.png)
+![hexastack-grpc](../../docs/assets/static/logos/packages/hexastack_grpc.png)
 
 # hexastack-grpc
 

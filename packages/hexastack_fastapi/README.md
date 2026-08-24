@@ -1,4 +1,4 @@
-![hexastack-fastapi](../../docs/assets/static/logos/packages/hexastack-fastapi.png)
+![hexastack-fastapi](../../docs/assets/static/logos/packages/hexastack_fastapi.png)
 
 # hexastack-fastapi
 

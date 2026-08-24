@@ -1,4 +1,4 @@
-![hexastack-events](../../docs/assets/static/logos/packages/hexastack-events.png)
+![hexastack-events](../../docs/assets/static/logos/packages/hexastack_events.png)
 
 # hexastack-events
 

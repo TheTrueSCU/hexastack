@@ -1,4 +1,4 @@
-![hexastack-otel](../../docs/assets/static/logos/packages/hexastack-otel.png)
+![hexastack-otel](../../docs/assets/static/logos/packages/hexastack_otel.png)
 
 # hexastack-otel
 

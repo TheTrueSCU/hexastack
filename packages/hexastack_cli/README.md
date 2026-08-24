@@ -1,4 +1,4 @@
-![hexastack-cli](../../docs/assets/static/logos/packages/hexastack-cli.png)
+![hexastack-cli](../../docs/assets/static/logos/packages/hexastack_cli.png)
 
 # hexastack-cli
 

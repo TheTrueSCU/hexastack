@@ -1,4 +1,4 @@
-![hexastack-mcp](../../docs/assets/static/logos/packages/hexastack-mcp.png)
+![hexastack-mcp](../../docs/assets/static/logos/packages/hexastack_mcp.png)
 
 # hexastack-mcp
 
