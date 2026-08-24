@@ -3,6 +3,7 @@ name = "hexastack-fastapi"
 version = "0.0.0"
 description = "FastAPI presentation adapter for Hexastack"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]

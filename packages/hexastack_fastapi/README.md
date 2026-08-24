@@ -5,6 +5,7 @@
 > FastAPI presentation adapter for Hexastack: automatic CQRS routing, database session middleware, exception mapping, and health check endpoints.
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_fastapi)](https://codecov.io/github/TheTrueSCU/hexastack)
 
 ---
 

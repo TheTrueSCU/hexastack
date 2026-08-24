@@ -33,7 +33,14 @@ jobs:
         run: uv run pre-commit run --all-files
 
       - name: Run Unit & Integration Tests
-        run: uv run pytest packages/ --ignore-glob="packages/*/tests/properties/*"
+        run: uv run pytest packages/ --ignore-glob="packages/*/tests/properties/*" --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: true
 
       - name: Install Graphviz
         run: sudo apt-get install -y graphviz

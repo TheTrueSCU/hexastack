@@ -3,6 +3,7 @@ name = "hexastack-cli"
 version = "0.0.0"
 description = "Hexastack CLI presentation adapter with Typer and Rich"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]

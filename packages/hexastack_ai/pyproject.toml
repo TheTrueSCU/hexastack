@@ -3,6 +3,7 @@ name = "hexastack-ai"
 version = "0.0.0"
 description = "AI engine, LLM provider integration (LiteLLM, Instructor, PydanticAI), and CQRS agent reflection for Hexastack"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]

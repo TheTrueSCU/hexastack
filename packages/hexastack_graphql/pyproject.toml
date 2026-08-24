@@ -3,6 +3,7 @@ name = "hexastack-graphql"
 version = "0.0.0"
 description = "Strawberry GraphQL presentation adapter and CQRS integration for Hexastack"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]

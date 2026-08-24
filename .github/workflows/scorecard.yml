@@ -1,0 +1,49 @@
+name: OpenSSF Scorecard
+
+on:
+  # Run on every push to main to keep the score current
+  push:
+    branches: [main]
+  # Run on PRs so contributors can see impact of their changes
+  pull_request:
+    branches: [main]
+  # Weekly scheduled run catches upstream scoring changes
+  schedule:
+    - cron: "30 4 * * 1"  # 04:30 UTC every Monday
+
+# Scorecard needs read access to the repo and write access to the Security tab
+permissions: read-all
+
+jobs:
+  scorecard:
+    name: OpenSSF Scorecard Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to upload SARIF results to the GitHub Security tab
+      security-events: write
+      # Required for the scorecard action to read the repo
+      contents: read
+      # Required for private repos; harmless on public repos
+      actions: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run OpenSSF Scorecard
+        uses: ossf/scorecard-action@v2.4.0
+        with:
+          results_file: scorecard-results.sarif
+          results_format: sarif
+          # Publish results to the public Scorecard API so the badge works.
+          # Set to 'false' for private repos until you're ready to go public.
+          publish_results: true
+
+      - name: Upload SARIF results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: scorecard-results.sarif
+          category: openssf-scorecard

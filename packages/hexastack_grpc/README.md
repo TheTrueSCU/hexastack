@@ -5,6 +5,7 @@
 > High-performance gRPC presentation adapter, interceptors, and CQRS service integration for Hexastack.
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_grpc)](https://codecov.io/github/TheTrueSCU/hexastack)
 
 ---
 

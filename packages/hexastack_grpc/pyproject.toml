@@ -3,6 +3,7 @@ name = "hexastack-grpc"
 version = "0.0.0"
 description = "High-performance gRPC presentation adapter and interceptors for Hexastack"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]

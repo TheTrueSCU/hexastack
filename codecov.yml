@@ -1,0 +1,110 @@
+# Codecov configuration for the Hexastack monorepo.
+# https://docs.codecov.com/docs/codecovyml-reference
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 1%       # allow up to 1% drop without failing
+    patch:
+      default:
+        target: 85%         # new code on PRs must be at least 85% covered
+
+comment:
+  layout: "reach,diff,flags,components,tree"
+  behavior: default
+  require_changes: true     # only comment when coverage changes
+
+# Components split the single coverage upload by path, giving
+# per-package breakdown in the Codecov UI and per-component badge URLs.
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: 90%
+  individual_components:
+    - component_id: hexastack
+      name: hexastack
+      paths:
+        - packages/hexastack/src/**
+
+    - component_id: hexastack_ai
+      name: hexastack-ai
+      paths:
+        - packages/hexastack_ai/src/**
+
+    - component_id: hexastack_auth
+      name: hexastack-auth
+      paths:
+        - packages/hexastack_auth/src/**
+
+    - component_id: hexastack_cli
+      name: hexastack-cli
+      paths:
+        - packages/hexastack_cli/src/**
+
+    - component_id: hexastack_core
+      name: hexastack-core
+      paths:
+        - packages/hexastack_core/src/**
+
+    - component_id: hexastack_cqrs
+      name: hexastack-cqrs
+      paths:
+        - packages/hexastack_cqrs/src/**
+
+    - component_id: hexastack_db
+      name: hexastack-db
+      paths:
+        - packages/hexastack_db/src/**
+
+    - component_id: hexastack_events
+      name: hexastack-events
+      paths:
+        - packages/hexastack_events/src/**
+
+    - component_id: hexastack_fastapi
+      name: hexastack-fastapi
+      paths:
+        - packages/hexastack_fastapi/src/**
+
+    - component_id: hexastack_flags
+      name: hexastack-flags
+      paths:
+        - packages/hexastack_flags/src/**
+
+    - component_id: hexastack_graphql
+      name: hexastack-graphql
+      paths:
+        - packages/hexastack_graphql/src/**
+
+    - component_id: hexastack_grpc
+      name: hexastack-grpc
+      paths:
+        - packages/hexastack_grpc/src/**
+
+    - component_id: hexastack_logging
+      name: hexastack-logging
+      paths:
+        - packages/hexastack_logging/src/**
+
+    - component_id: hexastack_mcp
+      name: hexastack-mcp
+      paths:
+        - packages/hexastack_mcp/src/**
+
+    - component_id: hexastack_otel
+      name: hexastack-otel
+      paths:
+        - packages/hexastack_otel/src/**
+
+ignore:
+  - "packages/*/tests/**"
+  - "packages/*/testing/**"
+  - "scripts/**"
+  - "docs/**"

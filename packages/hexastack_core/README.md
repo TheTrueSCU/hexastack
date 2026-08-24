@@ -5,6 +5,7 @@
 > The foundational kernel of Hexastack: dependency injection, abstract ports, domain abstractions, configuration registry, and the modular bootstrap lifecycle.
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_core)](https://codecov.io/github/TheTrueSCU/hexastack)
 
 ---
 

@@ -5,6 +5,7 @@
 > Structured logging, security sanitization, and adapter integrations (Loguru, Rich, Structlog) for Hexastack.
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_logging)](https://codecov.io/github/TheTrueSCU/hexastack)
 
 ---
 

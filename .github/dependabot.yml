@@ -1,0 +1,221 @@
+# Dependabot configuration for the Hexastack monorepo.
+#
+# Notes:
+#   - uv workspaces are not yet natively supported; the `pip` ecosystem is used
+#     and reads each package's pyproject.toml directly.
+#   - Each workspace package gets its own entry so per-package PRs are scoped
+#     to that package's dependency graph.
+#   - Minor and patch updates are grouped per-directory to reduce PR noise.
+#     Major version bumps always get their own PR (not auto-merged).
+#   - GitHub Actions updates are separate from Python dependency updates.
+
+version: 2
+
+updates:
+
+  # ── GitHub Actions ──────────────────────────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, github-actions]
+
+  # ── Python: workspace root ───────────────────────────────────────────────────
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      workspace-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python]
+
+  # ── Python: packages/* ───────────────────────────────────────────────────────
+  - package-ecosystem: pip
+    directory: /packages/hexastack
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_ai
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-ai-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-ai]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_auth
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-auth-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-auth]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_cli
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-cli-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-cli]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_core
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-core-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-core]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_cqrs
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-cqrs-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-cqrs]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_db
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-db-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-db]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_events
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-events-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-events]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_fastapi
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-fastapi-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-fastapi]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_flags
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-flags-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-flags]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_graphql
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-graphql-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-graphql]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_grpc
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-grpc-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-grpc]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_logging
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-logging-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-logging]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_mcp
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-mcp-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-mcp]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_otel
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-otel-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-otel]

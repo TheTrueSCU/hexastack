@@ -5,6 +5,7 @@
 > Typer and Rich presentation adapter for Hexastack: nested commands, aliases, piped outputs, and CQRS dispatching.
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_cli)](https://codecov.io/github/TheTrueSCU/hexastack)
 
 ---
 

@@ -3,6 +3,7 @@ name = "hexastack-flags"
 version = "0.0.0"
 description = "CNCF OpenFeature provider adapters and enterprise feature flagging for Hexastack"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]

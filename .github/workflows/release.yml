@@ -92,3 +92,53 @@ jobs:
         with:
           packages-dir: dist/
           skip-existing: true
+          attestations: true
+
+  sbom:
+    name: Generate & Attach SBOM
+    needs: [release, publish]
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # required to upload assets to the GitHub release
+
+    steps:
+      - name: Checkout Tagged Release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --all-packages --all-extras --all-groups
+
+      - name: Generate SBOM (SPDX JSON)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: hexastack-${{ needs.release.outputs.version }}-sbom.spdx.json
+
+      - name: Generate SBOM (CycloneDX JSON)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: hexastack-${{ needs.release.outputs.version }}-sbom.cyclonedx.json
+
+      - name: Attach SBOMs to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release.outputs.tag }}
+          files: |
+            hexastack-${{ needs.release.outputs.version }}-sbom.spdx.json
+            hexastack-${{ needs.release.outputs.version }}-sbom.cyclonedx.json

@@ -3,6 +3,7 @@ name = "hexastack-mcp"
 version = "0.0.0"
 description = "Model Context Protocol (MCP) adapter and AI agent tool integration for Hexastack"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]
