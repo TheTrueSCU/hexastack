@@ -23,7 +23,7 @@ jobs:
       tag: ${{ steps.psr.outputs.tag }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -54,7 +54,7 @@ jobs:
       url: https://pypi.org/p/hexastack
     steps:
       - name: Checkout Tagged Release
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.release.outputs.tag }}
 
@@ -104,7 +104,7 @@ jobs:
 
     steps:
       - name: Checkout Tagged Release
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.release.outputs.tag }}
 
