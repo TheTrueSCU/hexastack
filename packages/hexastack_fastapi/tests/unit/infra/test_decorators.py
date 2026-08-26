@@ -109,3 +109,23 @@ def test_feature_flag_route_decorator():
     flags.set_flag("flags.custom_route", False)
     with pytest.raises(HTTPException):
         sync_route(request=req)
+
+    # 4. Fallback when request is None (uses ConfigFeatureFlagAdapter)
+    @feature_flag_route("flags.missing_flag", default=True)
+    async def async_no_req():
+        return "default ok"
+
+    import asyncio
+
+    assert asyncio.run(async_no_req()) == "default ok"
+
+    @feature_flag_route(
+        "flags.missing_flag", default=False, status_code=403, detail="Forbidden feature"
+    )
+    def sync_no_req():
+        return "forbidden"
+
+    with pytest.raises(HTTPException) as exc_info:
+        sync_no_req()
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Forbidden feature"

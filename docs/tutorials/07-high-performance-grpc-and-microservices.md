@@ -41,6 +41,7 @@ You can colocate the Protobuf IDL string directly alongside your CQRS dataclass:
 from dataclasses import dataclass
 from hexastack_grpc.infra.decorators import proto_schema
 
+
 @proto_schema(
     schema="""
     syntax = "proto3";
@@ -78,6 +79,7 @@ If your organization maintains shared `.proto` repositories:
 
 ```python
 from hexastack_grpc.infra.decorators import proto_file
+
 
 @proto_file(
     file_path="protos/todo/v1/todo.proto",

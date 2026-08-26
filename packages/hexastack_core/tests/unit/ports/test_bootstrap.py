@@ -4,4 +4,5 @@ from hexastack_core.ports.bootstrap import BootstrapperPort
 
 
 def test_bootstrapper_port_interface() -> None:
-    assert hasattr(BootstrapperPort, "bootstrap")
+    assert hasattr(BootstrapperPort, "configure")
+    assert hasattr(BootstrapperPort, "register_config")

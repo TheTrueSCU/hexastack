@@ -28,7 +28,7 @@ _EXEMPT_TEST_FILES: set[str] = {
 
 
 def check_test_directories_inits(root_dir: Path) -> list[str]:
-    """Ensure every directory under packages/*/tests contains __init__.py."""
+    """Ensure every sub-directory under packages/*/tests contains __init__.py."""
     errors: list[str] = []
     packages_dir = root_dir / "packages"
     if not packages_dir.exists():
@@ -43,6 +43,9 @@ def check_test_directories_inits(root_dir: Path) -> list[str]:
 
         for dirpath, _, _ in os.walk(tests_dir):
             if "__pycache__" in dirpath or ".pytest_cache" in dirpath:
+                continue
+            # Skip the root tests/ directory itself to avoid pytest importlib conftest collision
+            if Path(dirpath) == tests_dir:
                 continue
             init_file = Path(dirpath) / "__init__.py"
             if not init_file.exists():

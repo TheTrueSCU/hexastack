@@ -1,3 +1,5 @@
+from inline_snapshot import snapshot
+
 from hexastack_graphql.infra.decorators import (
     get_schema_registry,
     graphql_mutation,
@@ -99,3 +101,16 @@ def test_graphql_decorators():
 
     schema = registry.build_schema()
     assert schema is not None
+    assert str(schema).strip() == snapshot(
+        """
+type Mutation {
+  \"\"\"Ping mutation endpoint\"\"\"
+  pingMutation: Boolean!
+}
+
+type Query {
+  \"\"\"Ping query endpoint\"\"\"
+  pingQuery: String!
+}
+""".strip()
+    )
