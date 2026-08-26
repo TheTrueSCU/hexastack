@@ -169,3 +169,37 @@ def test_sqlalchemy_outbox_storage_save_and_fetch(db_session_and_factory):
     assert pending[0].correlation_id == "corr-sql-10"
     assert pending[0].tenant_id == "tenant-acme"
     assert pending[0].status == OutboxStatus.PENDING
+
+
+def test_sqlalchemy_outbox_storage_max_retry_dead_letter(db_session_and_factory):
+    """Verify records with retry_count >= 5 are treated as dead-letters and excluded from pending."""
+    session, _ = db_session_and_factory
+    storage = SqlAlchemyOutboxStorage(session_factory=session)
+
+    # 1. Normal failed record under threshold (retry_count = 4)
+    normal_failed = OutboxRecord(
+        id="rec-retry-4",
+        event_type="OrderRetryEvent",
+        payload={"attempt": 4},
+        status=OutboxStatus.FAILED,
+        retry_count=4,
+    )
+    # 2. Poison pill record at threshold (retry_count = 5)
+    dead_letter = OutboxRecord(
+        id="rec-dead-letter",
+        event_type="PoisonEvent",
+        payload={"bad": "data"},
+        status=OutboxStatus.FAILED,
+        retry_count=5,
+    )
+    storage.save_all([normal_failed, dead_letter])
+
+    pending = storage.fetch_pending(limit=10)
+    pending_ids = [p.id for p in pending]
+    assert "rec-retry-4" in pending_ids
+    assert "rec-dead-letter" not in pending_ids
+
+    # 3. Fail rec-retry-4 one more time -> retry_count becomes 5 -> excluded
+    storage.mark_failed("rec-retry-4", "Final fatal error")
+    pending_after = storage.fetch_pending(limit=10)
+    assert len(pending_after) == 0
