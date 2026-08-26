@@ -106,6 +106,7 @@ class Priority(StrEnum):
 
 class TodoDomainError(Exception):
     """Base domain exception."""
+
     pass
 
 
@@ -287,7 +288,9 @@ def handle_create_todo(cmd: CreateTodoCommand, repo: TodoRepositoryPort) -> Todo
     return _to_dto(item)
 
 
-def handle_complete_todo(cmd: CompleteTodoCommand, repo: TodoRepositoryPort) -> TodoItemDTO:
+def handle_complete_todo(
+    cmd: CompleteTodoCommand, repo: TodoRepositoryPort
+) -> TodoItemDTO:
     item = repo.get_by_id(cmd.todo_id)
     if item is None:
         raise TodoNotFoundError(cmd.todo_id)
@@ -303,7 +306,9 @@ def handle_delete_todo(cmd: DeleteTodoCommand, repo: TodoRepositoryPort) -> bool
     return True
 
 
-def handle_list_todos(query: ListTodosQuery, repo: TodoRepositoryPort) -> list[TodoItemDTO]:
+def handle_list_todos(
+    query: ListTodosQuery, repo: TodoRepositoryPort
+) -> list[TodoItemDTO]:
     return [_to_dto(i) for i in repo.list_all(completed=query.completed_only)]
 
 
@@ -333,9 +338,15 @@ from todo_app.domain.commands import (
     GetTodoQuery,
 )
 
-api_command("/todos", method="POST", status_code=201, summary="Create task")(CreateTodoCommand)
-api_command("/todos/{todo_id}/complete", method="POST", summary="Complete task")(CompleteTodoCommand)
-api_command("/todos/{todo_id}", method="DELETE", summary="Delete task")(DeleteTodoCommand)
+api_command("/todos", method="POST", status_code=201, summary="Create task")(
+    CreateTodoCommand
+)
+api_command("/todos/{todo_id}/complete", method="POST", summary="Complete task")(
+    CompleteTodoCommand
+)
+api_command("/todos/{todo_id}", method="DELETE", summary="Delete task")(
+    DeleteTodoCommand
+)
 api_query("/todos", summary="List tasks")(ListTodosQuery)
 api_query("/todos/{todo_id}", summary="Get task details")(GetTodoQuery)
 ```

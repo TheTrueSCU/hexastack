@@ -87,8 +87,10 @@ dev = [
     "zensical>=0.0.56",
 ]
 
-[tool.complexipy]
-max_complexity_allowed = 25
+[tool.ty.environment]
+extra-paths = [
+    "examples/todo-app/src",
+]
 
 [tool.coverage.run]
 branch = false
