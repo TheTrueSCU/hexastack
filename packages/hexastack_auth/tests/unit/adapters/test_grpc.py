@@ -45,3 +45,44 @@ def test_grpc_auth_interceptor_valid_token():
         assert user_ctx is not None
         assert user_ctx.user_id == "alice"
         assert "admin" in user_ctx.roles
+
+
+def test_grpc_auth_interceptor_required_missing_credentials():
+    """Verify gRPC interceptor returns UNAUTHENTICATED when credentials are required but absent."""
+    import grpc
+
+    interceptor = AuthServerInterceptor(required=True)
+    continuation = MagicMock()
+    details = MockHandlerCallDetails(metadata=())
+
+    handler = interceptor.intercept_service(continuation, details)
+    assert handler is not None
+
+    mock_context = MagicMock()
+    handler.unary_unary(MagicMock(), mock_context)
+    mock_context.abort.assert_called_once_with(
+        grpc.StatusCode.UNAUTHENTICATED,
+        "Authentication credentials are required",
+    )
+
+
+def test_grpc_auth_interceptor_required_invalid_token():
+    """Verify gRPC interceptor returns UNAUTHENTICATED on invalid token."""
+    import grpc
+
+    sec_mock = MagicMock()
+    sec_mock.verify_token.side_effect = ValueError("Invalid signature")
+
+    interceptor = AuthServerInterceptor(security_port=sec_mock, required=True)
+    continuation = MagicMock()
+    details = MockHandlerCallDetails(metadata=(("authorization", "Bearer bad.token"),))
+
+    handler = interceptor.intercept_service(continuation, details)
+    assert handler is not None
+
+    mock_context = MagicMock()
+    handler.unary_unary(MagicMock(), mock_context)
+    mock_context.abort.assert_called_once_with(
+        grpc.StatusCode.UNAUTHENTICATED,
+        "Invalid or expired security token",
+    )

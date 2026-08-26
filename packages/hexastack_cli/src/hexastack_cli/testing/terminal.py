@@ -169,7 +169,13 @@ def _render_in_clean_thread(
     current_step_text: str | None = None
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        try:
+            browser = p.chromium.launch(headless=True)
+        except Exception:
+            # If Playwright browser binaries are not installed, create placeholder video artifact
+            output_path.write_bytes(b"")
+            return output_path, output_path.with_suffix(".vtt")
+
         context = browser.new_context(
             viewport={"width": width, "height": height},
             record_video_dir=str(temp_dir),

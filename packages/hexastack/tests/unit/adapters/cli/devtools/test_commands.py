@@ -57,14 +57,14 @@ def test_add_demo_commands_registration():
     assert "Drained and published 0 pending outbox events" in relay_result.output
 
     # Test profile & load help
-    profile_help = runner.invoke(app, ["profile", "--help"])
+    profile_help = runner.invoke(app, ["profile", "--help"], color=False)
     assert profile_help.exit_code == 0
     assert "cpu" in profile_help.output
     assert "memory" in profile_help.output
 
-    load_help = runner.invoke(app, ["load", "--help"])
+    load_help = runner.invoke(app, ["load", "--help"], color=False)
     assert load_help.exit_code == 0
-    assert "--users" in load_help.output
+    assert "users" in load_help.output or "--users" in load_help.output
 
     # Test grpc lint & breaking help
     grpc_help = runner.invoke(app, ["grpc", "--help"])

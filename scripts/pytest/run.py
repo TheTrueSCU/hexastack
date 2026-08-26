@@ -91,6 +91,16 @@ def build_pytest_args(
     if not test_paths:
         return []
 
+    # Scope coverage to target packages if a subset was requested
+    if target_pkgs is not None:
+        cov_flags = " ".join(f"--cov={pkg_dir / 'src'}" for pkg_dir in target_dirs)
+        pytest_args.extend(
+            [
+                "-o",
+                f"addopts=-n auto --import-mode=importlib --ignore=tests/e2e {cov_flags} --cov-fail-under=90 --cov-report=term-missing:skip-covered",
+            ]
+        )
+
     pytest_args.extend(test_paths)
     pytest_args.extend(extra_pytest_args)
     return pytest_args

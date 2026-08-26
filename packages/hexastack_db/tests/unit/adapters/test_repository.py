@@ -103,14 +103,22 @@ async def test_async_sqlalchemy_repository():
         with pytest.raises(UniqueConstraintViolationError) as exc_info:
             await repo.add(UserRecord(username="unique_user", email="dup@example.com"))
         assert exc_info.value is not None
+        assert (
+            "UNIQUE constraint failed" in str(exc_info.value)
+            or "unique" in str(exc_info.value).lower()
+        )
         await session.rollback()
 
         # Re-add unique_user to test add_many duplicate against it
         await repo.add(UserRecord(username="unique_user", email="unique@example.com"))
-        with pytest.raises(UniqueConstraintViolationError):
+        with pytest.raises(UniqueConstraintViolationError) as exc_info_many:
             await repo.add_many(
                 [UserRecord(username="unique_user", email="dup2@example.com")]
             )
+        assert (
+            "UNIQUE constraint failed" in str(exc_info_many.value)
+            or "unique" in str(exc_info_many.value).lower()
+        )
         await session.rollback()
 
         # Test update causing duplicate username

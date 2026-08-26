@@ -154,3 +154,41 @@ jobs:
 
       - name: Run Affected Property-Based Fuzzing
         run: uv run pytest-run -A -P --no-cov
+
+  # =========================================================================
+  # Stage 4: E2E Browser, Narrator Demos & Visual Accessibility (axe-core)
+  # Runs Playwright Chromium tests and UI accessibility scans
+  # =========================================================================
+  e2e-a11y:
+    name: E2E Browser & A11y Verification
+    needs: [test-suite]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --all-packages --all-extras --all-groups
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+      - name: Install Playwright Chromium & OS Dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: uv run playwright install --with-deps chromium
+
+      - name: Run E2E & Visual A11y Tests
+        run: uv run pytest tests/e2e --no-cov

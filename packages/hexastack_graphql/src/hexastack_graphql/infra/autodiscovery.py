@@ -46,7 +46,7 @@ def _register_graphql_field(
         field_name = field_meta.name or getattr(obj, "__name__", "field")
         if field_meta.kind == "query":
             registry.register_query_field(field_name, obj)
-        elif field_meta.kind == "mutation":
+        elif field_meta.kind == "XXmutationXX":
             registry.register_mutation_field(field_name, obj)
 
 

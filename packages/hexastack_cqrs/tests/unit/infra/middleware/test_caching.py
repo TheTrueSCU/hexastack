@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -115,7 +115,59 @@ async def test_query_caching_async_flow() -> None:
     cmd = UpdateUserCommand(user_id="100", name="Async Updated")
     await inval_mw(cmd, lambda _: None)
 
-    # 4. Async miss after invalidation
+    # 4. Third execution -> Miss again
     res3 = await query_mw(query, async_handler)
     assert res3 == {"id": "100", "name": "Async 100"}
     assert calls == 2
+
+
+@cached_query()
+class PlainHashedQuery(Query):
+    filter_val: str
+    limit: int = 10
+
+
+def test_query_caching_default_sha256_hash_key_generation():
+    """Verify default cache key generates query:{class_name}:{16_char_hash}."""
+    cache = InMemoryCache()
+    query_mw = QueryCachingMiddleware(cache)
+
+    q1 = PlainHashedQuery(filter_val="active", limit=10)
+    query_mw(q1, lambda _: "result_active_10")
+
+    # Key must begin with query:PlainHashedQuery: and have 16-hex hash
+    all_keys = list(cache._store.keys())
+    assert len(all_keys) == 1
+    key = all_keys[0]
+    assert key.startswith("query:PlainHashedQuery:")
+    hash_part = key.split(":")[-1]
+    assert len(hash_part) == 16
+
+    # Identical query payload produces exact same cache hit
+    assert (
+        query_mw(PlainHashedQuery(filter_val="active", limit=10), lambda _: "fresh")
+        == "result_active_10"
+    )
+
+    # Different query payload produces a distinct key
+    q2 = PlainHashedQuery(filter_val="inactive", limit=10)
+    query_mw(q2, lambda _: "result_inactive_10")
+    assert len(cache._store.keys()) == 2
+
+
+def test_query_caching_plain_object_fallback():
+    """Verify compute_cache_key fallback when query is a plain non-Pydantic object."""
+    from dataclasses import dataclass
+
+    from hexastack_cqrs.infra.decorators import QueryCacheMetadata
+    from hexastack_cqrs.infra.middleware.caching import compute_cache_key
+
+    @dataclass
+    class PlainObj:
+        a: int
+
+    meta = QueryCacheMetadata()
+    obj = PlainObj(a=123)
+    key = compute_cache_key(cast("Any", obj), meta)
+    assert key.startswith("query:PlainObj:")
+    assert len(key.split(":")[-1]) == 16
