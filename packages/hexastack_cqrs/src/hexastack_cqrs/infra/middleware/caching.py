@@ -70,7 +70,7 @@ class QueryCachingMiddleware:
         """
         self._cache = cache
 
-    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
+    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> Any:
         """Intercept query execution, check cache, and populate cache on miss.
 
         Args:
@@ -189,7 +189,7 @@ class CommandCacheInvalidationMiddleware:
         """Initialize CommandCacheInvalidationMiddleware with cache adapter."""
         self._cache = cache
 
-    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
+    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> Any:
         """Intercept command execution and purge tagged cache entries upon success."""
         inval_meta: CommandInvalidationMetadata | None = getattr(
             instance.__class__, _COMMAND_INVALIDATION_META_ATTR, None
@@ -199,10 +199,23 @@ class CommandCacheInvalidationMiddleware:
 
         result = next_call(instance)
 
+        if isinstance(self._cache, AsyncCachePort):
+            return cast(
+                "R", self._handle_async_invalidate(result, inval_meta, instance)
+            )
+
         if inspect.iscoroutine(result):
             return cast("R", self._await_and_invalidate(result, inval_meta, instance))
 
         self._invalidate_tags_sync(inval_meta.tags, instance)
+        return result
+
+    async def _handle_async_invalidate(
+        self, result: Any, inval_meta: CommandInvalidationMetadata, instance: Any
+    ) -> Any:
+        if inspect.iscoroutine(result):
+            result = await result
+        await self._invalidate_tags_async(inval_meta.tags, instance)
         return result
 
     async def _await_and_invalidate(

@@ -99,12 +99,12 @@ class SqliteTodoRepository(TodoRepositoryPort):
     @staticmethod
     def _to_entity(model: TodoItemModel) -> TodoItem:
         return TodoItem(
-            id=model.id,
-            owner_id=getattr(model, "owner_id", "alice"),
-            title=model.title,
-            description=model.description,
-            priority=Priority(model.priority),
-            completed=model.completed,
+            id=str(model.id),
+            owner_id=str(getattr(model, "owner_id", "alice")),
+            title=str(model.title),
+            description=str(model.description),
+            priority=Priority(str(model.priority)),
+            completed=bool(model.completed),
         )
 
 

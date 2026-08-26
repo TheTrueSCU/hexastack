@@ -66,7 +66,11 @@ class SqliteTodoRepository(TodoRepositoryPort):
     def save(self, item: TodoItem) -> None:
         with self._session_factory() as session:
             model = session.query(TodoItemModel).filter_by(id=item.id).first()
-            priority_str = item.priority.value if hasattr(item.priority, "value") else str(item.priority)
+            priority_str = (
+                item.priority.value
+                if hasattr(item.priority, "value")
+                else str(item.priority)
+            )
             if model is None:
                 model = TodoItemModel(
                     id=item.id,
