@@ -28,7 +28,7 @@ class SqlAlchemyUnitOfWork(UnitOfWorkPort):
 
     def __init__(
         self,
-        session_factory: sessionmaker[Session],
+        session_factory: sessionmaker[Session] | Callable[[], Session],
         reraise: bool = False,
     ) -> None:
         """Initialize Unit of Work with sessionmaker factory.
