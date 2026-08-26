@@ -71,6 +71,7 @@ from hexastack_core.ports.notification import (
 )
 from todo_app.domain.events import AdminDeletedUserTodoEvent
 
+
 @command_handler(DeleteTodoCommand)
 class DeleteTodoHandler:
     def __init__(
@@ -133,11 +134,13 @@ Broadcasts push notifications to mobile or chat webhooks:
 ```python
 from hexastack_events.adapters.notifications import AppriseNotificationAdapter
 
-notifier = AppriseNotificationAdapter(urls=[
-    "ntfy://hexastack-alerts",
-    # "discord://webhook_id/webhook_token",
-    # "slack://tokenA/tokenB/tokenC",
-])
+notifier = AppriseNotificationAdapter(
+    urls=[
+        "ntfy://hexastack-alerts",
+        # "discord://webhook_id/webhook_token",
+        # "slack://tokenA/tokenB/tokenC",
+    ]
+)
 ```
 
 ---
