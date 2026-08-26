@@ -46,7 +46,7 @@ logger = StandardLogger("todo_app.prod")
 # Inside any handler or adapter:
 logger.info(
     "To-Do task successfully processed",
-    extra={"todo_id": todo.id, "owner_id": todo.owner_id, "priority": todo.priority}
+    extra={"todo_id": todo.id, "owner_id": todo.owner_id, "priority": todo.priority},
 )
 ```
 
