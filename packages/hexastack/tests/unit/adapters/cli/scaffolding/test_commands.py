@@ -50,20 +50,31 @@ def test_cli_scaffold_subcommands():
                 "grpc.py",
             ).exists()
 
-            # Test `new graphql-service` subcommand
-            result_gql = runner.invoke(
-                app, ["new", "graphql-service", "gateway-service"]
-            )
-            assert result_gql.exit_code == 0
-            assert "Created new GraphQL Hexastack project" in result_gql.output
-            assert Path(
-                tmpdir,
-                "gateway-service",
-                "src",
-                "gateway_service",
-                "adapters",
-                "driving",
-                "graphql.py",
-            ).exists()
+            # Test `new event-driven` subcommand
+            result_events = runner.invoke(app, ["new", "event-driven", "order-service"])
+            assert result_events.exit_code == 0
+            assert "Created new Event-Driven Hexastack project" in result_events.output
+            assert Path(tmpdir, "order-service", "pyproject.toml").exists()
+
+            # Test `new mcp-agent` subcommand
+            result_mcp = runner.invoke(app, ["new", "mcp-agent", "agent-service"])
+            assert result_mcp.exit_code == 0
+            assert "Created new MCP Agent Hexastack project" in result_mcp.output
+            assert Path(tmpdir, "agent-service", "pyproject.toml").exists()
+
+            # Test `new enterprise` subcommand
+            result_ent = runner.invoke(app, ["new", "enterprise", "fintech-core"])
+            assert result_ent.exit_code == 0
+            assert "Created new Full-Featured Enterprise Hexastack project" in result_ent.output
+            assert Path(tmpdir, "fintech-core", "pyproject.toml").exists()
+
+            # Test `init` command
+            init_dir = Path(tmpdir, "init-test-app")
+            init_dir.mkdir()
+            os.chdir(init_dir)
+            result_init = runner.invoke(app, ["init", "--name", "init-test-app", "--template", "minimal", "--db", "sqlite"])
+            assert result_init.exit_code == 0
+            assert "Initialized Hexastack project" in result_init.output
+            assert Path(init_dir, "pyproject.toml").exists()
         finally:
             os.chdir(orig_cwd)

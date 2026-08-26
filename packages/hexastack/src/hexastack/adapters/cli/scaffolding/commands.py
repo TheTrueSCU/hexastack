@@ -185,6 +185,37 @@ def add_scaffold_commands(app: typer.Typer) -> None:
         typer.echo(f"🎉 Created new GraphQL Hexastack project at '{target_path}'")
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
 
+    @new_app.command(
+        name="enterprise",
+        help="Scaffold a production Enterprise microservice with all modules enabled.",
+    )
+    def new_enterprise(
+        name: str = typer.Argument(..., help="Name of the new microservice project."),
+        description: str = typer.Option(
+            "A full-featured enterprise Hexastack microservice.",
+            "--description",
+            "-d",
+            help="Project description.",
+        ),
+        db: str = typer.Option(
+            "sqlite",
+            "--db",
+            help="Database driver: in-memory, sqlite, postgres.",
+        ),
+    ) -> None:
+        target_path = scaffold_project(
+            name=name,
+            template="enterprise",
+            description=description,
+            db_type=db,
+            include_events=True,
+            include_mcp=True,
+            include_grpc=True,
+            include_graphql=True,
+        )
+        typer.echo(f"🎉 Created new Full-Featured Enterprise Hexastack project at '{target_path}'")
+        typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
+
     @app.command(
         name="init",
         help="Initialize a new Hexastack microservice in the current working directory.",

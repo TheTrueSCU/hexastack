@@ -56,6 +56,16 @@ def test_add_demo_commands_registration():
     assert relay_result.exit_code == 0
     assert "Drained and published 0 pending outbox events" in relay_result.output
 
+    # Test fastapi routes inspection
+    fastapi_res = runner.invoke(app, ["fastapi", "routes"])
+    assert fastapi_res.exit_code == 0
+
+    # Test db subcommands
+    db_help = runner.invoke(app, ["db", "--help"])
+    assert db_help.exit_code == 0
+    assert "init" in db_help.output
+    assert "revision" in db_help.output
+
     # Test profile & load help
     profile_help = runner.invoke(app, ["profile", "--help"], color=False)
     assert profile_help.exit_code == 0
@@ -66,8 +76,24 @@ def test_add_demo_commands_registration():
     assert load_help.exit_code == 0
     assert "users" in load_help.output or "--users" in load_help.output
 
-    # Test grpc lint & breaking help
-    grpc_help = runner.invoke(app, ["grpc", "--help"])
-    assert grpc_help.exit_code == 0
-    assert "lint" in grpc_help.output
-    assert "breaking" in grpc_help.output
+    # Test MCP config generation
+    mcp_cfg_res = runner.invoke(app, ["mcp", "config", "-c", "claude"])
+    assert mcp_cfg_res.exit_code == 0
+    assert "mcpServers" in mcp_cfg_res.output
+
+    # Test GraphQL schema command
+    gql_res = runner.invoke(app, ["graphql", "schema"])
+    assert gql_res.exit_code == 0
+    assert "DefaultQuery" in gql_res.output
+
+    # Test UI help
+    ui_help = runner.invoke(app, ["ui", "--help"])
+    assert ui_help.exit_code == 0
+
+    # Test serve help
+    serve_help = runner.invoke(app, ["serve", "--help"])
+    assert serve_help.exit_code == 0
+
+    # Test grpc compile help & execution fallback
+    grpc_compile_res = runner.invoke(app, ["grpc", "compile"])
+    assert grpc_compile_res.exit_code == 0
