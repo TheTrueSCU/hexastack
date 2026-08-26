@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.13"
 dependencies = [
     "hexastack[all]",
-    "openfeature-provider-flagd>=0.2.0",
+    "openfeature-provider-flagd>=0.5.2",
 ]
 
 [project.scripts]
@@ -59,7 +59,7 @@ dev = [
     "grpcio-tools>=1.83.0",
     "httpx>=0.27.0",
     "huey>=3.3.4",
-    "hypothesis>=6.100.0",
+    "hypothesis>=6.165.10",
     "import-linter>=2.13",
     "inline-snapshot>=0.35.4",
     "libcst>=1.9.0",
@@ -69,7 +69,7 @@ dev = [
     "nicegui>=2.0.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
     "pip-audit>=2.10.1",
-    "playwright>=1.49.0",
+    "playwright>=1.62.0",
     "pre-commit>=3.8.0",
     "py-spy>=0.4.2",
     "pydeps>=3.0.7",
@@ -80,15 +80,17 @@ dev = [
     "pytest-randomly>=4.1.0",
     "pytest-xdist>=3.8.0",
     "rope>=1.14.0",
-    "ruff>=0.16.2",
+    "ruff>=0.16.4",
     "schemathesis>=3.39.0",
-    "ty>=0.0.69",
+    "ty>=0.0.73",
     "vulture>=2.16",
     "zensical>=0.0.56",
 ]
 
-[tool.complexipy]
-max_complexity_allowed = 25
+[tool.ty.environment]
+extra-paths = [
+    "examples/todo-app/src",
+]
 
 [tool.coverage.run]
 branch = false

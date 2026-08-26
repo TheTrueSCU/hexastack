@@ -69,3 +69,32 @@ def test_mount_zensical_docs_via_configuration():
         resp = client.get("/developer-guide/")
         assert resp.status_code == 200
         assert "Configured Zensical" in resp.text
+
+
+def test_mount_zensical_docs_production_missing_dir_raises(monkeypatch):
+    """Verify DocumentationNotFoundError raised when site_dir is missing in production."""
+    import pytest
+
+    from hexastack_fastapi.adapters.docs import DocumentationNotFoundError
+
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    app = create_fastapi_app()
+
+    with pytest.raises(DocumentationNotFoundError):
+        mount_zensical_docs(app=app, path="/guide", site_dir="/non/existent/path/xyz")
+
+
+def test_mount_zensical_docs_development_missing_dir_creates_placeholder(
+    monkeypatch, tmp_path
+):
+    """Verify development mode gracefully creates placeholder index.html if missing."""
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
+    missing_dir = tmp_path / "missing_site_dir"
+
+    app = create_fastapi_app()
+    mount_zensical_docs(app=app, path="/guide", site_dir=missing_dir)
+
+    client = TestClient(app)
+    resp = client.get("/guide/")
+    assert resp.status_code == 200
+    assert "Documentation building..." in resp.text

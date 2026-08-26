@@ -44,3 +44,28 @@ def pytest_configure(config: pytest.Config) -> None:
         "markers",
         "slow: mark a test as slow-running (excluded from fast local runs).",
     )
+
+
+@pytest.fixture
+def fake():
+    """Deterministically seeded Faker instance across test runs.
+
+    Notes/Architectural Intent:
+        Guarantees 100% reproducible synthetic data generation compatible
+        with snapshot testing and deterministic CI runs.
+    """
+    from hexastack_core.testing.synthetic import seeded_faker
+
+    return seeded_faker(seed=42)
+
+
+@pytest.fixture
+def fake_user_id(fake) -> str:
+    """Generate a realistic, deterministic synthetic user ID."""
+    return f"usr_{fake.uuid4()[:8]}"
+
+
+@pytest.fixture
+def fake_email(fake) -> str:
+    """Generate a realistic, deterministic synthetic safe email."""
+    return fake.safe_email()
