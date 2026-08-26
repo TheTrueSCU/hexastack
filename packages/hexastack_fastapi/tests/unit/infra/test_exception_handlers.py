@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -170,3 +172,59 @@ def test_exception_handler_with_registry():
     res = client.get("/custom")
     assert res.status_code == 418
     assert res.json() == snapshot({"custom_reason": "I am a teapot"})
+
+
+def test_exception_handler_with_registry_non_dict_fallback():
+    """Verify non-dict returned by registry handler defaults to HTTP 400."""
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    registry = ExceptionRegistry()
+    raw_fn: Any = lambda exc: ["raw_error_list", str(exc)]
+    registry.register(
+        CustomMappedError,
+        raw_fn,
+    )
+    register_exception_handlers(app, exception_registry=registry)
+
+    @app.get("/custom-list")
+    async def raise_custom_list():
+        raise CustomMappedError("List payload")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    res = client.get("/custom-list")
+    assert res.status_code == 400
+    assert res.json() == ["raw_error_list", "List payload"]
+
+
+class AccessDeniedSecurityError(HexastackError):
+    pass
+
+
+class UnauthenticatedSecurityError(HexastackError):
+    pass
+
+
+class InvalidCredentialSecurityError(HexastackError):
+    pass
+
+
+def test_exception_handler_security_aliases():
+    """Verify security keywords (accessdenied, unauthenticated, invalidcredential) map to 403 / 401."""
+    app, client = _build_app(
+        ("/denied", AccessDeniedSecurityError, "Forbidden context"),
+        ("/unauth_sec", UnauthenticatedSecurityError, "Missing auth context"),
+        ("/bad_cred", InvalidCredentialSecurityError, "Invalid secret"),
+    )
+
+    res_denied = client.get("/denied")
+    assert res_denied.status_code == 403
+    assert res_denied.json()["error_type"] == "AccessDeniedSecurityError"
+
+    res_unauth = client.get("/unauth_sec")
+    assert res_unauth.status_code == 401
+    assert res_unauth.json()["error_type"] == "UnauthenticatedSecurityError"
+
+    res_cred = client.get("/bad_cred")
+    assert res_cred.status_code == 401
+    assert res_cred.json()["error_type"] == "InvalidCredentialSecurityError"
+
