@@ -45,15 +45,20 @@ jobs:
 
       - name: Set up Buf
         uses: bufbuild/buf-setup-action@v1.50.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Buf Lint
         uses: bufbuild/buf-lint-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Buf Breaking Change Detection
         if: github.event_name == 'pull_request'
         uses: bufbuild/buf-breaking-action@v1
         with:
           against: 'https://github.com/${{ github.repository }}.git#branch=main'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   # =========================================================================
   # Stage 2: Unit / Integration Tests & Architecture Verification
