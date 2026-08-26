@@ -1,8 +1,10 @@
 name: OpenSSF Scorecard
 
 on:
-  # Run on every push to main to keep the score current
-  push:
+  # Run when the CI workflow completes successfully on main
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
   # Run on PRs so contributors can see impact of their changes
   pull_request:
@@ -10,6 +12,7 @@ on:
   # Weekly scheduled run catches upstream scoring changes
   schedule:
     - cron: "30 4 * * 1"  # 04:30 UTC every Monday
+  workflow_dispatch:
 
 # Scorecard needs read access to the repo and write access to the Security tab
 permissions: read-all
@@ -18,6 +21,7 @@ jobs:
   scorecard:
     name: OpenSSF Scorecard Analysis
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     permissions:
       # Required to upload SARIF results to the GitHub Security tab
       security-events: write
