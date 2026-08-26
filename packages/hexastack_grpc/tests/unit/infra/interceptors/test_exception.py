@@ -46,8 +46,9 @@ def test_map_exception_to_status_code_branches() -> None:
     code, _ = _map_exception_to_status_code(CustomNotFoundError("not found"))
     assert code == grpc.StatusCode.NOT_FOUND
 
-    code, _ = _map_exception_to_status_code(CustomValidationError("invalid"))
+    code, msg = _map_exception_to_status_code(CustomValidationError("invalid"))
     assert code == grpc.StatusCode.INVALID_ARGUMENT
+    assert msg == "invalid"
 
     code, _ = _map_exception_to_status_code(CustomUnauthorizedError("unauth"))
     assert code == grpc.StatusCode.UNAUTHENTICATED
@@ -57,6 +58,26 @@ def test_map_exception_to_status_code_branches() -> None:
 
     code, _ = _map_exception_to_status_code(CustomConflictError("conflict"))
     assert code == grpc.StatusCode.ALREADY_EXISTS
+
+    class CustomPermissionError(Exception):
+        pass
+
+    class CustomAlreadyExistsError(Exception):
+        pass
+
+    class CustomAuthenticationError(Exception):
+        pass
+
+    code_perm, _ = _map_exception_to_status_code(CustomPermissionError("no perm"))
+    assert code_perm == grpc.StatusCode.PERMISSION_DENIED
+
+    code_exists, _ = _map_exception_to_status_code(CustomAlreadyExistsError("exists"))
+    assert code_exists == grpc.StatusCode.ALREADY_EXISTS
+
+    code_auth, _ = _map_exception_to_status_code(
+        CustomAuthenticationError("unauth user")
+    )
+    assert code_auth == grpc.StatusCode.UNAUTHENTICATED
 
     code, _ = _map_exception_to_status_code(CustomHexastackError("internal"))
     assert code == grpc.StatusCode.INTERNAL
