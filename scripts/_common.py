@@ -273,3 +273,163 @@ def resolve_target_python_files(
     for pkg_dir in get_package_directories(root):
         resolved_all.update(_find_py_files_in_dir(pkg_dir / "src"))
     return sorted(resolved_all)
+
+
+def get_package_dependencies(pkg_dir: Path) -> set[str]:
+    """Extract internal hexastack package dependencies from a package's pyproject.toml.
+
+    Args:
+        pkg_dir: Path to the package directory (e.g. packages/hexastack_fastapi).
+
+    Returns:
+        Set of canonical package names (e.g. {'core', 'cqrs'}) depended on.
+    """
+    pyproject = pkg_dir / "pyproject.toml"
+    if not pyproject.is_file():
+        return set()
+
+    import tomllib
+
+    try:
+        data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+
+    deps: set[str] = set()
+    # Check dependencies in [project.dependencies]
+    for req in data.get("project", {}).get("dependencies", []):
+        name = req.split(">")[0].split("<")[0].split("=")[0].split("[")[0].strip()
+        if name.startswith("hexastack"):
+            clean = name.removeprefix("hexastack_").removeprefix("hexastack-")
+            deps.add("hexastack" if clean == "hexastack" else clean)
+
+    # Check [tool.uv.sources]
+    for name in data.get("tool", {}).get("uv", {}).get("sources", {}):
+        if name.startswith("hexastack"):
+            clean = name.removeprefix("hexastack_").removeprefix("hexastack-")
+            deps.add("hexastack" if clean == "hexastack" else clean)
+
+    return deps
+
+
+def get_workspace_dependency_graph(
+    repo_root: Path | None = None,
+) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    """Build forward and reverse dependency graphs for all workspace packages.
+
+    Args:
+        repo_root: Optional repository root path.
+
+    Returns:
+        Tuple of:
+        - forward_graph: {pkg: set_of_packages_pkg_depends_on}
+        - reverse_graph: {pkg: set_of_packages_that_depend_on_pkg}
+    """
+    root = repo_root or get_repo_root()
+    forward: dict[str, set[str]] = {}
+    reverse: dict[str, set[str]] = {}
+
+    for pkg_dir in get_package_directories(root):
+        clean_name = pkg_dir.name.removeprefix("hexastack_").removeprefix("hexastack-")
+        pkg_key = "hexastack" if clean_name == "hexastack" else clean_name
+
+        deps = get_package_dependencies(pkg_dir)
+        forward[pkg_key] = deps
+        reverse.setdefault(pkg_key, set())
+
+        for d in deps:
+            reverse.setdefault(d, set()).add(pkg_key)
+
+    return forward, reverse
+
+
+def get_downstream_dependents(
+    pkg: str,
+    reverse_graph: dict[str, set[str]],
+) -> set[str]:
+    """Compute the transitive closure of all downstream packages that depend on pkg.
+
+    Args:
+        pkg: Canonical package name (e.g. 'core' or 'fastapi').
+        reverse_graph: Mapping of pkg -> direct dependents.
+
+    Returns:
+        Set of all downstream affected packages (including transitive dependents).
+    """
+    visited: set[str] = set()
+    queue = list(reverse_graph.get(pkg, set()))
+
+    while queue:
+        current = queue.pop(0)
+        if current not in visited:
+            visited.add(current)
+            queue.extend(reverse_graph.get(current, set()) - visited)
+
+    return visited
+
+
+def resolve_affected_packages(
+    changed_files: list[str],
+    repo_root: Path | None = None,
+) -> set[str] | None:
+    """Determine the set of affected packages given a list of modified file paths.
+
+    Args:
+        changed_files: List of file path strings modified in the changeset.
+        repo_root: Optional repository root path.
+
+    Returns:
+        - Set of canonical package names affected.
+        - None if root-level files (e.g. pyproject.toml, conftest.py) changed,
+          indicating ALL packages must be tested.
+    """
+    root = repo_root or get_repo_root()
+    _, reverse_graph = get_workspace_dependency_graph(root)
+
+    if not changed_files:
+        return set()
+
+    affected: set[str] = set()
+
+    for file_str in changed_files:
+        path = Path(file_str)
+        try:
+            rel_to_root = path.relative_to(root) if path.is_absolute() else path
+        except ValueError:
+            rel_to_root = path
+
+        parts = rel_to_root.parts
+
+        # Root-level configuration impacts everything
+        if len(parts) == 1:
+            filename = parts[0]
+            if filename in ("pyproject.toml", "uv.lock", "conftest.py"):
+                return None  # All packages affected
+            continue
+
+        if parts[0] in (".github", "scripts"):
+            return None  # CI or tooling change affects all
+
+        if parts[0] == "packages" and len(parts) > 1:
+            raw_pkg = parts[1]
+            clean_pkg = (
+                "hexastack"
+                if raw_pkg == "hexastack"
+                else raw_pkg.removeprefix("hexastack_")
+            )
+
+            if len(parts) == 2 and parts[1] == "pyproject.toml":
+                # Package manifest change affects pkg + all downstream
+                affected.add(clean_pkg)
+                affected.update(get_downstream_dependents(clean_pkg, reverse_graph))
+            elif len(parts) > 2:
+                sub_dir = parts[2]
+                if sub_dir in ("src", "pyproject.toml"):
+                    # Source change affects pkg + all downstream
+                    affected.add(clean_pkg)
+                    affected.update(get_downstream_dependents(clean_pkg, reverse_graph))
+                elif sub_dir in ("tests",):
+                    # Test-only change affects ONLY this package (no downstream cascade)
+                    affected.add(clean_pkg)
+
+    return affected

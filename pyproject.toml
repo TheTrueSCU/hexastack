@@ -11,6 +11,7 @@ dependencies = [
 alphabetizer = "scripts.rope.alphabetizer:main"
 check-all-statements = "scripts.pre_commit.all_statements:main_check"
 check-test-parity = "scripts.pre_commit.check_test_parity:main"
+deptry-run = "scripts.deptry.run:main"
 fix-all-statements = "scripts.pre_commit.all_statements:main_fix"
 import-linter-generate = "scripts.import_linter.generate:main"
 import-linter-run = "scripts.import_linter.run:main"
@@ -19,6 +20,7 @@ mutmut-inspect = "scripts.mutmut.inspect:main"
 mutmut-run = "scripts.mutmut.run:main"
 pydeps-generate = "scripts.pydeps.generate:main"
 pytest-archon-generate = "scripts.pytest_archon.generate:main"
+pytest-run = "scripts.pytest.run:main"
 rope-alphabetizer = "scripts.rope.alphabetizer:main"
 rope-run = "scripts.rope.run:main"
 
@@ -52,6 +54,7 @@ hexastack-otel = { workspace = true }
 dev = [
     "alembic>=1.19.1",
     "complexipy>=7.0.1",
+    "deptry>=0.23.0",
     "detect-secrets>=1.5.0",
     "dirty-equals>=0.11",
     "faker>=33.0.0",

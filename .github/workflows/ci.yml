@@ -7,11 +7,16 @@ on:
     branches: [main]
 
 jobs:
-  check:
-    name: Pre-Commit & Unit/Integration Tests
+  # =========================================================================
+  # Stage 1: Fast Quality Gate & Schema Governance (Fail-Fast Static Checks)
+  # =========================================================================
+  quality-gate:
+    name: Pre-Commit Quality Gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
@@ -32,49 +37,6 @@ jobs:
       - name: Run Pre-Commit Quality Checks
         run: uv run pre-commit run --all-files
 
-      - name: Run Unit & Integration Tests
-        run: uv run pytest packages/ --ignore-glob="packages/*/tests/properties/*" --cov-report=xml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.xml
-          fail_ci_if_error: true
-
-      - name: Install Graphviz
-        run: sudo apt-get install -y graphviz
-
-      - name: Check pydeps diagrams are up to date
-        run: |
-          uv run pydeps-generate
-          git diff --exit-code docs/assets/pydeps/ || \
-            (echo "::error::Architecture diagrams are stale. Run 'pydeps-generate' locally and commit the updated SVGs." && exit 1)
-
-  hypothesis:
-    name: Property-Based Fuzzing
-    needs: check
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          enable-cache: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install dependencies
-        run: uv sync --all-packages --all-extras --all-groups
-
-      - name: Run Property-Based Fuzzing
-        run: uv run pytest packages/*/tests/properties --no-cov
-
   buf-governance:
     name: Protobuf Governance (Buf Lint & Breaking)
     runs-on: ubuntu-latest
@@ -92,3 +54,103 @@ jobs:
         uses: bufbuild/buf-breaking-action@v1
         with:
           against: 'https://github.com/${{ github.repository }}.git#branch=main'
+
+  # =========================================================================
+  # Stage 2: Unit / Integration Tests & Architecture Verification
+  # Only executes if Stage 1 static quality checks succeed
+  # =========================================================================
+  test-suite:
+    name: Unit & Integration Tests
+    needs: [quality-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --all-packages --all-extras --all-groups
+
+      - name: Run Unit & Integration Tests (Push to Main)
+        if: github.event_name == 'push'
+        run: uv run pytest-run -U --cov-report=xml
+
+      - name: Run Affected Unit & Integration Tests (Pull Request)
+        if: github.event_name == 'pull_request'
+        run: uv run pytest-run -A -U --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: false
+
+  architecture-diagrams:
+    name: Architecture Diagram Verification
+    needs: [quality-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --all-packages --all-extras --all-groups
+
+      - name: Install Graphviz
+        run: sudo apt-get install -y graphviz
+
+      - name: Check pydeps diagrams are up to date
+        run: |
+          uv run pydeps-generate
+          git diff --exit-code docs/assets/pydeps/ || \
+            (echo "::error::Architecture diagrams are stale. Run 'pydeps-generate' locally and commit the updated SVGs." && exit 1)
+
+  # =========================================================================
+  # Stage 3: Invariant & Security Fuzzing (Deep Verification)
+  # Only executes on PRs if Unit & Integration test suite passed cleanly
+  # =========================================================================
+  hypothesis-fuzzing:
+    name: Property-Based State Machine Fuzzing
+    needs: [test-suite]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --all-packages --all-extras --all-groups
+
+      - name: Run Affected Property-Based Fuzzing
+        run: uv run pytest-run -A -P --no-cov

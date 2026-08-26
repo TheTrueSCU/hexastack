@@ -8,6 +8,8 @@
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI: hexastack](https://img.shields.io/pypi/v/hexastack.svg)](https://pypi.org/project/hexastack/)
+[![Accessibility: WCAG 2.1 AA](https://img.shields.io/badge/accessibility-WCAG%202.1%20AA-brightgreen.svg)](https://www.w3.org/WAI/WCAG21/quickref/?levels=aa)
+[![Tested with: axe--core](https://img.shields.io/badge/tested%20with-axe--core-4353ff.svg?logo=deque)](https://github.com/dequelabs/axe-core)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type checker: ty](https://img.shields.io/badge/type%20checker-ty-blueviolet.svg)](https://github.com/astral-sh/ty)
@@ -410,6 +412,56 @@ uv run python scripts/inspect_mutants.py --package db --limit 25
 
 # Inspect surviving mutants matching a specific filename
 uv run python scripts/inspect_mutants.py --file engine.py
+```
+
+### Selective Testing & Impact-Driven Test Runner (`pytest-run`)
+
+Hexastack features a direct, in-process workspace test runner (`scripts.pytest.run:main`) backed by an automated dependency DAG resolver:
+
+```bash
+# Run 100% full workspace unit & integration test suite
+uv run pytest-run
+
+# Run tests ONLY for packages affected by current git changeset (and their downstream dependents)
+uv run pytest-run -A
+
+# Target specific packages directly
+uv run pytest-run -p fastapi -p core
+
+# Run only deep property-based state machine fuzzing suites
+uv run pytest-run -P
+
+# List impacted packages and target test directories without running pytest
+uv run pytest-run -A --list
+```
+
+### Staged Fail-Fast CI Pipeline
+
+The GitHub Actions workflow is orchestrated across 3 dependent fail-fast stages to optimize developer feedback speed and prevent broken releases:
+
+```mermaid
+graph TD
+    subgraph Stage 1: Quality Gate & Governance [Fast Fail, ~15-25s]
+        QG["1. Pre-Commit Quality Gate<br/>ruff, ty check, vulture, jscpd, pip-audit"]
+        BUF["2. Protobuf Governance<br/>buf lint, breaking change check"]
+    end
+
+    subgraph Stage 2: Verification & Diagrams [Needs: Stage 1]
+        TEST["3. Unit & Integration Tests<br/>pytest-run with affected targeting"]
+        DIAG["4. Architecture Diagrams<br/>pydeps freshness check"]
+    end
+
+    subgraph Stage 3: Deep Fuzzing & Releases [Needs: Stage 2]
+        FUZZ["5. Property Fuzzing State Machines<br/>hypothesis + schemathesis"]
+        REL["6. Release & PyPI Publish<br/>(only runs after CI passes on main)"]
+        DOCS["7. Deploy Documentation<br/>(only runs after CI passes on main)"]
+    end
+
+    QG --> TEST
+    QG --> DIAG
+    TEST --> FUZZ
+    TEST -.->|Push to main & CI Success| REL
+    TEST -.->|Push to main & CI Success| DOCS
 ```
 
 ### Deep Testing & Invariant Verification

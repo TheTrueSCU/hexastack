@@ -66,6 +66,11 @@ repos:
         entry: cpd packages/ --threshold 5 --min-tokens 50 --ignore "**/tests/**,**/testing/**" --no-tips
         language: system
         pass_filenames: false
+      - id: deptry
+        name: deptry (dependency tree auditor)
+        entry: uv run deptry-run
+        language: system
+        pass_filenames: false
       - id: docs-build
         name: zensical docs build validation
         entry: uv run zensical build
