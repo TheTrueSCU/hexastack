@@ -1,3 +1,6 @@
+import pytest
+from inline_snapshot import snapshot
+
 from hexastack.application.diagnostics import (
     GetSystemInfoHandler,
     InspectRegistryHandler,
@@ -32,6 +35,7 @@ def test_get_system_info_handler():
     assert isinstance(result.extras, dict)
 
 
+@pytest.mark.snapshot
 def test_inspect_registry_handler():
     handler_reg = HandlerRegistry()
     handler_reg.register(PingDemoCommand, lambda cmd: None)
@@ -41,12 +45,16 @@ def test_inspect_registry_handler():
         handler_registry=handler_reg, config_registry=config_reg
     )
     result = handler(InspectRegistryQuery())
-    assert "PingDemoCommand" in result.commands
+    assert result.commands == snapshot(["PingDemoCommand"])
+    assert result.queries == snapshot([])
+    assert result.configs == snapshot([])
 
 
-def test_ping_demo_handler():
+@pytest.mark.snapshot
+def test_ping_demo_handler(fake_user_id: str):
     set_correlation_id("test-corr-456")
     handler = PingDemoHandler()
-    res = handler(PingDemoCommand(message="hexastack-ping"))
-    assert res.reply == "PONG: hexastack-ping"
-    assert res.correlation_id == "test-corr-456"
+    msg = f"hello-{fake_user_id}"
+    res = handler(PingDemoCommand(message=msg))
+    assert res.reply == f"PONG: hello-{fake_user_id}"
+    assert res.correlation_id == snapshot("test-corr-456")

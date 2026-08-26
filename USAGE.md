@@ -48,11 +48,13 @@ Hexastack enforces strict separation of concerns. Business logic is placed in do
 from dataclasses import dataclass
 from hexastack_cqrs import command_handler
 
+
 @dataclass(frozen=True)
 class CreateOrderCommand:
     order_id: str
     customer_id: str
     amount: float
+
 
 @command_handler(CreateOrderCommand)
 class CreateOrderHandler:
@@ -60,7 +62,9 @@ class CreateOrderHandler:
         self.order_repo = order_repo
 
     async def __call__(self, command: CreateOrderCommand) -> dict[str, str]:
-        order = Order(id=command.order_id, customer_id=command.customer_id, amount=command.amount)
+        order = Order(
+            id=command.order_id, customer_id=command.customer_id, amount=command.amount
+        )
         await self.order_repo.save(order)
         return {"status": "created", "order_id": order.id}
 ```
@@ -71,9 +75,11 @@ class CreateOrderHandler:
 from dataclasses import dataclass
 from hexastack_cqrs import query_handler, cached_query
 
+
 @dataclass(frozen=True)
 class GetOrderQuery:
     order_id: str
+
 
 @cached_query(ttl_seconds=300, tags=["orders"], key_fields=["order_id"])
 @query_handler(GetOrderQuery)
@@ -99,6 +105,7 @@ A single CQRS Command or Query can be exposed simultaneously across HTTP, gRPC, 
 ```python
 from hexastack_fastapi import api_command, api_query
 
+
 @api_command(
     path="/orders",
     command_cls=CreateOrderCommand,
@@ -115,6 +122,7 @@ def create_order_endpoint() -> None:
 from hexastack_cli import cli_command
 import typer
 
+
 @cli_command(name="create-order")
 def create_order_cli(
     order_id: str = typer.Option(..., help="Unique Order ID"),
@@ -128,6 +136,7 @@ def create_order_cli(
 
 ```python
 from hexastack_mcp import mcp_tool
+
 
 @mcp_tool(
     name="create_order",

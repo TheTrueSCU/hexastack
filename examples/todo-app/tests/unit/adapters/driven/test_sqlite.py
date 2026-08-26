@@ -46,7 +46,9 @@ def test_sqlite_repository_crud():
         # 4. Update
         item.completed = True
         repo.save(item)
-        assert repo.get_by_id("todo-1").completed is True
+        updated = repo.get_by_id("todo-1")
+        assert updated is not None
+        assert updated.completed is True
         assert len(repo.list_all(completed=False)) == 0
 
         # 5. Delete

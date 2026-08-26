@@ -135,6 +135,7 @@ from hexastack_auth.adapters.fastapi import require_policy, require_relation
 
 app = FastAPI()
 
+
 # Guard endpoint with OPA Rego policy
 @app.get(
     "/reports/confidential",
