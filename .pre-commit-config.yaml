@@ -91,7 +91,7 @@ repos:
         pass_filenames: true
       - id: pip-audit
         name: pip-audit (dependency vulnerability scan)
-        entry: uv run pip-audit --local --vulnerability-service osv --timeout 30
+        entry: uv run pip-audit --local --vulnerability-service pypi --timeout 30
         language: system
         pass_filenames: false
       - id: test-parity

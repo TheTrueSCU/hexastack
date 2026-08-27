@@ -10,23 +10,10 @@ In this chapter, you will add a high-throughput **gRPC binary protocol adapter**
 
 Watch the complete Chapter 7 workflow executing live below:
 
-````carousel
-```html
-<video controls width="100%" poster="/assets/static/terminal-poster.png">
-  <source src="/assets/demos/todo-ch07-cli-demo.webm" type="video/webm">
-  <track default kind="captions" srclang="en" src="/assets/demos/todo-ch07-cli-demo.vtt" label="English">
-  Your browser does not support the video tag.
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="../assets/demos/todo-ch07-cli-demo.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch07-cli-demo.vtt" default>
 </video>
-```
-<!-- slide -->
-```bash
-# Introspect registered gRPC servicers, RPC endpoints, and Protobuf schemas
-uv run hexastack grpc list
-
-# Launch the high-throughput binary daemon
-uv run hexastack grpc serve --host 0.0.0.0 --port 50051
-```
-````
 
 ---
 
