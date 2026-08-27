@@ -65,7 +65,7 @@ def test_ui_page_decorator():
 
 
 def test_mount_devtools_dashboard():
-    """Verify mount_devtools_dashboard attaches to FastAPI app."""
+    """Verify mount_devtools_dashboard attaches to FastAPI app and page renders."""
     from nicegui import core
 
     app = FastAPI()
@@ -79,12 +79,14 @@ def test_mount_devtools_dashboard():
 
     # FastAPI app has Mount object attached
     assert any(isinstance(r, Mount) for r in app.routes)
-    # NiceGUI internal core app has registered routes
     assert len(core.app.routes) > 0
 
 
 def test_render_internal_tabs():
     """Verify internal rendering helpers execute cleanly across container states."""
+    from nicegui import Client
+    from nicegui.page import page
+
     from hexastack_core.adapters.feature_flags.in_memory import (
         InMemoryFeatureFlagAdapter,
     )
@@ -102,53 +104,56 @@ def test_render_internal_tabs():
         _render_middleware_chain,
     )
 
-    # 1. Empty container rendering
-    empty_container = Container()
-    _render_cqrs_messages(empty_container)
-    _render_middleware_chain([])
-    _render_live_runner(empty_container, None, [])
-    _render_cqrs_tab(empty_container, None)
-    _render_flags_tab(empty_container)
-    _render_container_tab(empty_container)
+    client = Client(page("/test-render-tabs"))
+    with client.layout.default_slot:
+        # 1. Empty container rendering
+        empty_container = Container()
+        _render_cqrs_messages(empty_container)
+        _render_middleware_chain([])
+        _render_live_runner(empty_container, None, [])
+        _render_cqrs_tab(empty_container, None)
+        _render_flags_tab(empty_container)
+        _render_container_tab(empty_container)
 
-    # 2. Populated container rendering
-    container = Container()
-    cmd_reg = CommandRegistry()
-    qry_reg = QueryRegistry()
-    from hexastack_core.domain.command import Command as BaseCmd
-    from hexastack_core.domain.query import Query as BaseQry
+        # 2. Populated container rendering
+        container = Container()
+        cmd_reg = CommandRegistry()
+        qry_reg = QueryRegistry()
+        from hexastack_core.domain.command import Command as BaseCmd
+        from hexastack_core.domain.query import Query as BaseQry
 
-    class PlainCmd(BaseCmd):
-        pass
+        class PlainCmd(BaseCmd):
+            pass
 
-    class PlainQry(BaseQry):
-        pass
+        class PlainQry(BaseQry):
+            pass
 
-    cmd_reg.register(PlainCmd)
-    qry_reg.register(PlainQry)
+        cmd_reg.register(PlainCmd)
+        qry_reg.register(PlainQry)
 
-    container.add_instance(cmd_reg, declared_class=CommandRegistry)
-    container.add_instance(qry_reg, declared_class=QueryRegistry)
+        container.add_instance(cmd_reg, declared_class=CommandRegistry)
+        container.add_instance(qry_reg, declared_class=QueryRegistry)
 
-    flags_adapter = InMemoryFeatureFlagAdapter({"beta_feature": True, "limit": 100})
-    container.add_instance(flags_adapter, declared_class=FeatureFlagPort)
+        flags_adapter = InMemoryFeatureFlagAdapter({"beta_feature": True, "limit": 100})
+        container.add_instance(flags_adapter, declared_class=FeatureFlagPort)
 
-    cmd_bus_mock = MagicMock()
-    mw = CorrelationMiddleware()
-    cmd_bus_mock._middleware = [mw]
-    container.add_instance(cmd_bus_mock, declared_class=CommandBusPort)
+        cmd_bus_mock = MagicMock()
+        mw = CorrelationMiddleware()
+        cmd_bus_mock._middleware = [mw]
+        container.add_instance(cmd_bus_mock, declared_class=CommandBusPort)
 
-    pipeline_mock = MagicMock(spec=ExecutionPipeline)
-    pipeline_mock.execute = MagicMock(return_value="executed-ok")
+        pipeline_mock = MagicMock(spec=ExecutionPipeline)
+        pipeline_mock.execute = MagicMock(return_value="executed-ok")
 
-    class AuthTestMiddleware:
-        pass
+        class AuthTestMiddleware:
+            pass
 
-    _render_cqrs_messages(container)
-    _render_middleware_chain([mw, AuthTestMiddleware()])
-    _render_live_runner(container, None, [mw])
-    _render_flags_tab(container)
-    _render_container_tab(container)
+        _render_cqrs_messages(container)
+        _render_middleware_chain([mw, AuthTestMiddleware()])
+        _render_live_runner(container, pipeline_mock, [mw])
+        _render_cqrs_tab(container, pipeline=pipeline_mock)
+        _render_flags_tab(container)
+        _render_container_tab(container)
 
 
 @pytest.mark.anyio
@@ -172,7 +177,8 @@ async def test_dispatch_command_and_query_awaitable():
 @pytest.mark.anyio
 async def test_render_live_runner_ping_execution():
     """Verify _run_ping callback executes successfully with registered Ping command and pipeline."""
-    from nicegui import ui
+    from nicegui import Client
+    from nicegui.page import page
 
     from hexastack_cqrs.infra.registries.command import CommandRegistry
     from hexastack_fastapi.adapters.ui import _render_live_runner
@@ -191,11 +197,12 @@ async def test_render_live_runner_ping_execution():
     pipeline_mock.execute = MagicMock(return_value="PONG: Hello")
     container.add_instance(pipeline_mock, declared_class=ExecutionPipeline)
 
-    with ui.card():
+    client = Client(page("/test-live-runner"))
+    with client.layout.default_slot:
         _render_live_runner(container, pipeline_mock, [])
 
     # Find the button in NiceGUI client and trigger on_click
-    for element in ui.context.client.layout.default_slot.children:
+    for element in client.layout.default_slot.children:
         slot = getattr(element, "default_slot", None)
         children = getattr(slot, "children", []) if slot is not None else []
         for child in children:

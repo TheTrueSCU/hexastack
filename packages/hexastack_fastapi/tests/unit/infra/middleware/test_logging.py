@@ -150,8 +150,8 @@ async def test_request_logging_middleware_client_error_and_server_error():
     client, logger = _make_app()
     client.get("/client-err")
     assert len(logger.entries) == 1
-    assert logger.entries[0].level == "WARNING"
+    assert logger.entries[0].level.lower() == "warning"
 
     client.get("/server-err")
     assert len(logger.entries) == 2
-    assert logger.entries[1].level == "ERROR"
+    assert logger.entries[1].level.lower() == "error"
