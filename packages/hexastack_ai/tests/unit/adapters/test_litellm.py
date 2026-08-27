@@ -385,3 +385,28 @@ def test_litellm_adapter_generate_text_none_content_fallback():
         adapter = LiteLlmAdapter()
         res = adapter.generate_text("Prompt with empty output")
         assert res == ""
+
+
+def test_litellm_resolved_model_prefixes():
+    """Verify _resolved_model automatically prefixes gemini/, anthropic/, and ollama/."""
+    # 1. Gemini
+    cfg_gemini = HexastackAiConfig(provider="gemini", model="gemini-1.5-flash")
+    assert LiteLlmAdapter(config=cfg_gemini)._resolved_model == "gemini/gemini-1.5-flash"
+    cfg_gemini_already = HexastackAiConfig(provider="gemini", model="gemini/gemini-1.5-flash")
+    assert LiteLlmAdapter(config=cfg_gemini_already)._resolved_model == "gemini/gemini-1.5-flash"
+
+    # 2. Anthropic
+    cfg_anthropic = HexastackAiConfig(provider="anthropic", model="claude-3-5-sonnet-20241022")
+    assert LiteLlmAdapter(config=cfg_anthropic)._resolved_model == "anthropic/claude-3-5-sonnet-20241022"
+    cfg_anthropic_already = HexastackAiConfig(provider="anthropic", model="anthropic/claude-3-5-sonnet-20241022")
+    assert LiteLlmAdapter(config=cfg_anthropic_already)._resolved_model == "anthropic/claude-3-5-sonnet-20241022"
+
+    # 3. Ollama
+    cfg_ollama = HexastackAiConfig(provider="ollama", model="llama3.2")
+    assert LiteLlmAdapter(config=cfg_ollama)._resolved_model == "ollama/llama3.2"
+    cfg_ollama_already = HexastackAiConfig(provider="ollama", model="ollama/llama3.2")
+    assert LiteLlmAdapter(config=cfg_ollama_already)._resolved_model == "ollama/llama3.2"
+
+    # 4. OpenAI / Generic (unprefixed)
+    cfg_openai = HexastackAiConfig(provider="openai", model="gpt-4o")
+    assert LiteLlmAdapter(config=cfg_openai)._resolved_model == "gpt-4o"
