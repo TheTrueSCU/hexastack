@@ -90,17 +90,20 @@ def my_function(x: int) -> str:
 
 ---
 
-## Testing Requirements
+## Testing Requirements & Change Proposal Policy
 
-| Test type | Required? | Location |
-|---|---|---|
-| Unit tests for all public API | ✅ Yes — enforced by `check-test-parity` | `tests/unit/` |
-| Integration tests | ✅ For adapters and repositories | `tests/integration/` |
-| Property-based (Hypothesis) | ✅ For core algorithmic logic | `tests/properties/` |
-| Mutation testing (mutmut) | 🔄 Periodic CI — not required per PR | — |
+### Automated Test Policy for New Functionality
+**It is a strict project policy that all pull requests and change proposals introducing new functionality, modifying existing behavior, or fixing defects MUST include corresponding automated tests.** Change proposals without accompanying tests will not be reviewed or merged.
 
-`check-test-parity` runs in pre-commit and will block your commit if any public
-module is missing a corresponding test file.
+| Test type | Required? | Location | Scope / Policy |
+|---|---|---|---|
+| Unit tests for all public API | ✅ Yes — mandatory | `tests/unit/` | 100% parity across public classes, functions, and handlers. Enforced by `check-test-parity`. |
+| Integration tests | ✅ Yes — mandatory | `tests/integration/` | Required for all database, outbox, gRPC, and third-party adapters. |
+| Property-based (Hypothesis) | ✅ Yes — mandatory | `tests/properties/` | Required for serialization algorithms, domain logic, and state machines. |
+| End-to-End & Browser (Playwright) | ✅ Yes | `tests/e2e/` | Required for new CLI workflows and UI dashboard views. |
+| Mutation testing (mutmut) | 🔄 Periodic CI | — | Automated periodic regression suite. |
+
+`check-test-parity` runs in pre-commit and will block commits if any public module is missing a corresponding test suite. Minimum line coverage must remain $\ge 90\%$.
 
 Run tests locally:
 
