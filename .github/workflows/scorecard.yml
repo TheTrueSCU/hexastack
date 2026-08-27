@@ -42,6 +42,8 @@ jobs:
         with:
           results_file: scorecard-results.sarif
           results_format: sarif
+          # Token with Administration:Read-only to evaluate branch protection
+          repo_token: ${{ secrets.SCORECARD_TOKEN || secrets.GITHUB_TOKEN }}
           # Publish results to the public Scorecard API so the badge works.
           # Set to 'false' for private repos until you're ready to go public.
           publish_results: true
