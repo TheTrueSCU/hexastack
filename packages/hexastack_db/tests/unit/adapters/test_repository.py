@@ -218,3 +218,72 @@ def test_sqlalchemy_repository_sync():
 
     session.close()
     engine.dispose()
+
+
+def test_sqlalchemy_repository_general_exception_handling():
+    """Verify repository methods wrap unexpected sqlalchemy exceptions in DatabaseError."""
+    from unittest.mock import MagicMock
+
+    from hexastack_db.domain.exceptions import DatabaseError
+
+    mock_session = MagicMock()
+    mock_session.flush.side_effect = RuntimeError("DB driver crashed")
+    mock_session.execute.side_effect = RuntimeError("DB execute crashed")
+
+    repo = SqlAlchemyRepository(session=mock_session, model_cls=UserRecord)
+
+    with pytest.raises(DatabaseError):
+        repo.add(UserRecord(username="fail1", email="fail1@test.com"))
+
+    with pytest.raises(DatabaseError):
+        repo.add_many([UserRecord(username="fail2", email="fail2@test.com")])
+
+    with pytest.raises(DatabaseError):
+        repo.count()
+
+    with pytest.raises(DatabaseError):
+        repo.list()
+
+    with pytest.raises(DatabaseError):
+        repo.get(1)
+
+    with pytest.raises(DatabaseError):
+        repo.update(UserRecord(id=1, username="fail3", email="fail3@test.com"))
+
+    with pytest.raises(DatabaseError):
+        repo.delete(1)
+
+
+@pytest.mark.anyio
+async def test_async_sqlalchemy_repository_general_exception_handling():
+    """Verify async repository methods wrap unexpected exceptions in DatabaseError."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from hexastack_db.domain.exceptions import DatabaseError
+
+    mock_session = MagicMock()
+    mock_session.flush = AsyncMock(side_effect=RuntimeError("Async DB driver crashed"))
+    mock_session.execute = AsyncMock(side_effect=RuntimeError("Async execute crashed"))
+
+    repo = AsyncSqlAlchemyRepository(session=mock_session, model_cls=UserRecord)
+
+    with pytest.raises(DatabaseError):
+        await repo.add(UserRecord(username="async_fail1", email="f1@test.com"))
+
+    with pytest.raises(DatabaseError):
+        await repo.add_many([UserRecord(username="async_fail2", email="f2@test.com")])
+
+    with pytest.raises(DatabaseError):
+        await repo.count()
+
+    with pytest.raises(DatabaseError):
+        await repo.list()
+
+    with pytest.raises(DatabaseError):
+        await repo.get(1)
+
+    with pytest.raises(DatabaseError):
+        await repo.update(UserRecord(id=1, username="async_fail3", email="f3@test.com"))
+
+    with pytest.raises(DatabaseError):
+        await repo.delete(1)

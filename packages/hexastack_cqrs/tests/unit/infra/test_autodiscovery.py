@@ -193,3 +193,33 @@ def test_cqrs_autodiscovery_isolated_helpers():
     cfg_meta = ConfigMetadata(section_name="custom.test")
     _register_config(OrderConfig, cfg_meta, cfg_reg)
     assert "custom.test" in cfg_reg
+
+
+def test_cqrs_autodiscovery_extra_branches():
+    """Verify event subscription and class presenter instantiation in autodiscovery."""
+    from hexastack_cqrs.adapters.buses.event.recording import RecordingEventBus
+    from hexastack_cqrs.infra.autodiscovery import (
+        _register_handler,
+        _register_presenter,
+    )
+    from hexastack_cqrs.infra.decorators import HandlerMetadata, PresenterMetadata
+
+    evt_bus = RecordingEventBus()
+    pipeline = ExecutionPipeline(
+        handler_registry=HandlerRegistry(),
+        event_bus=evt_bus,
+        presenter_registry=PresenterRegistry(),
+    )
+
+    # 1. Event handler registration
+    evt_meta = HandlerMetadata(kind="event", target_cls=OrderFulfilled)
+    _register_handler(lambda e: None, evt_meta, pipeline, None)
+
+    # 2. Presenter as uninstantiated class without container
+    class CustomClassPresenter(PresenterPort):
+        def present(self, instance: Any) -> str:
+            return f"presented:{instance}"
+
+    p_meta = PresenterMetadata(target_cls=OrderDTO, output_format="custom_class")
+    _register_presenter(CustomClassPresenter, p_meta, pipeline, None)
+    assert pipeline._presenter_registry.get(OrderDTO, "custom_class") is not None

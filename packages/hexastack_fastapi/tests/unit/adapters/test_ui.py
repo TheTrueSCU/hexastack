@@ -168,3 +168,45 @@ async def test_devtools_page_and_ping_runner_execution():
     mw = CorrelationMiddleware()
     _render_live_runner(container, pipeline_mock, [mw])
     _render_live_runner(container, None, [mw])
+
+
+def test_ui_all_tab_variations_and_corner_cases():
+    """Test empty and populated flag/container/middleware tab rendering branches."""
+    from unittest.mock import MagicMock
+
+    from rodi import Container
+
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+    from hexastack_fastapi.adapters.ui import (
+        _render_container_tab,
+        _render_flags_tab,
+        _render_middleware_chain,
+    )
+
+    # 1. Flags with no flags
+    c_empty_flags = Container()
+    empty_adapter = InMemoryFeatureFlagAdapter({})
+    c_empty_flags.add_instance(empty_adapter, declared_class=FeatureFlagPort)
+    _render_flags_tab(c_empty_flags)
+
+    # 2. Flags adapter without get_all_flags
+    c_no_listing = Container()
+    c_no_listing.add_instance(MagicMock(), declared_class=FeatureFlagPort)
+    _render_flags_tab(c_no_listing)
+
+    # 3. Middlewares chain with auth and non-auth middlewares
+    class AuthMiddleware:
+        pass
+
+    class TimingMiddleware:
+        pass
+
+    _render_middleware_chain([AuthMiddleware(), TimingMiddleware()])
+
+    # 4. Container with service registrations
+    c_services = Container()
+    c_services.add_instance(empty_adapter, declared_class=FeatureFlagPort)
+    _render_container_tab(c_services)
