@@ -18,6 +18,11 @@ async def test_create_async_grpc_server():
     assert server is not None
     await server.stop(grace=None)
 
+    # Test with interceptors=None fallback to empty tuple
+    server_no_int = create_async_grpc_server(config=cfg, interceptors=None)
+    assert server_no_int is not None
+    await server_no_int.stop(grace=None)
+
 
 def test_run_grpc_server_blocking_keyboard_interrupt():
     mock_server = MagicMock(spec=grpc.Server)
@@ -28,8 +33,21 @@ def test_run_grpc_server_blocking_keyboard_interrupt():
     mock_server.stop.assert_called_once_with(grace=5.0)
 
 
+def test_run_grpc_server_blocking_normal():
+    mock_server = MagicMock(spec=grpc.Server)
+    run_grpc_server(mock_server, block=True)
+    mock_server.start.assert_called_once()
+    mock_server.wait_for_termination.assert_called_once()
+    mock_server.stop.assert_not_called()
+
+
 def test_run_grpc_server_non_blocking():
     mock_server = MagicMock(spec=grpc.Server)
     run_grpc_server(mock_server, block=False)
     mock_server.start.assert_called_once()
     mock_server.wait_for_termination.assert_not_called()
+    mock_server.stop.assert_not_called()
+    # Test default block argument (block=True by default)
+    mock_server_def = MagicMock(spec=grpc.Server)
+    run_grpc_server(mock_server_def)
+    mock_server_def.wait_for_termination.assert_called_once()

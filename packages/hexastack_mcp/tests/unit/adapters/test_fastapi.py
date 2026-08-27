@@ -40,3 +40,17 @@ def test_fastapi_mcp_sse_mount():
         headers={"host": "localhost"},
     )
     assert res.status_code in (200, 400, 404, 421)
+
+
+def test_create_mcp_sse_app_and_mount_defaults():
+    from hexastack_mcp.adapters.fastapi import create_mcp_sse_app
+
+    server = McpServer(name="TestFastMCP")
+    sse_app = create_mcp_sse_app(server)
+    assert sse_app is not None
+
+    app = FastAPI()
+    mount_mcp_sse(app, server)
+    # Check default mount on /mcp
+    routes = [getattr(r, "path", None) for r in app.routes]
+    assert "/mcp" in routes
