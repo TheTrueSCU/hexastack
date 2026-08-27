@@ -43,7 +43,9 @@ def test_structured_logger_listener_close_and_default_init():
     from unittest.mock import MagicMock
 
     mock_listener = MagicMock()
-    logger = StructuredLogger(logger=logging.getLogger("custom"), listener=mock_listener)
+    logger = StructuredLogger(
+        logger=logging.getLogger("custom"), listener=mock_listener
+    )
     assert logger._listener is mock_listener
 
     logger.close()

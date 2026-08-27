@@ -213,7 +213,9 @@ def add_scaffold_commands(app: typer.Typer) -> None:
             include_grpc=True,
             include_graphql=True,
         )
-        typer.echo(f"🎉 Created new Full-Featured Enterprise Hexastack project at '{target_path}'")
+        typer.echo(
+            f"🎉 Created new Full-Featured Enterprise Hexastack project at '{target_path}'"
+        )
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
 
     @app.command(

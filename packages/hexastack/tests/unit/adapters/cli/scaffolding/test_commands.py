@@ -65,14 +65,28 @@ def test_cli_scaffold_subcommands():
             # Test `new enterprise` subcommand
             result_ent = runner.invoke(app, ["new", "enterprise", "fintech-core"])
             assert result_ent.exit_code == 0
-            assert "Created new Full-Featured Enterprise Hexastack project" in result_ent.output
+            assert (
+                "Created new Full-Featured Enterprise Hexastack project"
+                in result_ent.output
+            )
             assert Path(tmpdir, "fintech-core", "pyproject.toml").exists()
 
             # Test `init` command
             init_dir = Path(tmpdir, "init-test-app")
             init_dir.mkdir()
             os.chdir(init_dir)
-            result_init = runner.invoke(app, ["init", "--name", "init-test-app", "--template", "minimal", "--db", "sqlite"])
+            result_init = runner.invoke(
+                app,
+                [
+                    "init",
+                    "--name",
+                    "init-test-app",
+                    "--template",
+                    "minimal",
+                    "--db",
+                    "sqlite",
+                ],
+            )
             assert result_init.exit_code == 0
             assert "Initialized Hexastack project" in result_init.output
             assert Path(init_dir, "pyproject.toml").exists()

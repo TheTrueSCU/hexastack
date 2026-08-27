@@ -61,7 +61,9 @@ def test_otel_custom_tracer_provider_and_inactive_span():
     from opentelemetry.sdk.trace import TracerProvider
 
     custom_provider = TracerProvider()
-    adapter = OtelTracingAdapter(service_name="custom-svc", tracer_provider=custom_provider)
+    adapter = OtelTracingAdapter(
+        service_name="custom-svc", tracer_provider=custom_provider
+    )
     assert adapter._provider is custom_provider
     # Outside any active span context, get_current_span returns None
     assert adapter.get_current_span() is None

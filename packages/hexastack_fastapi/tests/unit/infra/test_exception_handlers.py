@@ -227,4 +227,3 @@ def test_exception_handler_security_aliases():
     res_cred = client.get("/bad_cred")
     assert res_cred.status_code == 401
     assert res_cred.json()["error_type"] == "InvalidCredentialSecurityError"
-

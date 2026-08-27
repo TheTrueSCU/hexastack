@@ -69,7 +69,11 @@ def classify_mutant_line(line_str: str, filename: str) -> tuple[MutantCategory, 
     # 5. Critical / Actionable (Branch conditions, error mapping, security, state changes)
     if re.search(r"\b(?:if|elif|while|return|raise|assert)\b", line_str):
         return MutantCategory.CRITICAL, "Control flow / branching / assertion"
-    if re.search(r"\b(?:status|error|exception|retry|auth|token|security)\b", line_str, re.IGNORECASE):
+    if re.search(
+        r"\b(?:status|error|exception|retry|auth|token|security)\b",
+        line_str,
+        re.IGNORECASE,
+    ):
         return MutantCategory.CRITICAL, "Domain status / security / error handling"
     if re.search(r"[+\-*/%<>=!&|^]", line_str):
         return MutantCategory.CRITICAL, "Arithmetic / Comparison / Logical operator"
@@ -105,19 +109,32 @@ def show_summary(con: sqlite3.Connection) -> None:
         match = re.search(r"hexastack_([a-z0-9_]+)", filename)
         pkg = match.group(1) if match else "other"
         if pkg not in package_stats:
-            package_stats[pkg] = {"total": 0, "critical": 0, "equivalent": 0, "ignorable": 0}
+            package_stats[pkg] = {
+                "total": 0,
+                "critical": 0,
+                "equivalent": 0,
+                "ignorable": 0,
+            }
 
         category, _ = classify_mutant_line(line_str.strip(), filename)
         package_stats[pkg]["total"] += 1
         package_stats[pkg][category.value.lower()] += 1
 
-    print("\n================================================================================")
+    print(
+        "\n================================================================================"
+    )
     print(" Surviving Mutants Triage Summary by Package")
-    print("================================================================================")
-    print(f"  {'Package':<18} | {'Total':<6} | {'🔴 Critical':<12} | {'🟡 Equivalent':<14} | {'🟢 Ignorable':<12}")
+    print(
+        "================================================================================"
+    )
+    print(
+        f"  {'Package':<18} | {'Total':<6} | {'🔴 Critical':<12} | {'🟡 Equivalent':<14} | {'🟢 Ignorable':<12}"
+    )
     print("  " + "-" * 74)
 
-    for pkg, stats in sorted(package_stats.items(), key=lambda x: x[1]["critical"], reverse=True):
+    for pkg, stats in sorted(
+        package_stats.items(), key=lambda x: x[1]["critical"], reverse=True
+    ):
         print(
             f"  hexastack_{pkg:<8} | {stats['total']:<6d} | "
             f"{stats['critical']:<12d} | {stats['equivalent']:<14d} | {stats['ignorable']:<12d}"
@@ -155,12 +172,18 @@ def show_file_mutants(
         filtered_rows.append((row, cat, reason))
 
     title_suffix = " (Actionable Critical Only)" if actionable_only else ""
-    print(f"\n=== Surviving Mutants matching '{pattern}' ({len(filtered_rows)} total){title_suffix} ===")
+    print(
+        f"\n=== Surviving Mutants matching '{pattern}' ({len(filtered_rows)} total){title_suffix} ==="
+    )
 
     for row, cat, reason in filtered_rows[:limit]:
         rel_path = row[1].replace(str(ROOT_DIR) + "/", "")
         line_str = row[3].strip()
-        icon = "🔴" if cat == MutantCategory.CRITICAL else ("🟡" if cat == MutantCategory.EQUIVALENT else "🟢")
+        icon = (
+            "🔴"
+            if cat == MutantCategory.CRITICAL
+            else ("🟡" if cat == MutantCategory.EQUIVALENT else "🟢")
+        )
         print(f"  {icon} Mutant {row[0]:<4} [{cat.value:<10}] | {rel_path}:{row[2]}")
         print(f"     Code:   {line_str}")
         print(f"     Reason: {reason}\n")

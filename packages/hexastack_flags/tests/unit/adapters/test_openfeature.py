@@ -79,9 +79,10 @@ def test_openfeature_factory_missing_dependencies():
         with pytest.raises(MissingDependencyError, match="openfeature-provider-flagd"):
             _build_flagd_provider(opts)
 
-        with pytest.raises(MissingDependencyError, match="openfeature-provider-unleash"):
+        with pytest.raises(
+            MissingDependencyError, match="openfeature-provider-unleash"
+        ):
             _build_unleash_provider(opts)
 
         with pytest.raises(MissingDependencyError, match="openfeature-provider-flipt"):
             _build_flipt_provider(opts)
-

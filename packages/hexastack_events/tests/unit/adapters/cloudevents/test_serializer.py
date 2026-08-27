@@ -58,7 +58,14 @@ def test_cloudevent_serializer_defaults():
         extensions={"custom_ext": "value_123"},
     )
 
-    assert cloudevent_to_dict(ce) == snapshot(
+    d = cloudevent_to_dict(ce)
+    assert "data" in d
+    assert d["data"] == {
+        "invoice_id": "inv-default",
+        "amount": 100.0,
+        "currency": "USD",
+    }
+    assert d == snapshot(
         {
             "id": "fixed-event-id",
             "source": "hexastack",

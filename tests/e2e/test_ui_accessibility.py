@@ -56,19 +56,31 @@ def test_devtools_ui_wcag_accessibility(devtools_server: str, page: Page) -> Non
 
     # 1. Audit Primary Overview / CQRS Pipeline Tab
     violations_pipeline = run_axe_scan(page)
-    critical_violations = [v for v in violations_pipeline if v.get("impact") in ("critical", "serious")]
-    assert len(critical_violations) == 0, f"Accessibility violations on CQRS tab: {critical_violations}"
+    critical_violations = [
+        v for v in violations_pipeline if v.get("impact") in ("critical", "serious")
+    ]
+    assert len(critical_violations) == 0, (
+        f"Accessibility violations on CQRS tab: {critical_violations}"
+    )
 
     # 2. Audit Feature Flags Tab
     smart_click(page, page.get_by_text("Feature Flags"))
     expect(page.get_by_text("Active Feature Flags")).to_be_visible()
     violations_flags = run_axe_scan(page)
-    critical_violations_flags = [v for v in violations_flags if v.get("impact") in ("critical", "serious")]
-    assert len(critical_violations_flags) == 0, f"Accessibility violations on Feature Flags tab: {critical_violations_flags}"
+    critical_violations_flags = [
+        v for v in violations_flags if v.get("impact") in ("critical", "serious")
+    ]
+    assert len(critical_violations_flags) == 0, (
+        f"Accessibility violations on Feature Flags tab: {critical_violations_flags}"
+    )
 
     # 3. Audit DI Container Tab
     smart_click(page, page.get_by_text("DI Container"))
     expect(page.get_by_text("Dependency Injection Services")).to_be_visible()
     violations_di = run_axe_scan(page)
-    critical_violations_di = [v for v in violations_di if v.get("impact") in ("critical", "serious")]
-    assert len(critical_violations_di) == 0, f"Accessibility violations on DI tab: {critical_violations_di}"
+    critical_violations_di = [
+        v for v in violations_di if v.get("impact") in ("critical", "serious")
+    ]
+    assert len(critical_violations_di) == 0, (
+        f"Accessibility violations on DI tab: {critical_violations_di}"
+    )

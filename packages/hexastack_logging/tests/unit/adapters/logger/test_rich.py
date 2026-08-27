@@ -73,4 +73,6 @@ def test_rich_logger_no_correlation_id():
     mock_console = MagicMock()
     logger = RichLogger(console=mock_console)
     logger.info("Message without cid")
-    mock_console.print.assert_called_with("[green][INFO    ][/green] Message without cid")
+    mock_console.print.assert_called_with(
+        "[green][INFO    ][/green] Message without cid"
+    )
