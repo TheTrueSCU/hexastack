@@ -4,9 +4,10 @@
 
 > Command Query Responsibility Segregation (CQRS) buses, execution pipelines, and middleware for Hexastack.
 
+[![PyPI: hexastack-cqrs](https://img.shields.io/pypi/v/hexastack-cqrs.svg)](https://pypi.org/project/hexastack-cqrs/)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_cqrs)](https://codecov.io/github/TheTrueSCU/hexastack)
-
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
 ---
 
 ## 1. Overview & Capabilities

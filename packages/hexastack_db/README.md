@@ -4,9 +4,10 @@
 
 > SQLAlchemy 2.0+ persistence layer, generic repositories, Unit of Work, declarative mixins, and Alembic migrations for Hexastack.
 
+[![PyPI: hexastack-db](https://img.shields.io/pypi/v/hexastack-db.svg)](https://pypi.org/project/hexastack-db/)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_db)](https://codecov.io/github/TheTrueSCU/hexastack)
-
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
 ---
 
 ## 1. Overview & Capabilities
