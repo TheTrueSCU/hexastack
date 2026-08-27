@@ -11,6 +11,7 @@ Usage:
 """
 
 import argparse
+import enum
 import re
 import sqlite3
 import sys
@@ -19,6 +20,61 @@ from scripts._common import get_repo_root
 
 ROOT_DIR = get_repo_root()
 CACHE_FILE = ROOT_DIR / ".mutmut-cache"
+
+
+class MutantCategory(enum.StrEnum):
+    CRITICAL = "CRITICAL"
+    EQUIVALENT = "EQUIVALENT"
+    IGNORABLE = "IGNORABLE"
+
+
+def classify_mutant_line(line_str: str, filename: str) -> tuple[MutantCategory, str]:
+    """Classify a surviving mutant based on syntactic and contextual heuristics.
+
+    Args:
+        line_str: Raw line of source code where mutation survived.
+        filename: Path of the source file.
+
+    Returns:
+        Tuple of (Category, Rationale string).
+    """
+    # 1. Ignorable test harnesses & demo recordings
+    if "/testing/" in filename or "/devtools/" in filename or "recorder.py" in filename:
+        return MutantCategory.IGNORABLE, "Test harness / demo recorder"
+
+    # 2. Ignorable logging & terminal UI print statements
+    if re.search(r"\b(?:logger|log)\.(?:debug|info|trace|warning|error)\(", line_str):
+        return MutantCategory.IGNORABLE, "Log statement format"
+    if re.search(r"\b(?:typer\.echo|console\.print|print)\(", line_str):
+        return MutantCategory.IGNORABLE, "CLI / Console output"
+
+    # 3. Ignorable docstrings / help metadata
+    if re.search(r"\b(?:help|description|summary|instructions)\s*=", line_str):
+        return MutantCategory.IGNORABLE, "Doc / Help text"
+    if re.search(r":\s*(?:bool|str|int|float|list|dict|set)[^=]*=\s*Field\(", line_str):
+        return MutantCategory.IGNORABLE, "Pydantic Field metadata"
+
+    # 4. Equivalent candidates (dict fallbacks, default kwargs, None defaults, dataclass metadata)
+    if re.search(r"@dataclass\(", line_str):
+        return MutantCategory.EQUIVALENT, "Dataclass decorator configuration"
+    if re.search(r":\s*[^=]+=\s*None\b", line_str):
+        return MutantCategory.EQUIVALENT, "Model / dataclass default None attribute"
+    if re.search(r"\.get\([^,]+,\s*None\)", line_str):
+        return MutantCategory.EQUIVALENT, "Dict fallback with None default"
+    if re.search(r"=\s*None\s*\)", line_str) or re.search(r"=\s*None\s*,", line_str):
+        return MutantCategory.EQUIVALENT, "Optional parameter None default"
+    if re.search(r"\bcast\(", line_str):
+        return MutantCategory.EQUIVALENT, "Type casting statement"
+
+    # 5. Critical / Actionable (Branch conditions, error mapping, security, state changes)
+    if re.search(r"\b(?:if|elif|while|return|raise|assert)\b", line_str):
+        return MutantCategory.CRITICAL, "Control flow / branching / assertion"
+    if re.search(r"\b(?:status|error|exception|retry|auth|token|security)\b", line_str, re.IGNORECASE):
+        return MutantCategory.CRITICAL, "Domain status / security / error handling"
+    if re.search(r"[+\-*/%<>=!&|^]", line_str):
+        return MutantCategory.CRITICAL, "Arithmetic / Comparison / Logical operator"
+
+    return MutantCategory.CRITICAL, "Domain execution logic"
 
 
 def get_db_connection() -> sqlite3.Connection | None:
@@ -30,47 +86,52 @@ def get_db_connection() -> sqlite3.Connection | None:
 
 
 def show_summary(con: sqlite3.Connection) -> None:
-    """Print high-level summary of surviving mutants by package."""
+    """Print high-level summary of surviving mutants by package with triage classification."""
     cur = con.cursor()
     query = """
-    SELECT sf.filename, count(m.id) as survivor_count
+    SELECT m.id, sf.filename, l.line
     FROM Mutant m
     JOIN Line l ON m.line = l.id
     JOIN SourceFile sf ON l.sourcefile = sf.id
     WHERE m.status IN ('bad_survived', 'bad_timeout')
-    GROUP BY sf.filename
-    ORDER BY survivor_count DESC
     """
     rows = cur.execute(query).fetchall()
     if not rows:
         print("No surviving mutants found in cache!")
         return
 
-    package_counts: dict[str, int] = {}
-    for filename, count in rows:
+    package_stats: dict[str, dict[str, int]] = {}
+    for _, filename, line_str in rows:
         match = re.search(r"hexastack_([a-z0-9_]+)", filename)
         pkg = match.group(1) if match else "other"
-        package_counts[pkg] = package_counts.get(pkg, 0) + count
+        if pkg not in package_stats:
+            package_stats[pkg] = {"total": 0, "critical": 0, "equivalent": 0, "ignorable": 0}
 
-    print("\n========================================================")
-    print(" Surviving Mutants Summary by Package")
-    print("========================================================")
-    for pkg, count in sorted(package_counts.items(), key=lambda x: x[1], reverse=True):
-        print(f"  hexastack_{pkg:<14}: {count:4d} survivors")
+        category, _ = classify_mutant_line(line_str.strip(), filename)
+        package_stats[pkg]["total"] += 1
+        package_stats[pkg][category.value.lower()] += 1
 
-    print("\n--- Top Files with Survivors ---")
-    for filename, count in rows[:20]:
-        rel_path = filename.replace(str(ROOT_DIR) + "/", "")
-        print(f"  {count:4d}  {rel_path}")
+    print("\n================================================================================")
+    print(" Surviving Mutants Triage Summary by Package")
+    print("================================================================================")
+    print(f"  {'Package':<18} | {'Total':<6} | {'🔴 Critical':<12} | {'🟡 Equivalent':<14} | {'🟢 Ignorable':<12}")
+    print("  " + "-" * 74)
+
+    for pkg, stats in sorted(package_stats.items(), key=lambda x: x[1]["critical"], reverse=True):
+        print(
+            f"  hexastack_{pkg:<8} | {stats['total']:<6d} | "
+            f"{stats['critical']:<12d} | {stats['equivalent']:<14d} | {stats['ignorable']:<12d}"
+        )
     print()
 
 
 def show_file_mutants(
     con: sqlite3.Connection,
     pattern: str,
-    limit: int = 15,
+    limit: int = 25,
+    actionable_only: bool = False,
 ) -> None:
-    """Print line details for surviving mutants matching a pattern."""
+    """Print classified line details for surviving mutants matching a pattern."""
     cur = con.cursor()
     query = """
     SELECT m.id, sf.filename, l.line_number, l.line
@@ -86,37 +147,55 @@ def show_file_mutants(
         print(f"No surviving mutants matching '{pattern}'.")
         return
 
-    print(f"\n=== Surviving Mutants matching '{pattern}' ({len(rows)} total) ===")
-    for row in rows[:limit]:
+    filtered_rows = []
+    for row in rows:
+        cat, reason = classify_mutant_line(row[3].strip(), row[1])
+        if actionable_only and cat != MutantCategory.CRITICAL:
+            continue
+        filtered_rows.append((row, cat, reason))
+
+    title_suffix = " (Actionable Critical Only)" if actionable_only else ""
+    print(f"\n=== Surviving Mutants matching '{pattern}' ({len(filtered_rows)} total){title_suffix} ===")
+
+    for row, cat, reason in filtered_rows[:limit]:
         rel_path = row[1].replace(str(ROOT_DIR) + "/", "")
         line_str = row[3].strip()
-        print(f"  Mutant {row[0]:<4} | {rel_path}:{row[2]} -> {line_str}")
-    if len(rows) > limit:
-        print(f"  ... ({len(rows) - limit} more matching mutants omitted)")
-    print()
+        icon = "🔴" if cat == MutantCategory.CRITICAL else ("🟡" if cat == MutantCategory.EQUIVALENT else "🟢")
+        print(f"  {icon} Mutant {row[0]:<4} [{cat.value:<10}] | {rel_path}:{row[2]}")
+        print(f"     Code:   {line_str}")
+        print(f"     Reason: {reason}\n")
+
+    if len(filtered_rows) > limit:
+        print(f"  ... ({len(filtered_rows) - limit} more matching mutants omitted)\n")
 
 
 def main() -> None:
     """Parse CLI arguments and dispatch cache inspection."""
     parser = argparse.ArgumentParser(
-        description="Inspect .mutmut-cache for surviving mutants"
+        description="Inspect .mutmut-cache with automated mutant classification (Critical vs Ignorable)"
     )
     parser.add_argument(
         "--summary",
         action="store_true",
-        help="Display package-level and top-file survivor summaries.",
+        help="Display package-level and triage classification summary.",
     )
     parser.add_argument(
         "-p",
         "--package",
         default=None,
-        help="Filter surviving mutants by package name (e.g. db, auth, events).",
+        help="Filter surviving mutants by package name (e.g. db, auth, events, grpc).",
     )
     parser.add_argument(
         "-f",
         "--file",
         default=None,
-        help="Filter surviving mutants by filename pattern (e.g. engine.py).",
+        help="Filter surviving mutants by filename pattern (e.g. exception.py).",
+    )
+    parser.add_argument(
+        "-a",
+        "--actionable-only",
+        action="store_true",
+        help="Only display actionable critical mutants (skip ignorable / equivalent).",
     )
     parser.add_argument(
         "-n",
@@ -136,10 +215,20 @@ def main() -> None:
         show_summary(con)
 
     if args.package:
-        show_file_mutants(con, f"hexastack_{args.package}", limit=args.limit)
+        show_file_mutants(
+            con,
+            f"hexastack_{args.package}",
+            limit=args.limit,
+            actionable_only=args.actionable_only,
+        )
 
     if args.file:
-        show_file_mutants(con, args.file, limit=args.limit)
+        show_file_mutants(
+            con,
+            args.file,
+            limit=args.limit,
+            actionable_only=args.actionable_only,
+        )
 
 
 if __name__ == "__main__":
