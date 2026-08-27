@@ -85,6 +85,37 @@ Hexastack maintainers commit to working in **good faith** with security research
 
 Researchers who follow these principles will not be subject to legal action related to their research. We will work with you to understand and resolve the issue promptly.
 
+## Security Assurance Case
+
+Hexastack maintains a formal security assurance case to demonstrate why its security requirements and architectural guarantees are met.
+
+### 1. Threat Model & Asset Identification
+* **Primary Assets**: Integrity of application business logic and domain entities, confidentiality and integrity of cryptographic signing tokens (JWT/OAuth), and isolation of dependency/transport boundaries (FastAPI, gRPC, DB, RabbitMQ/Redis).
+* **Threat Vectors**:
+  * *Boundary Bypass & Data Tampering*: Inbound payloads attempting to inject malicious state or bypass domain invariant checks.
+  * *Privilege Escalation & Impersonation*: Forged or expired JWTs attempting unauthorized resource access across CQRS pipelines.
+  * *Supply Chain & Dependency Injection*: Vulnerabilities introduced via third-party PyPI packages.
+  * *Side-Channel & Leakage*: Sensitive credentials leaked into stdout logs or error tracebacks.
+
+### 2. Trust Boundaries
+* **External Transport Boundary**: Untrusted user input enters through primary adapters (FastAPI HTTP endpoints, gRPC handlers, CLI commands). All inbound payloads cross an explicit validation boundary where types and bounds are coerced using strict Pydantic and Msgspec schemas before reaching domain models.
+* **Ports & Adapters Boundary**: The domain and application core depend only on abstract port contracts (`hexastack_core`). Secondary adapters (SQLAlchemy, Redis, HTTP clients) execute behind interface boundaries, preventing database injections or infrastructure concerns from polluting the domain.
+* **Authentication & Authorization Boundary**: Handled via `hexastack_auth` middleware before dispatching commands or queries to CQRS handlers.
+
+### 3. Secure Design Principles Applied
+* **Strict Least Privilege**: Docker deployment containers execute under unprivileged user IDs (`appuser:10001`). Framework abstractions avoid elevated permissions or filesystem root access.
+* **Separation of Concerns & Isolation**: Strict architectural layering enforced statically on every commit via `import-linter` and `pytest-archon`.
+* **Fail-Secure Defaults**: Security exceptions reject requests with closed states; authentication middlewares require explicit role permits.
+* **Cryptographic & Credential Agility**: Key rotation and configurable algorithms (RS256, EdDSA) supported without code modification.
+
+### 4. Implementation Security Weakness Countermeasures
+* **Automated Static Analysis (SAST)**: Enforced via `Ruff` (security rules `S`), `ty check`, and GitHub `CodeQL`.
+* **Automated Dependency Auditing (SCA)**: Daily `Dependabot` vulnerability monitoring and pre-commit `pip-audit` scans.
+* **Property & Contract Fuzzing**: Algorithmic correctness validated via `Hypothesis` property-based testing and `Schemathesis` OpenAPI contract testing.
+* **Secret Detection**: `detect-secrets` hook in pre-commit prevents accidental credential check-ins.
+
+---
+
 ## Preferred Disclosure Language
 
 Please submit all reports in **English** to ensure the fastest possible triage and response.
