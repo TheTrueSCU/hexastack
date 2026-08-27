@@ -70,9 +70,13 @@ def test_rich_logger_missing_dependency():
 
 
 def test_rich_logger_no_correlation_id():
-    mock_console = MagicMock()
-    logger = RichLogger(console=mock_console)
-    logger.info("Message without cid")
-    mock_console.print.assert_called_with(
-        "[green][INFO    ][/green] Message without cid"
-    )
+    token = correlation_id_ctx.set("")
+    try:
+        mock_console = MagicMock()
+        logger = RichLogger(console=mock_console)
+        logger.info("Message without cid")
+        mock_console.print.assert_called_with(
+            "[green][INFO    ][/green] Message without cid"
+        )
+    finally:
+        correlation_id_ctx.reset(token)

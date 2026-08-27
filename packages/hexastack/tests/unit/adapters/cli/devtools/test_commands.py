@@ -94,6 +94,11 @@ def test_add_demo_commands_registration():
     serve_help = runner.invoke(app, ["serve", "--help"])
     assert serve_help.exit_code == 0
 
-    # Test grpc compile help & execution fallback
-    grpc_compile_res = runner.invoke(app, ["grpc", "compile"])
-    assert grpc_compile_res.exit_code == 0
+    # Test grpc compile with mocked compiler backend
+    from unittest.mock import patch
+
+    with patch(
+        "hexastack_grpc.infra.compiler.ProtoCompiler.compile_files", return_value=[]
+    ):
+        grpc_compile_res = runner.invoke(app, ["grpc", "compile"])
+        assert grpc_compile_res.exit_code == 0
