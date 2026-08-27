@@ -103,3 +103,40 @@ def test_database_bootstrapper_with_vector_sync():
     db_res: DatabaseBootstrapResult = result.get("database_result")
     assert db_res.vector_store is vec_store
     assert result.get("db_vector_store") is vec_store
+
+
+def test_database_bootstrapper_auto_create_tables_and_metadata_registration():
+    """Verify _auto_create_tables executes over registered metadata in sync & async modes."""
+    from sqlalchemy import Column, Integer, MetaData, String, Table
+
+    from hexastack_db.infra.registries.metadata import register_metadata
+
+    custom_meta = MetaData()
+    Table(
+        "auto_test_items",
+        custom_meta,
+        Column("id", Integer, primary_key=True),
+        Column("name", String),
+    )
+    register_metadata(custom_meta)
+
+    # 1. Sync auto create
+    cfg_sync = HexastackDatabaseConfig(
+        url="sqlite:///:memory:",
+        auto_create_tables=True,
+    )
+    c_sync = Container()
+    c_sync.add_instance(cfg_sync, declared_class=HexastackDatabaseConfig)
+    res_sync = bootstrap(bootstrappers=[DatabaseBootstrapper()], container=c_sync)
+    assert res_sync.get("database_result") is not None
+
+    # 2. Async auto create
+    cfg_async = HexastackDatabaseConfig(
+        url="sqlite+aiosqlite:///:memory:",
+        async_mode=True,
+        auto_create_tables=True,
+    )
+    c_async = Container()
+    c_async.add_instance(cfg_async, declared_class=HexastackDatabaseConfig)
+    res_async = bootstrap(bootstrappers=[DatabaseBootstrapper()], container=c_async)
+    assert res_async.get("database_result") is not None

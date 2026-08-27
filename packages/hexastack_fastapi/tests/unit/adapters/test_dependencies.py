@@ -213,3 +213,49 @@ def test_check_openapi_conformance_smoke() -> None:
     paths = set(schema)
     assert "/items/create" in paths
     assert "/items/get" in paths
+
+
+def test_fastapi_dependencies_isolated_resolvers():
+    """Verify isolated dependency helper functions directly."""
+    from unittest.mock import MagicMock
+
+    from fastapi import HTTPException, Request
+    from rodi import Container
+
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+    from hexastack_fastapi.adapters.dependencies import (
+        get_container,
+        get_pipeline,
+        require_feature,
+    )
+
+    # 1. Pipeline from container
+    container = Container()
+    pipeline_mock = MagicMock(spec=ExecutionPipeline)
+    container.add_instance(pipeline_mock, declared_class=ExecutionPipeline)
+
+    req = MagicMock(spec=Request)
+    req.app.state.pipeline = None
+    req.app.state.container = container
+
+    assert get_pipeline(req) is pipeline_mock
+    assert get_container(req) is container
+
+    # 2. require_feature enabled and disabled
+    flags = InMemoryFeatureFlagAdapter({"feature.gated": False})
+    container.add_instance(flags, declared_class=FeatureFlagPort)
+    req.state.container = container
+
+    dep_fn = require_feature("feature.gated")
+    import asyncio
+
+    with pytest.raises(HTTPException) as exc_info:
+        asyncio.run(dep_fn(req))
+    assert exc_info.value.status_code == 404
+
+    flags.set_flag("feature.gated", True)
+    # When enabled, does not raise
+    asyncio.run(dep_fn(req))

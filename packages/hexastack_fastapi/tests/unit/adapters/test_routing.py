@@ -235,3 +235,42 @@ def test_cqrs_router_openapi_conformance_with_schemathesis():
 
     # 2. Automated Schemathesis conformance test
     check_openapi_conformance(app, validate_schema=True)
+
+
+def test_cqrs_router_query_and_command_extra_branches():
+    """Verify CqrsRouter handling with missing and explicit presentation formats."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from hexastack_core.domain import Command, Query
+    from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+    from hexastack_cqrs.infra.registries.handler import HandlerRegistry
+    from hexastack_fastapi.adapters.routing import CqrsRouter
+
+    class PingCmd(Command):
+        pass
+
+    class PingQry(Query):
+        pass
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(PingCmd, lambda cmd: {"pong": True})
+    handler_reg.register(PingQry, lambda qry: {"pong": "query"})
+    pipeline = ExecutionPipeline(handler_registry=handler_reg)
+
+    router = CqrsRouter()
+    router.add_command("/ping-cmd", PingCmd, status_code=200)
+    router.add_query("/ping-qry", PingQry)
+
+    app = FastAPI()
+    app.state.pipeline = pipeline
+    app.include_router(router)
+    client = TestClient(app)
+
+    res_cmd = client.post("/ping-cmd", json={})
+    assert res_cmd.status_code == 200
+    assert res_cmd.json() == {"pong": True}
+
+    res_qry = client.get("/ping-qry")
+    assert res_qry.status_code == 200
+    assert res_qry.json() == {"pong": "query"}

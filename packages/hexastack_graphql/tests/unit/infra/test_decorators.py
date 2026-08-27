@@ -159,3 +159,42 @@ def test_feature_flag_field_decorator_sync_fallback_and_async_error():
     res_async = asyncio.run(schema.execute("{ asyncError }", context_value=ctx))
     assert res_async.errors is not None
     assert "disabled by feature flag 'graphql.flag'" in str(res_async.errors[0])
+
+
+def test_graphql_query_and_mutation_decorators():
+    """Verify standalone @graphql_query and @graphql_mutation functions attach metadata."""
+    from hexastack_graphql.infra.decorators import (
+        _GRAPHQL_FIELD_ATTR,
+        _GRAPHQL_TYPE_ATTR,
+        get_schema_registry,
+        graphql_mutation,
+        graphql_mutation_type,
+        graphql_query,
+        graphql_query_type,
+    )
+
+    @graphql_query(name="ping_query", description="Ping query desc")
+    def ping() -> str:
+        return "pong"
+
+    @graphql_mutation(name="ping_mutation", description="Ping mut desc")
+    def mutate_ping() -> bool:
+        return True
+
+    class PlainQueryCls:
+        pass
+
+    class PlainMutationCls:
+        pass
+
+    q_type = graphql_query_type(PlainQueryCls)
+    m_type = graphql_mutation_type(PlainMutationCls)
+
+    assert getattr(ping, _GRAPHQL_FIELD_ATTR).name == "ping_query"
+    assert getattr(mutate_ping, _GRAPHQL_FIELD_ATTR).name == "ping_mutation"
+    assert getattr(q_type, _GRAPHQL_TYPE_ATTR).kind == "query"
+    assert getattr(m_type, _GRAPHQL_TYPE_ATTR).kind == "mutation"
+
+    reg = get_schema_registry()
+    assert "ping_query" in reg._query_fields
+    assert "ping_mutation" in reg._mutation_fields
