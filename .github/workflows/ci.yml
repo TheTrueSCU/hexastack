@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [main]
 
+permissions: read-all
+
 jobs:
   # =========================================================================
   # Stage 1: Fast Quality Gate & Schema Governance (Fail-Fast Static Checks)

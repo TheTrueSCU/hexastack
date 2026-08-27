@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: release
@@ -16,6 +15,9 @@ jobs:
     name: Semantic Release & Version Bump
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     outputs:
       released: ${{ steps.psr.outputs.released }}
       version: ${{ steps.psr.outputs.version }}
