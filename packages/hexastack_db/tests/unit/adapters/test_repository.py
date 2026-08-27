@@ -228,7 +228,10 @@ def test_sqlalchemy_repository_general_exception_handling():
 
     mock_session = MagicMock()
     mock_session.flush.side_effect = RuntimeError("DB driver crashed")
+    mock_session.scalar.side_effect = RuntimeError("DB scalar crashed")
+    mock_session.get.side_effect = RuntimeError("DB get crashed")
     mock_session.execute.side_effect = RuntimeError("DB execute crashed")
+    mock_session.merge.side_effect = RuntimeError("DB merge crashed")
 
     repo = SqlAlchemyRepository(session=mock_session, model_cls=UserRecord)
 
@@ -263,7 +266,10 @@ async def test_async_sqlalchemy_repository_general_exception_handling():
 
     mock_session = MagicMock()
     mock_session.flush = AsyncMock(side_effect=RuntimeError("Async DB driver crashed"))
+    mock_session.scalar = AsyncMock(side_effect=RuntimeError("Async scalar crashed"))
+    mock_session.get = AsyncMock(side_effect=RuntimeError("Async get crashed"))
     mock_session.execute = AsyncMock(side_effect=RuntimeError("Async execute crashed"))
+    mock_session.merge = MagicMock(side_effect=RuntimeError("Async merge crashed"))
 
     repo = AsyncSqlAlchemyRepository(session=mock_session, model_cls=UserRecord)
 
