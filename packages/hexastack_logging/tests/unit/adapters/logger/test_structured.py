@@ -37,3 +37,23 @@ def test_structured_logger_methods():
     assert handler.records[2].levelname == "WARNING"
     assert handler.records[3].levelname == "ERROR"
     assert handler.records[4].levelname == "CRITICAL"
+
+
+def test_structured_logger_listener_close_and_default_init():
+    from unittest.mock import MagicMock
+
+    mock_listener = MagicMock()
+    logger = StructuredLogger(logger=logging.getLogger("custom"), listener=mock_listener)
+    assert logger._listener is mock_listener
+
+    logger.close()
+    mock_listener.stop.assert_called_once()
+    assert logger._listener is None
+
+    # Idempotent close
+    logger.close()
+
+    # Default init without pre-built logger
+    default_logger = StructuredLogger(name="default_test_app")
+    assert default_logger._logger.name == "default_test_app"
+    default_logger.close()

@@ -67,3 +67,10 @@ def test_rich_logger_missing_dependency():
     ):
         RichLogger()
     assert isinstance(exc_info.value, HexastackError)
+
+
+def test_rich_logger_no_correlation_id():
+    mock_console = MagicMock()
+    logger = RichLogger(console=mock_console)
+    logger.info("Message without cid")
+    mock_console.print.assert_called_with("[green][INFO    ][/green] Message without cid")
