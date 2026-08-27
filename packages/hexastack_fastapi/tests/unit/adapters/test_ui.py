@@ -169,6 +169,42 @@ async def test_dispatch_command_and_query_awaitable():
     assert res_qry == "async-val"
 
 
+@pytest.mark.anyio
+async def test_render_live_runner_ping_execution():
+    """Verify _run_ping callback executes successfully with registered Ping command and pipeline."""
+    from nicegui import ui
+
+    from hexastack_cqrs.infra.registries.command import CommandRegistry
+    from hexastack_fastapi.adapters.ui import _render_live_runner
+
+    container = Container()
+    creg = CommandRegistry()
+
+    @dataclass(frozen=True)
+    class PingDemoCommand(Command):
+        message: str = ""
+
+    creg.register(PingDemoCommand)
+    container.add_instance(creg, declared_class=CommandRegistry)
+
+    pipeline_mock = MagicMock(spec=ExecutionPipeline)
+    pipeline_mock.execute = MagicMock(return_value="PONG: Hello")
+    container.add_instance(pipeline_mock, declared_class=ExecutionPipeline)
+
+    with ui.card():
+        _render_live_runner(container, pipeline_mock, [])
+
+    # Find the button in NiceGUI client and trigger on_click
+    for element in ui.context.client.layout.default_slot.children:
+        slot = getattr(element, "default_slot", None)
+        children = getattr(slot, "children", []) if slot is not None else []
+        for child in children:
+            if getattr(child, "text", "") == "Dispatch Ping Command":
+                # Execute callback
+                await child._props["on_click"]()
+                pipeline_mock.execute.assert_called_once()
+
+
 def test_check_nicegui_installed_missing():
     """Verify _check_nicegui_installed raises MissingDependencyError when nicegui is missing."""
     import sys

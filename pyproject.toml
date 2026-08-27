@@ -234,7 +234,7 @@ version_toml = [
 version_variables = []
 branch = "main"
 tag_format = "v{version}"
-commit_parser = "angular"
+commit_parser = "conventional"
 major_on_zero = false
 allow_zero_version = true
 build_command = ""
@@ -256,10 +256,12 @@ minor_tags = ["feat"]
 patch_tags = ["fix", "perf"]
 
 [tool.semantic_release.changelog]
-changelog_file = "CHANGELOG.md"
 exclude_commit_patterns = [
     "chore\\(release\\):.*",
 ]
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
 
 [tool.mutmut]
 runner = "pytest --import-mode=importlib -n 0 -x -q --no-cov -o addopts=\"\""
