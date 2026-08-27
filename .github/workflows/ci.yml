@@ -88,11 +88,11 @@ jobs:
 
       - name: Run Unit & Integration Tests (Push to Main)
         if: github.event_name == 'push'
-        run: uv run pytest-run -U --cov-report=xml
+        run: uv run pytest-run -U --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Run Affected Unit & Integration Tests (Pull Request)
         if: github.event_name == 'pull_request'
-        run: uv run pytest-run -A -U --cov-report=xml
+        run: uv run pytest-run -A -U --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
@@ -100,6 +100,13 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
           fail_ci_if_error: false
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: junit.xml
 
   architecture-diagrams:
     name: Architecture Diagram Verification
