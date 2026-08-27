@@ -138,3 +138,33 @@ def test_render_internal_tabs():
     _render_cqrs_tab(container, pipeline_mock)
     _render_flags_tab(container)
     _render_container_tab(container)
+
+
+@pytest.mark.anyio
+async def test_devtools_page_and_ping_runner_execution():
+    """Verify devtools page rendering callback and async ping runner callback."""
+
+    app = FastAPI()
+    container = Container()
+    pipeline_mock = MagicMock(spec=ExecutionPipeline)
+    pipeline_mock.execute = MagicMock(return_value="pong-success")
+    pipeline_mock.execute_by_name = MagicMock(return_value="pong-by-name-success")
+
+    mount_devtools_dashboard(
+        app, container=container, pipeline=pipeline_mock, path="/_devtools_test"
+    )
+
+    # Find registered page handler for /_devtools_test
+    for route in app.routes:
+        if getattr(route, "path", None) == "/_devtools_test":
+            endpoint = getattr(route, "endpoint", None)
+            if endpoint and callable(endpoint):
+                endpoint()
+
+    # Directly test _render_live_runner button callback
+    from hexastack_cqrs.infra.middleware.correlation import CorrelationMiddleware
+    from hexastack_fastapi.adapters.ui import _render_live_runner
+
+    mw = CorrelationMiddleware()
+    _render_live_runner(container, pipeline_mock, [mw])
+    _render_live_runner(container, None, [mw])

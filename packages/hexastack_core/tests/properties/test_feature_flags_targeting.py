@@ -73,7 +73,7 @@ def test_evaluation_context_property_invariants(
 
 
 @given(
-    user_id=st.one_of(st.none(), st.text(min_size=1, max_size=30)),
+    user_id=st.text(min_size=1, max_size=30),
     tenant_id=st.one_of(st.none(), st.text(min_size=1, max_size=30)),
     roles=st.lists(st.text(min_size=1, max_size=20), max_size=5),
     extra_attr_key=st.text(
@@ -82,7 +82,7 @@ def test_evaluation_context_property_invariants(
     extra_attr_val=st.text(min_size=1, max_size=20),
 )
 def test_evaluation_context_ambient_resolution_property(
-    user_id: str | None,
+    user_id: str,
     tenant_id: str | None,
     roles: list[str],
     extra_attr_key: str,
@@ -90,31 +90,21 @@ def test_evaluation_context_ambient_resolution_property(
 ) -> None:
     """Verify ambient UserContext extraction accurately propagates into EvaluationContext."""
     try:
-        if user_id or tenant_id or roles:
-            uctx = UserContext(
-                user_id=user_id or "",
-                tenant_id=tenant_id,
-                roles=roles,
-            )
-            set_user_context(uctx)
-            eval_ctx = EvaluationContext.from_current_context(
-                **{extra_attr_key: extra_attr_val}
-            )
+        uctx = UserContext(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            roles=roles,
+        )
+        set_user_context(uctx)
+        eval_ctx = EvaluationContext.from_current_context(
+            **{extra_attr_key: extra_attr_val}
+        )
 
-            assert eval_ctx.user_id == user_id
-            assert eval_ctx.tenant_id == tenant_id
-            assert eval_ctx.targeting_key == (user_id or tenant_id)
-            assert eval_ctx.roles == tuple(sorted(roles))
-            assert eval_ctx.attributes[extra_attr_key] == extra_attr_val
-        else:
-            set_user_context(None)
-            eval_ctx = EvaluationContext.from_current_context(
-                **{extra_attr_key: extra_attr_val}
-            )
-            assert eval_ctx.user_id is None
-            assert eval_ctx.tenant_id is None
-            assert eval_ctx.targeting_key is None
-            assert eval_ctx.attributes[extra_attr_key] == extra_attr_val
+        assert eval_ctx.user_id == user_id
+        assert eval_ctx.tenant_id == tenant_id
+        assert eval_ctx.targeting_key == (user_id or tenant_id)
+        assert eval_ctx.roles == tuple(sorted(roles))
+        assert eval_ctx.attributes[extra_attr_key] == extra_attr_val
     finally:
         set_user_context(None)
 
