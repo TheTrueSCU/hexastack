@@ -6,6 +6,30 @@ In this chapter, you will add a high-throughput **gRPC binary protocol adapter**
 
 ---
 
+## 📹 Interactive Video Demonstration
+
+Watch the complete Chapter 7 workflow executing live below:
+
+````carousel
+```html
+<video controls width="100%" poster="/assets/static/terminal-poster.png">
+  <source src="/assets/demos/todo-ch07-cli-demo.webm" type="video/webm">
+  <track default kind="captions" srclang="en" src="/assets/demos/todo-ch07-cli-demo.vtt" label="English">
+  Your browser does not support the video tag.
+</video>
+```
+<!-- slide -->
+```bash
+# Introspect registered gRPC servicers, RPC endpoints, and Protobuf schemas
+uv run hexastack grpc list
+
+# Launch the high-throughput binary daemon
+uv run hexastack grpc serve --host 0.0.0.0 --port 50051
+```
+````
+
+---
+
 ## 1. Dual Inbound Transports: The Power of Ports & Adapters
 
 In Hexagonal Architecture, gRPC is simply another **driving presentation adapter** that translates incoming Protocol Buffer messages into standard CQRS commands and queries:
