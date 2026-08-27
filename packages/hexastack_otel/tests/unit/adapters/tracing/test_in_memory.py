@@ -181,3 +181,34 @@ def test_top_level_span_has_no_parent(in_memory_tracer: InMemoryTracingAdapter):
     """Kills mutant 905: parent is None when no current span exists."""
     with in_memory_tracer.trace_scope("root.op") as span:
         assert span.parent_context is None
+
+
+def test_in_memory_span_unset_status_and_query_by_name(
+    in_memory_tracer: InMemoryTracingAdapter,
+):
+    span = in_memory_tracer.start_span("custom.metric.op", attributes={"key": "val"})
+    assert span.status == "UNSET"
+    assert span.status_description is None
+    assert span.is_ended is False
+    assert span.attributes["key"] == "val"
+    assert len(span.context.span_id) == 16
+    assert len(span.context.trace_id) == 32
+
+    # End span
+    span.end()
+    assert span.is_ended is True
+    end_time_first = span.end_time
+    assert end_time_first is not None
+
+    # Idempotent double end()
+    span.end()
+    assert span.end_time == end_time_first
+
+    # Query finished spans by name
+    in_memory_tracer.finished_spans.append(span)
+    matches = in_memory_tracer.get_spans_by_name("custom.metric.op")
+    assert len(matches) == 1
+    assert matches[0] is span
+
+    no_matches = in_memory_tracer.get_spans_by_name("non_existent_op")
+    assert len(no_matches) == 0
