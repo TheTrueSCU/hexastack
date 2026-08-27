@@ -48,3 +48,44 @@ def test_initialize_flagd_provider():
         provider_type=FeatureFlagProviderType.FLAGD,
         options=FlagProviderOptions(host="localhost", port=8013, timeout_ms=3000),
     )
+
+
+def test_initialize_unleash_and_flipt_mocked():
+    """Verify Unleash and Flipt provider initialization when modules are present."""
+    from unittest.mock import MagicMock, patch
+
+    mock_unleash_cls = MagicMock()
+    mock_flipt_cls = MagicMock()
+
+    with (
+        patch("importlib.import_module") as mock_import,
+    ):
+
+        def _mock_import(name):
+            if "unleash" in name:
+                m = MagicMock()
+                m.UnleashProvider = mock_unleash_cls
+                return m
+            if "flipt" in name:
+                m = MagicMock()
+                m.FliptProvider = mock_flipt_cls
+                return m
+            raise ImportError(name)
+
+        mock_import.side_effect = _mock_import
+
+        opts_unleash = FlagProviderOptions(
+            host="localhost",
+            port=4242,
+            extra={"api_token": "secret"},  # pragma: allowlist secret
+        )
+        initialize_openfeature_provider(
+            FeatureFlagProviderType.UNLEASH, options=opts_unleash
+        )
+        mock_unleash_cls.assert_called_once()
+
+        opts_flipt = FlagProviderOptions(host="localhost", port=9000)
+        initialize_openfeature_provider(
+            FeatureFlagProviderType.FLIPT, options=opts_flipt
+        )
+        mock_flipt_cls.assert_called_once()

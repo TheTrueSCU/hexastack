@@ -89,3 +89,27 @@ def test_autodiscover_graphql_schema():
     assert custom_reg._query_types[0] is ModQuery
     assert len(custom_reg._mutation_types) == 1
     assert custom_reg._mutation_types[0] is ModMutation
+
+
+def test_autodiscover_graphql_query_and_mutation_branches():
+    """Verify autodiscovery of unnamed query field and mutation type branches."""
+    from hexastack_graphql.infra.decorators import graphql_mutation_type, graphql_query
+
+    mod = types.ModuleType("dummy_graphql_branches_mod")
+
+    @graphql_query()
+    def unnamed_query() -> str:
+        return "unnamed"
+
+    @graphql_mutation_type
+    class StandaloneMutation:
+        pass
+
+    setattr(mod, "unnamed_query", unnamed_query)  # noqa: B010
+    setattr(mod, "StandaloneMutation", StandaloneMutation)  # noqa: B010
+
+    reg = GraphQLSchemaRegistry()
+    autodiscover_graphql_schema([mod], reg)
+
+    assert "unnamed_query" in reg._query_fields
+    assert StandaloneMutation in reg._mutation_types

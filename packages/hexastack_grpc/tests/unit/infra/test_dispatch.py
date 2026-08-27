@@ -82,3 +82,31 @@ def test_dispatch_rpc_helpers():
         container=runtime.container,
     )
     assert qry_res == {"order_id": "ord-100", "status": "CONFIRMED"}
+
+
+@pytest.mark.anyio
+async def test_dispatch_rpc_async_with_awaitable_handlers():
+    """Verify dispatch_rpc_command_async and dispatch_rpc_query_async when bus returns coroutine."""
+    from rodi import Container
+
+    from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
+
+    class AsyncMockCmdBus:
+        async def dispatch(self, cmd):
+            return f"async-bus-cmd-{cmd.order_id}"
+
+    class AsyncMockQryBus:
+        async def dispatch(self, qry):
+            return f"async-bus-qry-{qry.order_id}"
+
+    container = Container()
+    container.add_instance(AsyncMockCmdBus(), declared_class=CommandBusPort)
+    container.add_instance(AsyncMockQryBus(), declared_class=QueryBusPort)
+
+    cmd_req = MockProtoRequest(order_id="async-bus-1", amount=1.0)
+    res_cmd = await dispatch_rpc_command_async(cmd_req, CreateOrderCommand, container)
+    assert res_cmd == "async-bus-cmd-async-bus-1"
+
+    qry_req = MockProtoRequest(order_id="async-bus-2")
+    res_qry = await dispatch_rpc_query_async(qry_req, GetOrderQuery, container)
+    assert res_qry == "async-bus-qry-async-bus-2"

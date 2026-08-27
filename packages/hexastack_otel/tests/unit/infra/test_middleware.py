@@ -158,3 +158,42 @@ def test_tracing_middleware_with_feature_flags():
     res = middleware(cmd, lambda c: "ok")
     assert res == "ok"
     assert len(tracer.finished_spans) == 1
+
+
+def test_tracing_middleware_with_tenant_and_user_context():
+    """Verify tenant and user context attributes in TracingMiddleware."""
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer)
+
+    set_user_context(UserContext(user_id="usr_123", tenant_id="tenant_456"))
+    cmd = CreateInvoiceCommand(invoice_id="inv-ctx", amount=100.0)
+    res = middleware(cmd, lambda c: "ok")
+    assert res == "ok"
+    assert len(tracer.finished_spans) == 1
+    attrs = tracer.finished_spans[0].attributes
+    assert attrs.get("user.id") == "usr_123"
+    assert attrs.get("tenant.id") == "tenant_456"
+
+
+@pytest.mark.anyio
+async def test_tracing_middleware_async_handler_and_error():
+    """Verify TracingMiddleware async execution and exception recording."""
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer)
+
+    async def async_ok_handler(cmd):
+        return "async_ok"
+
+    cmd = CreateInvoiceCommand(invoice_id="inv-async", amount=20.0)
+    res = await middleware(cmd, async_ok_handler)
+    assert res == "async_ok"
+    assert len(tracer.finished_spans) == 1
+
+    async def async_err_handler(cmd):
+        raise ValueError("async_error_test")
+
+    with pytest.raises(ValueError, match="async_error_test"):
+        await middleware(cmd, async_err_handler)
+
+    assert len(tracer.finished_spans) == 2
+    assert len(tracer.finished_spans[1].exceptions) == 1

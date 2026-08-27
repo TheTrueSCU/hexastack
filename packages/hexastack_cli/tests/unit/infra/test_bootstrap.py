@@ -62,3 +62,26 @@ def test_meta_bootstrap_with_cli_and_autodiscovery():
     res = runner.invoke(cli_app, ["ping", "--message", "hello"])
     assert res.exit_code == 0
     assert "PONG: hello" in res.stdout
+
+
+def test_cli_bootstrapper_configure_standalone():
+    """Verify CliBootstrapper configure with pipeline in container and config present."""
+    from rodi import Container
+
+    from hexastack_core.infra.bootstrap import BootstrapContext
+    from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+    from hexastack_cqrs.infra.registries.handler import HandlerRegistry
+
+    container = Container()
+    pipeline = ExecutionPipeline(handler_registry=HandlerRegistry())
+    container.add_instance(pipeline, declared_class=ExecutionPipeline)
+
+    bootstrapper = CliBootstrapper()
+    config_reg = ConfigRegistry()
+    bootstrapper.register_config(config_reg)
+
+    ctx = BootstrapContext(container=container, config=None, config_registry=config_reg)
+    bootstrapper.configure(ctx)
+
+    assert "cli_app" in ctx.properties
+    assert isinstance(ctx.properties["cli_app"], typer.Typer)

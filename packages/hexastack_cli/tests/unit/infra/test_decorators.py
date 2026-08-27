@@ -90,3 +90,25 @@ def test_feature_flag_command_decorator():
         "disabled by feature flag" in res_disabled.stderr
         or "disabled by feature flag" in res_disabled.stdout
     )
+
+
+def test_feature_flag_command_direct_invocation():
+    """Verify feature_flag_command gating on CLI functions directly."""
+    import pytest
+    import typer
+
+    from hexastack_cli.infra.decorators import feature_flag_command
+
+    @feature_flag_command("cli.active_feature", default=True)
+    def active_cmd():
+        return "active-ok"
+
+    assert active_cmd() == "active-ok"
+
+    @feature_flag_command("cli.inactive_feature", default=False)
+    def inactive_cmd():
+        return "inactive-ok"
+
+    with pytest.raises(typer.Exit) as exc_info:
+        inactive_cmd()
+    assert exc_info.value.exit_code == 1

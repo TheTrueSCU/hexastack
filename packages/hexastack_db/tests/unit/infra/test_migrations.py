@@ -123,3 +123,19 @@ def test_require_alembic_missing():
         pytest.raises(MissingDependencyError, match="alembic is required"),
     ):
         _require_alembic()
+
+
+def test_run_check_and_missing_alembic(tmp_path: Path):
+    """Verify run_check and missing alembic exception."""
+    from hexastack_db.infra.migrations import run_check
+
+    cfg, _, _ = _make_config(tmp_path)
+    with patch("alembic.command.check") as mock_check:
+        run_check(cfg)
+        mock_check.assert_called_once_with(cfg)
+
+    with (
+        patch("importlib.util.find_spec", return_value=None),
+        pytest.raises(MissingDependencyError, match="alembic is required"),
+    ):
+        _require_alembic()

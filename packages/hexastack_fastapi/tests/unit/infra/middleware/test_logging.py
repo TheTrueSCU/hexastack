@@ -142,3 +142,16 @@ def test_request_logging_middleware_post_method_and_status():
     assert logger.entries[0].extra["http_method"] == "POST"
     assert logger.entries[0].extra["http_status"] == 201
     assert "POST /items HTTP/1.1 -> 201" in logger.entries[0].message
+
+
+@pytest.mark.anyio
+async def test_request_logging_middleware_client_error_and_server_error():
+    """Verify warning logging for 4xx and error logging for 5xx."""
+    client, logger = _make_app()
+    client.get("/client-err")
+    assert len(logger.entries) == 1
+    assert logger.entries[0].level == "WARNING"
+
+    client.get("/server-err")
+    assert len(logger.entries) == 2
+    assert logger.entries[1].level == "ERROR"

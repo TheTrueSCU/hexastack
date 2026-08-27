@@ -129,3 +129,50 @@ def test_sanitizer_config():
     logger = logging.getLogger("test_no_sanitizer")
     listener = configure_logging(config=cfg, target_logger=logger)
     assert listener is None
+
+
+def test_configure_logging_time_rotation(tmp_path: Path):
+    """Verify configure_logging creates TimedRotatingFileHandler when rotation_type is 'time'."""
+    log_file = tmp_path / "time_rotated.log"
+    logger = logging.getLogger("test_time_logger")
+
+    cfg = HexastackLoggingConfig(
+        level="DEBUG",
+        file=FileLoggingConfig(
+            enable=True,
+            path=str(log_file),
+            rotation_type="time",
+            when="midnight",
+            backup_count=5,
+        ),
+    )
+    configure_logging(config=cfg, target_logger=logger)
+    logger.debug("Testing timed rotation logging")
+    assert log_file.exists()
+
+
+def test_configure_logging_size_rotation_and_queue(tmp_path: Path):
+    """Verify configure_logging with size-based file rotation and queue logging enabled."""
+    from hexastack_logging.infra.config import AsyncQueueConfig
+
+    log_file = tmp_path / "size_rotated.log"
+    logger = logging.getLogger("test_queue_logger")
+
+    cfg = HexastackLoggingConfig(
+        level="INFO",
+        file=FileLoggingConfig(
+            enable=True,
+            path=str(log_file),
+            rotation_type="size",
+            max_bytes=1024,
+            backup_count=2,
+        ),
+        queue=AsyncQueueConfig(enable=True, max_size=100),
+    )
+    listener = configure_logging(config=cfg, target_logger=logger)
+    try:
+        assert listener is not None
+        logger.info("Message through queue listener")
+    finally:
+        if listener is not None:
+            listener.stop()

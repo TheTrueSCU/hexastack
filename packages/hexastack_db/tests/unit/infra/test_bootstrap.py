@@ -140,3 +140,59 @@ def test_database_bootstrapper_auto_create_tables_and_metadata_registration():
     c_async.add_instance(cfg_async, declared_class=HexastackDatabaseConfig)
     res_async = bootstrap(bootstrappers=[DatabaseBootstrapper()], container=c_async)
     assert res_async.get("database_result") is not None
+
+
+def test_database_bootstrapper_async_vector_mocked():
+    """Verify DatabaseBootstrapper async mode with vector store configuration."""
+    from unittest.mock import MagicMock, patch
+
+    from hexastack_core.infra.bootstrap import BootstrapContext
+    from hexastack_core.infra.registries.config import ConfigRegistry
+    from hexastack_db.infra.config import PgVectorConfig
+
+    cfg = HexastackDatabaseConfig(
+        url="postgresql+asyncpg://user:pass@localhost:5432/testdb",  # pragma: allowlist secret
+        async_mode=True,
+        vector=PgVectorConfig(enabled=True, table_name="custom_vectors"),
+    )
+    container = Container()
+    container.add_instance(cfg, declared_class=HexastackDatabaseConfig)
+
+    bootstrapper = DatabaseBootstrapper()
+    config_reg = ConfigRegistry()
+    bootstrapper.register_config(config_reg)
+    ctx = BootstrapContext(container=container, config=None, config_registry=config_reg)
+
+    with (
+        patch("hexastack_db.infra.bootstrap.create_async_db_engine") as mock_engine_fn,
+        patch(
+            "hexastack_db.infra.bootstrap.create_async_session_factory"
+        ) as mock_factory_fn,
+    ):
+        mock_engine = MagicMock()
+        mock_factory = MagicMock()
+        mock_engine_fn.return_value = mock_engine
+        mock_factory_fn.return_value = mock_factory
+
+        bootstrapper.configure(ctx)
+
+    db_res = ctx.properties.get("database_result")
+    assert db_res is not None
+    assert db_res.vector_store is not None
+
+
+def test_database_bootstrapper_configure_without_explicit_config():
+    """Verify DatabaseBootstrapper resolves default config when HexastackDatabaseConfig is missing in container."""
+    from hexastack_core.infra.bootstrap import BootstrapContext
+    from hexastack_core.infra.registries.config import ConfigRegistry
+
+    container = Container()
+    config_reg = ConfigRegistry()
+    bootstrapper = DatabaseBootstrapper()
+    bootstrapper.register_config(config_reg)
+
+    ctx = BootstrapContext(container=container, config=None, config_registry=config_reg)
+    bootstrapper.configure(ctx)
+
+    assert "database_result" in ctx.properties
+    assert ctx.properties["database_result"].engine is not None

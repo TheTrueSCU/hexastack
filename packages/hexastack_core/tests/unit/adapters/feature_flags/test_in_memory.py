@@ -61,3 +61,13 @@ def test_in_memory_feature_flag_mutation():
     adapter.set_flag("beta", True)
     adapter.clear()
     assert adapter.is_enabled("beta") is False
+
+
+def test_in_memory_feature_flag_get_all_flags_and_clear():
+    """Verify get_all_flags returns dictionary copy of flags and clear resets adapter."""
+    adapter = InMemoryFeatureFlagAdapter({"flag.one": True, "flag.two": False})
+    all_flags = adapter.get_all_flags()
+    assert all_flags == {"flag.one": True, "flag.two": False}
+
+    adapter.clear()
+    assert adapter.get_all_flags() == {}

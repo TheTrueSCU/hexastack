@@ -212,3 +212,55 @@ def test_map_exception_to_status_code(
     code, msg = _map_exception_to_status_code(exc)
     assert code == expected_code
     assert msg == str(exc)
+
+
+@pytest.mark.anyio
+async def test_async_interceptor_intercept_service_pipeline():
+    """Verify AsyncGenericServerInterceptor.intercept_service wrapping unary calls."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from hexastack_grpc.infra.interceptors.generic import AsyncGenericServerInterceptor
+
+    class DummyAsyncInterceptor(AsyncGenericServerInterceptor):
+        async def _handle_unary_async(
+            self,
+            request: Any,
+            context: Any,
+            unary_fn: Any,
+            handler_call_details: Any,
+        ) -> Any:
+            res = await unary_fn(request, context)
+            return f"{res}-intercepted"
+
+    interceptor = DummyAsyncInterceptor()
+
+    # 1. Non-existent handler continuation returns None
+    res_none = await interceptor.intercept_service(
+        AsyncMock(return_value=None), MagicMock()
+    )
+    assert res_none is None
+
+    # 2. Handler without unary_unary
+    handler_without_unary = MagicMock(spec=[])
+    res_raw = await interceptor.intercept_service(
+        AsyncMock(return_value=handler_without_unary), MagicMock()
+    )
+    assert res_raw is handler_without_unary
+
+    # 3. Handler with unary_unary method
+    async def _dummy_rpc(req, ctx):
+        return f"hello {req}"
+
+    handler_mock = MagicMock()
+    handler_mock.unary_unary = _dummy_rpc
+    handler_mock.request_streaming = False
+    handler_mock.response_streaming = False
+    handler_mock.request_deserializer = None
+    handler_mock.response_serializer = None
+
+    wrapped_handler = await interceptor.intercept_service(
+        AsyncMock(return_value=handler_mock), MagicMock()
+    )
+    assert wrapped_handler is not None
+    res_val = await wrapped_handler.unary_unary("world", MagicMock())
+    assert res_val == "hello world-intercepted"

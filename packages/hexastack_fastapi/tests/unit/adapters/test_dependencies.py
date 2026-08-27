@@ -259,3 +259,33 @@ def test_fastapi_dependencies_isolated_resolvers():
     flags.set_flag("feature.gated", True)
     # When enabled, does not raise
     asyncio.run(dep_fn(req))
+
+
+def test_check_openapi_conformance_missing_dependency():
+    """Verify check_openapi_conformance raises MissingDependencyError if schemathesis is not found."""
+    import sys
+    from unittest.mock import patch
+
+    from hexastack_core.domain.exceptions import MissingDependencyError
+
+    with (
+        patch.dict(sys.modules, {"schemathesis": None}),
+        pytest.raises(MissingDependencyError, match="schemathesis is required"),
+    ):
+        check_openapi_conformance(FastAPI())
+
+
+def test_create_test_client_with_flags():
+    """Verify create_test_client configures in-memory feature flags in container."""
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+    from hexastack_fastapi.adapters.dependencies import create_test_client
+
+    app = FastAPI()
+    container = Container()
+    app.state.container = container
+
+    client = create_test_client(app, flags={"beta_feature": True})
+    assert client is not None
+    assert FeatureFlagPort in container
+    flags_adapter = container.resolve(FeatureFlagPort)
+    assert flags_adapter.is_enabled("beta_feature") is True

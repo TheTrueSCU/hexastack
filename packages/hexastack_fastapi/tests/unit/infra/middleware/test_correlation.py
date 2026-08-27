@@ -68,3 +68,25 @@ def test_correlation_middleware_user_context():
     assert data["correlation_id"] == "corr-999"
     assert data["user_id"] == "user-alice"
     assert data["tenant_id"] == "tenant-acme"
+
+
+def test_correlation_middleware_tenant_only_and_non_http_scope():
+    """Verify tenant_only header extraction and non-http scope pass through."""
+    from unittest.mock import AsyncMock
+
+    # 1. Tenant header without user header
+    app = create_test_app()
+    client = TestClient(app)
+    res = client.get("/ping", headers={"X-Tenant-ID": "tenant-xyz"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["user_id"] == "anonymous"
+    assert data["tenant_id"] == "tenant-xyz"
+
+    # 2. Non-http scope (e.g. lifespan or websocket)
+    mock_app = AsyncMock()
+    middleware = CorrelationHttpMiddleware(mock_app)
+    import asyncio
+
+    asyncio.run(middleware({"type": "lifespan"}, AsyncMock(), AsyncMock()))
+    mock_app.assert_awaited_once()

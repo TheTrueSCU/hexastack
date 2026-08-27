@@ -28,3 +28,18 @@ def test_autodiscover_grpc_services():
     assert len(custom_reg._services) == 1
     assert custom_reg._services[0].servicer == MyServicer
     assert custom_reg._services[0].service_names == ["dummy.Service"]
+
+
+def test_grpc_visitor_ignores_non_decorated_objects():
+    """Verify create_grpc_visitor ignores objects without _GRPC_SERVICE_ATTR."""
+    from hexastack_grpc.infra.autodiscovery import create_grpc_visitor
+
+    registry = GrpcServiceRegistry()
+    visitor = create_grpc_visitor(registry)
+
+    class PlainObj:
+        pass
+
+    dummy_mod = types.ModuleType("dummy_empty_grpc_mod")
+    visitor(PlainObj, dummy_mod)
+    assert len(registry._services) == 0

@@ -115,3 +115,47 @@ def test_create_sync_engine_file_null_pool(tmp_path: Path):
         assert str(journal).upper() == "WAL"
 
     engine.dispose()
+
+
+def test_create_engine_postgres_pooling_parameters():
+    """Verify create_db_engine sets pooling parameters for non-sqlite engines."""
+    from unittest.mock import patch
+
+    cfg_sync_pg = HexastackDatabaseConfig(
+        url="postgresql://usr:pwd@localhost:5432/testdb",
+        pool_size=15,
+        max_overflow=25,
+        pool_timeout=50,
+        pool_recycle=1200,
+    )
+
+    with patch("hexastack_db.infra.engine.create_engine") as mock_ce:
+        create_db_engine(cfg_sync_pg)
+        mock_ce.assert_called_once_with(
+            "postgresql://usr:pwd@localhost:5432/testdb",
+            echo=False,
+            pool_size=15,
+            max_overflow=25,
+            pool_timeout=50,
+            pool_recycle=1200,
+        )
+
+    cfg_async_pg = HexastackDatabaseConfig(
+        url="postgresql://usr:pwd@localhost:5432/testdb",
+        async_mode=True,
+        pool_size=8,
+        max_overflow=12,
+        pool_timeout=30,
+        pool_recycle=600,
+    )
+
+    with patch("hexastack_db.infra.engine.create_async_engine") as mock_cae:
+        create_async_db_engine(cfg_async_pg)
+        mock_cae.assert_called_once_with(
+            "postgresql+asyncpg://usr:pwd@localhost:5432/testdb",
+            echo=False,
+            pool_size=8,
+            max_overflow=12,
+            pool_timeout=30,
+            pool_recycle=600,
+        )

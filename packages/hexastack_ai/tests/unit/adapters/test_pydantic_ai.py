@@ -40,3 +40,14 @@ def test_pydantic_ai_agent_adapter_run_sync():
     adapter = PydanticAiAgentAdapter(agent=mock_agent)
     data = adapter.run_sync("Sync prompt")
     assert data == "Sync result"
+
+
+@pytest.mark.anyio
+async def test_pydantic_ai_agent_adapter_run_async_error():
+    mock_agent = MagicMock(spec=Agent)
+    mock_agent.run = AsyncMock(side_effect=RuntimeError("Async LLM error"))
+
+    adapter = PydanticAiAgentAdapter(agent=mock_agent)
+    with pytest.raises(AgentExecutionError) as exc_info:
+        await adapter.run("Will fail async")
+    assert "Async LLM error" in str(exc_info.value)

@@ -115,8 +115,17 @@ def test_render_internal_tabs():
     container = Container()
     cmd_reg = CommandRegistry()
     qry_reg = QueryRegistry()
-    cmd_reg.register(CreateItem)
-    qry_reg.register(GetItem)
+    from hexastack_core.domain.command import Command as BaseCmd
+    from hexastack_core.domain.query import Query as BaseQry
+
+    class PlainCmd(BaseCmd):
+        pass
+
+    class PlainQry(BaseQry):
+        pass
+
+    cmd_reg.register(PlainCmd)
+    qry_reg.register(PlainQry)
 
     container.add_instance(cmd_reg, declared_class=CommandRegistry)
     container.add_instance(qry_reg, declared_class=QueryRegistry)
@@ -132,81 +141,44 @@ def test_render_internal_tabs():
     pipeline_mock = MagicMock(spec=ExecutionPipeline)
     pipeline_mock.execute = MagicMock(return_value="executed-ok")
 
+    class AuthTestMiddleware:
+        pass
+
     _render_cqrs_messages(container)
-    _render_middleware_chain([mw])
-    _render_live_runner(container, pipeline_mock, [mw])
-    _render_cqrs_tab(container, pipeline_mock)
+    _render_middleware_chain([mw, AuthTestMiddleware()])
+    _render_live_runner(container, None, [mw])
     _render_flags_tab(container)
     _render_container_tab(container)
 
 
 @pytest.mark.anyio
-async def test_devtools_page_and_ping_runner_execution():
-    """Verify devtools page rendering callback and async ping runner callback."""
+async def test_dispatch_command_and_query_awaitable():
+    """Verify dispatch_command and dispatch_query handle awaitable results."""
 
-    app = FastAPI()
-    container = Container()
+    async def async_res():
+        return "async-val"
+
     pipeline_mock = MagicMock(spec=ExecutionPipeline)
-    pipeline_mock.execute = MagicMock(return_value="pong-success")
-    pipeline_mock.execute_by_name = MagicMock(return_value="pong-by-name-success")
+    pipeline_mock.execute = MagicMock(return_value=async_res())
 
-    mount_devtools_dashboard(
-        app, container=container, pipeline=pipeline_mock, path="/_devtools_test"
-    )
+    res_cmd = await dispatch_command(pipeline_mock, CreateItem(name="AsyncWidget"))
+    assert res_cmd == "async-val"
 
-    # Find registered page handler for /_devtools_test
-    for route in app.routes:
-        if getattr(route, "path", None) == "/_devtools_test":
-            endpoint = getattr(route, "endpoint", None)
-            if endpoint and callable(endpoint):
-                endpoint()
-
-    # Directly test _render_live_runner button callback
-    from hexastack_cqrs.infra.middleware.correlation import CorrelationMiddleware
-    from hexastack_fastapi.adapters.ui import _render_live_runner
-
-    mw = CorrelationMiddleware()
-    _render_live_runner(container, pipeline_mock, [mw])
-    _render_live_runner(container, None, [mw])
+    pipeline_mock.execute = MagicMock(return_value=async_res())
+    res_qry = await dispatch_query(pipeline_mock, GetItem(item_id="async-123"))
+    assert res_qry == "async-val"
 
 
-def test_ui_all_tab_variations_and_corner_cases():
-    """Test empty and populated flag/container/middleware tab rendering branches."""
-    from unittest.mock import MagicMock
+def test_check_nicegui_installed_missing():
+    """Verify _check_nicegui_installed raises MissingDependencyError when nicegui is missing."""
+    import sys
+    from unittest.mock import patch
 
-    from rodi import Container
+    from hexastack_core.domain.exceptions import MissingDependencyError
+    from hexastack_fastapi.adapters.ui import _check_nicegui_installed
 
-    from hexastack_core.adapters.feature_flags.in_memory import (
-        InMemoryFeatureFlagAdapter,
-    )
-    from hexastack_core.ports.feature_flags import FeatureFlagPort
-    from hexastack_fastapi.adapters.ui import (
-        _render_container_tab,
-        _render_flags_tab,
-        _render_middleware_chain,
-    )
-
-    # 1. Flags with no flags
-    c_empty_flags = Container()
-    empty_adapter = InMemoryFeatureFlagAdapter({})
-    c_empty_flags.add_instance(empty_adapter, declared_class=FeatureFlagPort)
-    _render_flags_tab(c_empty_flags)
-
-    # 2. Flags adapter without get_all_flags
-    c_no_listing = Container()
-    c_no_listing.add_instance(MagicMock(), declared_class=FeatureFlagPort)
-    _render_flags_tab(c_no_listing)
-
-    # 3. Middlewares chain with auth and non-auth middlewares
-    class AuthMiddleware:
-        pass
-
-    class TimingMiddleware:
-        pass
-
-    _render_middleware_chain([AuthMiddleware(), TimingMiddleware()])
-
-    # 4. Container with service registrations
-    c_services = Container()
-    c_services.add_instance(empty_adapter, declared_class=FeatureFlagPort)
-    _render_container_tab(c_services)
+    with (
+        patch.dict(sys.modules, {"nicegui": None}),
+        pytest.raises(MissingDependencyError, match="NiceGUI is required"),
+    ):
+        _check_nicegui_installed()

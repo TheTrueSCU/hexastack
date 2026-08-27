@@ -63,3 +63,19 @@ async def test_create_tool_for_message(pipeline: ExecutionPipeline):
 
     res = await tool_fn(amount=100.0, tax_rate=0.2)
     assert res == {"total": 120.0}
+
+
+@pytest.mark.anyio
+async def test_create_tool_for_message_async_handler():
+    """Verify tool_executor awaits coroutine returned by pipeline.execute."""
+    from unittest.mock import MagicMock
+
+    async def _async_res():
+        return {"async_total": 200.0}
+
+    mock_pipeline = MagicMock(spec=ExecutionPipeline)
+    mock_pipeline.execute = MagicMock(return_value=_async_res())
+
+    tool_fn = create_tool_for_message(CalculateTaxCommand, mock_pipeline)
+    res = await tool_fn(amount=100.0, tax_rate=1.0)
+    assert res == {"async_total": 200.0}

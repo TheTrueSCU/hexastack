@@ -1,3 +1,4 @@
+import pytest
 from inline_snapshot import snapshot
 
 from hexastack_graphql.infra.decorators import (
@@ -198,3 +199,84 @@ def test_graphql_query_and_mutation_decorators():
     reg = get_schema_registry()
     assert "ping_query" in reg._query_fields
     assert "ping_mutation" in reg._mutation_fields
+
+
+def test_resolve_flags_fallback():
+    """Verify _resolve_flags falls back to ConfigFeatureFlagAdapter when no container is present."""
+    from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
+    from hexastack_graphql.infra.decorators import _resolve_flags
+
+    flags = _resolve_flags((), {})
+    assert isinstance(flags, ConfigFeatureFlagAdapter)
+
+    # Empty context object without container
+    class MockInfo:
+        class Context:
+            container = None
+
+        context = Context()
+
+    flags_no_c = _resolve_flags((MockInfo(),), {})
+    assert isinstance(flags_no_c, ConfigFeatureFlagAdapter)
+
+
+@pytest.mark.anyio
+async def test_feature_flag_field_decorator_all_branches():
+    """Verify sync/async enabled and async raise_error branches."""
+    import strawberry
+    from rodi import Container
+    from strawberry.types import Info
+
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+    from hexastack_graphql.domain.context import GraphQLContext
+    from hexastack_graphql.infra.decorators import feature_flag_field
+
+    flags = InMemoryFeatureFlagAdapter(
+        {"graphql.enabled": True, "graphql.disabled": False}
+    )
+    c = Container()
+    c.add_instance(flags, declared_class=FeatureFlagPort)
+    ctx = GraphQLContext(container=c)
+
+    @strawberry.type
+    class BranchQuery:
+        @strawberry.field
+        @feature_flag_field("graphql.enabled")
+        def sync_enabled(self, info: Info[GraphQLContext, None]) -> str:
+            return "sync-ok"
+
+        @strawberry.field
+        @feature_flag_field("graphql.enabled")
+        async def async_enabled(self, info: Info[GraphQLContext, None]) -> str:
+            return "async-ok"
+
+        @strawberry.field
+        @feature_flag_field("graphql.disabled", raise_error=True)
+        async def async_disabled_raises(self, info: Info[GraphQLContext, None]) -> str:
+            return "should-not-run"
+
+        @strawberry.field
+        @feature_flag_field(
+            "graphql.disabled", raise_error=False, fallback="sync-fallback-val"
+        )
+        def sync_disabled_fallback(self, info: Info[GraphQLContext, None]) -> str:
+            return "should-not-run"
+
+    schema = strawberry.Schema(query=BranchQuery)
+
+    res1 = schema.execute_sync(
+        "{ syncEnabled syncDisabledFallback }", context_value=ctx
+    )
+    assert res1.data == {
+        "syncEnabled": "sync-ok",
+        "syncDisabledFallback": "sync-fallback-val",
+    }
+
+    res2 = await schema.execute("{ asyncEnabled }", context_value=ctx)
+    assert res2.data == {"asyncEnabled": "async-ok"}
+
+    res3 = await schema.execute("{ asyncDisabledRaises }", context_value=ctx)
+    assert res3.errors is not None

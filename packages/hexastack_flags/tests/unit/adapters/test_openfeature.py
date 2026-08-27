@@ -86,3 +86,44 @@ def test_openfeature_factory_missing_dependencies():
 
         with pytest.raises(MissingDependencyError, match="openfeature-provider-flipt"):
             _build_flipt_provider(opts)
+
+
+def test_openfeature_adapter_details_unknown_reason_and_custom_provider_flags():
+    """Verify get_boolean_details handles unknown reasons and custom provider flag structures."""
+    from unittest.mock import MagicMock
+
+    import openfeature.api as of_api
+    from hexastack_flags.adapters.openfeature import OpenFeatureFlagAdapter
+
+    mock_client = MagicMock()
+    mock_details = MagicMock()
+    mock_details.flag_key = "custom_flag"
+    mock_details.value = True
+    mock_details.reason = "NON_STANDARD_REASON"
+    mock_details.variant = "v1"
+    mock_details.error_code = None
+    mock_client.get_boolean_details.return_value = mock_details
+
+    adapter = OpenFeatureFlagAdapter(client=mock_client)
+    res = adapter.get_boolean_details("custom_flag")
+    assert res.reason.value == "UNKNOWN"
+
+    # Test get_all_flags with complex mock provider
+    class MockFlagState:
+        state = "ACTIVE"
+
+    class MockFlagVariants:
+        variants = {"on": True, "off": False}
+        default_variant = "on"
+
+    mock_provider = MagicMock()
+    mock_provider._flags = {
+        "state_flag": MockFlagState(),
+        "var_flag": MockFlagVariants(),
+        "raw_flag": 123,
+    }
+    of_api.set_provider(mock_provider)
+    all_f = adapter.get_all_flags()
+    assert all_f["state_flag"] == "ACTIVE"
+    assert all_f["var_flag"] is True
+    assert all_f["raw_flag"] == 123

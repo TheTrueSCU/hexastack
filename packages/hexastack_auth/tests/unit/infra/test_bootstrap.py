@@ -81,3 +81,52 @@ def test_auth_bootstrapper_properties():
     bootstrapper = AuthBootstrapper()
     assert bootstrapper.order == 16
     assert bootstrapper.name == "auth"
+
+
+def test_auth_bootstrapper_opa_openfga_and_spiffe_configurations():
+    """Verify AuthBootstrapper configuring OPA, OpenFGA, and SPIFFE adapters."""
+    from hexastack_auth.adapters.opa.policy import OpaPolicyAdapter
+    from hexastack_auth.adapters.openfga.policy import OpenFgaPolicyAdapter
+    from hexastack_auth.adapters.spiffe.workload import SpiffeWorkloadAdapter
+    from hexastack_auth.infra.config import (
+        OpaConfig,
+        OpenFgaConfig,
+        SpiffeConfig,
+    )
+    from hexastack_auth.ports.policy import AuthorizationPolicyPort
+    from hexastack_auth.ports.workload import WorkloadIdentityPort
+
+    bootstrapper = AuthBootstrapper()
+
+    # 1. OPA + SPIFFE
+    c1 = Container()
+    cfg1 = HexastackAuthConfig(
+        opa=OpaConfig(enabled=True, url="http://localhost:8181"),
+        spiffe=SpiffeConfig(
+            enabled=True,
+            socket_path="unix:///tmp/spire.sock",
+            trust_domain="example.org",
+        ),
+    )
+    c1.add_instance(cfg1, declared_class=HexastackAuthConfig)
+    ctx1 = BootstrapContext(container=c1, config=None, config_registry=ConfigRegistry())
+    bootstrapper.configure(ctx1)
+
+    assert isinstance(c1.resolve(AuthorizationPolicyPort), OpaPolicyAdapter)
+    assert isinstance(c1.resolve(WorkloadIdentityPort), SpiffeWorkloadAdapter)
+
+    # 2. OpenFGA
+    c2 = Container()
+    cfg2 = HexastackAuthConfig(
+        openfga=OpenFgaConfig(
+            enabled=True,
+            api_url="http://localhost:8080",
+            store_id="store1",
+            model_id="model1",
+        ),
+    )
+    c2.add_instance(cfg2, declared_class=HexastackAuthConfig)
+    ctx2 = BootstrapContext(container=c2, config=None, config_registry=ConfigRegistry())
+    bootstrapper.configure(ctx2)
+
+    assert isinstance(c2.resolve(AuthorizationPolicyPort), OpenFgaPolicyAdapter)

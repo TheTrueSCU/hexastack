@@ -171,3 +171,39 @@ def test_query_caching_plain_object_fallback():
     key = compute_cache_key(cast("Any", obj), meta)
     assert key.startswith("query:PlainObj:")
     assert len(key.split(":")[-1]) == 16
+
+
+@pytest.mark.anyio
+async def test_query_caching_async_handler_with_sync_cache():
+    """Verify QueryCachingMiddleware with sync cache and async handler returning coroutine."""
+    cache = InMemoryCache()
+    query_mw = QueryCachingMiddleware(cache)
+
+    async def async_handler(q: GetUserQuery):
+        return {"id": q.user_id, "async": True}
+
+    q = GetUserQuery(user_id="async-sync-cache")
+    res = await query_mw(q, async_handler)
+    assert res == {"id": "async-sync-cache", "async": True}
+
+    # Second execution is cached
+    res2 = query_mw(q, lambda _: None)
+    assert res2 == {"id": "async-sync-cache", "async": True}
+
+
+@pytest.mark.anyio
+async def test_query_caching_async_cache_with_tags():
+    """Verify QueryCachingMiddleware with async cache and tags."""
+    cache = AsyncInMemoryCache()
+    query_mw = QueryCachingMiddleware(cache)
+
+    async def async_handler(q: GetUserQuery):
+        return {"id": q.user_id, "tagged": True}
+
+    q = GetUserQuery(user_id="tag-user-1")
+    res = await query_mw(q, async_handler)
+    assert res == {"id": "tag-user-1", "tagged": True}
+
+    # Verify hit
+    res_hit = await query_mw(q, async_handler)
+    assert res_hit == {"id": "tag-user-1", "tagged": True}

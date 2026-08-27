@@ -39,3 +39,21 @@ def test_autodiscover_mcp_elements():
     assert custom_reg._resources[0].name == "res"
     assert len(custom_reg._prompts) == 1
     assert custom_reg._prompts[0].name == "prompt"
+
+
+def test_create_mcp_visitor_ignores_non_mcp_objects():
+    """Verify create_mcp_visitor ignores functions/classes without MCP metadata attributes."""
+    from hexastack_mcp.infra.autodiscovery import create_mcp_visitor
+
+    registry = McpServerRegistry()
+    visitor = create_mcp_visitor(registry)
+
+    def plain_fn():
+        pass
+
+    dummy_mod = types.ModuleType("dummy_empty_mcp_mod")
+    visitor(plain_fn, dummy_mod)
+
+    assert len(registry._tools) == 0
+    assert len(registry._resources) == 0
+    assert len(registry._prompts) == 0

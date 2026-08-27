@@ -223,3 +223,71 @@ def test_cqrs_autodiscovery_extra_branches():
     p_meta = PresenterMetadata(target_cls=OrderDTO, output_format="custom_class")
     _register_presenter(CustomClassPresenter, p_meta, pipeline, None)
     assert pipeline._presenter_registry.get(OrderDTO, "custom_class") is not None
+
+
+def test_autodiscovery_visitor_dispatch_and_class_handler():
+    """Verify visitor dispatching presenter and exception handlers, and class handler instantiation with container."""
+    from hexastack_cqrs.infra.autodiscovery import create_cqrs_visitor
+    from hexastack_cqrs.infra.decorators import (
+        command_handler,
+        exception_handler,
+        presenter,
+    )
+
+    container = Container()
+    pipeline = ExecutionPipeline(
+        handler_registry=HandlerRegistry(),
+        presenter_registry=PresenterRegistry(),
+        exception_registry=ExceptionRegistry(),
+    )
+
+    visitor = create_cqrs_visitor(pipeline, container=container)
+
+    @command_handler(CreateOrder)
+    class ClassOrderHandler:
+        def __call__(self, cmd: CreateOrder):
+            return f"handled-{cmd.order_id}"
+
+    @presenter(OrderDTO, "custom_fmt")
+    class ClassOrderPresenter(PresenterPort):
+        def present(self, instance: Any) -> str:
+            return f"fmt-{instance.order_id}"
+
+    @exception_handler(DomainValidationError)
+    def handle_domain_val_err(exc: DomainValidationError):
+        return "caught-via-visitor"
+
+    dummy_mod = types.ModuleType("dummy_visitor_mod")
+    visitor(ClassOrderHandler, dummy_mod)
+    visitor(ClassOrderPresenter, dummy_mod)
+    visitor(handle_domain_val_err, dummy_mod)
+
+    # Verify registered in pipeline
+    assert CreateOrder in pipeline._handler_registry
+    handler_fn = pipeline._handler_registry.get(CreateOrder)
+    assert handler_fn is not None
+    assert handler_fn(CreateOrder(order_id="vis-1")) == "handled-vis-1"
+    assert pipeline._presenter_registry.get(OrderDTO, "custom_fmt") is not None
+    assert pipeline._exception_registry is not None
+    assert DomainValidationError in pipeline._exception_registry
+
+
+def test_autodiscover_cqrs_top_level_function():
+    """Verify autodiscover_cqrs top-level wrapper scans and registers handlers into pipeline."""
+    from hexastack_cqrs.infra.autodiscovery import autodiscover_cqrs
+
+    mod = types.ModuleType("dummy_top_level_cqrs_mod")
+
+    @command_handler(CreateOrder)
+    def handle_order(cmd: CreateOrder):
+        return f"top-level-{cmd.order_id}"
+
+    setattr(mod, "handle_order", handle_order)  # noqa: B010
+
+    pipeline = ExecutionPipeline(handler_registry=HandlerRegistry())
+    autodiscover_cqrs([mod], pipeline)
+
+    assert CreateOrder in pipeline._handler_registry
+    handler_fn = pipeline._handler_registry.get(CreateOrder)
+    assert handler_fn is not None
+    assert handler_fn(CreateOrder(order_id="tl-1")) == "top-level-tl-1"

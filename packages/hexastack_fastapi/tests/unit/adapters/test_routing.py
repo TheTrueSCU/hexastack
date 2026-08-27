@@ -274,3 +274,112 @@ def test_cqrs_router_query_and_command_extra_branches():
     res_qry = client.get("/ping-qry")
     assert res_qry.status_code == 200
     assert res_qry.json() == {"pong": "query"}
+
+
+def test_cqrs_router_feature_flag_and_post_query():
+    """Verify CqrsRouter with feature flags and POST queries."""
+    from rodi import Container
+
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+
+    class ConfidentialCmd(Command):
+        pass
+
+    class PostQry(Query):
+        pass
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(ConfidentialCmd, lambda cmd: {"info": "data"})
+    handler_reg.register(PostQry, lambda qry: {"query_post": "ok"})
+    pipeline = ExecutionPipeline(handler_registry=handler_reg)
+
+    flags = InMemoryFeatureFlagAdapter({"cmd.confidential": True})
+    container = Container()
+    container.add_instance(flags, declared_class=FeatureFlagPort)
+
+    router = CqrsRouter()
+    router.add_command(
+        "/confidential-cmd", ConfidentialCmd, feature_flag="cmd.confidential"
+    )
+    router.add_query(
+        "/query-post", PostQry, method="POST", feature_flag="cmd.confidential"
+    )
+
+    app = FastAPI()
+    app.state.pipeline = pipeline
+    app.state.container = container
+    app.include_router(router)
+
+    client = TestClient(app)
+    res_cmd = client.post("/confidential-cmd", json={})
+    assert res_cmd.status_code == 200
+    assert res_cmd.json() == {"info": "data"}
+
+    res_post_qry = client.post("/query-post", json={})
+    assert res_post_qry.status_code == 200
+    assert res_post_qry.json() == {"query_post": "ok"}
+
+
+def test_cqrs_router_query_post_method_and_feature_flags():
+    """Verify CqrsRouter registering POST query endpoint and feature flag gating."""
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(
+        GetUser,
+        lambda qry: UserDTO(user_id=qry.user_id, username=f"post_{qry.user_id}"),
+    )
+    handler_reg.register(
+        RegisterUser, lambda cmd: UserDTO(user_id=cmd.user_id, username=cmd.username)
+    )
+
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=CommandRegistry(),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+        presenter_registry=PresenterRegistry(),
+    )
+
+    router = CqrsRouter()
+    router.add_query(
+        path="/users/search",
+        query_cls=GetUser,
+        method="POST",
+        feature_flag="flags.search",
+    )
+    router.add_command(
+        path="/users/flagged-reg",
+        command_cls=RegisterUser,
+        feature_flag="flags.reg",
+    )
+
+    app = FastAPI()
+    app.include_router(router)
+    app.state.pipeline = pipeline
+    container = Container()
+    container.add_instance(
+        InMemoryFeatureFlagAdapter(flags={"flags.search": True, "flags.reg": False}),
+        declared_class=FeatureFlagPort,
+    )
+    app.state.container = container
+
+    client = TestClient(app)
+
+    # 1. Enabled POST query
+    res_q = client.post("/users/search", json={"user_id": "456"})
+    assert res_q.status_code == 200
+
+    # 2. Disabled command via feature flag -> 404 Not Found
+    res_c = client.post(
+        "/users/flagged-reg", json={"user_id": "789", "username": "flagged"}
+    )
+    assert res_c.status_code == 404
