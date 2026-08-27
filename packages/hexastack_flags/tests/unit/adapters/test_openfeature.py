@@ -59,3 +59,29 @@ def test_openfeature_adapter_in_memory():
     assert adapter.get_object_value("missing_obj", default={"k": "default"}) == {
         "k": "default"
     }
+
+
+def test_openfeature_factory_missing_dependencies():
+    from unittest.mock import patch
+
+    import pytest
+    from hexastack_flags.adapters.providers.factory import (
+        _build_flagd_provider,
+        _build_flipt_provider,
+        _build_unleash_provider,
+    )
+    from hexastack_flags.domain.models import FlagProviderOptions
+
+    from hexastack_core.domain.exceptions import MissingDependencyError
+
+    opts = FlagProviderOptions(host="127.0.0.1", port=8080)
+    with patch("importlib.import_module", side_effect=ImportError("No module")):
+        with pytest.raises(MissingDependencyError, match="openfeature-provider-flagd"):
+            _build_flagd_provider(opts)
+
+        with pytest.raises(MissingDependencyError, match="openfeature-provider-unleash"):
+            _build_unleash_provider(opts)
+
+        with pytest.raises(MissingDependencyError, match="openfeature-provider-flipt"):
+            _build_flipt_provider(opts)
+

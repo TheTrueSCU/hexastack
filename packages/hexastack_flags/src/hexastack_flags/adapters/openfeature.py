@@ -48,7 +48,9 @@ class OpenFeatureFlagAdapter(FeatureFlagPort):
         """
         flags: dict[str, Any] = {}
         try:
-            provider: Any = openfeature.api.provider_registry.get_provider(None)
+            provider: Any = (
+                openfeature.api.provider_registry.get_default_provider()
+            )
             provider_flags = getattr(provider, "_flags", None)
             if isinstance(provider_flags, dict):
                 for k, v in provider_flags.items():
