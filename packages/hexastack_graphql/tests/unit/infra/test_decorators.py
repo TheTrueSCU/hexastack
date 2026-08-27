@@ -114,3 +114,48 @@ type Query {
 }
 """.strip()
     )
+
+
+def test_feature_flag_field_decorator_sync_fallback_and_async_error():
+    """Verify sync fallback and async error branches of feature_flag_field."""
+    import strawberry
+    from rodi import Container
+    from strawberry.types import Info
+
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+    from hexastack_core.ports.feature_flags import FeatureFlagPort
+    from hexastack_graphql.domain.context import GraphQLContext
+    from hexastack_graphql.infra.decorators import feature_flag_field
+
+    flags = InMemoryFeatureFlagAdapter({"graphql.flag": False})
+    container = Container()
+    container.add_instance(flags, declared_class=FeatureFlagPort)
+    ctx = GraphQLContext(container=container)
+
+    @strawberry.type
+    class ExtraFeatureQuery:
+        @strawberry.field
+        @feature_flag_field("graphql.flag", raise_error=False, fallback=999)
+        def sync_fallback(self, info: Info[GraphQLContext, None]) -> int:
+            return 123
+
+        @strawberry.field
+        @feature_flag_field("graphql.flag", raise_error=True)
+        async def async_error(self, info: Info[GraphQLContext, None]) -> str:
+            return "async ok"
+
+    schema = strawberry.Schema(query=ExtraFeatureQuery)
+
+    # 1. Sync fallback returns fallback without error
+    res_sync = schema.execute_sync("{ syncFallback }", context_value=ctx)
+    assert res_sync.errors is None
+    assert res_sync.data == {"syncFallback": 999}
+
+    # 2. Async error raises GraphQLError
+    import asyncio
+
+    res_async = asyncio.run(schema.execute("{ asyncError }", context_value=ctx))
+    assert res_async.errors is not None
+    assert "disabled by feature flag 'graphql.flag'" in str(res_async.errors[0])
