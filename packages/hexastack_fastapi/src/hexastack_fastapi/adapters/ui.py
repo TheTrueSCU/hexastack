@@ -229,15 +229,22 @@ def _render_middleware_chain(middlewares: list[Any]) -> None:
                 ui.chip(
                     f"{idx}. {mw_name}",
                     icon="security" if "Auth" in mw_name else "filter_alt",
-                ).classes(
-                    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                )
+                    color="blue-9",
+                    text_color="white",
+                ).classes("font-medium")
                 if idx < len(middlewares):
-                    ui.icon("arrow_forward", size="sm").classes("text-slate-400")
-            ui.icon("arrow_forward", size="sm").classes("text-slate-400")
-            ui.chip("Handler Execution", icon="play_circle").classes(
-                "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 font-bold"
+                    ui.icon("arrow_forward", size="sm").classes(
+                        "text-slate-600 dark:text-slate-300"
+                    )
+            ui.icon("arrow_forward", size="sm").classes(
+                "text-slate-600 dark:text-slate-300"
             )
+            ui.chip(
+                "Handler Execution",
+                icon="play_circle",
+                color="green-9",
+                text_color="white",
+            ).classes("font-bold")
     else:
         ui.label("No active middlewares attached to CommandBus.").classes(
             "text-slate-500 italic mb-6"
@@ -315,9 +322,9 @@ def _render_live_runner(
                 except Exception as exc:
                     log_output.push(f"❌ [ERROR] Execution failed: {exc}")
 
-            ui.button("Dispatch Ping Command", on_click=_run_ping, icon="send").classes(
-                "bg-blue-600 text-white"
-            )
+            ui.button(
+                "Dispatch Ping Command", on_click=_run_ping, icon="send", color="blue-9"
+            ).classes("text-white font-medium shadow-sm")
 
 
 def _render_cqrs_tab(
@@ -366,15 +373,16 @@ def _render_flags_tab(container: Container) -> None:
                 ],
                 rows=flag_rows,
                 row_key="flag",
+                pagination={"rowsPerPage": 10},
             ).classes("w-full")
         else:
             ui.label("No feature flags currently configured in provider.").classes(
-                "text-slate-500 italic"
+                "text-slate-600 dark:text-slate-400 italic"
             )
     else:
         ui.label(
             "Feature flag provider not available or does not support listing."
-        ).classes("text-slate-500 italic")
+        ).classes("text-slate-600 dark:text-slate-400 italic")
 
 
 def _render_container_tab(container: Container) -> None:
@@ -427,10 +435,11 @@ def _render_container_tab(container: Container) -> None:
             ],
             rows=services,
             row_key="service",
+            pagination={"rowsPerPage": 10},
         ).classes("w-full")
     else:
         ui.label("No direct services found in container introspection.").classes(
-            "text-slate-500 italic"
+            "text-slate-600 dark:text-slate-400 italic"
         )
 
 
@@ -465,7 +474,7 @@ def mount_devtools_dashboard(
 
     @ui.page(path, title=title)
     def devtools_page():
-        ui.colors(primary="#3B82F6", secondary="#10B981", accent="#8B5CF6")
+        ui.colors(primary="#1E40AF", secondary="#065F46", accent="#5B21B6")
 
         with ui.header().classes(
             "items-center justify-between bg-slate-900 text-white px-6 py-3"
@@ -473,7 +482,9 @@ def mount_devtools_dashboard(
             with ui.row().classes("items-center gap-3"):
                 ui.icon("layers", size="md").classes("text-blue-400")
                 ui.label(title).classes("text-xl font-bold tracking-tight")
-            ui.badge("v0.1.0", color="blue").classes("text-xs")
+            ui.badge("v0.1.0", color="blue-10").classes(
+                "text-xs font-semibold text-white"
+            )
 
         with ui.tabs().classes("w-full bg-slate-100 dark:bg-slate-800") as tabs:
             tab_cqrs = ui.tab("CQRS Registry", icon="bolt")

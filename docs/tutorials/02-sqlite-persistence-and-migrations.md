@@ -195,14 +195,17 @@ Watch the CLI setup for a persistent SQLite service:
 
 ---
 
-## 5. Verification: Persistent SQLite API
+## 5. Verification: Persistent SQLite API & Swagger UI
 
-Watch the persistent REST endpoints executing live in Chromium:
+Launch the development server to verify SQLite persistence across service restarts:
 
-<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-  <source src="../assets/demos/todo-ch02-browser-demo.webm" type="video/webm">
-  <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch02-browser-demo.vtt" default>
-</video>
+```bash
+uv run hexastack serve --port 8000
+```
+
+Open `http://127.0.0.1:8000/docs` in your browser to create and query To-Do items. Even after restarting the server process, your tasks will remain intact in `todos.db`.
+
+---
 
 ## 6. Next Steps: The Security Dilemma
 

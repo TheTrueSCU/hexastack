@@ -57,15 +57,22 @@ Your report will be visible only to repository maintainers until a coordinated d
 - Denial-of-service issues requiring physical or local access to the host
 - Reports against unsupported older minor versions
 
-## Response Timeline
+## Response Timeline & SLA
 
 | Milestone | Target |
 |---|---|
-| Acknowledgement of report | Within **5 business days** |
-| Triage and severity assessment | Within **10 business days** of acknowledgement |
-| Coordinated fix & CVE assignment | Agreed with reporter; typically within **90 days** for critical issues |
+| Initial Acknowledgement of report | Within **48 hours** |
+| Triage and severity assessment | Within **7 business days** of acknowledgement |
+| Coordinated fix & CVE assignment | Agreed with reporter; typically within **30 to 60 days** for critical issues |
 
 We will keep you informed of progress at each milestone. If you believe a critical issue warrants an accelerated timeline, please state so in your report.
+
+## Credit & Vulnerability Acknowledgment
+
+We believe in giving credit where credit is due. Unless you request to remain anonymous, we will publicly credit you in our:
+1. Release notes and `CHANGELOG.md`
+2. GitHub Security Advisory release page
+3. CVE metadata / attribution records
 
 ## Safe Harbour
 

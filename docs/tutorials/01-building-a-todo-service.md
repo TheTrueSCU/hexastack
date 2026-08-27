@@ -452,18 +452,13 @@ uv run hexastack inspect info
 
 ### Interactive OpenAPI Testing & Swagger UI
 
-Launch the dev server to explore the Swagger UI:
+Launch the dev server to explore the Swagger UI and interactive OpenAPI schema:
 
 ```bash
 uv run hexastack serve --port 8000
 ```
 
-Watch the auto-generated Swagger UI in action:
-
-<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-  <source src="../assets/demos/todo-ch01-browser-demo.webm" type="video/webm">
-  <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch01-browser-demo.vtt" default>
-</video>
+Open your browser at `http://127.0.0.1:8000/docs` to test endpoints interactively with real-time JSON validation.
 
 ---
 

@@ -168,12 +168,15 @@ Watch the CLI setup for a secured microservice:
 
 ## 5. Verification: RBAC & Swagger UI
 
-Watch the secured endpoints executing live in Chromium with role checks:
+Launch the application to verify role-based security in the Swagger UI:
 
-<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-  <source src="../assets/demos/todo-ch03-browser-demo.webm" type="video/webm">
-  <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch03-browser-demo.vtt" default>
-</video>
+```bash
+uv run hexastack serve --port 8000
+```
+
+1. Click **Authorize** in Swagger UI (`http://127.0.0.1:8000/docs`).
+2. Pass `Bearer user` to create and view your own items.
+3. Pass `Bearer admin` to execute administrative deletions across all user items.
 
 ---
 

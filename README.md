@@ -14,7 +14,7 @@
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type checker: ty](https://img.shields.io/badge/type%20checker-ty-blueviolet.svg)](https://github.com/astral-sh/ty)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/TheTrueSCU/hexastack/badge)](https://securityscorecards.dev/viewer/?uri=github.com/TheTrueSCU/hexastack)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/0/badge)](https://www.bestpractices.dev/projects/0)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14264/badge)](https://www.bestpractices.dev/projects/14264)
 
 ---
 

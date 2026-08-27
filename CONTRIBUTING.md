@@ -177,6 +177,22 @@ compatibility is a hard constraint for any released gRPC service.
 
 ---
 
+## Developer Certificate of Origin (DCO)
+
+All contributions to Hexastack must be accompanied by a Developer Certificate of Origin sign-off. By adding a `Signed-off-by` line in your commit message, you certify the requirements outlined in [DCO.md](DCO.md):
+
+```bash
+git commit -s -m "feat: add support for Redis cache invalidation"
+```
+
+---
+
+## Code of Conduct
+
+We are committed to providing a friendly, safe, and welcoming environment. All participants are expected to adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+---
+
 ## Security Issues
 
 **Do not open a public GitHub issue for security vulnerabilities.**

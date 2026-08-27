@@ -145,12 +145,11 @@ Watch the CLI setup for a production-grade microservice:
 
 ## 5. Verification: Observability & Endpoints
 
-Watch the browser interaction and production telemetry walkthrough live in Chromium:
+Inspect real-time telemetry spans and structured execution traces:
 
-<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-  <source src="../assets/demos/todo-ch06-browser-demo.webm" type="video/webm">
-  <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch06-browser-demo.vtt" default>
-</video>
+1. **Send Requests**: Issue several commands and queries via HTTP REST or CLI.
+2. **Inspect Spans**: Open DevTools UI (`http://127.0.0.1:8000/_devtools`) to view active pipeline execution telemetry.
+3. **Structured Logs**: View contextual JSON log outputs with correlation IDs and redactions.
 
 ---
 

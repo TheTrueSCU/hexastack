@@ -222,12 +222,11 @@ Watch the CLI setup for an event-driven microservice:
 
 ## 7. Verification: Admin Deletion Triggers Notification
 
-Watch the browser interaction and push notification dispatch live in Chromium:
+Trigger the flow through the interactive Swagger UI:
 
-<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-  <source src="../assets/demos/todo-ch04-browser-demo.webm" type="video/webm">
-  <track label="English" kind="subtitles" srclang="en" src="../assets/demos/todo-ch04-browser-demo.vtt" default>
-</video>
+1. **Delete Item**: Send `DELETE /todos/{id}` with `Authorization: Bearer admin`.
+2. **Inspect Outbox Table**: Verify an event record was persisted inside the same transactional unit of work in `todos.db`.
+3. **Drain Outbox**: Run `uv run hexastack outbox relay --once` to publish events to configured notification channels.
 
 ---
 
