@@ -46,27 +46,27 @@ def test_query_caching_sync_flow() -> None:
     def query_handler(q: GetUserQuery) -> dict[str, Any]:
         nonlocal calls
         calls += 1
-        return {"id": q.user_id, "name": f"User {q.user_id}"}
+        return {"id": q.user_id, "name": f"User {q.user_id}", "call_count": calls}
 
     query = GetUserQuery(user_id="42")
 
     # 1. First execution -> Miss, calls handler
     res1 = query_mw(query, query_handler)
-    assert res1 == {"id": "42", "name": "User 42"}
+    assert res1 == {"id": "42", "name": "User 42", "call_count": 1}
     assert calls == 1
 
-    # 2. Second execution -> Hit, handler not called
+    # 2. Second execution -> Hit, handler not called (call_count in result stays 1)
     res2 = query_mw(query, query_handler)
-    assert res2 == {"id": "42", "name": "User 42"}
+    assert res2 == {"id": "42", "name": "User 42", "call_count": 1}
     assert calls == 1
 
     # 3. Execute invalidation command
     cmd = UpdateUserCommand(user_id="42", name="Updated")
     inval_mw(cmd, lambda _: None)
 
-    # 4. Third execution -> Miss again because cache was invalidated
+    # 4. Third execution -> Miss again because cache was invalidated (call_count becomes 2)
     res3 = query_mw(query, query_handler)
-    assert res3 == {"id": "42", "name": "User 42"}
+    assert res3 == {"id": "42", "name": "User 42", "call_count": 2}
     assert calls == 2
 
 
@@ -97,27 +97,27 @@ async def test_query_caching_async_flow() -> None:
     async def async_handler(q: GetUserQuery) -> dict[str, Any]:
         nonlocal calls
         calls += 1
-        return {"id": q.user_id, "name": f"Async {q.user_id}"}
+        return {"id": q.user_id, "name": f"Async {q.user_id}", "call_count": calls}
 
     query = GetUserQuery(user_id="100")
 
     # 1. Async miss
     res1 = await query_mw(query, async_handler)
-    assert res1 == {"id": "100", "name": "Async 100"}
+    assert res1 == {"id": "100", "name": "Async 100", "call_count": 1}
     assert calls == 1
 
-    # 2. Async hit
+    # 2. Async hit (call_count in result stays 1)
     res2 = await query_mw(query, async_handler)
-    assert res2 == {"id": "100", "name": "Async 100"}
+    assert res2 == {"id": "100", "name": "Async 100", "call_count": 1}
     assert calls == 1
 
     # 3. Async Invalidate
     cmd = UpdateUserCommand(user_id="100", name="Async Updated")
     await inval_mw(cmd, lambda _: None)
 
-    # 4. Third execution -> Miss again
+    # 4. Third execution -> Miss again (call_count becomes 2)
     res3 = await query_mw(query, async_handler)
-    assert res3 == {"id": "100", "name": "Async 100"}
+    assert res3 == {"id": "100", "name": "Async 100", "call_count": 2}
     assert calls == 2
 
 

@@ -1,6 +1,8 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
+
+T = TypeVar("T")
 
 _AUTH_METADATA_ATTR = "__hexastack_auth__"
 
@@ -45,7 +47,7 @@ def authenticated[T: Any]() -> Callable[[T], T]:
     return authorize(require_authenticated=True)
 
 
-def authorize[T: Any](
+def authorize(
     *,
     roles: Sequence[str] = (),
     permissions: Sequence[str] = (),

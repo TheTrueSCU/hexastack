@@ -1,8 +1,11 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from hexastack_core.domain import Command, Query
+
+TCommand = TypeVar("TCommand", bound=Command)
+TQuery = TypeVar("TQuery", bound=Query)
 
 _CLI_METADATA_ATTR = "__hexastack_cli__"
 _CLI_GROUP_ATTR = "__hexastack_cli_group__"
@@ -58,7 +61,7 @@ def _normalize_tokens(tokens: Sequence[str] | str | None) -> tuple[str, ...]:
     return tuple(str(t).strip() for t in tokens if str(t).strip())
 
 
-def cli_command[TCommand: Command](
+def cli_command(
     name: str | None = None,
     *,
     positional: Sequence[str] | str | None = None,
@@ -129,7 +132,7 @@ def cli_group(
     return decorator
 
 
-def cli_query[TQuery: Query](
+def cli_query(
     name: str | None = None,
     *,
     positional: Sequence[str] | str | None = None,

@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra.decorators import (
@@ -260,7 +260,11 @@ class CommandInvalidationMetadata:
     tags: tuple[str, ...] = ()
 
 
-def cached_query[Q: type](
+Q = TypeVar("Q", bound=type)
+C = TypeVar("C", bound=type)
+
+
+def cached_query(
     ttl_seconds: float | None = 300.0,
     key_fields: list[str] | tuple[str, ...] | None = None,
     tags: list[str] | tuple[str, ...] = (),
@@ -300,7 +304,7 @@ def cached_query[Q: type](
     return decorator
 
 
-def invalidates_cache[C: type](
+def invalidates_cache(
     tags: list[str] | tuple[str, ...] = (),
 ) -> Callable[[C], C]:
     """Decorate a Command class to automatically purge tagged cache entries upon success.

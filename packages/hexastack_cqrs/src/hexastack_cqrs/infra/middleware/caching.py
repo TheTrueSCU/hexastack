@@ -6,7 +6,7 @@ import hashlib
 import inspect
 import json
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_core.ports.cache import AsyncCachePort, CachePort
@@ -16,6 +16,9 @@ from hexastack_cqrs.infra.decorators import (
     CommandInvalidationMetadata,
     QueryCacheMetadata,
 )
+
+G = TypeVar("G", bound=Generic)
+R = TypeVar("R")
 
 
 def compute_cache_key(query: Query[Any], metadata: QueryCacheMetadata) -> str:
@@ -70,7 +73,7 @@ class QueryCachingMiddleware:
         """
         self._cache = cache
 
-    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> Any:
+    def __call__(self, instance: G, next_call: Callable[[G], R]) -> Any:
         """Intercept query execution, check cache, and populate cache on miss.
 
         Args:
@@ -111,13 +114,14 @@ class QueryCachingMiddleware:
 
         return result
 
-    async def _handle_async[G: Generic, R](
+    async def _handle_async(
         self,
         instance: G,
         next_call: Callable[[G], R],
         cache_key: str,
         cache_meta: QueryCacheMetadata,
     ) -> Any:
+
         async_cache = cast("AsyncCachePort", self._cache)
         cached_val = await async_cache.get_async(cache_key)
         if cached_val is not None:
@@ -189,7 +193,7 @@ class CommandCacheInvalidationMiddleware:
         """Initialize CommandCacheInvalidationMiddleware with cache adapter."""
         self._cache = cache
 
-    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> Any:
+    def __call__(self, instance: G, next_call: Callable[[G], R]) -> Any:
         """Intercept command execution and purge tagged cache entries upon success."""
         inval_meta: CommandInvalidationMetadata | None = getattr(
             instance.__class__, _COMMAND_INVALIDATION_META_ATTR, None
