@@ -119,9 +119,7 @@ uv run pytest packages/*/tests/properties/
 
 ## Commit Message Format
 
-Hexastack uses **[Conventional Commits](https://www.conventionalcommits.org/)**
-— `python-semantic-release` reads them to bump versions and generate the CHANGELOG
-automatically.
+Hexastack uses standard structured commit messages:
 
 ```
 <type>[optional scope]: <description>
@@ -141,14 +139,6 @@ automatically.
 | `chore` | Build process, tooling, dependency updates |
 | `perf` | Performance improvements |
 
-**Breaking changes** — add `!` after the type or a `BREAKING CHANGE:` footer:
-
-```
-feat!: remove deprecated SyncRepositoryPort
-
-BREAKING CHANGE: SyncRepositoryPort has been removed. Use AsyncRepositoryPort instead.
-```
-
 ---
 
 ## Pull Request Process
@@ -156,8 +146,7 @@ BREAKING CHANGE: SyncRepositoryPort has been removed. Use AsyncRepositoryPort in
 1. **Branch from `main`**: `git checkout -b feat/my-feature`
 2. **Keep PRs focused** — one logical change per PR
 3. **All pre-commit hooks must pass** before opening the PR
-4. **CI must be green** — the `check` job (including `hypothesis`) is required for merge
-5. **Update `CHANGELOG.md` entries are automatic** — do not edit it manually
+4. **CI must be green** — all required quality gates must pass for merge
 6. Request a review from a maintainer; at least one approval is required
 
 ---

@@ -96,8 +96,8 @@ To automate dependency maintenance safely:
 
 ---
 
-## 6. Automated Release Protocol
-To automate versioning and changelog generation using python-semantic-release (Bot Proposes, Human Approves pattern):
-1. **Conventional Commits:** All commits must follow Conventional Commits.
-2. **Repository Permissions:** In GitHub Settings > Actions > General > Workflow permissions, select "Read and write permissions" and check "Allow GitHub Actions to create and approve pull requests."
-3. **Automate:** Add the workflow to `.github/workflows/release.yml`.
+## 6. Release & Distribution Protocol
+Hexastack releases are versioned synchronously across all 15 monorepo packages:
+1. **Version Bump & Changelog:** Maintainers bump package versions across `pyproject.toml` and update `CHANGELOG.md` via a standard release pull request (`chore(release): vX.Y.Z`).
+2. **Tagging:** After the release PR is merged into `main`, tag the release (`git tag -a vX.Y.Z -m "Release vX.Y.Z"` and `git push origin vX.Y.Z`).
+3. **Automated Distribution:** The `.github/workflows/release.yml` pipeline triggers on the tag push, builds all distribution wheels, publishes to PyPI with trusted publishing attestations, and attaches SPDX/CycloneDX SBOMs to the GitHub release.
