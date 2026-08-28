@@ -40,8 +40,8 @@ def get_github_token() -> str | None:
             )
             if res.returncode == 0 and res.stdout.strip():
                 return res.stdout.strip()
-        except Exception:
-            pass
+        except (subprocess.SubprocessError, OSError):
+            return None
 
     return None
 
