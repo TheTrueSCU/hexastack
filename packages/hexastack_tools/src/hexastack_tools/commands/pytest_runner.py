@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -48,6 +49,34 @@ def _get_git_changed_files(base_ref: str = "origin/main") -> list[str]:
         return []
 
 
+def _resolve_test_targets(
+    packages: list[str] | None,
+    affected: bool,
+    unit_only: bool,
+    root: Path,
+) -> list[str]:
+    """Resolve target test directory paths based on CLI flags."""
+    sub_dir = "tests/unit" if unit_only else "tests"
+
+    if packages:
+        return [str(get_package_directory(p, root) / sub_dir) for p in packages]
+
+    if affected:
+        changed = _get_git_changed_files()
+        affected_pkgs = resolve_affected_packages(changed, root)
+        if affected_pkgs is not None:
+            return [
+                str(get_package_directory(p, root) / sub_dir) for p in affected_pkgs
+            ]
+        # None indicates workspace-wide impact -> fall through to all packages
+
+    return [
+        str(target)
+        for pkg_dir in get_package_directories(root)
+        if (target := pkg_dir / sub_dir).is_dir()
+    ]
+
+
 def run_main() -> None:
     """CLI entrypoint for pytest-run."""
     parser = argparse.ArgumentParser(description="Run pytest test suite.")
@@ -59,26 +88,14 @@ def run_main() -> None:
     args, unknown = parser.parse_known_args()
 
     root = get_repo_root()
-    test_paths: list[str] = []
+    test_paths = _resolve_test_targets(
+        packages=args.packages,
+        affected=args.affected,
+        unit_only=args.unit,
+        root=root,
+    )
 
-    if args.packages:
-        for p in args.packages:
-            target_sub = "tests/unit" if args.unit else "tests"
-            test_paths.append(str(get_package_directory(p, root) / target_sub))
-    elif args.affected:
-        changed = _get_git_changed_files()
-        affected = resolve_affected_packages(changed, root)
-        if affected:
-            for p in affected:
-                target_sub = "tests/unit" if args.unit else "tests"
-                test_paths.append(str(get_package_directory(p, root) / target_sub))
-    elif args.unit:
-        for pkg_dir in get_package_directories(root):
-            unit_dir = pkg_dir / "tests" / "unit"
-            if unit_dir.is_dir():
-                test_paths.append(str(unit_dir))
-
-    call_args = (test_paths or []) + (unknown or [])
+    call_args = test_paths + (unknown or [])
     sys.exit(pytest.main(call_args))
 
 

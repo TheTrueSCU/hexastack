@@ -12,7 +12,7 @@ def test_spiffe_workload_adapter():
 
 def test_spiffe_workload_adapter_errors_and_fetch():
     """Verify missing dependency error on fetch_jwt_svid and validation on empty token."""
-    from unittest.mock import patch
+    from unittest.mock import MagicMock, patch
 
     import pytest
 
@@ -22,8 +22,9 @@ def test_spiffe_workload_adapter_errors_and_fetch():
     adapter = SpiffeWorkloadAdapter(trust_domain="custom.org")
 
     # 1. Normal fetch when spiffe is installed
-    token = adapter.fetch_jwt_svid(audience={"svc"})
-    assert token == "dummy-jwt-svid"
+    with patch("importlib.util.find_spec", return_value=MagicMock()):
+        token = adapter.fetch_jwt_svid(audience={"svc"})
+        assert token == "dummy-jwt-svid"
 
     # 2. When spiffe is not found
     with (

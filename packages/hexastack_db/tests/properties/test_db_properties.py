@@ -18,6 +18,7 @@ from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+from hexastack_core.testing.flags import require_extra
 from hexastack_db.adapters.repository import (
     AsyncSqlAlchemyRepository,
     SqlAlchemyRepository,
@@ -131,6 +132,7 @@ def test_sync_repository_duplicate_unique_constraint_property(
             repo.add(SampleItem(name=name, category=category, score=score + 1))
 
 
+@require_extra("aiosqlite")
 @pytest.mark.anyio
 @given(
     name=clean_str,
