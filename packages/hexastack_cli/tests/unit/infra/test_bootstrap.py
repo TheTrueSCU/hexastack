@@ -1,5 +1,4 @@
 import types
-from typing import Any, cast
 
 import typer
 from typer.testing import CliRunner
@@ -41,8 +40,8 @@ def test_cli_bootstrapper_registration():
 
 def test_meta_bootstrap_with_cli_and_autodiscovery():
     mod = types.ModuleType("sample_ping_mod")
-    cast("Any", mod).PingCmd = PingCmd
-    cast("Any", mod).PingHandler = PingHandler
+    mod.__dict__["PingCmd"] = PingCmd
+    mod.__dict__["PingHandler"] = PingHandler
 
     result = bootstrap(
         bootstrappers=[

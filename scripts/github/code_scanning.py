@@ -179,10 +179,66 @@ def inspect_and_bucket_alerts(
     return 0
 
 
+def inspect_single_alert(alert_number: int) -> int:
+    """Fetch and print detailed metadata for a single CodeQL alert.
+
+    Args:
+        alert_number: The unique alert number.
+
+    Returns:
+        0 on success, 1 on error.
+    """
+    with GitHubClient() as client:
+        resp = client._client.get(
+            f"/repos/{client.owner}/{client.repo}/code-scanning/alerts/{alert_number}"
+        )
+        resp.raise_for_status()
+        alert = resp.json()
+
+    rule = alert.get("rule", {})
+    inst = alert.get("most_recent_instance", {})
+    loc = inst.get("location", {})
+    path = loc.get("path", "unknown")
+    start_line = loc.get("start_line", "-")
+    end_line = loc.get("end_line", start_line)
+    msg = inst.get("message", {}).get("text", "")
+    desc = rule.get("description", "")
+    help_text = rule.get("help", "")
+
+    panel_content = (
+        f"[bold white]Rule ID:[/bold white] [bold cyan]{rule.get('id', 'unknown')}[/bold cyan]\n"
+        f"[bold white]Severity:[/bold white] {rule.get('severity', 'unknown')} ({rule.get('security_severity_level') or 'quality'})\n"
+        f"[bold white]Location:[/bold white] [bold blue]{path}:{start_line}-{end_line}[/bold blue]\n"
+        f"[bold white]State:[/bold white] {alert.get('state', 'unknown')}\n\n"
+        f"[bold white]Message:[/bold white]\n{msg}\n\n"
+        f"[bold white]Description:[/bold white]\n{desc}\n"
+    )
+    if help_text:
+        panel_content += (
+            f"\n[bold white]Remediation Guidance:[/bold white]\n{help_text[:400]}..."
+        )
+
+    console.print(
+        Panel(
+            panel_content,
+            title=f"[bold magenta]CodeQL Alert #{alert_number}[/bold magenta]",
+            border_style="cyan",
+        )
+    )
+    return 0
+
+
 def main() -> int:
     """CLI entrypoint for gh-code-scanning."""
     parser = argparse.ArgumentParser(
         description="Bucket and inspect GitHub CodeQL security & quality code-scanning alerts."
+    )
+    parser.add_argument(
+        "alert",
+        nargs="?",
+        type=int,
+        default=None,
+        help="Inspect a specific alert number in detail (e.g. 98).",
     )
     parser.add_argument(
         "--rule",
@@ -215,6 +271,9 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
+        if args.alert is not None:
+            return inspect_single_alert(args.alert)
+
         return inspect_and_bucket_alerts(
             rule_filter=args.rule,
             package_filter=args.package,

@@ -1,5 +1,4 @@
 import types
-from typing import Any, cast
 
 from typer.testing import CliRunner
 
@@ -86,10 +85,10 @@ def test_autodiscover_cli_commands_nested_subgroups_and_aliases():
 
     app = create_cli_app()
     mod = types.ModuleType("sample_nested_cli_module")
-    cast("Any", mod).UserGroupConfig = UserGroupConfig
-    cast("Any", mod).CreateUserCommand = CreateUserCommand
-    cast("Any", mod).GetUserQuery = GetUserQuery
-    cast("Any", mod).SetBioCommand = SetBioCommand
+    mod.__dict__["UserGroupConfig"] = UserGroupConfig
+    mod.__dict__["CreateUserCommand"] = CreateUserCommand
+    mod.__dict__["GetUserQuery"] = GetUserQuery
+    mod.__dict__["SetBioCommand"] = SetBioCommand
 
     autodiscover_cli_commands(app, [mod], pipeline=pipeline)
 
