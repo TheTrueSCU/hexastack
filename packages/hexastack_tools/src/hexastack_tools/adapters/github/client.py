@@ -11,7 +11,7 @@ import httpx
 
 from hexastack_tools.domain.github import (
     CheckRunFinding,
-    PRSummary,
+    PrSummary,
     ReviewComment,
     ReviewThread,
     SecurityAlert,
@@ -85,7 +85,7 @@ class GitHubHttpAdapter(GitHubApiPort):
         """Context manager exit."""
         self.close()
 
-    def get_pr_summary(self, pr_number: int) -> PRSummary:
+    def get_pr_summary(self, pr_number: int) -> PrSummary:
         """Fetch full aggregate summary for a pull request."""
         resp = self._client.get(f"/repos/{self.owner}/{self.repo}/pulls/{pr_number}")
         resp.raise_for_status()
@@ -115,7 +115,7 @@ class GitHubHttpAdapter(GitHubApiPort):
                     )
                 )
 
-        return PRSummary(
+        return PrSummary(
             number=pr_number,
             title=data.get("title", ""),
             author=data.get("user", {}).get("login", "unknown"),

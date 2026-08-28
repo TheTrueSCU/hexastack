@@ -81,7 +81,7 @@ class SecurityAlert:
 
 
 @dataclass(frozen=True)
-class PRSummary:
+class PrSummary:
     """Comprehensive summary of a GitHub Pull Request."""
 
     number: int
@@ -117,7 +117,7 @@ __all__ = [
     "AlertSeverity",
     "CheckRunFinding",
     "OutputFormat",
-    "PRSummary",
+    "PrSummary",
     "ReviewComment",
     "ReviewThread",
     "SecurityAlert",

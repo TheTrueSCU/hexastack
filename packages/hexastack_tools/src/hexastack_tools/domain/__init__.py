@@ -3,7 +3,8 @@
 from hexastack_tools.domain.github import (
     AlertSeverity,
     CheckRunFinding,
-    PRSummary,
+    OutputFormat,
+    PrSummary,
     ReviewComment,
     ReviewThread,
     SecurityAlert,
@@ -12,7 +13,8 @@ from hexastack_tools.domain.github import (
 __all__ = [
     "AlertSeverity",
     "CheckRunFinding",
-    "PRSummary",
+    "OutputFormat",
+    "PrSummary",
     "ReviewComment",
     "ReviewThread",
     "SecurityAlert",

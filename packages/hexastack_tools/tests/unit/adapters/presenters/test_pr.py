@@ -12,7 +12,7 @@ from hexastack_tools.adapters.presenters.pr import (
 from hexastack_tools.domain.github import (
     CheckRunFinding,
     OutputFormat,
-    PRSummary,
+    PrSummary,
     ReviewComment,
     ReviewThread,
 )
@@ -83,7 +83,7 @@ def test_render_pr_summary_rich() -> None:
         conclusion="failure",
         details_url="https://ci.example.com",
     )
-    summary = PRSummary(
+    summary = PrSummary(
         number=41,
         title="fix(security): test",
         author="alice",
@@ -100,7 +100,7 @@ def test_render_pr_summary_rich() -> None:
 
 
 def test_render_pr_summary_json_and_plain() -> None:
-    """Verify PRSummary JSON and plain serialization format."""
+    """Verify PrSummary JSON and plain serialization format."""
     comment = ReviewComment(
         id=3,
         author="alice",
@@ -121,7 +121,7 @@ def test_render_pr_summary_json_and_plain() -> None:
         conclusion="success",
         details_url="https://ci.example.com",
     )
-    summary = PRSummary(
+    summary = PrSummary(
         number=41,
         title="fix(security): test",
         author="alice",
@@ -134,6 +134,7 @@ def test_render_pr_summary_json_and_plain() -> None:
         check_runs=(check,),
         review_threads=(thread,),
     )
+
     json_str = render_pr_summary_json(summary)
     assert '"number": 41' in json_str
     assert '"is_clean": true' in json_str

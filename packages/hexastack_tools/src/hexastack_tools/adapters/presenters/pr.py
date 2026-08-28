@@ -13,7 +13,7 @@ from hexastack_tools.adapters.presenters.common import resolve_output_format
 from hexastack_tools.domain.github import (
     CheckRunFinding,
     OutputFormat,
-    PRSummary,
+    PrSummary,
     ReviewThread,
 )
 
@@ -93,8 +93,9 @@ def _build_threads_table(threads: tuple[ReviewThread, ...]) -> Table:
     return table
 
 
-def render_pr_summary_rich(summary: PRSummary, show_details: bool = False) -> None:
+def render_pr_summary_rich(summary: PrSummary, show_details: bool = False) -> None:
     """Render full PR inspection dashboard using Rich components."""
+
     state_style = "bold green" if summary.state == "open" else "bold purple"
     clean_badge = (
         "[bold green]✓ CLEAN (Ready for Merge)[/bold green]"
@@ -137,8 +138,9 @@ def render_pr_summary_rich(summary: PRSummary, show_details: bool = False) -> No
                     )
 
 
-def render_pr_summary_json(summary: PRSummary) -> str:
-    """Serialize PRSummary to formatted JSON string."""
+def render_pr_summary_json(summary: PrSummary) -> str:
+    """Serialize PrSummary to formatted JSON string."""
+
     data = {
         "number": summary.number,
         "title": summary.title,
@@ -183,8 +185,8 @@ def render_pr_summary_json(summary: PRSummary) -> str:
     return json.dumps(data, indent=2)
 
 
-def render_pr_summary_plain(summary: PRSummary) -> str:
-    """Serialize PRSummary to line-delimited TSV string."""
+def render_pr_summary_plain(summary: PrSummary) -> str:
+    """Serialize PrSummary to line-delimited TSV string."""
     lines: list[str] = [
         f"PR\t{summary.number}\t{summary.state}\t{summary.mergeable}\t{summary.head_ref}\t{summary.base_ref}\t{summary.html_url}"
     ]
@@ -202,11 +204,12 @@ def render_pr_summary_plain(summary: PRSummary) -> str:
 
 
 def present_pr_summary(
-    summary: PRSummary,
+    summary: PrSummary,
     output_format: OutputFormat = OutputFormat.AUTO,
     show_details: bool = False,
 ) -> None:
     """Unified entrypoint to present PR summary in rich, json, plain, or auto-detected format."""
+
     resolved_format = resolve_output_format(output_format)
     if resolved_format == OutputFormat.JSON:
         sys.stdout.write(render_pr_summary_json(summary) + "\n")

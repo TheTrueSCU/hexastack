@@ -6,7 +6,7 @@ from typing import Protocol, runtime_checkable
 
 from hexastack_tools.domain.github import (
     CheckRunFinding,
-    PRSummary,
+    PrSummary,
     ReviewThread,
     SecurityAlert,
 )
@@ -14,10 +14,10 @@ from hexastack_tools.domain.github import (
 
 @runtime_checkable
 class GitHubApiPort(Protocol):
-    """Port interface for GitHub REST and GraphQL interactions."""
+    """Port interface for communicating with GitHub APIs."""
 
-    def get_pr_summary(self, pr_number: int) -> PRSummary:
-        """Fetch full aggregate summary for a pull request."""
+    def get_pr_summary(self, pr_number: int) -> PrSummary:
+        """Fetch comprehensive Pull Request summary including checks and reviews."""
         ...
 
     def get_check_runs(self, ref: str) -> list[CheckRunFinding]:
