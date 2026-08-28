@@ -109,8 +109,8 @@ class StaminaRetryMiddleware:
                         )
                     raise
 
-        msg = f"Stamina retry failed to execute {message_name}"
-        raise RuntimeError(msg)
+        msg = f"Stamina retry failed to execute {message_name}"  # pragma: no cover
+        raise RuntimeError(msg)  # pragma: no cover
 
 
 class TenacityRetryMiddleware:
