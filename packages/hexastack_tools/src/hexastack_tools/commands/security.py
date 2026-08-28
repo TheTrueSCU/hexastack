@@ -30,9 +30,9 @@ def security(
         typer.Option(
             "--format",
             "-f",
-            help="Output format: rich (interactive tables), json (structured), plain (TSV).",
+            help="Output format: auto (detects pipes), rich (interactive tables), json (structured), plain (TSV).",
         ),
-    ] = OutputFormat.RICH,
+    ] = OutputFormat.AUTO,
 ) -> None:
     """Fetch and display review comments and security findings for a PR."""
     try:

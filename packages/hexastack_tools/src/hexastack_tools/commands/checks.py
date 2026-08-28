@@ -30,9 +30,9 @@ def checks(
         typer.Option(
             "--format",
             "-f",
-            help="Output format: rich (interactive tables), json (structured), plain (TSV).",
+            help="Output format: auto (detects pipes), rich (interactive tables), json (structured), plain (TSV).",
         ),
-    ] = OutputFormat.RICH,
+    ] = OutputFormat.AUTO,
 ) -> None:
     """Inspect CI status checks for a given PR number or Git ref."""
     try:

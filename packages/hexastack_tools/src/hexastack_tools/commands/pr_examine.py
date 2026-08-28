@@ -81,9 +81,9 @@ def examine(
         typer.Option(
             "--format",
             "-f",
-            help="Output format: rich (interactive panels), json (structured), plain (TSV).",
+            help="Output format: auto (detects pipes), rich (interactive panels), json (structured), plain (TSV).",
         ),
-    ] = OutputFormat.RICH,
+    ] = OutputFormat.AUTO,
     show_details: Annotated[
         bool,
         typer.Option(
