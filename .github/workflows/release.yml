@@ -99,6 +99,7 @@ jobs:
         with:
           packages-dir: dist/
           skip-existing: true
+          password: ${{ secrets.PYPI_API_TOKEN }}
           attestations: true
 
   sbom:
