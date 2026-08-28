@@ -68,4 +68,4 @@ def test_faker_strategy_hypothesis_fuzz(email: str):
     """Verify faker_strategy generates valid synthetic email inputs during hypothesis fuzzing."""
     assert isinstance(email, str)
     assert "@" in email
-    assert email.endswith(".org") or email.endswith(".com") or email.endswith(".net")
+    assert email.endswith((".org", ".com", ".net"))

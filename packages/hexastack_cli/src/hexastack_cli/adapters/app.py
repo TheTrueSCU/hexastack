@@ -51,7 +51,7 @@ def create_cli_app(
     def _version_callback(value: bool) -> None:
         if value:
             active_console.print(f"{cfg.app_name} {cfg.version}")
-            raise typer.Exit()
+            raise typer.Exit
 
     # Establish root callback to enforce multi-command structure and handle --version
     @app.callback()

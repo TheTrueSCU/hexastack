@@ -40,17 +40,15 @@ class UnitOfWorkPort(ABC):
             self.rollback()
 
             if self._reraise:
-                raise UnitOfWorkError() from exc
+                raise UnitOfWorkError from exc
 
     @abstractmethod
     def commit(self) -> None:
         """Commit all pending transactional changes."""
-        pass
 
     @abstractmethod
     def rollback(self) -> None:
         """Roll back all pending transactional changes."""
-        pass
 
 
 class AsyncUnitOfWorkPort(ABC):
@@ -74,17 +72,15 @@ class AsyncUnitOfWorkPort(ABC):
             await self.rollback_async()
 
             if self._reraise:
-                raise UnitOfWorkError() from exc
+                raise UnitOfWorkError from exc
 
     @abstractmethod
     async def commit_async(self) -> None:
         """Asynchronously commit all pending transactional changes."""
-        pass
 
     @abstractmethod
     async def rollback_async(self) -> None:
         """Asynchronously roll back all pending transactional changes."""
-        pass
 
 
 __all__ = [

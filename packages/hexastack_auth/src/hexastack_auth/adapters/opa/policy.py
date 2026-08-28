@@ -50,9 +50,10 @@ class OpaPolicyAdapter(AuthorizationPolicyPort):
         # Determine target policy path (use action if it starts with 'v1/data/' or 'policies/')
         policy_path = (
             action.strip("/")
-            if action.startswith("v1/data/") or action.startswith("policies/")
+            if action.startswith(("v1/data/", "policies/"))
             else self.default_policy_path
         )
+
         url = f"{self.base_url}/{policy_path}"
 
         input_payload = {

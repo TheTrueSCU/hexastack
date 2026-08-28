@@ -25,11 +25,9 @@ class WorkloadIdentityPort(Protocol):
         Returns:
             Cryptographically signed JWT-SVID token string.
         """
-        pass
 
     def get_spiffe_id(self) -> str | None:
         """Retrieve the local attested SPIFFE ID (e.g. 'spiffe://example.org/ns/prod/sa/order-service')."""
-        pass
 
     def validate_jwt_svid(self, token: str, audience: set[str]) -> str:
         """Validate an inbound JWT-SVID token and return the verified SPIFFE ID.
@@ -41,4 +39,3 @@ class WorkloadIdentityPort(Protocol):
         Returns:
             Verified caller SPIFFE ID string.
         """
-        pass
