@@ -8,14 +8,15 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import typer
 
-from hexastack.application.scaffolding.generator import (
-    TemplateType,
-    scaffold_project,
-)
+from hexastack.application.scaffolding.generator import scaffold_project
+
+if TYPE_CHECKING:
+    from hexastack.application.scaffolding.generator import TemplateType
+
 
 __all__ = [
     "add_init_command",

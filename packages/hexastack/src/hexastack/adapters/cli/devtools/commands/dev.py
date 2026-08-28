@@ -33,11 +33,10 @@ def add_dev_command(app: typer.Typer) -> None:
             True, "--outbox/--no-outbox", help="Launch Outbox relay daemon."
         ),
     ) -> None:
-        import multiprocessing
-
         typer.echo(
             "🚀 [bold cyan]Hexastack Multi-Transport Development Environment[/bold cyan]\n"
         )
+
         typer.echo(
             f"   • 🌐 REST API:    http://{host}:{http_port} (Swagger UI at http://{host}:{http_port}/_devtools)"
         )
