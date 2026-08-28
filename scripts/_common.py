@@ -54,6 +54,7 @@ VALID_PACKAGES: list[str] = sorted(
         "logging",
         "mcp",
         "otel",
+        "tools",
     ]
 )
 

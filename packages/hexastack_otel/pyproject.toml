@@ -33,8 +33,6 @@ build-backend = "uv_build"
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 
-[tool.importlinter]
-root_packages = ["hexastack_otel"]
 
 [[tool.importlinter.contracts]]
 name = "Hexagonal architecture layer hierarchy"
@@ -63,4 +61,18 @@ source_modules = ["hexastack_otel.ports"]
 forbidden_modules = [
     "hexastack_otel.adapters",
     "hexastack_otel.infra",
+]
+
+[tool.importlinter]
+root_packages = ["hexastack_otel"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_otel"]
+layers = [
+    "adapters",
+    "infra",
+    "ports",
+    "domain",
 ]

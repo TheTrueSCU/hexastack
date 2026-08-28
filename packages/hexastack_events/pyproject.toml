@@ -42,8 +42,6 @@ build-backend = "uv_build"
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 
-[tool.importlinter]
-root_packages = ["hexastack_events"]
 
 [[tool.importlinter.contracts]]
 name = "Hexagonal architecture layer hierarchy"
@@ -80,4 +78,18 @@ type = "forbidden"
 source_modules = ["hexastack_events.adapters"]
 forbidden_modules = [
     "hexastack_events.infra",
+]
+
+[tool.importlinter]
+root_packages = ["hexastack_events"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_events"]
+layers = [
+    "adapters",
+    "infra",
+    "ports",
+    "domain",
 ]

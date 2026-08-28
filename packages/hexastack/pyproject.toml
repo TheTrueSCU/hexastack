@@ -69,6 +69,9 @@ testing = [
     "pytest-archon>=0.0.7",
     "schemathesis>=3.39.0",
 ]
+tools = [
+    "hexastack-tools",
+]
 all = [
     "hexastack-ai",
     "hexastack-auth",
@@ -81,6 +84,7 @@ all = [
     "hexastack-grpc",
     "hexastack-mcp",
     "hexastack-otel",
+    "hexastack-tools",
     "uvicorn[standard]>=0.30.0",
 ]
 
@@ -106,6 +110,18 @@ hexastack-graphql = { workspace = true }
 hexastack-grpc = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
+hexastack-tools = { workspace = true }
+
+
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack"]
+layers = [
+    "adapters",
+    "domain",
+]
 
 [tool.importlinter]
 root_packages = ["hexastack"]

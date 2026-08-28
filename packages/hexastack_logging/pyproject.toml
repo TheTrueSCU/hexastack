@@ -34,3 +34,12 @@ hexastack-core = { workspace = true }
 
 [tool.importlinter]
 root_packages = ["hexastack_logging"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_logging"]
+layers = [
+    "adapters",
+    "infra",
+]
