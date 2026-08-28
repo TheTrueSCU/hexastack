@@ -5,6 +5,7 @@ Welcome to the foundational tutorial for **Hexastack**!
 In this guide, you will learn how to build a clean, production-grade To-Do microservice strictly following **Hexagonal Architecture (Ports & Adapters)** and **CQRS (Command-Query Responsibility Segregation)**.
 
 By the end of this tutorial, you will have:
+
 - A pure domain model with zero external framework dependencies.
 - CQRS commands and queries decoupled from transport layers.
 - Inverted storage ports and database adapters.
@@ -19,6 +20,7 @@ By the end of this tutorial, you will have:
 Hexastack comes with an opinionated scaffolding engine that sets up a full project layout, tiered GitHub Actions CI, pre-commit hooks, and test runners out of the box.
 
 The `hexastack new` command provides dedicated subcommands for each microservice archetype:
+
 - `hexastack new web-api <name>`: Full REST API service with FastAPI, unit-of-work, and DevTools UI.
 - `hexastack new grpc-service <name>`: High-performance gRPC binary microservice (Protobuf + Reflection).
 - `hexastack new graphql-service <name>`: GraphQL data-graph gateway with Strawberry and GraphiQL IDE.
@@ -467,6 +469,7 @@ Open your browser at `http://127.0.0.1:8000/docs` to test endpoints interactivel
 Congratulations! You now have a complete, fully tested hexagonal microservice.
 
 Choose what to build next:
+
 - **[Tutorial 2: Adding SQLite Persistence & Alembic Migrations](./02-sqlite-persistence-and-migrations.md)**
 - **[Tutorial 3: Role-Based Access Control (RBAC) & JWT Auth](./03-jwt-authentication-and-rbac.md)**
 - **[Tutorial 4: Event-Driven Architecture with Outbox & CloudEvents](./04-events-outbox-and-notifications.md)**

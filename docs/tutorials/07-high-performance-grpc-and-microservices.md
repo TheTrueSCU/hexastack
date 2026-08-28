@@ -119,6 +119,7 @@ uv run hexastack grpc compile --out-dir src/todo_app/adapters/driving/grpc/gen
 ```
 
 This generates:
+
 - `src/todo_app/adapters/driving/grpc/gen/schema_0_pb2.py` (Message descriptors)
 - `src/todo_app/adapters/driving/grpc/gen/schema_0_pb2_grpc.py` (Servicer & Stub interfaces)
 - `src/todo_app/adapters/driving/grpc/gen/schema_0_pb2.pyi` (Static typing stubs)

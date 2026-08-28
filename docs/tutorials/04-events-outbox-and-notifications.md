@@ -9,6 +9,7 @@ In this chapter, you will implement **Event-Driven Architecture** and the **Tran
 ## 1. The Dual-Write Problem & Transactional Outbox
 
 When a domain command executes, writing changes to the database and sending a network request to a notification service (Slack, Discord, ntfy.sh) in the same handler creates a **Dual-Write vulnerability**:
+
 - If the database commit succeeds but the notification service times out, events are lost.
 - If the notification is sent but the database rollback occurs, phantom notifications are sent.
 
