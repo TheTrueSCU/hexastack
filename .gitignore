@@ -41,6 +41,8 @@ dist/
 *.sqlite3
 logs/
 *.log
+locustfile.py
+
 
 # OS Specific
 .DS_Store

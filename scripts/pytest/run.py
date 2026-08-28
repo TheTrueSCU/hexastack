@@ -74,11 +74,13 @@ def build_pytest_args(
         return []
 
     test_paths: list[str] = []
+    active_target_dirs: list[Path] = []
     for pkg_dir in target_dirs:
         tests_dir = pkg_dir / "tests"
         if not tests_dir.is_dir():
             continue
 
+        active_target_dirs.append(pkg_dir)
         if properties_only:
             prop_dir = tests_dir / "properties"
             if prop_dir.is_dir():
@@ -94,7 +96,9 @@ def build_pytest_args(
 
     # Scope coverage to target packages if a subset was requested
     if target_pkgs is not None:
-        cov_flags = " ".join(f"--cov={pkg_dir / 'src'}" for pkg_dir in target_dirs)
+        cov_flags = " ".join(
+            f"--cov={pkg_dir / 'src'}" for pkg_dir in active_target_dirs
+        )
         pytest_args.extend(
             [
                 "-o",

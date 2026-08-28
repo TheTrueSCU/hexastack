@@ -9,11 +9,12 @@ This guide provides end-to-end usage examples and recipes for building resilient
 The fastest way to start a new service is using `hexastack new` or the interactive wizard `hexastack init`.
 
 ```bash
-# Interactive wizard (select template, database, auth, transports, telemetry)
+# Interactive wizard (select template, database, transports, release pipeline, OpenSSF pack)
 hexastack init
 
-# Or scaffold a specific archetype directly:
+# Or scaffold a specific archetype directly with release & OpenSSF governance:
 hexastack new web-api order-service
+hexastack init --name payment-service --template web-api --with-release --with-openssf
 cd order-service
 
 # Install dependencies and sync environment
@@ -21,7 +22,7 @@ uv sync
 
 # Run tests and verify architectural layer boundaries
 uv run pytest
-uv run import-linter-run
+uv run lint-imports
 ```
 
 ### Supported Archetypes
@@ -30,11 +31,16 @@ uv run import-linter-run
 |---|---|
 | `web-api` | FastAPI REST endpoints, OpenAPI docs, SQLite/Postgres DB session middleware, health probes. |
 | `grpc-service` | In-process ProtoCompiler, inline Protobuf schemas, gRPC Reflection, Buf linting. |
-| `mcp-agent` | Anthropic Model Context Protocol (MCP) server, stdio & SSE transports, reflective tools. |
+| `mcp-agent` | Model Context Protocol (MCP) server, stdio mode for Gemini/Antigravity/Claude, reflective tools. |
 | `graphql-service` | Strawberry GraphQL schema, CQRS query resolvers, GraphQL Playground. |
 | `event-driven` | CloudEvents 1.0 streaming, Transactional Outbox relay daemon, consumer handlers. |
-| `enterprise` | Multi-transport omnibus (FastAPI + gRPC + GraphQL + MCP + Outbox + RBAC Auth). |
+| `enterprise` | Multi-transport omnibus (FastAPI + gRPC + GraphQL + MCP + Outbox + Release + OpenSSF). |
 | `minimal` | Ultra-lightweight CQRS bus kernel without transport dependencies. |
+
+### Day 1 Production Batteries
+* `--with-release`: Generates `.github/workflows/release.yml` (automated PyPI build & publish via `uv build` and `pypa/gh-action-pypi-publish`, plus SPDX & CycloneDX SBOMs via `anchore/sbom-action`) and `CHANGELOG.md`.
+* `--with-openssf`: Generates `.github/workflows/scorecard.yml` (weekly automated OpenSSF security audits), `SECURITY.md`, `GOVERNANCE.md`, and `CODE_OF_CONDUCT.md`.
+
 
 ---
 
@@ -167,8 +173,20 @@ hexastack dev
 The workspace provides purpose-built developer CLI commands for architecture validation, testing, and formatting:
 
 ```bash
-# Run unit & integration test suite (with coverage enforcement)
-uv run pytest-run -U
+# Alphabetize imports and export statements across packages
+uv run alphabetizer
+
+# Check 1:1 parity between src/ implementation modules and unit tests
+uv run check-test-parity
+
+# Run dependency boundary analysis (Deptry)
+uv run deptry-run
+
+# Enforce hexagonal layer and cross-package import boundaries across packages
+uv run import-linter-run
+
+# Re-generate architecture dependency graphs (Pydeps SVGs)
+uv run pydeps-generate
 
 # Run impact-driven test suite for affected packages only (based on git diff)
 uv run pytest-run -A -U
@@ -176,17 +194,8 @@ uv run pytest-run -A -U
 # Run property-based invariant & fuzzing tests
 uv run pytest-run -P
 
-# Enforce hexagonal layer and cross-package import boundaries
-uv run import-linter-run
-
-# Re-generate architecture dependency graphs (Pydeps SVGs)
-uv run pydeps-generate
-
-# Alphabetize imports and export statements across packages
-uv run alphabetizer
-
-# Verify 1:1 parity between src/ implementation modules and unit tests
-uv run check-test-parity
+# Run unit & integration test suite (with coverage enforcement)
+uv run pytest-run -U
 
 # Run pre-commit quality checks across all files
 uv run pre-commit run --all-files

@@ -50,10 +50,10 @@ jobs:
 
 We use pre-commit to ensure code quality **before** it hits the repository.
 
-*   **Standard Hooks:** Trailing whitespace, end-of-file fixes, YAML validation, large file checks.
-*   **Linting & Formatting:** `ruff` (with `--fix`) and `ruff-format`.
-*   **Type Safety:** `ty check` (using `language: system` to leverage uv environments).
 *   **Hexagonal Architecture Enforcement:** `import-linter` (`lint-imports`) enforcing strict domain/ports purity and inter-package independence.
+*   **Linting & Formatting:** `ruff` (with `--fix`) and `ruff-format`.
+*   **Standard Hooks:** Trailing whitespace, end-of-file fixes, YAML validation, large file checks.
+*   **Type Safety:** `ty check` (using `language: system` to leverage uv environments).
 
 ---
 
@@ -101,3 +101,10 @@ Hexastack releases are versioned synchronously across all 15 monorepo packages:
 1. **Version Bump & Changelog:** Maintainers bump package versions across `pyproject.toml` and update `CHANGELOG.md` via a standard release pull request (`chore(release): vX.Y.Z`).
 2. **Tagging:** After the release PR is merged into `main`, tag the release (`git tag -a vX.Y.Z -m "Release vX.Y.Z"` and `git push origin vX.Y.Z`).
 3. **Automated Distribution:** The `.github/workflows/release.yml` pipeline triggers on the tag push, builds all distribution wheels, publishes to PyPI with trusted publishing attestations, and attaches SPDX/CycloneDX SBOMs to the GitHub release.
+
+---
+
+## 7. CLI & Scaffolding Modularity Guidelines
+To prevent monolithic file bloat and ensure high testability:
+1. **CLI Commands Modularity:** CLI command groups in `hexastack.adapters.cli.*` must be organized in dedicated subdirectories (`commands/`) split by transport and domain concern (e.g. `db.py`, `dev.py`, `fastapi.py`, `graphql.py`, `grpc.py`, `init.py`, `inspect.py`, `mcp.py`, `new.py`, `outbox.py`, `profiling.py`, `serve.py`, `ui.py`).
+2. **Scaffolding Template Isolation:** Scaffolding file generators in `hexastack.application.scaffolding` must live in focused template renderer modules under `templates/{adapters, ci, config, domain, infra, openssf, ports, tests}/` rather than hardcoded string monoliths in the generator engine.
