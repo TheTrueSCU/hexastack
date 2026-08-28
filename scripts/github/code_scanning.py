@@ -28,39 +28,53 @@ __all__ = [
 console = Console()
 
 
-def fetch_open_code_scanning_alerts(client: GitHubClient) -> list[dict[str, Any]]:
-    """Query GitHub REST API for all open code scanning alerts.
+def fetch_open_code_scanning_alerts(
+    client: GitHubClient, state: str = "open"
+) -> list[dict[str, Any]]:
+    """Query GitHub REST API for code scanning alerts.
 
     Args:
         client: Authenticated GitHubClient instance.
+        state: Alert state filter ('open', 'closed', 'dismissed', or 'all').
 
     Returns:
         List of alert dictionaries.
     """
+    params: dict[str, Any] = {"per_page": 100}
+    if state != "all":
+        params["state"] = state
     resp = client._client.get(
         f"/repos/{client.owner}/{client.repo}/code-scanning/alerts",
-        params={"state": "open", "per_page": 100},
+        params=params,
     )
     resp.raise_for_status()
     return resp.json()
 
 
-def inspect_and_bucket_alerts(rule_filter: str | None = None) -> int:
+def inspect_and_bucket_alerts(
+    rule_filter: str | None = None,
+    package_filter: str | None = None,
+    severity_filter: str | None = None,
+    state: str = "open",
+) -> int:
     """Bucket open alerts by rule, severity, and package, displaying actionable tables.
 
     Args:
         rule_filter: Optional substring filter for rule ID.
+        package_filter: Optional package name substring filter.
+        severity_filter: Optional severity level filter.
+        state: State filter ('open', 'closed', 'dismissed', or 'all').
 
     Returns:
         0 if clean or alerts displayed, 1 on error.
     """
     with GitHubClient() as client:
-        alerts = fetch_open_code_scanning_alerts(client)
+        alerts = fetch_open_code_scanning_alerts(client, state=state)
 
     if not alerts:
         console.print(
             Panel(
-                "[bold green]🎉 Zero open CodeQL code-scanning alerts found![/bold green]",
+                f"[bold green]🎉 Zero {state} CodeQL code-scanning alerts found![/bold green]",
                 title="[bold cyan]CodeQL Code Scanning Status[/bold cyan]",
             )
         )
@@ -71,6 +85,24 @@ def inspect_and_bucket_alerts(rule_filter: str | None = None) -> int:
             a
             for a in alerts
             if rule_filter.lower() in a.get("rule", {}).get("id", "").lower()
+        ]
+
+    if severity_filter:
+        alerts = [
+            a
+            for a in alerts
+            if severity_filter.lower() == a.get("rule", {}).get("severity", "").lower()
+        ]
+
+    if package_filter:
+        alerts = [
+            a
+            for a in alerts
+            if package_filter.lower()
+            in a.get("most_recent_instance", {})
+            .get("location", {})
+            .get("path", "")
+            .lower()
         ]
 
     # Groupings
@@ -94,7 +126,7 @@ def inspect_and_bucket_alerts(rule_filter: str | None = None) -> int:
 
     # 1. Summary by Rule Table
     summary_table = Table(
-        title=f"[bold cyan]CodeQL Open Alerts Summary (Total: {len(alerts)})[/bold cyan]",
+        title=f"[bold cyan]CodeQL Alerts Summary (State: {state}, Total: {len(alerts)})[/bold cyan]",
         show_header=True,
         header_style="bold magenta",
     )
@@ -157,12 +189,38 @@ def main() -> int:
         "-r",
         type=str,
         default=None,
-        help="Filter alerts by rule ID substring (e.g. 'ineffectual-statement').",
+        help="Filter alerts by rule ID substring (e.g. 'unused-import').",
+    )
+    parser.add_argument(
+        "--package",
+        "-p",
+        type=str,
+        default=None,
+        help="Filter alerts by package name substring (e.g. 'hexastack_core').",
+    )
+    parser.add_argument(
+        "--severity",
+        "-s",
+        type=str,
+        default=None,
+        help="Filter alerts by severity ('error', 'warning', 'note').",
+    )
+    parser.add_argument(
+        "--state",
+        type=str,
+        default="open",
+        choices=["open", "closed", "dismissed", "all"],
+        help="Alert state ('open', 'closed', 'dismissed', 'all').",
     )
     args = parser.parse_args()
 
     try:
-        return inspect_and_bucket_alerts(rule_filter=args.rule)
+        return inspect_and_bucket_alerts(
+            rule_filter=args.rule,
+            package_filter=args.package,
+            severity_filter=args.severity,
+            state=args.state,
+        )
     except Exception as exc:
         console.print(
             f"[bold red]Error querying code scanning alerts:[/bold red] {exc}"
