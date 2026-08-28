@@ -116,20 +116,43 @@ def check_src_to_test_symmetry(root_dir: Path) -> list[str]:
 
 def main() -> int:
     """Run test parity checks and exit with status code."""
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
+    console = Console()
     root_dir = Path.cwd()
     errors: list[str] = []
 
-    errors.extend(check_test_directories_inits(root_dir))
-    errors.extend(check_src_to_test_symmetry(root_dir))
+    init_errors = check_test_directories_inits(root_dir)
+    symmetry_errors = check_src_to_test_symmetry(root_dir)
+    errors.extend(init_errors)
+    errors.extend(symmetry_errors)
 
     if errors:
-        print("❌ Test Parity & Directory Integrity Violations Found:", file=sys.stderr)
-        for err in errors:
-            print(f"  • {err}", file=sys.stderr)
+        table = Table(
+            title="[bold red]❌ Test Parity & Directory Integrity Violations[/bold red]",
+            show_header=True,
+            header_style="bold magenta",
+        )
+        table.add_column("Violation Type", style="bold red", width=30)
+        table.add_column("Details", style="white", width=60)
+
+        for err in init_errors:
+            table.add_row("Missing __init__.py", err)
+        for err in symmetry_errors:
+            table.add_row("Asymmetry / Missing Test", err)
+
+        console.print()
+        console.print(table)
+        console.print()
         return 1
 
-    print(
-        "✅ All source modules mirror unit tests 1:1 and test directories contain __init__.py."
+    console.print(
+        Panel.fit(
+            "[bold green]✅ All source modules mirror unit tests 1:1 and all test directories contain __init__.py.[/bold green]",
+            border_style="green",
+        )
     )
     return 0
 

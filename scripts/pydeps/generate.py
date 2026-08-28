@@ -147,23 +147,24 @@ def generate_monorepo_diagram(root: Path) -> None:
 
 
 def main() -> None:
-    """CLI entrypoint to generate pydeps architecture diagrams.
+    """CLI entrypoint to generate pydeps architecture diagrams."""
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
 
-    Notes/Architectural Intent:
-        When no ``--packages`` flag is given the monorepo overview is generated
-        first, followed by all per-package diagrams.  Passing ``--packages``
-        limits generation to the named packages only (no monorepo diagram).
-    """
+    console = Console()
     parser = HexastackScriptArgumentParser(
         description="Generate pydeps architecture diagrams to docs/assets/pydeps/."
     )
     args = parser.parse_args()
 
     root = get_repo_root()
+    generated = []
 
     # 1. Global package-level diagram when no specific packages requested
     if not args.packages:
         generate_monorepo_diagram(root)
+        generated.append("hexastack_packages.svg (Monorepo Overview)")
 
     # 2. Per-package diagrams
     if args.packages:
@@ -171,8 +172,32 @@ def main() -> None:
     else:
         packages = get_package_directories(root)
 
+    table = Table(
+        title="[bold cyan]Architecture Dependency Diagram Generator (pydeps)[/bold cyan]",
+        show_header=True,
+        header_style="bold magenta",
+    )
+    table.add_column("Asset / Package", style="bold white", width=30)
+    table.add_column("Output File", style="cyan", width=45)
+
+    if not args.packages:
+        table.add_row("Monorepo Overview", "docs/assets/pydeps/hexastack_packages.svg")
+
     for pkg_path in packages:
         generate_package_diagram(pkg_path, root)
+        svg_name = f"{pkg_path.name.replace('-', '_')}.svg"
+        table.add_row(pkg_path.name, f"docs/assets/pydeps/{svg_name}")
+        generated.append(svg_name)
+
+    console.print()
+    console.print(table)
+    console.print()
+    console.print(
+        Panel.fit(
+            f"[bold green]✨ Generated {len(generated)} architecture dependency diagram(s) in docs/assets/pydeps/.[/bold green]",
+            border_style="green",
+        )
+    )
 
 
 if __name__ == "__main__":

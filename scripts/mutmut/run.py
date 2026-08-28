@@ -186,18 +186,51 @@ def run_all_mutation_tests(fresh: bool = False) -> int:
         code = run_mutation_test(pkg, fresh=fresh)
         results[pkg] = code
 
-    print("\n========================================================")
-    print(" Mutation Testing Batch Summary")
-    print("========================================================")
-    for pkg, code in results.items():
-        status = (
-            "PASSED (0 surviving mutants)"
-            if code == 0
-            else f"SURVIVORS (exit code {code})"
-        )
-        print(f"  hexastack-{pkg:<10}: {status}")
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
 
-    return 0 if all(c == 0 for c in results.values()) else 1
+    console = Console()
+
+    table = Table(
+        title="[bold cyan]Mutation Testing Batch Summary[/bold cyan]",
+        show_header=True,
+        header_style="bold magenta",
+    )
+    table.add_column("Package", style="bold white", width=25)
+    table.add_column("Status", width=30)
+    table.add_column("Exit Code", justify="right", width=12)
+
+    for pkg, code in results.items():
+        if code == 0:
+            status = "[bold green]PASSED[/bold green] (0 survivors)"
+            exit_style = "green"
+        else:
+            status = "[bold red]SURVIVORS[/bold red]"
+            exit_style = "red"
+        table.add_row(
+            f"hexastack-{pkg}", status, f"[{exit_style}]{code}[/{exit_style}]"
+        )
+
+    console.print()
+    console.print(table)
+    console.print()
+
+    if all(c == 0 for c in results.values()):
+        console.print(
+            Panel.fit(
+                "[bold green]✨ All mutated packages passed with zero surviving mutants![/bold green]",
+                border_style="green",
+            )
+        )
+        return 0
+    console.print(
+        Panel.fit(
+            "[bold yellow]⚠️ Surviving mutants detected. Use 'uv run mutmut-inspect' to triage.[/bold yellow]",
+            border_style="yellow",
+        )
+    )
+    return 1
 
 
 def show_mutant(mutant_id: str) -> int:

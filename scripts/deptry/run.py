@@ -13,14 +13,20 @@ import subprocess
 import sys
 from pathlib import Path
 
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
 from scripts._common import get_package_directories, get_repo_root
 
+console = Console()
 
-def run_deptry_on_package(pkg_dir: Path) -> bool:
+
+def run_deptry_on_package(pkg_dir: Path) -> tuple[bool, str]:
     """Execute deptry check for a single package."""
     pyproject = pkg_dir / "pyproject.toml"
     if not pyproject.is_file():
-        return True
+        return True, ""
 
     cmd = [
         "deptry",
@@ -35,13 +41,9 @@ def run_deptry_on_package(pkg_dir: Path) -> bool:
 
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
-        print(f"\n❌ [deptry] Undeclared dependencies in {pkg_dir.name}:")
-        if res.stdout.strip():
-            print(res.stdout)
-        if res.stderr.strip():
-            print(res.stderr)
-        return False
-    return True
+        err_msg = (res.stdout.strip() + "\n" + res.stderr.strip()).strip()
+        return False, err_msg
+    return True, ""
 
 
 def main() -> int:
@@ -52,14 +54,40 @@ def main() -> int:
     repo_root = get_repo_root()
     failed = False
 
+    table = Table(
+        title="[bold cyan]Deptry Workspace Dependency Auditor[/bold cyan]",
+        show_header=True,
+        header_style="bold magenta",
+    )
+    table.add_column("Package", style="bold white", width=25)
+    table.add_column("Status", width=35)
+
+    errors = []
     for pkg_dir in get_package_directories(repo_root):
-        if not run_deptry_on_package(pkg_dir):
+        success, err = run_deptry_on_package(pkg_dir)
+        if success:
+            table.add_row(pkg_dir.name, "[bold green]CLEAN[/bold green]")
+        else:
+            table.add_row(pkg_dir.name, "[bold red]UNDECLARED DEPENDENCIES[/bold red]")
+            errors.append((pkg_dir.name, err))
             failed = True
 
-    if not failed:
-        print("✅ [deptry] All package dependency declarations are clean!")
-        return 0
-    return 1
+    console.print()
+    console.print(table)
+    console.print()
+
+    if failed:
+        for pkg_name, err in errors:
+            console.print(f"[bold red]❌ Issues in {pkg_name}:[/bold red]\n{err}\n")
+        return 1
+
+    console.print(
+        Panel.fit(
+            "[bold green]✅ All package dependency declarations are explicitly declared and clean![/bold green]",
+            border_style="green",
+        )
+    )
+    return 0
 
 
 if __name__ == "__main__":
