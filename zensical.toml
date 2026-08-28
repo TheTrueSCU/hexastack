@@ -16,8 +16,10 @@ nav = [
         "tutorials/07-high-performance-grpc-and-microservices.md"
     ]},
     { "Architecture" = "architecture.md" },
+    { "Developer Tools" = "tools.md" },
     { "Packages" = "packages.md" }
 ]
+
 
 [project.markdown_extensions]
 admonition = {}

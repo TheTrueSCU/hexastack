@@ -19,4 +19,5 @@
 | [`hexastack-flags`](https://pypi.org/project/hexastack-flags/) | CNCF OpenFeature integration (Flagd, Unleash, Flipt providers). | `hexastack[flags]` |
 | [`hexastack-otel`](https://pypi.org/project/hexastack-otel/) | OpenTelemetry distributed tracing and OTLP exporters. | `hexastack[otel]` |
 | [`hexastack-graphql`](https://pypi.org/project/hexastack-graphql/) | Strawberry GraphQL presentation adapter over CQRS. | `hexastack[graphql]` |
+| [`hexastack-tools`](https://pypi.org/project/hexastack-tools/) | Developer tooling, governance, multi-format presenters, and CI inspection suite (`gh-pr-examine`). | `hexastack[tools]` |
 | [`hexastack`](https://pypi.org/project/hexastack/) | Umbrella distribution, diagnostic CLI, and project scaffolding engine (`hexastack new`). | `hexastack[all]` |
