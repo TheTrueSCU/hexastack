@@ -8,15 +8,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
 
 import typer
 
 from hexastack.application.scaffolding.generator import scaffold_project
-
-if TYPE_CHECKING:
-    from hexastack.application.scaffolding.generator import TemplateType
-
 
 __all__ = [
     "add_init_command",
@@ -128,7 +123,7 @@ def add_init_command(app: typer.Typer) -> None:
 
         target_path = scaffold_project(
             name=proj_name,
-            template=cast("TemplateType", selected_template),
+            template=selected_template,
             db_type=selected_db,
             include_events=include_events,
             include_mcp=include_mcp,
@@ -136,6 +131,7 @@ def add_init_command(app: typer.Typer) -> None:
             include_openssf=include_openssf,
             output_dir=current_dir.parent,
         )
+
         typer.echo(f"🎉 Initialized Hexastack project in '{target_path}'")
         typer.echo(
             f"   Next steps:\n     cd {proj_name}\n     uv sync\n     uv run pytest"

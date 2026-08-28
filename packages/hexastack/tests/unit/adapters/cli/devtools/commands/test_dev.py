@@ -18,7 +18,7 @@ def test_dev_commands():
     add_dev_command(app)
     runner = CliRunner()
 
-    res = runner.invoke(app, ["--help"])
+    res = runner.invoke(app, ["--help"], color=False)
     assert res.exit_code == 0
     assert "--host" in res.output
 

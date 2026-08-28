@@ -29,7 +29,8 @@ class ScaffoldConfig:
     """Configuration parameters for scaffolding a new Hexastack project."""
 
     name: str
-    template: TemplateType = "web-api"
+    template: str = "web-api"
+
     description: str = "A modern microservice powered by Hexastack."
     python_version: str = ">=3.13"
     db_type: str = "in-memory"  # in-memory, sqlite, postgres
@@ -276,7 +277,7 @@ class ProjectScaffolder:
 
 def scaffold_project(
     name: str,
-    template: TemplateType = "web-api",
+    template: str = "web-api",
     description: str = "A modern microservice powered by Hexastack.",
     db_type: str = "in-memory",
     include_events: bool = False,
