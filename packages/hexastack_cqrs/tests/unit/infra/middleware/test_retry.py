@@ -250,3 +250,50 @@ def test_stamina_retry_middleware_defaults():
     assert middleware._logger is None
     assert middleware._config.enable is True
     assert middleware._config.max_attempts == 3
+
+
+def test_stamina_retry_middleware_without_jitter():
+    calls = 0
+
+    def handler(cmd: _DummyCommand) -> int:
+        nonlocal calls
+        calls += 1
+        if calls < 2:
+            raise ConnectionResetError("network glitch")
+        return cmd.val * 3
+
+    mw = StaminaRetryMiddleware(
+        config=RetryMiddlewareConfig(
+            max_attempts=3,
+            initial_backoff_seconds=0.01,
+            jitter=False,
+        )
+    )
+    res = mw(_DummyCommand(val=4), handler)
+    assert res == 12
+    assert calls == 2
+
+
+def test_stamina_retry_middleware_exhausts_attempts():
+    calls = 0
+    logger = InMemoryLogger()
+
+    def handler(cmd: _DummyCommand) -> int:
+        nonlocal calls
+        calls += 1
+        raise ConnectionResetError("persistent transient outage")
+
+    mw = StaminaRetryMiddleware(
+        logger=logger,
+        config=RetryMiddlewareConfig(
+            max_attempts=3,
+            initial_backoff_seconds=0.01,
+        ),
+    )
+
+    with pytest.raises(ConnectionResetError, match="persistent transient outage"):
+        mw(_DummyCommand(val=1), handler)
+
+    assert calls == 3
+    # Retry log entries for attempts 1 and 2 (attempt 3 raises and is not retried)
+    assert len([e for e in logger.entries if "Stamina retrying" in e.message]) == 2

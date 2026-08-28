@@ -73,7 +73,7 @@ class StaminaRetryMiddleware:
             # Deterministic Hexastack domain errors must never be retried
             return not isinstance(exc, HexastackError)
 
-        for attempt in stamina.retry_context(
+        @stamina.retry(
             on=_should_retry,
             attempts=self._config.max_attempts,
             wait_initial=self._config.initial_backoff_seconds,
@@ -81,28 +81,29 @@ class StaminaRetryMiddleware:
             wait_jitter=self._config.initial_backoff_seconds
             if self._config.jitter
             else 0.0,
-        ):
-            with attempt:
-                attempts += 1
-                try:
-                    return next_call(instance)
-                except Exception as exc:
-                    if (
-                        self._logger
-                        and attempts < self._config.max_attempts
-                        and _should_retry(exc)
-                    ):
-                        self._logger.debug(
-                            f"Stamina retrying {message_name} (attempt {attempts}/{self._config.max_attempts}) after transient error: {exc}",
-                            extra={
-                                "message_type": message_name,
-                                "attempt": attempts,
-                                "max_attempts": self._config.max_attempts,
-                            },
-                        )
-                    raise
+        )
+        def _next_call_with_stamina() -> R:
+            nonlocal attempts
+            attempts += 1
+            try:
+                return next_call(instance)
+            except Exception as exc:
+                if (
+                    self._logger
+                    and attempts < self._config.max_attempts
+                    and _should_retry(exc)
+                ):
+                    self._logger.debug(
+                        f"Stamina retrying {message_name} (attempt {attempts}/{self._config.max_attempts}) after transient error: {exc}",
+                        extra={
+                            "message_type": message_name,
+                            "attempt": attempts,
+                            "max_attempts": self._config.max_attempts,
+                        },
+                    )
+                raise
 
-        return next_call(instance)
+        return _next_call_with_stamina()
 
 
 class TenacityRetryMiddleware:
