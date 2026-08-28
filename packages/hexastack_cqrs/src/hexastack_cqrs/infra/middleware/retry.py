@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+import stamina
 from tenacity import (
     RetryCallState,
     retry,
@@ -13,6 +14,18 @@ from hexastack_core.domain.feature_flags import EvaluationContext
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.config import RetryMiddlewareConfig
+
+
+def _should_stamina_retry(exc: Exception) -> bool:
+    """Predicate indicating whether stamina should retry an exception.
+
+    Args:
+        exc: Exception raised during execution.
+
+    Returns:
+        False if exc is a deterministic HexastackError, True otherwise.
+    """
+    return not isinstance(exc, HexastackError)
 
 
 class StaminaRetryMiddleware:
@@ -64,17 +77,11 @@ class StaminaRetryMiddleware:
             ):
                 return next_call(instance)
 
-        import stamina
-
         attempts = 0
         message_name = instance.__class__.__name__
 
-        def _should_retry(exc: Exception) -> bool:
-            # Deterministic Hexastack domain errors must never be retried
-            return not isinstance(exc, HexastackError)
-
         @stamina.retry(
-            on=_should_retry,
+            on=_should_stamina_retry,
             attempts=self._config.max_attempts,
             wait_initial=self._config.initial_backoff_seconds,
             wait_max=self._config.max_backoff_seconds,
@@ -82,7 +89,7 @@ class StaminaRetryMiddleware:
             if self._config.jitter
             else 0.0,
         )
-        def _next_call_with_stamina() -> R:
+        def _execute_attempt() -> R:
             nonlocal attempts
             attempts += 1
             try:
@@ -91,7 +98,7 @@ class StaminaRetryMiddleware:
                 if (
                     self._logger
                     and attempts < self._config.max_attempts
-                    and _should_retry(exc)
+                    and _should_stamina_retry(exc)
                 ):
                     self._logger.debug(
                         f"Stamina retrying {message_name} (attempt {attempts}/{self._config.max_attempts}) after transient error: {exc}",
@@ -103,7 +110,7 @@ class StaminaRetryMiddleware:
                     )
                 raise
 
-        return _next_call_with_stamina()
+        return _execute_attempt()
 
 
 class TenacityRetryMiddleware:
