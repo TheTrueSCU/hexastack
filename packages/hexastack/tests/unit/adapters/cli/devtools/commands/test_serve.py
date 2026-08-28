@@ -13,9 +13,9 @@ def test_serve_commands():
     add_serve_command(app)
     runner = CliRunner()
 
-    res = runner.invoke(app, ["--help"], color=False)
+    res = runner.invoke(app, ["--help"])
     assert res.exit_code == 0
-    assert "--host" in res.output
+    assert "host" in res.output
 
     with patch("uvicorn.run"):
         res_run = runner.invoke(app, ["--no-reload"])

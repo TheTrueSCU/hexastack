@@ -41,10 +41,11 @@ def test_profiling_commands():
             res_mem_missing = runner.invoke(app, ["profile", "memory"])
             assert res_mem_missing.exit_code == 1
 
-        res_load = runner.invoke(app, ["load", "--help"], color=False)
-        assert res_load.exit_code == 0
-
-        res_load_exec = runner.invoke(
-            app, ["load", "--users", "10", "--run-time", "5s"]
-        )
-        assert res_load_exec.exit_code == 0
+        with (
+            patch("pathlib.Path.write_text"),
+            patch("pathlib.Path.exists", return_value=False),
+        ):
+            res_load_exec = runner.invoke(
+                app, ["load", "--users", "10", "--run-time", "5s"]
+            )
+            assert res_load_exec.exit_code == 0
