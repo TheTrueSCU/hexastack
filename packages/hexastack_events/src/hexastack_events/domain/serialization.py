@@ -7,13 +7,11 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
-from typing import Any, TypeVar
+from typing import Any
 
 import msgspec
 
 from hexastack_events.domain.models import CloudEventEnvelope
-
-T = TypeVar("T")
 
 __all__ = [
     "decode_cloudevent_bytes",
