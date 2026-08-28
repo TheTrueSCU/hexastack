@@ -33,19 +33,24 @@ def find_packages_to_lint(changed_files: list[str]) -> list[Path]:
     return sorted(affected_packages)
 
 
-def run_linter_for_package(pkg_path: Path) -> bool:
+def run_linter_for_package(pkg_path: Path) -> tuple[bool, str]:
     """Execute lint-imports using the package's pyproject.toml configuration."""
     config_file = pkg_path / "pyproject.toml"
-    print(f"\n[import-linter] Checking {pkg_path.name}...")
-
     result = subprocess.run(
         ["lint-imports", "--config", str(config_file)],
-        capture_output=False,
+        capture_output=True,
+        text=True,
     )
-    return result.returncode == 0
+    output = (result.stdout.strip() + "\n" + result.stderr.strip()).strip()
+    return result.returncode == 0, output
 
 
 def main() -> int:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
+    console = Console()
     parser = argparse.ArgumentParser(description="Run import-linter per package.")
     parser.add_argument("files", nargs="*", help="Changed files passed by pre-commit")
     parser.add_argument(
@@ -61,16 +66,54 @@ def main() -> int:
         packages = find_packages_to_lint(args.files)
 
     if not packages:
-        print("[import-linter] No package changes detected.")
+        console.print(
+            Panel.fit(
+                "[dim]✨ [import-linter] No package changes detected. 0 checks needed.[/dim]",
+                border_style="dim",
+            )
+        )
         return 0
 
+    table = Table(
+        title="[bold cyan]Hexagonal Layer & Package Boundary Auditor[/bold cyan]",
+        show_header=True,
+        header_style="bold magenta",
+    )
+    table.add_column("Package", style="bold white", width=25)
+    table.add_column("Boundary Contracts", width=35)
+
     failed = False
+    errors = []
+
     for pkg in packages:
-        success = run_linter_for_package(pkg)
-        if not success:
+        success, out = run_linter_for_package(pkg)
+        if success:
+            table.add_row(
+                pkg.name, "[bold green]KEPT (All rules satisfied)[/bold green]"
+            )
+        else:
+            table.add_row(pkg.name, "[bold red]BROKEN (Contract violated)[/bold red]")
+            errors.append((pkg.name, out))
             failed = True
 
-    return 1 if failed else 0
+    console.print()
+    console.print(table)
+    console.print()
+
+    if failed:
+        for pkg_name, out in errors:
+            console.print(
+                f"[bold red]❌ Boundary Violations in {pkg_name}:[/bold red]\n{out}\n"
+            )
+        return 1
+
+    console.print(
+        Panel.fit(
+            f"[bold green]✅ All {len(packages)} inspected package(s) adhere strictly to Hexagonal & layer boundaries![/bold green]",
+            border_style="green",
+        )
+    )
+    return 0
 
 
 if __name__ == "__main__":

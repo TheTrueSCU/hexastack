@@ -126,15 +126,12 @@ def check_file_all(py_file: Path) -> list[str]:
 
 
 def main_check() -> int:
-    """Run __all__ integrity checks across target Python files.
+    """Run __all__ integrity checks across target Python files."""
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
 
-    Returns:
-        Exit code: 0 on success, 1 if any violations are found.
-
-    Notes/Architectural Intent:
-        Intended as the ``check-all-statements`` console script entrypoint.
-        Mirrors ruff's ``check`` mode: read-only, non-zero exit on violations.
-    """
+    console = Console()
     parser = HexastackScriptArgumentParser(
         description="Verify API surface and __all__ statement integrity."
     )
@@ -147,12 +144,26 @@ def main_check() -> int:
         errors.extend(check_file_all(py_file))
 
     if errors:
-        sys.stderr.write("API Surface / __all__ Integrity Violations Found:\n")
+        table = Table(
+            title="[bold red]API Surface & __all__ Integrity Violations[/bold red]",
+            show_header=True,
+            header_style="bold magenta",
+        )
+        table.add_column("Location & Violation", style="bold red", width=80)
         for err in errors:
-            sys.stderr.write(f"  - {err}\n")
+            table.add_row(err)
+
+        console.print()
+        console.print(table)
+        console.print()
         return 1
 
-    print(f"API Surface check passed: verified {len(py_files)} Python source modules.")
+    console.print(
+        Panel.fit(
+            f"[bold green]✅ API Surface check passed: verified {len(py_files)} Python source modules.[/bold green]",
+            border_style="green",
+        )
+    )
     return 0
 
 
@@ -162,20 +173,7 @@ def main_check() -> int:
 
 
 def fix_file_all(py_file: Path) -> bool:
-    """Alphabetize and deduplicate ``__all__`` in a Python source file in-place.
-
-    Args:
-        py_file: Path to the Python source file to rewrite.
-
-    Returns:
-        ``True`` if the file was modified, ``False`` otherwise.
-
-    Notes/Architectural Intent:
-        Only List and Tuple ``__all__`` nodes are rewritten; ``ast.Set`` literals
-        are skipped because they have no meaningful canonical source order.
-        Uses ``ast.get_source_segment`` for a surgical replacement rather than
-        pretty-printing the whole file, so surrounding formatting is preserved.
-    """
+    """Alphabetize and deduplicate ``__all__`` in a Python source file in-place."""
     content = py_file.read_text(encoding="utf-8")
     try:
         tree = ast.parse(content, filename=str(py_file))
@@ -209,13 +207,11 @@ def fix_file_all(py_file: Path) -> bool:
 
 
 def main_fix() -> None:
-    """Format ``__all__`` declarations in target Python files.
+    """Format ``__all__`` declarations in target Python files."""
+    from rich.console import Console
+    from rich.panel import Panel
 
-    Notes/Architectural Intent:
-        Intended as the ``fix-all-statements`` console script entrypoint.
-        Mirrors ruff's ``--fix`` mode: rewrites files in-place and reports a count.
-        Always exits 0; use ``check-all-statements`` in CI to gate on violations.
-    """
+    console = Console()
     parser = HexastackScriptArgumentParser(
         description="Format, alphabetize, and deduplicate __all__ statements."
     )
@@ -223,7 +219,12 @@ def main_fix() -> None:
 
     py_files = resolve_target_python_files(args)
     formatted_count = sum(fix_file_all(f) for f in py_files)
-    print(f"Formatted __all__ statements in {formatted_count} files.")
+    console.print(
+        Panel.fit(
+            f"[bold green]✨ Formatted and alphabetized __all__ statements in {formatted_count} file(s).[/bold green]",
+            border_style="green",
+        )
+    )
 
 
 # ---------------------------------------------------------------------------

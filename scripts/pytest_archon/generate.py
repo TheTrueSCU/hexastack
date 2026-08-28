@@ -41,6 +41,11 @@ def generate_tests_for_package(pkg_path: Path) -> None:
 
 def main() -> None:
     """CLI entrypoint to generate architecture tests."""
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
+    console = Console()
     parser = HexastackScriptArgumentParser(
         description="Generate pytest-archon boundary tests for packages."
     )
@@ -55,8 +60,35 @@ def main() -> None:
     if not packages:
         raise SystemExit("No packages found.")
 
+    table = Table(
+        title="[bold cyan]Architecture Test Generator (pytest-archon)[/bold cyan]",
+        show_header=True,
+        header_style="bold magenta",
+    )
+    table.add_column("Package", style="bold white", width=25)
+    table.add_column("Generated Test File", style="cyan", width=55)
+
+    generated = 0
     for pkg_path in packages:
         generate_tests_for_package(pkg_path)
+        rel_test = (
+            pkg_path.relative_to(root)
+            / "tests"
+            / "architecture"
+            / "test_hexagonal_boundaries.py"
+        )
+        table.add_row(pkg_path.name, str(rel_test))
+        generated += 1
+
+    console.print()
+    console.print(table)
+    console.print()
+    console.print(
+        Panel.fit(
+            f"[bold green]✨ Generated pytest-archon tests across {generated} package(s).[/bold green]",
+            border_style="green",
+        )
+    )
 
 
 if __name__ == "__main__":
