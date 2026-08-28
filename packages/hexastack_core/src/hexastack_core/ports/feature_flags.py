@@ -33,7 +33,6 @@ class FeatureFlagPort(Protocol):
         Returns:
             FlagEvaluationDetails containing value, reason, and variant.
         """
-        ...
 
     def get_boolean_value(
         self,
@@ -51,7 +50,6 @@ class FeatureFlagPort(Protocol):
         Returns:
             Resolved boolean flag status.
         """
-        ...
 
     def get_float_value(
         self,
@@ -69,7 +67,6 @@ class FeatureFlagPort(Protocol):
         Returns:
             Resolved float value.
         """
-        ...
 
     def get_integer_value(
         self,
@@ -87,7 +84,6 @@ class FeatureFlagPort(Protocol):
         Returns:
             Resolved integer value.
         """
-        ...
 
     def get_object_value(
         self,
@@ -105,7 +101,6 @@ class FeatureFlagPort(Protocol):
         Returns:
             Resolved structured configuration.
         """
-        ...
 
     def get_string_value(
         self,
@@ -123,7 +118,6 @@ class FeatureFlagPort(Protocol):
         Returns:
             Resolved string variation.
         """
-        ...
 
     def is_enabled(
         self,
@@ -141,7 +135,6 @@ class FeatureFlagPort(Protocol):
         Returns:
             Resolved boolean flag status.
         """
-        ...
 
 
 __all__ = [

@@ -51,7 +51,6 @@ class NotificationPort(ABC):
         Raises:
             Exception: Implementations should log delivery failures but propagate critical transport errors if unhandled.
         """
-        ...
 
 
 __all__ = [

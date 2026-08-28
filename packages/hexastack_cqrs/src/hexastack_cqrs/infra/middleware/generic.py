@@ -29,4 +29,3 @@ class GenericMiddleware(Protocol):
         Raises:
             Exception: Re-raises unhandled exceptions or domain errors.
         """
-        ...

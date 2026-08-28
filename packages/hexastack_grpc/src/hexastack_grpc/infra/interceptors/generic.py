@@ -66,7 +66,6 @@ class GenericServerInterceptor(grpc.ServerInterceptor, ABC):
             call downstream.  They may wrap the call in try/except, prepend or
             postpend logic, or modify context (e.g. abort) before/after.
         """
-        ...
 
     def intercept_service(
         self,
@@ -136,7 +135,6 @@ class AsyncGenericServerInterceptor(grpc.aio.ServerInterceptor, ABC):
         Raises:
             Exception: Subclasses may raise, suppress, or re-raise as needed.
         """
-        ...
 
     async def intercept_service(
         self,

@@ -20,12 +20,10 @@ class LoggingPort(ABC):
         exc: Exception | None = None,
     ) -> None:
         """Log a critical-level message with optional exception context."""
-        ...
 
     @abstractmethod
     def debug(self, message: str, extra: Extras | None = None) -> None:
         """Log a debug-level message."""
-        ...
 
     @abstractmethod
     def error(
@@ -35,17 +33,14 @@ class LoggingPort(ABC):
         exc: Exception | None = None,
     ) -> None:
         """Log an error-level message with optional exception context."""
-        ...
 
     @abstractmethod
     def info(self, message: str, extra: Extras | None = None) -> None:
         """Log an info-level message."""
-        ...
 
     @abstractmethod
     def warning(self, message: str, extra: Extras | None = None) -> None:
         """Log a warning-level message."""
-        ...
 
 
 __all__ = [
