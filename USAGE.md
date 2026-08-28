@@ -182,11 +182,29 @@ uv run check-test-parity
 # Run dependency boundary analysis (Deptry)
 uv run deptry-run
 
+# Inspect GitHub CI check runs and commit status conclusions
+uv run gh-checks <pr-number-or-ref>
+
+# Inspect PR review comments and automated security findings
+uv run gh-security <pr-number>
+
 # Enforce hexagonal layer and cross-package import boundaries across packages
 uv run import-linter-run
 
+# Run pre-commit quality checks across all files
+uv run pre-commit run --all-files
+
 # Re-generate architecture dependency graphs (Pydeps SVGs)
 uv run pydeps-generate
+
+# Build distribution wheels and tarballs for all 15 monorepo packages
+uv run pypi-build
+
+# Audit version synchronization across monorepo and check against live PyPI registry
+uv run pypi-check
+
+# Dry-run publish packages or monitor GitHub Actions release workflows
+uv run pypi-publish --monitor
 
 # Run impact-driven test suite for affected packages only (based on git diff)
 uv run pytest-run -A -U
@@ -197,8 +215,6 @@ uv run pytest-run -P
 # Run unit & integration test suite (with coverage enforcement)
 uv run pytest-run -U
 
-# Run pre-commit quality checks across all files
-uv run pre-commit run --all-files
 ```
 
 ---
