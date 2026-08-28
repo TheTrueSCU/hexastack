@@ -9,6 +9,7 @@ In this chapter, you will secure the To-Do microservice by enforcing **Task Owne
 ## 1. The Ownership & RBAC Security Model
 
 We enforce two distinct security tiers:
+
 1. **Regular Users (`role="user"`)**:
    - Can create and view their own To-Do items.
    - Can **only delete items they own** (`item.owner_id == current_user.user_id`).

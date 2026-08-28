@@ -23,6 +23,8 @@ venv/
 htmlcov/
 nosetests.xml
 coverage.xml
+junit.xml
+*.xml
 *.cover
 *.mutmut-cache
 

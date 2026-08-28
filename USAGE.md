@@ -160,26 +160,45 @@ hexastack dev
 
 ---
 
-## 5. Testing Recipes & Invariant Verification
+---
 
-Hexastack projects come configured with automated testing tools:
+## 5. Developer Tooling & Verification Scripts
+
+The workspace provides purpose-built developer CLI commands for architecture validation, testing, and formatting:
 
 ```bash
-# Run unit and integration tests
-uv run pytest
+# Run unit & integration test suite (with coverage enforcement)
+uv run pytest-run -U
 
-# Check hexagonal boundary import rules
+# Run impact-driven test suite for affected packages only (based on git diff)
+uv run pytest-run -A -U
+
+# Run property-based invariant & fuzzing tests
+uv run pytest-run -P
+
+# Enforce hexagonal layer and cross-package import boundaries
 uv run import-linter-run
 
-# Run static type checking
-uv run ty check packages
+# Re-generate architecture dependency graphs (Pydeps SVGs)
+uv run pydeps-generate
 
-# Run property-based invariant fuzzing
-uv run pytest -k "test_hypothesis"
+# Alphabetize imports and export statements across packages
+uv run alphabetizer
 
-# Run Schemathesis ASGI OpenAPI negative fuzzing
-uv run pytest -k "test_openapi"
+# Verify 1:1 parity between src/ implementation modules and unit tests
+uv run check-test-parity
 
-# Run full pre-commit pipeline
+# Run pre-commit quality checks across all files
 uv run pre-commit run --all-files
 ```
+
+---
+
+## 6. OpenSSF Security & Best Practices Rigor
+
+Hexastack maintains an automated security and supply-chain governance posture:
+
+- **OpenSSF Best Practices**: Certified at **100% Silver** (with **270% cumulative progress** including Gold criteria).
+- **OpenSSF Scorecard**: Scored at **7.1 / 10** with enforced GitHub Actions commit-SHA dependency pinning, least-privilege token permissions, and automated CodeQL SAST scanning on all commits.
+- **Supply Chain Artifacts**: Automated SPDX and CycloneDX Software Bill of Materials (SBOMs) generated with releases.
+- **Accessibility & Compliance**: DevTools interface adheres to **WCAG 2.1 AA** accessibility standards and is validated via automated axe-core Playwright suites.

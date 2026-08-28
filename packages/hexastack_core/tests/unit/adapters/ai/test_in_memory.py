@@ -81,3 +81,28 @@ def test_in_memory_vector_store_upsert_and_similarity_search():
     assert store.get("doc1") is None
     store.clear()
     assert len(store.search([1.0, 0.0])) == 0
+
+
+def test_in_memory_llm_provider_defaults_and_synthesis():
+    class DynamicOutput(BaseModel):
+        title: str
+        count: int
+        active: bool
+        extra_data: dict | None = None
+
+    llm = InMemoryLlmProvider()
+    llm.set_default_text("Custom Default Text")
+    assert llm.generate_text("Unmatched prompt") == "Custom Default Text"
+
+    # Test auto-synthesis of dynamic output
+    synth_res = llm.generate_structured("Synthesize me", DynamicOutput)
+    assert isinstance(synth_res, DynamicOutput)
+    assert synth_res.title == "Mock title"
+    assert synth_res.count == 1
+    assert synth_res.active is True
+    assert synth_res.extra_data is None
+
+    # Test set_default_structured
+    canned_dyn = DynamicOutput(title="Explicit", count=42, active=False)
+    llm.set_default_structured(canned_dyn)
+    assert llm.generate_structured("Another prompt", DynamicOutput) == canned_dyn

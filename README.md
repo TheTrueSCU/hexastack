@@ -293,29 +293,29 @@ Hexastack maintains a comprehensive quality hierarchy to ensure any project—wh
 
 | Capability / Inspection | Engine / Tool | Pre-Commit | CI Gate | Provided / Scaffolded for Users |
 | :--- | :--- | :---: | :---: | :--- |
-| **Dead Code Elimination** | `vulture` | ✅ | ✅ | Scaffolded in `pyproject.toml` + `.pre-commit-config.yaml` |
-| **Duplicate Code Detection** | `cpd` | ✅ | ✅ | Monorepo CI check + golden standards |
-| **Cognitive Complexity Guard** | `complexipy` | ✅ | ✅ | Scaffolded in `[tool.complexipy]` (max 25 score cap) |
-| **Lint & Idiomatic Code Style** | `ruff` (UP/D/S/B/SIM) | ✅ | ✅ | Scaffolded in `pyproject.toml` + `.pre-commit-config.yaml` |
-| **Strict Static Type Checking** | `ty` / `mypy` | ✅ | ✅ | Pre-configured in scaffolded `[dependency-groups]` |
-| **Hexagonal Boundary Enforcement** | `import-linter` | ✅ | ✅ | Auto-generated `.importlinter` contract rules |
 | **Architecture-as-Code Invariants** | `pytest-archon` | — | ✅ | Abstract port checks & domain purity rules |
-| **Public API Surface Integrity** | AST Visitor | ✅ | ✅ | `scripts/pre_commit/all_statements.py` (`check-all-statements` / `fix-all-statements`) |
-| **Secret & Key Leak Prevention** | `detect-secrets` | ✅ | ✅ | Automated `.secrets.baseline` in pre-commit |
-| **Dependency Vulnerability Audit** | `pip-audit` | ✅ | ✅ | Scaffolded `pip-audit --local` pre-commit gate |
-| **Database Schema Drift Check** | `alembic check` | ✅ | ✅ | CLI command: `hexastack db check` |
-| **Unit & Transport Integration** | `pytest` + `anyio` | — | ✅ | Golden-path test fixtures in `tests/conftest.py` |
-| **Realistic Synthetic Test Data** | `faker` | — | ✅ | Pre-configured `faker` pytest fixture support |
-| **Property-Based Invariant Fuzzing** | `hypothesis` | — | ✅ | Scaffolded sample in `tests/hypothesis/` |
-| **Negative API Contract Fuzzing** | `schemathesis` | — | ✅ | OpenAPI negative payload fuzzing integration |
-| **Golden Master Output Assertion** | `inline-snapshot` | — | ✅ | Diagnostic & JSON payload snapshot testing |
-| **Statement & Branch Coverage** | `coverage.py` | — | ✅ | Pre-configured `fail_under = 90` threshold |
-| **Mutation Testing** | `mutmut` | — | — | `scripts/run_mutation_tests.py` suite |
-| **Load & Concurrency Benchmarking** | `locust` | — | — | CLI command: `hexastack load` + default `locustfile.py` |
+| **Cognitive Complexity Guard** | `complexipy` | ✅ | ✅ | Scaffolded in `[tool.complexipy]` (max 25 score cap) |
 | **CPU Flamegraph Profiling** | `py-spy` | — | — | CLI command: `hexastack profile cpu --pid <PID>` |
+| **Database Schema Drift Check** | `alembic check` | ✅ | ✅ | CLI command: `hexastack db check` |
+| **Dead Code Elimination** | `vulture` | ✅ | ✅ | Scaffolded in `pyproject.toml` + `.pre-commit-config.yaml` |
+| **Dependency Vulnerability Audit** | `pip-audit` | ✅ | ✅ | Scaffolded `pip-audit --local` pre-commit gate |
+| **Duplicate Code Detection** | `cpd` / `jscpd` | ✅ | ✅ | Monorepo CI check + golden standards |
+| **End-to-End Browser & UI Testing** | `playwright` | — | ✅ | Pre-configured headless browser & axe-core fixtures |
+| **Golden Master Output Assertion** | `inline-snapshot` | — | ✅ | Diagnostic & JSON payload snapshot testing |
+| **Hexagonal Boundary Enforcement** | `import-linter` | ✅ | ✅ | Auto-generated `.importlinter` contract rules |
+| **Lint & Idiomatic Code Style** | `ruff` (UP/D/S/B/SIM) | ✅ | ✅ | Scaffolded in `pyproject.toml` + `.pre-commit-config.yaml` |
+| **Load & Concurrency Benchmarking** | `locust` | — | — | CLI command: `hexastack load` + default `locustfile.py` |
 | **Memory Allocation Flamegraph** | `memray` | — | — | CLI command: `hexastack profile memory --bin <FILE>` |
+| **Mutation Testing** | `mutmut` | — | — | `scripts/run_mutation_tests.py` suite |
+| **Negative API Contract Fuzzing** | `schemathesis` | — | ✅ | OpenAPI negative payload fuzzing integration |
+| **Property-Based Invariant Fuzzing** | `hypothesis` | — | ✅ | Scaffolded sample in `tests/hypothesis/` |
 | **Protobuf Linting & Breaking Changes** | `buf` | — | ✅ | Scaffolded `buf.yaml` + CLI: `hexastack grpc lint/breaking` |
-| **End-to-End Browser & UI Testing** | `playwright` | — | ✅ | Pre-configured headless browser fixtures |
+| **Public API Surface Integrity** | AST Visitor | ✅ | ✅ | `scripts/pre_commit/all_statements.py` (`check-all-statements`) |
+| **Realistic Synthetic Test Data** | `faker` | — | ✅ | Pre-configured `faker` pytest fixture support |
+| **Secret & Key Leak Prevention** | `detect-secrets` | ✅ | ✅ | Automated `.secrets.baseline` in pre-commit |
+| **Statement & Branch Coverage** | `coverage.py` | — | ✅ | Pre-configured `fail_under = 90` threshold |
+| **Strict Static Type Checking** | `ty` / `mypy` | ✅ | ✅ | Pre-configured in scaffolded `[dependency-groups]` |
+| **Unit & Transport Integration** | `pytest` + `anyio` | — | ✅ | Golden-path test fixtures in `tests/conftest.py` |
 
 ```mermaid
 mindmap
