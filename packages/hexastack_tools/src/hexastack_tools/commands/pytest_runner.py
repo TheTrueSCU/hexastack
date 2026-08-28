@@ -32,6 +32,7 @@ def _get_git_changed_files(base_ref: str = "origin/main") -> list[str]:
         if files:
             return files
     except Exception:
+        # Fall back to uncommitted local changes if diff against base_ref fails (e.g. shallow clone)
         pass
 
     try:
@@ -43,6 +44,7 @@ def _get_git_changed_files(base_ref: str = "origin/main") -> list[str]:
         )
         return [line.strip() for line in res.stdout.splitlines() if line.strip()]
     except Exception:
+        # If git diff fails entirely (e.g. not in a git working tree), return empty list
         return []
 
 
