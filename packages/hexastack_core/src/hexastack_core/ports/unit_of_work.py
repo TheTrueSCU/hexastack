@@ -45,12 +45,12 @@ class UnitOfWorkPort(ABC):
     @abstractmethod
     def commit(self) -> None:
         """Commit all pending transactional changes."""
-        ...
+        pass
 
     @abstractmethod
     def rollback(self) -> None:
         """Roll back all pending transactional changes."""
-        ...
+        pass
 
 
 class AsyncUnitOfWorkPort(ABC):
@@ -79,12 +79,12 @@ class AsyncUnitOfWorkPort(ABC):
     @abstractmethod
     async def commit_async(self) -> None:
         """Asynchronously commit all pending transactional changes."""
-        ...
+        pass
 
     @abstractmethod
     async def rollback_async(self) -> None:
         """Asynchronously roll back all pending transactional changes."""
-        ...
+        pass
 
 
 __all__ = [

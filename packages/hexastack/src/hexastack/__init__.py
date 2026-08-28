@@ -46,6 +46,7 @@ for _shorthand in __all__:
             sys.modules[f"hexastack.{_shorthand}"] = _mod
             _installed_shorthands.append(_shorthand)
         except (ImportError, AttributeError):
+            # Optional subpackage import failure; omit from installed shorthands
             pass
 
 

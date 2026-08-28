@@ -28,7 +28,8 @@ def test_in_memory_cache_basic_crud():
     assert cache.has("user:1") is True
     assert cache.get("user:1") == {"name": "Alice"}
 
-    assert cache.delete("user:1") is True
+    deleted = cache.delete("user:1")
+    assert deleted is True
     assert cache.has("user:1") is False
 
     cache.set("k1", "v1")

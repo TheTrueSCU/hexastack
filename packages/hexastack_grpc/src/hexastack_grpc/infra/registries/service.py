@@ -43,6 +43,7 @@ class GrpcServiceRegistry:
             names = tuple(all_service_names) + (reflection.SERVICE_NAME,)
             reflection.enable_server_reflection(names, server)
         except ImportError:
+            # grpc_reflection is optional; pass silently when not installed
             pass
 
     def _resolve_servicer_instance(

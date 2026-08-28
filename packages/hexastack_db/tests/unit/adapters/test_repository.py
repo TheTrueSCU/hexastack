@@ -93,8 +93,10 @@ async def test_async_sqlalchemy_repository():
         assert await repo.get_by_id_async(user_alias.id) is None
 
         # 7. Delete
-        assert await repo.delete(user1.id) is True
-        assert await repo.delete(999999) is False
+        deleted_user1 = await repo.delete(user1.id)
+        assert deleted_user1 is True
+        deleted_missing = await repo.delete(999999)
+        assert deleted_missing is False
         assert await repo.count() == 2
 
         # 8. Unique constraint errors
@@ -188,8 +190,10 @@ def test_sqlalchemy_repository_sync():
     assert refetched.email == "alice_updated@example.com"
 
     # 6. Delete
-    assert repo.delete(user1.id) is True
-    assert repo.delete(999999) is False
+    deleted_sync = repo.delete(user1.id)
+    assert deleted_sync is True
+    deleted_sync_missing = repo.delete(999999)
+    assert deleted_sync_missing is False
     assert repo.count() == 2
 
     # 7. Unique constraint errors on add, add_many, and update
