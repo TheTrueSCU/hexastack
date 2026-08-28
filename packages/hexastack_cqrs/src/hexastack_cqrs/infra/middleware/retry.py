@@ -80,7 +80,7 @@ class StaminaRetryMiddleware:
         attempts = 0
         message_name = instance.__class__.__name__
 
-        @stamina.retry(
+        for attempt in stamina.retry_context(
             on=_should_stamina_retry,
             attempts=self._config.max_attempts,
             wait_initial=self._config.initial_backoff_seconds,
@@ -88,29 +88,29 @@ class StaminaRetryMiddleware:
             wait_jitter=self._config.initial_backoff_seconds
             if self._config.jitter
             else 0.0,
-        )
-        def _execute_attempt() -> R:
-            nonlocal attempts
-            attempts += 1
-            try:
-                return next_call(instance)
-            except Exception as exc:
-                if (
-                    self._logger
-                    and attempts < self._config.max_attempts
-                    and _should_stamina_retry(exc)
-                ):
-                    self._logger.debug(
-                        f"Stamina retrying {message_name} (attempt {attempts}/{self._config.max_attempts}) after transient error: {exc}",
-                        extra={
-                            "message_type": message_name,
-                            "attempt": attempts,
-                            "max_attempts": self._config.max_attempts,
-                        },
-                    )
-                raise
+        ):
+            with attempt:
+                attempts += 1
+                try:
+                    return next_call(instance)
+                except Exception as exc:
+                    if (
+                        self._logger
+                        and attempts < self._config.max_attempts
+                        and _should_stamina_retry(exc)
+                    ):
+                        self._logger.debug(
+                            f"Stamina retrying {message_name} (attempt {attempts}/{self._config.max_attempts}) after transient error: {exc}",
+                            extra={
+                                "message_type": message_name,
+                                "attempt": attempts,
+                                "max_attempts": self._config.max_attempts,
+                            },
+                        )
+                    raise
 
-        return _execute_attempt()
+        msg = f"Stamina retry failed to execute {message_name}"
+        raise RuntimeError(msg)
 
 
 class TenacityRetryMiddleware:
