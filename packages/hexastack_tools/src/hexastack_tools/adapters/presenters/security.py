@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from hexastack_tools.adapters.presenters.common import resolve_output_format
 from hexastack_tools.domain.github import OutputFormat, ReviewThread
 
 console = Console()
@@ -97,10 +98,11 @@ def render_security_comments_plain(
 def present_security_comments(
     threads: tuple[ReviewThread, ...],
     pr_number: int,
-    output_format: OutputFormat = OutputFormat.RICH,
+    output_format: OutputFormat = OutputFormat.AUTO,
 ) -> None:
-    """Unified entrypoint to present security/review comments in rich, json, or plain format."""
-    if not threads and output_format == OutputFormat.RICH:
+    """Unified entrypoint to present security/review comments in rich, json, plain, or auto-detected format."""
+    resolved_format = resolve_output_format(output_format)
+    if not threads and resolved_format == OutputFormat.RICH:
         console.print(
             Panel(
                 f"[bold green]No inline security or review comments found on PR #{pr_number}.[/bold green]",
@@ -109,10 +111,10 @@ def present_security_comments(
         )
         return
 
-    if output_format == OutputFormat.JSON:
+    if resolved_format == OutputFormat.JSON:
         sys.stdout.write(render_security_comments_json(threads, pr_number) + "\n")
         sys.stdout.flush()
-    elif output_format == OutputFormat.PLAIN:
+    elif resolved_format == OutputFormat.PLAIN:
         sys.stdout.write(render_security_comments_plain(threads, pr_number) + "\n")
         sys.stdout.flush()
     else:

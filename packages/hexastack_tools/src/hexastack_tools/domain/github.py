@@ -7,6 +7,7 @@ from enum import StrEnum
 class OutputFormat(StrEnum):
     """Output presentation formats supported across CLI tools."""
 
+    AUTO = "auto"
     RICH = "rich"
     JSON = "json"
     PLAIN = "plain"

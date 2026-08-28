@@ -6,6 +6,7 @@ from hexastack_tools.adapters.presenters.checks import (
     render_checks_json,
     render_checks_plain,
 )
+from hexastack_tools.adapters.presenters.common import resolve_output_format
 from hexastack_tools.adapters.presenters.pr import (
     present_pr_summary,
     render_pr_summary_json,
@@ -32,4 +33,5 @@ __all__ = [
     "render_pr_summary_rich",
     "render_security_comments_json",
     "render_security_comments_plain",
+    "resolve_output_format",
 ]

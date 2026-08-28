@@ -8,6 +8,7 @@ import sys
 from rich.console import Console
 from rich.table import Table
 
+from hexastack_tools.adapters.presenters.common import resolve_output_format
 from hexastack_tools.domain.github import CheckRunFinding, OutputFormat
 
 console = Console()
@@ -83,13 +84,14 @@ def render_checks_plain(checks: list[CheckRunFinding], ref: str) -> str:
 def present_checks(
     checks: list[CheckRunFinding],
     ref: str,
-    output_format: OutputFormat = OutputFormat.RICH,
+    output_format: OutputFormat = OutputFormat.AUTO,
 ) -> None:
-    """Unified entrypoint to present CI check runs in rich, json, or plain format."""
-    if output_format == OutputFormat.JSON:
+    """Unified entrypoint to present CI check runs in rich, json, plain, or auto-detected format."""
+    resolved_format = resolve_output_format(output_format)
+    if resolved_format == OutputFormat.JSON:
         sys.stdout.write(render_checks_json(checks, ref) + "\n")
         sys.stdout.flush()
-    elif output_format == OutputFormat.PLAIN:
+    elif resolved_format == OutputFormat.PLAIN:
         sys.stdout.write(render_checks_plain(checks, ref) + "\n")
         sys.stdout.flush()
     else:

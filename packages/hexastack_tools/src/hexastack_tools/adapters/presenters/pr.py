@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from hexastack_tools.adapters.presenters.common import resolve_output_format
 from hexastack_tools.domain.github import (
     CheckRunFinding,
     OutputFormat,
@@ -191,7 +192,6 @@ def render_pr_summary_plain(summary: PRSummary) -> str:
         lines.append(
             f"CHECK\t{c.workflow_name or 'CI'}\t{c.name}\t{c.status}\t{c.conclusion}\t{c.details_url}"
         )
-
     for t in summary.review_threads:
         status = "RESOLVED" if t.is_resolved else "UNRESOLVED"
         for c in t.comments:
@@ -203,14 +203,15 @@ def render_pr_summary_plain(summary: PRSummary) -> str:
 
 def present_pr_summary(
     summary: PRSummary,
-    output_format: OutputFormat = OutputFormat.RICH,
+    output_format: OutputFormat = OutputFormat.AUTO,
     show_details: bool = False,
 ) -> None:
-    """Unified entrypoint to present PR summary in rich, json, or plain format."""
-    if output_format == OutputFormat.JSON:
+    """Unified entrypoint to present PR summary in rich, json, plain, or auto-detected format."""
+    resolved_format = resolve_output_format(output_format)
+    if resolved_format == OutputFormat.JSON:
         sys.stdout.write(render_pr_summary_json(summary) + "\n")
         sys.stdout.flush()
-    elif output_format == OutputFormat.PLAIN:
+    elif resolved_format == OutputFormat.PLAIN:
         sys.stdout.write(render_pr_summary_plain(summary) + "\n")
         sys.stdout.flush()
     else:
