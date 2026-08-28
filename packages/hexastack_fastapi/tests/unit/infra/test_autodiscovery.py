@@ -1,5 +1,4 @@
 import types
-from typing import Any, cast
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -58,8 +57,8 @@ def test_route_autodiscovery_and_execution():
     app.state.pipeline = pipeline
 
     dummy_module = types.ModuleType("dummy_fastapi_endpoints")
-    cast("Any", dummy_module).AutoCreate = AutoCreate
-    cast("Any", dummy_module).AutoGet = AutoGet
+    dummy_module.__dict__["AutoCreate"] = AutoCreate
+    dummy_module.__dict__["AutoGet"] = AutoGet
 
     autodiscover_routes(app, packages_to_scan=[dummy_module])
 

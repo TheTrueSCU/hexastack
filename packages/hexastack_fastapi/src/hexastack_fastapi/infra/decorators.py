@@ -1,9 +1,12 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 
 from hexastack_core.domain import Command, Query
+
+TCommand = TypeVar("TCommand", bound=Command)
+TQuery = TypeVar("TQuery", bound=Query)
 
 _ROUTE_METADATA_ATTR = "__hexastack_route__"
 
@@ -35,7 +38,7 @@ __all__ = [
 ]
 
 
-def api_command[TCommand: Command](
+def api_command(
     path: str,
     *,
     method: str = "POST",
@@ -80,7 +83,7 @@ def api_command[TCommand: Command](
     return decorator
 
 
-def api_query[TQuery: Query](
+def api_query(
     path: str,
     *,
     method: str = "GET",

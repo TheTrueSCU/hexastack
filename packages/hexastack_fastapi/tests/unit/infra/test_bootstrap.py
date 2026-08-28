@@ -1,5 +1,4 @@
 import types
-from typing import Any, cast
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -44,8 +43,8 @@ def test_fastapi_bootstrapper_registration():
 
 def test_meta_bootstrap_with_fastapi_and_autodiscovery():
     mod = types.ModuleType("sample_greet_module")
-    cast("Any", mod).GreetUser = GreetUser
-    cast("Any", mod).GreetUserHandler = GreetUserHandler
+    mod.__dict__["GreetUser"] = GreetUser
+    mod.__dict__["GreetUserHandler"] = GreetUserHandler
 
     result = bootstrap(
         bootstrappers=[

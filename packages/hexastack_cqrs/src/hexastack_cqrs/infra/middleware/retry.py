@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import TypeVar
 
 import stamina
 from tenacity import (
@@ -14,6 +15,9 @@ from hexastack_core.domain.feature_flags import EvaluationContext
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.config import RetryMiddlewareConfig
+
+G = TypeVar("G", bound=Generic)
+R = TypeVar("R")
 
 
 def _should_stamina_retry(exc: Exception) -> bool:
@@ -54,7 +58,7 @@ class StaminaRetryMiddleware:
         self._config = config or RetryMiddlewareConfig()
         self._flags = flags
 
-    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
+    def __call__(self, instance: G, next_call: Callable[[G], R]) -> R:
         """Execute next_call with stamina retry backoff policies.
 
         Args:
@@ -139,7 +143,7 @@ class TenacityRetryMiddleware:
         self._config = config or RetryMiddlewareConfig()
         self._flags = flags
 
-    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
+    def __call__(self, instance: G, next_call: Callable[[G], R]) -> R:
         """Execute next_call with retry policies and debug logging.
 
         Args:

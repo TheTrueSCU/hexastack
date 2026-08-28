@@ -9,7 +9,7 @@ import re
 import shutil
 from pathlib import Path
 
-from hexastack_cli.testing.narrator import TerminalEvent
+from hexastack_cli.testing.events import TerminalEvent
 from hexastack_core.domain.exceptions import MissingDependencyError
 
 TERMINAL_HTML_TEMPLATE = """<!DOCTYPE html>

@@ -56,6 +56,7 @@ def inspect_and_bucket_alerts(
     package_filter: str | None = None,
     severity_filter: str | None = None,
     state: str = "open",
+    show_details: bool = False,
 ) -> int:
     """Bucket open alerts by rule, severity, and package, displaying actionable tables.
 
@@ -64,6 +65,7 @@ def inspect_and_bucket_alerts(
         package_filter: Optional package name substring filter.
         severity_filter: Optional severity level filter.
         state: State filter ('open', 'closed', 'dismissed', or 'all').
+        show_details: If True, prints detailed inspection panels for matching alerts.
 
     Returns:
         0 if clean or alerts displayed, 1 on error.
@@ -74,26 +76,26 @@ def inspect_and_bucket_alerts(
     if not alerts:
         console.print(
             Panel(
-                f"[bold green]🎉 Zero {state} CodeQL code-scanning alerts found![/bold green]",
-                title="[bold cyan]CodeQL Code Scanning Status[/bold cyan]",
+                f"[bold green]🎉 Zero CodeQL code scanning alerts in state '{state}'![/bold green]",
+                title="[bold green]Clean Security State[/bold green]",
+                border_style="green",
             )
         )
         return 0
 
+    # Filter alerts
     if rule_filter:
         alerts = [
             a
             for a in alerts
             if rule_filter.lower() in a.get("rule", {}).get("id", "").lower()
         ]
-
     if severity_filter:
         alerts = [
             a
             for a in alerts
-            if severity_filter.lower() == a.get("rule", {}).get("severity", "").lower()
+            if a.get("rule", {}).get("severity", "").lower() == severity_filter.lower()
         ]
-
     if package_filter:
         alerts = [
             a
@@ -105,7 +107,13 @@ def inspect_and_bucket_alerts(
             .lower()
         ]
 
-    # Groupings
+    if not alerts:
+        console.print(
+            f"[yellow]No alerts matched the provided filters (rule: '{rule_filter}', pkg: '{package_filter}', sev: '{severity_filter}').[/yellow]"
+        )
+        return 0
+
+    # Group by Rule ID and Package
     by_rule: dict[str, list[dict[str, Any]]] = defaultdict(list)
     by_package: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
@@ -176,6 +184,61 @@ def inspect_and_bucket_alerts(
         detail_table.add_row(f"#{num}", rule, f"{path}:{line}", msg)
 
     console.print(detail_table)
+
+    # 3. Optional inline detailed view
+    if show_details:
+        for a in sorted(alerts, key=lambda x: x.get("number", 0), reverse=True):
+            inspect_single_alert(a["number"])
+
+    return 0
+
+
+def inspect_single_alert(alert_number: int) -> int:
+    """Fetch and print detailed metadata for a single CodeQL alert.
+
+    Args:
+        alert_number: The unique alert number.
+
+    Returns:
+        0 on success, 1 on error.
+    """
+    with GitHubClient() as client:
+        resp = client._client.get(
+            f"/repos/{client.owner}/{client.repo}/code-scanning/alerts/{alert_number}"
+        )
+        resp.raise_for_status()
+        alert = resp.json()
+
+    rule = alert.get("rule", {})
+    inst = alert.get("most_recent_instance", {})
+    loc = inst.get("location", {})
+    path = loc.get("path", "unknown")
+    start_line = loc.get("start_line", "-")
+    end_line = loc.get("end_line", start_line)
+    msg = inst.get("message", {}).get("text", "")
+    desc = rule.get("description", "")
+    help_text = rule.get("help", "")
+
+    panel_content = (
+        f"[bold white]Rule ID:[/bold white] [bold cyan]{rule.get('id', 'unknown')}[/bold cyan]\n"
+        f"[bold white]Severity:[/bold white] {rule.get('severity', 'unknown')} ({rule.get('security_severity_level') or 'quality'})\n"
+        f"[bold white]Location:[/bold white] [bold blue]{path}:{start_line}-{end_line}[/bold blue]\n"
+        f"[bold white]State:[/bold white] {alert.get('state', 'unknown')}\n\n"
+        f"[bold white]Message:[/bold white]\n{msg}\n\n"
+        f"[bold white]Description:[/bold white]\n{desc}\n"
+    )
+    if help_text:
+        panel_content += (
+            f"\n[bold white]Remediation Guidance:[/bold white]\n{help_text[:400]}..."
+        )
+
+    console.print(
+        Panel(
+            panel_content,
+            title=f"[bold magenta]CodeQL Alert #{alert_number}[/bold magenta]",
+            border_style="cyan",
+        )
+    )
     return 0
 
 
@@ -183,6 +246,13 @@ def main() -> int:
     """CLI entrypoint for gh-code-scanning."""
     parser = argparse.ArgumentParser(
         description="Bucket and inspect GitHub CodeQL security & quality code-scanning alerts."
+    )
+    parser.add_argument(
+        "alert",
+        nargs="?",
+        type=int,
+        default=None,
+        help="Inspect a specific alert number in detail (e.g. 98).",
     )
     parser.add_argument(
         "--rule",
@@ -212,15 +282,27 @@ def main() -> int:
         choices=["open", "closed", "dismissed", "all"],
         help="Alert state ('open', 'closed', 'dismissed', 'all').",
     )
+    parser.add_argument(
+        "--details",
+        "-d",
+        action="store_true",
+        default=False,
+        help="Print detailed contextual panels for all matching alerts.",
+    )
     args = parser.parse_args()
 
     try:
+        if args.alert is not None:
+            return inspect_single_alert(args.alert)
+
         return inspect_and_bucket_alerts(
             rule_filter=args.rule,
             package_filter=args.package,
             severity_filter=args.severity,
             state=args.state,
+            show_details=args.details,
         )
+
     except Exception as exc:
         console.print(
             f"[bold red]Error querying code scanning alerts:[/bold red] {exc}"
