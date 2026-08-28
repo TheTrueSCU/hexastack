@@ -15,6 +15,7 @@
 [![Type checker: ty](https://img.shields.io/badge/type%20checker-ty-blueviolet.svg)](https://github.com/astral-sh/ty)
 [![OpenSSF Scorecard](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.scorecard.dev%2Fprojects%2Fgithub.com%2FTheTrueSCU%2Fhexastack&query=%24.score&label=OpenSSF%20Scorecard&color=blue)](https://securityscorecards.dev/viewer/?uri=github.com/TheTrueSCU/hexastack)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14264/badge)](https://www.bestpractices.dev/projects/14264)
+[![OpenSSF Best Practices: Progress](https://img.shields.io/cii/percentage/14264?label=OpenSSF%20Best%20Practices%3A%20Progress)](https://www.bestpractices.dev/projects/14264)
 
 ---
 
