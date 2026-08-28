@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-flags"
-version = "0.0.0"
+version = "0.1.0"
 description = "CNCF OpenFeature provider adapters and enterprise feature flagging for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
