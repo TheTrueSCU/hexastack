@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import pytest
+
+from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_flags.adapters.providers.factory import initialize_openfeature_provider
 from hexastack_flags.domain.models import (
     FeatureFlagProviderType,
     FlagProviderOptions,
 )
-
-from hexastack_core.domain.exceptions import MissingDependencyError
 
 
 def test_initialize_in_memory_provider():

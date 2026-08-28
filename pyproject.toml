@@ -199,16 +199,11 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Alphabetized per-file ignore mappings
 "**/hexastack_cli/**/*.py" = ["T201"]
-"**/hexastack_tools/**/*.py" = ["D", "T201"]
-
+"**/hexastack_tools/**/*.py" = ["D", "E501", "S112", "S603", "S608", "T201", "T203"]
 "**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
+
 "examples/**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
 "examples/**/*.py" = ["ARG", "D", "E501", "F401", "S101", "S105", "T201", "UP042"]
-"scripts/**/*.py" = ["D", "E501", "S603", "T201", "T203"]
-
-
-
-
 
 [tool.ruff.lint.isort]
 known-first-party = [
@@ -221,14 +216,15 @@ known-first-party = [
     "hexastack_db",
     "hexastack_events",
     "hexastack_fastapi",
+    "hexastack_flags",
     "hexastack_graphql",
     "hexastack_grpc",
     "hexastack_logging",
     "hexastack_mcp",
     "hexastack_otel",
     "hexastack_tools",
-    "scripts",
 ]
+
 
 
 [tool.ruff.lint.pydocstyle]
@@ -247,6 +243,8 @@ ignore_names = [
     "message_path",
     "model_config",
     "visit_*",
+    "leave_*",
     "on_connect",
+    "original_node",
     "Huey",
 ]

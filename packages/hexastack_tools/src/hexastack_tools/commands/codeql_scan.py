@@ -15,7 +15,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from scripts._common import get_repo_root
+from hexastack_tools.utils.workspace import get_repo_root
 
 console = Console()
 
