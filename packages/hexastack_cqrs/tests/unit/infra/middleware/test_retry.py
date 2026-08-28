@@ -229,3 +229,24 @@ def test_stamina_retry_middleware_dynamic_feature_flag():
     res = middleware(_DummyCommand(val=10), flaky)
     assert res == 10
     assert attempts == 2
+
+
+def test_stamina_retry_middleware_disabled():
+    config = RetryMiddlewareConfig(enable=False)
+    middleware = StaminaRetryMiddleware(config=config)
+    calls = []
+
+    def handler(cmd: _DummyCommand) -> int:
+        calls.append(1)
+        return cmd.val
+
+    result = middleware(_DummyCommand(val=7), handler)
+    assert result == 7
+    assert len(calls) == 1
+
+
+def test_stamina_retry_middleware_defaults():
+    middleware = StaminaRetryMiddleware()
+    assert middleware._logger is None
+    assert middleware._config.enable is True
+    assert middleware._config.max_attempts == 3
