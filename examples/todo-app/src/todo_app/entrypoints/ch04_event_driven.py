@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import uvicorn
 from fastapi import FastAPI
-from rodi import Container
-
 from hexastack_core.adapters.notification import StdoutNotificationAdapter
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_core.ports.notification import NotificationPort
+from rodi import Container
 
-import todo_app.adapters.driving.http
 import todo_app.infra.handlers
 from todo_app.adapters.driven.sqlite import (
     SqliteTodoRepository,

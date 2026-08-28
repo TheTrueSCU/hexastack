@@ -14,7 +14,6 @@ class PresenterPort(ABC):
     @abstractmethod
     def present(self, instance: Generic) -> Any | None:
         """Format a generic domain instance into presenter output."""
-        ...
 
 
 __all__ = [

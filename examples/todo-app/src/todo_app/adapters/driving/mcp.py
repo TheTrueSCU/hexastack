@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from hexastack_mcp.infra.decorators import mcp_tool
+
 from todo_app.domain.commands import (
     CompleteTodoCommand,
     CreateTodoCommand,

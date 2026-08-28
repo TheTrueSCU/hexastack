@@ -23,7 +23,6 @@ class PasswordHasherPort(ABC):
         Raises:
             PasswordHashError: If hashing computation fails.
         """
-        ...
 
     @abstractmethod
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
@@ -39,7 +38,6 @@ class PasswordHasherPort(ABC):
         Raises:
             PasswordHashError: If verification computation encounters an invalid format.
         """
-        ...
 
 
 __all__ = [

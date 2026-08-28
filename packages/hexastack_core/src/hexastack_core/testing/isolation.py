@@ -9,7 +9,6 @@ class ClearableRegistry(Protocol):
 
     def clear(self) -> None:
         """Clear all registered items in the registry."""
-        ...
 
 
 __all__ = [

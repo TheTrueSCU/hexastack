@@ -185,8 +185,12 @@ uv run deptry-run
 # Inspect GitHub CI check runs and commit status conclusions
 uv run gh-checks <pr-number-or-ref>
 
+# Bucket and analyze GitHub CodeQL security & quality code-scanning alerts
+uv run gh-code-scanning
+
 # Inspect PR review comments and automated security findings
 uv run gh-security <pr-number>
+
 
 # Enforce hexagonal layer and cross-package import boundaries across packages
 uv run import-linter-run

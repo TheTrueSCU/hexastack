@@ -38,4 +38,3 @@ class AuthorizationPolicyPort(Protocol):
         Returns:
             True if authorized, False otherwise.
         """
-        ...

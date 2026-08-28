@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from hexastack_grpc.infra.decorators import proto_schema
 

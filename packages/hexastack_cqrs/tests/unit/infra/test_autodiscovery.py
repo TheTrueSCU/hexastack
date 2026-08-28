@@ -180,7 +180,7 @@ def test_cqrs_autodiscovery_isolated_helpers():
 
     # 2. _register_presenter
     pres_meta = PresenterMetadata(target_cls=OrderDTO, output_format="text")
-    _register_presenter(lambda x: str(x), pres_meta, pipeline, None)
+    _register_presenter(str, pres_meta, pipeline, None)
     assert pres_reg.get(OrderDTO, "text") is not None
 
     # 3. _register_exception

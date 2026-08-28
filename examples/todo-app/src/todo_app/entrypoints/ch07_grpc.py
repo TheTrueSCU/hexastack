@@ -7,10 +7,9 @@ Run with:
 from __future__ import annotations
 
 import grpc
-from rodi import Container
-
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_grpc.adapters.server import run_grpc_server
+from rodi import Container
 
 import todo_app.adapters.driving.grpc
 import todo_app.infra.handlers

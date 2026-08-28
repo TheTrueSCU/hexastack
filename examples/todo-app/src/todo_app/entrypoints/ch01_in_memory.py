@@ -6,11 +6,10 @@ Run with:
 
 import uvicorn
 from fastapi import FastAPI
-from rodi import Container
-
 from hexastack_core.adapters.notification import InMemoryNotificationAdapter
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_core.ports.notification import NotificationPort
+from rodi import Container
 
 import todo_app.infra.handlers
 from todo_app.adapters.driven.database import InMemoryTodoRepository

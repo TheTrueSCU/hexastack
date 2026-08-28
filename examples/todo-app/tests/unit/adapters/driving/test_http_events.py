@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-
 from hexastack_core.adapters.notification import InMemoryNotificationAdapter
 from hexastack_core.ports.notification import NotificationPriority
+
 from todo_app.entrypoints.ch04_event_driven import build_app
 
 

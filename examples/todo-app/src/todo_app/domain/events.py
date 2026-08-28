@@ -8,6 +8,7 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 from hexastack_core.domain import Event
 
 

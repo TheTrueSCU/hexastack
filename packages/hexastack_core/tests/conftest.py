@@ -74,7 +74,7 @@ def in_memory_repo() -> InMemoryRepository[Any, Any]:
 @pytest.fixture
 def in_memory_repo_factory() -> Callable[..., InMemoryRepository[Any, Any]]:
     """Fixture providing a factory to create parameterized InMemoryRepository instances."""
-    return lambda **kwargs: InMemoryRepository(**kwargs)
+    return InMemoryRepository
 
 
 @pytest.fixture

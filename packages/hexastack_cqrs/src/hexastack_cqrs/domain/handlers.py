@@ -24,7 +24,6 @@ class GenericHandler[I, R](ABC):
         Raises:
             Exception: Any exception raised during message processing.
         """
-        ...
 
 
 class CommandHandler[C: Command, R](GenericHandler[C, R]):
