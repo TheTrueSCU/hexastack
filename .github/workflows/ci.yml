@@ -206,3 +206,47 @@ jobs:
 
       - name: Run E2E & Visual A11y Tests
         run: uv run pytest tests/e2e --no-cov
+
+  # =========================================================================
+  # Stage 5: Unified CI Success Status Check (Branch Protection Gate)
+  # Aggregates results of all upstream stages, handling skipped conditional jobs
+  # =========================================================================
+  ci-success:
+    name: CI Success (All Required Checks)
+    needs:
+      - quality-gate
+      - buf-governance
+      - test-suite
+      - architecture-diagrams
+      - hypothesis-fuzzing
+      - e2e-a11y
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify All Upstream Jobs Succeeded or Skipped
+        run: |
+          echo "Evaluating CI pipeline status:"
+          echo "  Pre-Commit Quality Gate:      ${{ needs.quality-gate.result }}"
+          echo "  Protobuf Governance:          ${{ needs.buf-governance.result }}"
+          echo "  Unit & Integration Tests:     ${{ needs.test-suite.result }}"
+          echo "  Architecture Diagrams:        ${{ needs.architecture-diagrams.result }}"
+          echo "  Property-Based Fuzzing:       ${{ needs.hypothesis-fuzzing.result }}"
+          echo "  E2E & A11y Verification:      ${{ needs.e2e-a11y.result }}"
+
+          results=(
+            "${{ needs.quality-gate.result }}"
+            "${{ needs.buf-governance.result }}"
+            "${{ needs.test-suite.result }}"
+            "${{ needs.architecture-diagrams.result }}"
+            "${{ needs.hypothesis-fuzzing.result }}"
+            "${{ needs.e2e-a11y.result }}"
+          )
+
+          for res in "${results[@]}"; do
+            if [ "$res" = "failure" ] || [ "$res" = "cancelled" ]; then
+              echo "::error::One or more upstream CI jobs failed or were cancelled."
+              exit 1
+            fi
+          done
+
+          echo "🎉 All required CI jobs completed successfully (or were cleanly skipped)."

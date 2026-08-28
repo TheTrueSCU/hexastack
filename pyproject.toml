@@ -13,6 +13,8 @@ check-all-statements = "scripts.pre_commit.all_statements:main_check"
 check-test-parity = "scripts.pre_commit.check_test_parity:main"
 deptry-run = "scripts.deptry.run:main"
 fix-all-statements = "scripts.pre_commit.all_statements:main_fix"
+gh-checks = "scripts.github.checks:main"
+gh-security = "scripts.github.security:main"
 import-linter-generate = "scripts.import_linter.generate:main"
 import-linter-run = "scripts.import_linter.run:main"
 inline-snapshot-update = "scripts.inline_snapshot.update:main"
@@ -23,6 +25,7 @@ pytest-archon-generate = "scripts.pytest_archon.generate:main"
 pytest-run = "scripts.pytest.run:main"
 rope-alphabetizer = "scripts.rope.alphabetizer:main"
 rope-run = "scripts.rope.run:main"
+
 
 [build-system]
 requires = ["hatchling"]
