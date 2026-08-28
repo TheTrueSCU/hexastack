@@ -19,6 +19,7 @@ Notes/Architectural Intent:
     ``git diff --exit-code docs/assets/pydeps/``.
 """
 
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from pydeps.pydeps import pydeps
@@ -53,7 +54,7 @@ def _output_dir(root: Path) -> Path:
     return out
 
 
-def generate_package_diagram(pkg_path: Path, root: Path) -> None:
+def generate_package_diagram(pkg_path: Path, root: Path) -> str | None:
     """Generate a dependency SVG for a single package.
 
     Shows intra-package modules as a cluster plus visible third-party
@@ -63,6 +64,9 @@ def generate_package_diagram(pkg_path: Path, root: Path) -> None:
     Args:
         pkg_path: Path to the package root directory (e.g. ``packages/hexastack_core``).
         root: Absolute path to the repository root (used to resolve the output dir).
+
+    Returns:
+        The generated SVG filename on success, or None if skipped.
 
     Notes/Architectural Intent:
         ``only`` is intentionally *not* set so that third-party dependency nodes
@@ -77,7 +81,7 @@ def generate_package_diagram(pkg_path: Path, root: Path) -> None:
 
     if not src_dir.is_dir():
         print(f"Skipping {pkg_name}: '{src_dir}' not found.")
-        return
+        return None
 
     print(f"Generating diagram for {pkg_name} -> {output_file.relative_to(root)}...")
 
@@ -99,9 +103,10 @@ def generate_package_diagram(pkg_path: Path, root: Path) -> None:
         noshow=True,
         output=str(output_file),
     )
+    return f"{pkg_name.replace('-', '_')}.svg"
 
 
-def generate_monorepo_diagram(root: Path) -> None:
+def generate_monorepo_diagram(root: Path) -> str | None:
     """Generate a high-level cross-package overview diagram.
 
     Shows all hexastack packages as clusters with shared third-party
@@ -110,6 +115,9 @@ def generate_monorepo_diagram(root: Path) -> None:
 
     Args:
         root: Absolute path to the repository root.
+
+    Returns:
+        The generated overview SVG filename on success, or None if skipped.
 
     Notes/Architectural Intent:
         Uses the umbrella ``hexastack`` package as the entry point so pydeps
@@ -122,7 +130,7 @@ def generate_monorepo_diagram(root: Path) -> None:
 
     if not umbrella_src.is_dir():
         print(f"Skipping monorepo diagram: '{umbrella_src}' not found.")
-        return
+        return None
 
     print(f"Generating monorepo overview -> {output_file.relative_to(root)}...")
 
@@ -144,6 +152,7 @@ def generate_monorepo_diagram(root: Path) -> None:
         noshow=True,
         output=str(output_file),
     )
+    return "hexastack_packages.svg"
 
 
 def main() -> None:
@@ -154,19 +163,14 @@ def main() -> None:
 
     console = Console()
     parser = HexastackScriptArgumentParser(
-        description="Generate pydeps architecture diagrams to docs/assets/pydeps/."
+        description="Generate pydeps architecture diagrams in parallel to docs/assets/pydeps/."
     )
     args = parser.parse_args()
 
     root = get_repo_root()
     generated = []
 
-    # 1. Global package-level diagram when no specific packages requested
-    if not args.packages:
-        generate_monorepo_diagram(root)
-        generated.append("hexastack_packages.svg (Monorepo Overview)")
-
-    # 2. Per-package diagrams
+    # Resolve packages to generate
     if args.packages:
         packages = [get_package_directory(p, root) for p in args.packages]
     else:
@@ -180,21 +184,40 @@ def main() -> None:
     table.add_column("Asset / Package", style="bold white", width=30)
     table.add_column("Output File", style="cyan", width=45)
 
-    if not args.packages:
-        table.add_row("Monorepo Overview", "docs/assets/pydeps/hexastack_packages.svg")
+    # Execute diagram generation concurrently across available CPU cores
+    tasks = []
+    with ProcessPoolExecutor() as executor:
+        if not args.packages:
+            tasks.append(
+                (
+                    "Monorepo Overview",
+                    "docs/assets/pydeps/hexastack_packages.svg",
+                    executor.submit(generate_monorepo_diagram, root),
+                )
+            )
 
-    for pkg_path in packages:
-        generate_package_diagram(pkg_path, root)
-        svg_name = f"{pkg_path.name.replace('-', '_')}.svg"
-        table.add_row(pkg_path.name, f"docs/assets/pydeps/{svg_name}")
-        generated.append(svg_name)
+        for pkg_path in packages:
+            svg_name = f"{pkg_path.name.replace('-', '_')}.svg"
+            tasks.append(
+                (
+                    pkg_path.name,
+                    f"docs/assets/pydeps/{svg_name}",
+                    executor.submit(generate_package_diagram, pkg_path, root),
+                )
+            )
+
+        for name, out_path, future in tasks:
+            result = future.result()
+            if result:
+                table.add_row(name, out_path)
+                generated.append(result)
 
     console.print()
     console.print(table)
     console.print()
     console.print(
         Panel.fit(
-            f"[bold green]✨ Generated {len(generated)} architecture dependency diagram(s) in docs/assets/pydeps/.[/bold green]",
+            f"[bold green]✨ Generated {len(generated)} architecture dependency diagram(s) concurrently in docs/assets/pydeps/.[/bold green]",
             border_style="green",
         )
     )

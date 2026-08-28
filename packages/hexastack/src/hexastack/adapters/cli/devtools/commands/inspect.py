@@ -23,14 +23,10 @@ __all__ = [
 class DemoGroupDocs:
     """CLI group documentation container for demo commands."""
 
-    pass
-
 
 @cli_group("inspect", help="Introspect registered CQRS handlers, routes, and config")
 class InspectGroupDocs:
     """CLI group documentation container for inspect commands."""
-
-    pass
 
 
 # Decorate diagnostics domain models with CLI exposure metadata

@@ -71,7 +71,7 @@ class SqlAlchemyUnitOfWork(UnitOfWorkPort):
                 self._session.commit()
             except SQLAlchemyError as exc:
                 self._session.rollback()
-                raise UnitOfWorkError() from exc
+                raise UnitOfWorkError from exc
 
     def rollback(self) -> None:
         """Roll back all pending database changes in active session."""
@@ -145,7 +145,7 @@ class AsyncSqlAlchemyUnitOfWork(AsyncUnitOfWorkPort):
                 await self._session.commit()
             except SQLAlchemyError as exc:
                 await self._session.rollback()
-                raise UnitOfWorkError() from exc
+                raise UnitOfWorkError from exc
 
     async def commit_async(self) -> None:
         """Asynchronously commit all pending transactional changes."""

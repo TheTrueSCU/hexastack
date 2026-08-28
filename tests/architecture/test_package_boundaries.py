@@ -43,12 +43,9 @@ def _extract_known_packages(raw_deps: list[str]) -> set[str]:
     matched = set()
     for dep in raw_deps:
         for known in ALL_KNOWN_PACKAGES:
-            if (
-                dep == known
-                or dep.startswith(f"{known}[")
-                or dep.startswith(f"{known}>=")
-            ):
+            if dep == known or dep.startswith((f"{known}[", f"{known}>=")):
                 matched.add(known)
+
     return matched
 
 

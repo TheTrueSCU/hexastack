@@ -11,11 +11,13 @@ dependencies = [
 alphabetizer = "scripts.rope.alphabetizer:main"
 check-all-statements = "scripts.pre_commit.all_statements:main_check"
 check-test-parity = "scripts.pre_commit.check_test_parity:main"
+codeql-scan = "scripts.codeql.scan:main"
 deptry-run = "scripts.deptry.run:main"
 fix-all-statements = "scripts.pre_commit.all_statements:main_fix"
 gh-checks = "scripts.github.checks:main"
 gh-code-scanning = "scripts.github.code_scanning:main"
 gh-security = "scripts.github.security:main"
+
 
 import-linter-generate = "scripts.import_linter.generate:main"
 import-linter-run = "scripts.import_linter.run:main"
@@ -148,23 +150,26 @@ markers = [
 
 select = [
     "ARG",  # flake8-unused-arguments
-    "B",    # flake8-bugbear
+    "B",    # flake8-bugbear (catches uninitialized closures, loop variable rebinds, mutable defaults)
     "C4",   # flake8-comprehensions
     "D",    # pydocstyle
     "E",    # pycodestyle errors
-    "F",    # pyflakes
+    "F",    # pyflakes (uninitialized variables, undefined names, unused imports)
     "FAST", # FastAPI lint
     "I",    # isort
     "LOG",  # flake8-logging
+    "PIE",  # flake8-pie (redundant expressions, duplicates)
     "PTH",  # flake8-use-pathlib
-    "RET",  # flake8-return
-    "S",    # flake8-bandit (Security-specific linting)
-    "SIM",  # flake8-simplify
+    "RET",  # flake8-return (missing return statements, dead fallthroughs)
+    "RSE",  # flake8-raise (unnecessary raise parens)
+    "S",    # flake8-bandit (Security-specific SAST linting)
+    "SIM",  # flake8-simplify (redundant comparisons, unnecessary nested blocks)
     "T20",  # flake8-print
     "TCH",  # flake8-type-checking
     "TID",  # flake8-tidy-imports
     "UP",   # pyupgrade
     "W",    # pycodestyle warnings
+
 ]
 ignore = [
     "ARG001", # Unused function argument (framework interfaces, visitors, listeners)
@@ -194,8 +199,10 @@ ignore = [
 # Alphabetized per-file ignore mappings
 "**/hexastack_cli/**/*.py" = ["T201"]
 "**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
+"examples/**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
 "examples/**/*.py" = ["ARG", "D", "E501", "F401", "S101", "S105", "T201", "UP042"]
 "scripts/**/*.py" = ["D", "E501", "S603", "T201", "T203"]
+
 
 
 
