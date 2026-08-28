@@ -188,7 +188,10 @@ def render_pr_summary_plain(summary: PRSummary) -> str:
         f"PR\t{summary.number}\t{summary.state}\t{summary.mergeable}\t{summary.head_ref}\t{summary.base_ref}\t{summary.html_url}"
     ]
     for c in summary.check_runs:
-        lines.append(f"CHECK\t{c.name}\t{c.status}\t{c.conclusion}\t{c.details_url}")
+        lines.append(
+            f"CHECK\t{c.workflow_name or 'CI'}\t{c.name}\t{c.status}\t{c.conclusion}\t{c.details_url}"
+        )
+
     for t in summary.review_threads:
         status = "RESOLVED" if t.is_resolved else "UNRESOLVED"
         for c in t.comments:

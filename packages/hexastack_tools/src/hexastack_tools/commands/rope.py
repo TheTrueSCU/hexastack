@@ -139,8 +139,8 @@ def run_main() -> int:
 
 
 __all__ = [
-    "FunctionAndMethodAlphabetizerCST",
     "alphabetize_main",
+    "FunctionAndMethodAlphabetizerCST",
     "run_main",
     "sort_python_file",
 ]

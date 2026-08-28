@@ -19,11 +19,6 @@ from hexastack_tools.utils.workspace import (
 )
 
 __all__ = [
-    "HEX_LAYERS",
-    "HexastackScriptArgumentParser",
-    "LAYER_RESTRICTIONS",
-    "PACKAGES_DIR",
-    "VALID_PACKAGES",
     "get_downstream_dependents",
     "get_package_dependencies",
     "get_package_directories",
@@ -32,6 +27,11 @@ __all__ = [
     "get_present_layers",
     "get_repo_root",
     "get_workspace_dependency_graph",
+    "HEX_LAYERS",
+    "HexastackScriptArgumentParser",
+    "LAYER_RESTRICTIONS",
+    "PACKAGES_DIR",
     "resolve_affected_packages",
     "resolve_target_python_files",
+    "VALID_PACKAGES",
 ]

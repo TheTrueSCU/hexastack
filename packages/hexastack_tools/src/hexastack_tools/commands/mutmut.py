@@ -82,8 +82,8 @@ def inspect_main() -> None:
 
 
 __all__ = [
-    "MutantCategory",
     "clear_package_cache",
     "inspect_main",
+    "MutantCategory",
     "run_main",
 ]

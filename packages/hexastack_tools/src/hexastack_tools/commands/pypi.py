@@ -144,11 +144,11 @@ def publish_main() -> None:
 
 
 __all__ = [
-    "PackageMetadata",
     "build_all_packages",
     "build_main",
     "check_main",
     "check_pypi_version_exists",
     "get_workspace_packages_metadata",
+    "PackageMetadata",
     "publish_main",
 ]
