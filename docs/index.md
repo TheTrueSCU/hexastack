@@ -58,26 +58,29 @@ graph TD
 Generate a standardized, production-ready hexagonal microservice with zero local dependencies using `uvx`, or run the interactive terminal wizard:
 
 ```bash
-# Launch interactive terminal setup wizard
+# Launch interactive terminal setup wizard (with optional Release CI & OpenSSF packs)
 uvx hexastack init
 
-# REST Web API service with FastAPI and SQLite
-uvx hexastack new web-api billing-service --db sqlite
-
-# High-performance gRPC microservice with Protobuf & Reflection
-uvx hexastack new grpc-service rpc-service
-
-# Strawberry GraphQL data-graph gateway & GraphiQL playground
-uvx hexastack new graphql-service gateway-service
+# Enterprise full-featured microservice (includes release automation & OpenSSF starter pack)
+uvx hexastack new enterprise core-platform
 
 # Event-driven streaming microservice with CloudEvents & Transactional Outbox
 uvx hexastack new event-driven order-service
 
-# Model Context Protocol (MCP) server & AI tools
+# Strawberry GraphQL data-graph gateway & GraphiQL playground
+uvx hexastack new graphql-service gateway-service
+
+# High-performance gRPC microservice with Protobuf & Reflection
+uvx hexastack new grpc-service rpc-service
+
+# Model Context Protocol (MCP) server & AI agent tools
 uvx hexastack new mcp-agent agent-service
 
 # Minimal CLI or background worker
 uvx hexastack new minimal worker-service
+
+# REST Web API service with FastAPI and SQLite
+uvx hexastack new web-api billing-service --db sqlite
 ```
 
 Launch all transports concurrently during development:

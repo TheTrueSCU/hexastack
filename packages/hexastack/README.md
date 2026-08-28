@@ -157,8 +157,14 @@ hexastack init
 Generate microservices in a single command using one of the pre-built blueprints:
 
 ```bash
-# Web API service with FastAPI, SQLite/Postgres, and OpenAPI specs
-hexastack new web-api order-service
+# Enterprise grade multi-transport service (FastAPI + gRPC + GraphQL + MCP + Outbox + Release + OpenSSF)
+hexastack new enterprise core-platform
+
+# Asynchronous event-driven microservice with CloudEvents 1.0 and Transactional Outbox
+hexastack new event-driven billing-worker
+
+# GraphQL presentation service with Strawberry schema and CQRS bus
+hexastack new graphql-service analytics-service
 
 # High-throughput gRPC binary RPC microservice with in-process ProtoCompiler and Buf linting
 hexastack new grpc-service payment-gateway
@@ -166,17 +172,11 @@ hexastack new grpc-service payment-gateway
 # AI Agent service equipped with Model Context Protocol (MCP) server & tools
 hexastack new mcp-agent customer-assistant
 
-# GraphQL presentation service with Strawberry schema and CQRS bus
-hexastack new graphql-service analytics-service
-
-# Asynchronous event-driven microservice with CloudEvents 1.0 and Transactional Outbox
-hexastack new event-driven billing-worker
-
-# Enterprise grade multi-transport service (FastAPI + gRPC + GraphQL + MCP + Outbox + Auth)
-hexastack new enterprise core-platform
-
 # Ultra-minimal CQRS microservice
 hexastack new minimal lightweight-worker
+
+# Web API service with FastAPI, SQLite/Postgres, and OpenAPI specs
+hexastack new web-api order-service
 ```
 
 ### Scaffolded Service Anatomy
@@ -185,6 +185,9 @@ Every scaffolded service immediately includes:
 1. **Strict Layer Isolation**: `domain/` (0 framework dependencies), `ports/` (abstract protocols), `adapters/driving/` (FastAPI / gRPC / CLI / MCP), `adapters/driven/` (SQLAlchemy / InMemory / Outbox), and `infra/` (bootstrappers & configuration).
 2. **Golden-Path Multi-Stage Dockerfile**: Ultra-fast `uv`-cached builder layer, rootless non-root runtime user (`appuser:10001`), `/health` probe `HEALTHCHECK`, and `.dockerignore`.
 3. **Automated Quality Gates**: `.importlinter` rules enforcing directional purity, pre-commit config with `detect-secrets`, `pip-audit`, and `ruff`, plus a complete `pytest` unit test suite.
+4. **Automated Release Pipeline (`--with-release`)**: `.github/workflows/release.yml` with `uv build`, `pypa/gh-action-pypi-publish`, and SPDX/CycloneDX SBOM generation via `anchore/sbom-action`, plus a `CHANGELOG.md`.
+5. **OpenSSF Security Suite (`--with-openssf`)**: `.github/workflows/scorecard.yml` (weekly security analysis), `SECURITY.md`, `GOVERNANCE.md`, and `CODE_OF_CONDUCT.md`.
+
 
 ---
 
