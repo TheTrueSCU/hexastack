@@ -55,23 +55,30 @@ def run_main() -> None:
         "-p", "--package", dest="packages", action="append", choices=VALID_PACKAGES
     )
     parser.add_argument("-A", "--affected", action="store_true")
-    parser.add_argument("pytest_args", nargs=argparse.REMAINDER)
-    args = parser.parse_args()
+    parser.add_argument("-U", "--unit", action="store_true")
+    args, unknown = parser.parse_known_args()
 
     root = get_repo_root()
     test_paths: list[str] = []
 
     if args.packages:
         for p in args.packages:
-            test_paths.append(str(get_package_directory(p, root) / "tests"))
+            target_sub = "tests/unit" if args.unit else "tests"
+            test_paths.append(str(get_package_directory(p, root) / target_sub))
     elif args.affected:
         changed = _get_git_changed_files()
         affected = resolve_affected_packages(changed, root)
         if affected:
             for p in affected:
-                test_paths.append(str(get_package_directory(p, root) / "tests"))
+                target_sub = "tests/unit" if args.unit else "tests"
+                test_paths.append(str(get_package_directory(p, root) / target_sub))
+    elif args.unit:
+        for pkg_dir in get_package_directories(root):
+            unit_dir = pkg_dir / "tests" / "unit"
+            if unit_dir.is_dir():
+                test_paths.append(str(unit_dir))
 
-    call_args = (test_paths or []) + (args.pytest_args or [])
+    call_args = (test_paths or []) + (unknown or [])
     sys.exit(pytest.main(call_args))
 
 
