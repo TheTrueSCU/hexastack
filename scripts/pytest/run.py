@@ -150,7 +150,10 @@ def main(cli_args: list[str] | None = None) -> int:
     args, extra_args = parser.parse_known_args(cli_args)
     repo_root = get_repo_root()
 
-    target_pkgs: set[str] | None = None
+    forwarded_args = list(extra_args)
+    # Strip leading '--' if passed to separate args
+    if forwarded_args and forwarded_args[0] == "--":
+        forwarded_args = forwarded_args[1:]
 
     if args.packages:
         target_pkgs = set(args.packages)
@@ -162,6 +165,20 @@ def main(cli_args: list[str] | None = None) -> int:
             target_pkgs = None
         elif not affected:
             print("✨ No code packages affected by current changeset. 0 tests needed.")
+            # Generate empty test/coverage reports so downstream CI steps (e.g. Codecov) find expected artifacts
+            for arg in forwarded_args:
+                if arg.startswith("--junitxml="):
+                    junit_path = repo_root / arg.split("=", 1)[1]
+                    junit_path.write_text(
+                        '<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="0" time="0.0"></testsuite></testsuites>\n',
+                        encoding="utf-8",
+                    )
+                if "--cov-report=xml" in arg or arg == "--cov-report=xml":
+                    cov_path = repo_root / "coverage.xml"
+                    cov_path.write_text(
+                        '<?xml version="1.0" ?><coverage version="7.0" timestamp="0" lines-valid="0" lines-covered="0" line-rate="1.0" branches-covered="0" branches-valid="0" branch-rate="1.0" complexity="0"><sources><source>packages</source></sources><packages></packages></coverage>\n',
+                        encoding="utf-8",
+                    )
             return 0
         else:
             target_pkgs = affected
@@ -174,11 +191,6 @@ def main(cli_args: list[str] | None = None) -> int:
                 f"Affected packages ({len(target_pkgs)}): {', '.join(sorted(target_pkgs))}"
             )
         return 0
-
-    forwarded_args = list(extra_args)
-    # Strip leading '--' if passed to separate args
-    if forwarded_args and forwarded_args[0] == "--":
-        forwarded_args = forwarded_args[1:]
 
     pytest_cmd_args = build_pytest_args(
         target_pkgs=target_pkgs,
