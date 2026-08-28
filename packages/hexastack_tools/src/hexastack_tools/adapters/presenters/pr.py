@@ -1,8 +1,9 @@
-"""Rich and JSON Presenters for PR examination and status auditing."""
+"""PR Summary Presenter supporting Rich ANSI panels, structured JSON, and plain TSV."""
 
 from __future__ import annotations
 
 import json
+import sys
 
 from rich.console import Console
 from rich.panel import Panel
@@ -10,6 +11,7 @@ from rich.table import Table
 
 from hexastack_tools.domain.github import (
     CheckRunFinding,
+    OutputFormat,
     PRSummary,
     ReviewThread,
 )
@@ -18,7 +20,7 @@ console = Console()
 
 
 def _render_check_conclusion(conclusion: str) -> str:
-    """Format check conclusion badge with rich styling."""
+    """Format conclusion with color styling."""
     conc = conclusion.lower()
     if conc == "success":
         return "[bold green]✓ SUCCESS[/bold green]"
@@ -31,78 +33,77 @@ def _render_check_conclusion(conclusion: str) -> str:
     return f"[bold yellow]⏳ {conc.upper()}[/bold yellow]"
 
 
-def _build_checks_table(checks: tuple[CheckRunFinding, ...]) -> Table:
-    """Build formatted table of CI check runs."""
-    check_table = Table(
-        title=f"[bold cyan]CI & Check Runs ({len(checks)} checks)[/bold cyan]",
+def _build_checks_table(check_runs: tuple[CheckRunFinding, ...]) -> Table:
+    """Construct Rich table for CI check runs."""
+    table = Table(
+        title=f"[bold cyan]CI / Check Runs ({len(check_runs)} checks)[/bold cyan]",
         show_header=True,
         header_style="bold magenta",
     )
-    check_table.add_column("Workflow", style="dim", width=22)
-    check_table.add_column("Job / Check Name", style="bold")
-    check_table.add_column("Status", width=12)
-    check_table.add_column("Conclusion", width=16)
-    check_table.add_column("Log Details", style="blue")
+    table.add_column("Workflow", style="dim", width=22)
+    table.add_column("Job / Check Name", style="bold")
+    table.add_column("Status", width=12)
+    table.add_column("Conclusion", width=16)
+    table.add_column("Details URL", style="blue")
 
-    for c in checks:
-        check_table.add_row(
+    for c in check_runs:
+        table.add_row(
             c.workflow_name or "CI",
             c.name,
             c.status,
             _render_check_conclusion(c.conclusion),
             c.details_url,
         )
-    return check_table
+    return table
 
 
 def _build_threads_table(threads: tuple[ReviewThread, ...]) -> Table:
-    """Build formatted table of review discussion threads."""
-    thread_table = Table(
-        title=f"[bold cyan]Review Conversations & Security Audit ({len(threads)} threads)[/bold cyan]",
+    """Construct Rich table for PR review conversation threads."""
+    table = Table(
+        title=f"[bold cyan]Review & Conversation Threads ({len(threads)} threads)[/bold cyan]",
         show_header=True,
         header_style="bold magenta",
     )
-    thread_table.add_column("Thread ID", style="dim", width=14)
-    thread_table.add_column("Author", style="bold", width=24)
-    thread_table.add_column("File / Location", width=36)
-    thread_table.add_column("Resolution Status", width=20)
-    thread_table.add_column("Snippet / Comment")
+    table.add_column("Thread ID", style="dim", width=12)
+    table.add_column("Author", style="bold", width=20)
+    table.add_column("Location", style="cyan", width=30)
+    table.add_column("Status", width=14)
+    table.add_column("Latest Snippet")
 
     for t in threads:
-        first_c = t.comments[0] if t.comments else None
-        author = first_c.author if first_c else "unknown"
-        loc = f"{first_c.path}:{first_c.line}" if first_c and first_c.path else "-"
-        snippet = first_c.body.splitlines()[0][:60] if first_c else ""
+        if not t.comments:
+            continue
+        first_c = t.comments[0]
+        author = first_c.author
+        loc = f"{first_c.path}:{first_c.line}" if first_c.path else "Discussion"
+        snippet = first_c.body.strip().split("\n")[0][:80]
 
-        if t.is_resolved:
-            res_styled = (
-                f"[bold green]✓ RESOLVED[/bold green] (by @{t.resolved_by or 'bot'})"
-            )
+        if "bot" in author.lower() or "security" in author.lower():
+            author_styled = f"[yellow]🤖 {author}[/yellow]"
         else:
-            res_styled = "[bold red]✗ UNRESOLVED[/bold red]"
+            author_styled = f"[cyan]{author}[/cyan]"
 
-        thread_table.add_row(
-            t.id[-8:],
-            author,
-            loc,
-            res_styled,
-            snippet,
+        status_styled = (
+            "[bold green]✓ Resolved[/bold green]"
+            if t.is_resolved
+            else "[bold red]✗ Unresolved[/bold red]"
         )
-    return thread_table
+        table.add_row(t.id, author_styled, loc, status_styled, snippet)
+    return table
 
 
 def render_pr_summary_rich(summary: PRSummary, show_details: bool = False) -> None:
-    """Render a comprehensive Rich dashboard for PRSummary."""
+    """Render full PR inspection dashboard using Rich components."""
     state_style = "bold green" if summary.state == "open" else "bold purple"
     clean_badge = (
-        "[bold green]✓ READY TO MERGE[/bold green]"
+        "[bold green]✓ CLEAN (Ready for Merge)[/bold green]"
         if summary.is_clean
-        else "[bold red]✗ CHECKS / REVIEWS REQUIRED[/bold red]"
+        else "[bold red]✗ BLOCKED (Has Failures/Unresolved Threads)[/bold red]"
     )
 
     header_body = (
         f"[bold white]Title:[/bold white] {summary.title}\n"
-        f"[bold white]Author:[/bold white] @{summary.author}\n"
+        f"[bold white]Author:[/bold white] [cyan]@{summary.author}[/cyan]\n"
         f"[bold white]Branch:[/bold white] [bold cyan]{summary.head_ref}[/bold cyan] ➔ [bold cyan]{summary.base_ref}[/bold cyan]\n"
         f"[bold white]State:[/bold white] [{state_style}]{summary.state.upper()}[/{state_style}] (mergeable: [bold]{summary.mergeable}[/bold])\n"
         f"[bold white]URL:[/bold white] [blue]{summary.html_url}[/blue]\n"
@@ -153,8 +154,8 @@ def render_pr_summary_json(summary: PRSummary) -> str:
                 "name": c.name,
                 "status": c.status,
                 "conclusion": c.conclusion,
+                "workflow": c.workflow_name,
                 "details_url": c.details_url,
-                "workflow_name": c.workflow_name,
             }
             for c in summary.check_runs
         ],
@@ -163,7 +164,17 @@ def render_pr_summary_json(summary: PRSummary) -> str:
                 "id": t.id,
                 "is_resolved": t.is_resolved,
                 "resolved_by": t.resolved_by,
-                "comments_count": len(t.comments),
+                "comments": [
+                    {
+                        "id": c.id,
+                        "author": c.author,
+                        "body": c.body,
+                        "path": c.path,
+                        "line": c.line,
+                        "created_at": c.created_at,
+                    }
+                    for c in t.comments
+                ],
             }
             for t in summary.review_threads
         ],
@@ -171,7 +182,41 @@ def render_pr_summary_json(summary: PRSummary) -> str:
     return json.dumps(data, indent=2)
 
 
+def render_pr_summary_plain(summary: PRSummary) -> str:
+    """Serialize PRSummary to line-delimited TSV string."""
+    lines: list[str] = [
+        f"PR\t{summary.number}\t{summary.state}\t{summary.mergeable}\t{summary.head_ref}\t{summary.base_ref}\t{summary.html_url}"
+    ]
+    for c in summary.check_runs:
+        lines.append(f"CHECK\t{c.name}\t{c.status}\t{c.conclusion}\t{c.details_url}")
+    for t in summary.review_threads:
+        status = "RESOLVED" if t.is_resolved else "UNRESOLVED"
+        for c in t.comments:
+            lines.append(
+                f"THREAD\t{t.id}\t{status}\t{c.author}\t{c.path or '-'}:{c.line or '-'}\t{c.body.strip().splitlines()[0]}"
+            )
+    return "\n".join(lines)
+
+
+def present_pr_summary(
+    summary: PRSummary,
+    output_format: OutputFormat = OutputFormat.RICH,
+    show_details: bool = False,
+) -> None:
+    """Unified entrypoint to present PR summary in rich, json, or plain format."""
+    if output_format == OutputFormat.JSON:
+        sys.stdout.write(render_pr_summary_json(summary) + "\n")
+        sys.stdout.flush()
+    elif output_format == OutputFormat.PLAIN:
+        sys.stdout.write(render_pr_summary_plain(summary) + "\n")
+        sys.stdout.flush()
+    else:
+        render_pr_summary_rich(summary, show_details=show_details)
+
+
 __all__ = [
+    "present_pr_summary",
     "render_pr_summary_json",
+    "render_pr_summary_plain",
     "render_pr_summary_rich",
 ]

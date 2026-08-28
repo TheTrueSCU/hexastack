@@ -4,6 +4,14 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 
+class OutputFormat(StrEnum):
+    """Output presentation formats supported across CLI tools."""
+
+    RICH = "rich"
+    JSON = "json"
+    PLAIN = "plain"
+
+
 class AlertSeverity(StrEnum):
     """Normalized security and quality alert severity."""
 
@@ -45,17 +53,17 @@ class ReviewComment:
 
 @dataclass(frozen=True)
 class ReviewThread:
-    """A conversation thread attached to a PR review."""
+    """Review discussion thread on a pull request."""
 
     id: str
     is_resolved: bool
-    resolved_by: str | None
     comments: tuple[ReviewComment, ...] = ()
+    resolved_by: str | None = None
 
 
 @dataclass(frozen=True)
 class SecurityAlert:
-    """A security or quality alert from CodeQL, Scorecard, or Dependabot."""
+    """GitHub code scanning or CodeQL alert."""
 
     number: int
     rule_id: str
@@ -64,15 +72,16 @@ class SecurityAlert:
     security_severity_level: str | None
     state: str
     path: str
-    start_line: int | None
-    end_line: int | None
+    start_line: int
+    end_line: int
     message: str
     help_markdown: str | None = None
+    created_at: str | None = None
 
 
 @dataclass(frozen=True)
 class PRSummary:
-    """Comprehensive aggregation of Pull Request state and governance checks."""
+    """Comprehensive summary of a GitHub Pull Request."""
 
     number: int
     title: str
@@ -87,21 +96,26 @@ class PRSummary:
     review_threads: tuple[ReviewThread, ...] = ()
     security_alerts: tuple[SecurityAlert, ...] = ()
     general_comments: tuple[ReviewComment, ...] = ()
-    scorecard_score: float | None = None
 
     @property
     def is_clean(self) -> bool:
-        """Indicate whether PR has zero failed checks and zero unresolved threads."""
-        has_failed_checks = any(
-            c.conclusion.lower() == "failure" for c in self.check_runs
+        """Check if PR has zero failures, all threads resolved, and no blocker alerts."""
+        checks_ok = all(
+            c.conclusion.lower() in ("success", "skipped", "neutral")
+            for c in self.check_runs
         )
-        has_unresolved_threads = any(not t.is_resolved for t in self.review_threads)
-        return not (has_failed_checks or has_unresolved_threads)
+        threads_ok = all(t.is_resolved for t in self.review_threads)
+        alerts_ok = not any(
+            a.severity.lower() in ("critical", "high", "error")
+            for a in self.security_alerts
+        )
+        return checks_ok and threads_ok and alerts_ok
 
 
 __all__ = [
     "AlertSeverity",
     "CheckRunFinding",
+    "OutputFormat",
     "PRSummary",
     "ReviewComment",
     "ReviewThread",

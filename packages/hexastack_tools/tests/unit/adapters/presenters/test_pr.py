@@ -4,11 +4,14 @@ from hexastack_tools.adapters.presenters.pr import (
     _build_checks_table,
     _build_threads_table,
     _render_check_conclusion,
+    present_pr_summary,
     render_pr_summary_json,
+    render_pr_summary_plain,
     render_pr_summary_rich,
 )
 from hexastack_tools.domain.github import (
     CheckRunFinding,
+    OutputFormat,
     PRSummary,
     ReviewComment,
     ReviewThread,
@@ -96,8 +99,28 @@ def test_render_pr_summary_rich() -> None:
     render_pr_summary_rich(summary, show_details=True)
 
 
-def test_render_pr_summary_json() -> None:
-    """Verify PRSummary JSON serialization format."""
+def test_render_pr_summary_json_and_plain() -> None:
+    """Verify PRSummary JSON and plain serialization format."""
+    comment = ReviewComment(
+        id=3,
+        author="alice",
+        body="LGTM",
+        created_at="2026-08-28T00:00:00Z",
+        path="src/main.py",
+        line=10,
+    )
+    thread = ReviewThread(
+        id="T3",
+        is_resolved=True,
+        resolved_by="alice",
+        comments=(comment,),
+    )
+    check = CheckRunFinding(
+        name="Linter",
+        status="completed",
+        conclusion="success",
+        details_url="https://ci.example.com",
+    )
     summary = PRSummary(
         number=41,
         title="fix(security): test",
@@ -108,7 +131,18 @@ def test_render_pr_summary_json() -> None:
         head_ref="fix/test",
         base_ref="main",
         html_url="https://github.com/pr/41",
+        check_runs=(check,),
+        review_threads=(thread,),
     )
     json_str = render_pr_summary_json(summary)
     assert '"number": 41' in json_str
     assert '"is_clean": true' in json_str
+
+    plain_str = render_pr_summary_plain(summary)
+    assert "PR\t41\topen" in plain_str
+    assert "CHECK\tCI\tLinter" in plain_str
+    assert "THREAD\tT3\tRESOLVED" in plain_str
+
+    present_pr_summary(summary, OutputFormat.RICH)
+    present_pr_summary(summary, OutputFormat.JSON)
+    present_pr_summary(summary, OutputFormat.PLAIN)
