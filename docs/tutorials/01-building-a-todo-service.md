@@ -53,10 +53,15 @@ cd todo-app
 todo-app/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                 # Tiered CI: Fast check on push, fuzzing on PR
-├── .importlinter                 # Hexagonal layer contracts
-├── .pre-commit-config.yaml       # Ruff, ty, complexipy, and import-linter
-├── pyproject.toml
+│       ├── ci.yml                 # Tiered CI: Fast check on push, fuzzing on PR
+│       ├── release.yml            # (Optional) Automated PyPI release & SBOM generation
+│       └── scorecard.yml          # (Optional) OpenSSF Scorecard automated security analysis
+├── .importlinter                  # Hexagonal layer contracts
+├── .pre-commit-config.yaml        # Ruff, ty, complexipy, and import-linter
+├── CHANGELOG.md                   # (Optional) Semantic release notes and changelog
+├── GOVERNANCE.md                  # (Optional) OpenSSF Project governance & maintainer roles
+├── pyproject.toml                 # Project metadata, dependencies & tool configs
+├── SECURITY.md                    # (Optional) OpenSSF Security & vulnerability disclosure policy
 ├── src/
 │   └── todo_app/
 │       ├── domain/                # 1. Pure Python Domain (Models, CQRS Messages)

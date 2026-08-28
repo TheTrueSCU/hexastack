@@ -117,3 +117,60 @@ def test_scaffold_graphql_service():
         assert "@strawberry.type" in gql_code
         assert "@strawberry.mutation" in gql_code
         assert "schema = strawberry.Schema" in gql_code
+
+
+def test_scaffold_with_release_and_openssf():
+    """Verify scaffolder generates release workflow, changelog, and OpenSSF governance suite."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest_dir = Path(tmpdir)
+        proj_dir = scaffold_project(
+            name="secure-service",
+            template="web-api",
+            include_release=True,
+            include_openssf=True,
+            output_dir=dest_dir,
+        )
+
+        # Verify release assets
+        assert (proj_dir / ".github" / "workflows" / "release.yml").exists()
+        release_yml = (proj_dir / ".github" / "workflows" / "release.yml").read_text()
+        assert "anchore/sbom-action" in release_yml
+        assert "pypa/gh-action-pypi-publish" in release_yml
+        assert (proj_dir / "CHANGELOG.md").exists()
+
+        # Verify OpenSSF & Governance assets
+        assert (proj_dir / ".github" / "workflows" / "scorecard.yml").exists()
+        scorecard_yml = (
+            proj_dir / ".github" / "workflows" / "scorecard.yml"
+        ).read_text()
+        assert "ossf/scorecard-action" in scorecard_yml
+        assert (proj_dir / "SECURITY.md").exists()
+        assert (proj_dir / "GOVERNANCE.md").exists()
+        assert (proj_dir / "CODE_OF_CONDUCT.md").exists()
+
+
+def test_scaffold_enterprise_includes_all_batteries():
+    """Verify enterprise template enables release, openssf, events, mcp, grpc, and graphql."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest_dir = Path(tmpdir)
+        proj_dir = scaffold_project(
+            name="mega-service",
+            template="enterprise",
+            include_release=True,
+            include_openssf=True,
+            output_dir=dest_dir,
+        )
+
+        assert (proj_dir / ".github" / "workflows" / "release.yml").exists()
+        assert (proj_dir / ".github" / "workflows" / "scorecard.yml").exists()
+        assert (proj_dir / "SECURITY.md").exists()
+        assert (proj_dir / "CHANGELOG.md").exists()
+        assert (
+            proj_dir / "src" / "mega_service" / "adapters" / "driving" / "grpc.py"
+        ).exists()
+        assert (
+            proj_dir / "src" / "mega_service" / "adapters" / "driving" / "graphql.py"
+        ).exists()
+        assert (
+            proj_dir / "src" / "mega_service" / "adapters" / "driving" / "mcp.py"
+        ).exists()
