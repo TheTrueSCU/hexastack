@@ -155,6 +155,8 @@ def main(cli_args: list[str] | None = None) -> int:
     if forwarded_args and forwarded_args[0] == "--":
         forwarded_args = forwarded_args[1:]
 
+    target_pkgs: set[str] | None = None
+
     if args.packages:
         target_pkgs = set(args.packages)
     elif args.affected:
