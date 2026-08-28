@@ -212,57 +212,6 @@ known-first-party = [
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.semantic_release]
-version_toml = [
-    "pyproject.toml:project.version",
-    "packages/hexastack/pyproject.toml:project.version",
-    "packages/hexastack_ai/pyproject.toml:project.version",
-    "packages/hexastack_auth/pyproject.toml:project.version",
-    "packages/hexastack_cli/pyproject.toml:project.version",
-    "packages/hexastack_core/pyproject.toml:project.version",
-    "packages/hexastack_cqrs/pyproject.toml:project.version",
-    "packages/hexastack_db/pyproject.toml:project.version",
-    "packages/hexastack_events/pyproject.toml:project.version",
-    "packages/hexastack_fastapi/pyproject.toml:project.version",
-    "packages/hexastack_flags/pyproject.toml:project.version",
-    "packages/hexastack_graphql/pyproject.toml:project.version",
-    "packages/hexastack_grpc/pyproject.toml:project.version",
-    "packages/hexastack_logging/pyproject.toml:project.version",
-    "packages/hexastack_mcp/pyproject.toml:project.version",
-    "packages/hexastack_otel/pyproject.toml:project.version",
-]
-version_variables = []
-branch = "main"
-tag_format = "v{version}"
-commit_parser = "conventional"
-major_on_zero = false
-allow_zero_version = true
-build_command = ""
-
-[tool.semantic_release.commit_parser_options]
-allowed_tags = [
-    "build",
-    "chore",
-    "ci",
-    "docs",
-    "feat",
-    "fix",
-    "perf",
-    "style",
-    "refactor",
-    "test",
-]
-minor_tags = ["feat"]
-patch_tags = ["fix", "perf"]
-
-[tool.semantic_release.changelog]
-exclude_commit_patterns = [
-    "chore\\(release\\):.*",
-]
-
-[tool.semantic_release.changelog.default_templates]
-changelog_file = "CHANGELOG.md"
-
 [tool.mutmut]
 runner = "pytest --import-mode=importlib -n 0 -x -q --no-cov -o addopts=\"\""
 
