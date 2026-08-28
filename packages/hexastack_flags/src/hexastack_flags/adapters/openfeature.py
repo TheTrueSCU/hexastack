@@ -62,6 +62,7 @@ class OpenFeatureFlagAdapter(FeatureFlagPort):
                     else:
                         flags[str(k)] = v
         except Exception:
+            # Fallback cleanly if provider data structure differs from expected shape
             pass
         return flags
 

@@ -77,7 +77,8 @@ def test_in_memory_vector_store_upsert_and_similarity_search():
 
     # Test get, delete, clear
     assert store.get("doc1") is not None
-    assert store.delete("doc1") is True
+    deleted = store.delete("doc1")
+    assert deleted is True
     assert store.get("doc1") is None
     store.clear()
     assert len(store.search([1.0, 0.0])) == 0

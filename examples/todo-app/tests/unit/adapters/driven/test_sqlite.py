@@ -52,7 +52,8 @@ def test_sqlite_repository_crud():
         assert len(repo.list_all(completed=False)) == 0
 
         # 5. Delete
-        assert repo.delete("todo-1") is True
+        deleted = repo.delete("todo-1")
+        assert deleted is True
         assert repo.get_by_id("todo-1") is None
 
 

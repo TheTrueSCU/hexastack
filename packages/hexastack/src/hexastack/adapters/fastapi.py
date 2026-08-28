@@ -65,6 +65,7 @@ def create_demo_app() -> Any:
                 path="/_devtools",
             )
         except Exception:
+            # DevTools mounting is optional and non-critical; pass silently on failure
             pass
 
     return app

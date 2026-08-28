@@ -195,5 +195,6 @@ def test_hypothesis_vector_adapter_storage_and_ordering_invariants(
 
     # 4. Deletion
     for vid, _, _ in valid_records:
-        assert adapter.delete(vid) is True
+        deleted = adapter.delete(vid)
+        assert deleted is True
         assert adapter.get(vid) is None

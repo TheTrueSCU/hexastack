@@ -311,6 +311,7 @@ def _parse_pyproject_metadata() -> tuple[list[str], dict[str, list[str]]]:
             for extra, deps in opt_deps.items():
                 extras[extra] = deps
         except (OSError, tomllib.TOMLDecodeError):
+            # Continue gracefully if pyproject.toml is unreadable or malformed
             pass
 
     return sorted(set(packages)), extras

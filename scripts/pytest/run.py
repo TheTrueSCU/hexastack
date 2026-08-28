@@ -38,6 +38,7 @@ def _get_git_changed_files(base_ref: str = "origin/main") -> list[str]:
         if files:
             return files
     except Exception:
+        # Fallback cleanly to checking uncommitted local diff if base_ref comparison fails
         pass
 
     # Fallback to local unstaged/staged diff

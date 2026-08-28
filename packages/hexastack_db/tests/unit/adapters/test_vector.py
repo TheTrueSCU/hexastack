@@ -141,8 +141,10 @@ def test_pg_vector_store_adapter_sync():
     assert results[0]["_score"] > results[1]["_score"]
 
     # Delete
-    assert adapter.delete("v1") is True
-    assert adapter.delete("non_existent") is False
+    deleted_v1 = adapter.delete("v1")
+    assert deleted_v1 is True
+    deleted_non_existent = adapter.delete("non_existent")
+    assert deleted_non_existent is False
     assert adapter.get("v1") is None
 
     # Clear

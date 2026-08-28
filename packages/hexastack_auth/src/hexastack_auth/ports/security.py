@@ -32,7 +32,7 @@ class SecurityPort(ABC):
         Raises:
             AuthError: If token generation or signing fails.
         """
-        ...
+        pass
 
     @abstractmethod
     def verify_token(self, token: str) -> Identity:
@@ -49,7 +49,7 @@ class SecurityPort(ABC):
             TokenExpiredError: If token has expired past its expiration timestamp.
             AuthError: If general verification fails.
         """
-        ...
+        pass
 
 
 __all__ = [
