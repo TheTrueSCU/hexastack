@@ -21,8 +21,12 @@ inline-snapshot-update = "scripts.inline_snapshot.update:main"
 mutmut-inspect = "scripts.mutmut.inspect:main"
 mutmut-run = "scripts.mutmut.run:main"
 pydeps-generate = "scripts.pydeps.generate:main"
+pypi-build = "scripts.pypi.build:main"
+pypi-check = "scripts.pypi.check:main"
+pypi-publish = "scripts.pypi.publish:main"
 pytest-archon-generate = "scripts.pytest_archon.generate:main"
 pytest-run = "scripts.pytest.run:main"
+
 rope-alphabetizer = "scripts.rope.alphabetizer:main"
 rope-run = "scripts.rope.run:main"
 
