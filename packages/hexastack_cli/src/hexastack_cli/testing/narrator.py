@@ -4,20 +4,12 @@ from __future__ import annotations
 
 import os
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from typer.testing import CliRunner, Result
 
-
-@dataclass(frozen=True)
-class TerminalEvent:
-    """A discrete timestamped event within a CLI demo recording session."""
-
-    event_type: str  # "step" | "input" | "output"
-    payload: str
-    timestamp: float
+from hexastack_cli.testing.events import TerminalEvent
 
 
 class CliNarrator:

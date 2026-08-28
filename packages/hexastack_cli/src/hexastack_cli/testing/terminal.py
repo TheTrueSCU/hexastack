@@ -8,13 +8,9 @@ import json
 import re
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from hexastack_cli.testing.events import TerminalEvent
 from hexastack_core.domain.exceptions import MissingDependencyError
-
-if TYPE_CHECKING:
-    from hexastack_cli.testing.narrator import TerminalEvent
-
 
 TERMINAL_HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
