@@ -63,6 +63,19 @@ def run_local_codeql_scan(
 
     root = get_repo_root()
 
+    # Ensure required query pack / extractor dependencies are available
+    console.print(f"[bold cyan]📦 Ensuring CodeQL pack '{query_suite}'...[/bold cyan]")
+    pack_res = subprocess.run(
+        [codeql_bin, "pack", "download", query_suite],
+        cwd=root,
+        capture_output=True,
+        text=True,
+    )
+    if pack_res.returncode != 0 and "Installed fresh" not in pack_res.stdout:
+        console.print(
+            f"[dim]Notice: Query pack download check returned: {pack_res.stderr.strip()}[/dim]"
+        )
+
     with tempfile.TemporaryDirectory(prefix="hexastack-codeql-db-") as tmp_db_dir:
         db_path = Path(tmp_db_dir) / "db"
         sarif_file = output_sarif or (Path(tmp_db_dir) / "results.sarif")
@@ -70,6 +83,7 @@ def run_local_codeql_scan(
         console.print(
             f"[bold cyan]🔍 1. Creating CodeQL database at {db_path}...[/bold cyan]"
         )
+
         create_cmd = [
             codeql_bin,
             "database",

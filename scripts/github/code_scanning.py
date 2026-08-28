@@ -56,6 +56,7 @@ def inspect_and_bucket_alerts(
     package_filter: str | None = None,
     severity_filter: str | None = None,
     state: str = "open",
+    show_details: bool = False,
 ) -> int:
     """Bucket open alerts by rule, severity, and package, displaying actionable tables.
 
@@ -64,6 +65,7 @@ def inspect_and_bucket_alerts(
         package_filter: Optional package name substring filter.
         severity_filter: Optional severity level filter.
         state: State filter ('open', 'closed', 'dismissed', or 'all').
+        show_details: If True, prints detailed inspection panels for matching alerts.
 
     Returns:
         0 if clean or alerts displayed, 1 on error.
@@ -74,26 +76,26 @@ def inspect_and_bucket_alerts(
     if not alerts:
         console.print(
             Panel(
-                f"[bold green]🎉 Zero {state} CodeQL code-scanning alerts found![/bold green]",
-                title="[bold cyan]CodeQL Code Scanning Status[/bold cyan]",
+                f"[bold green]🎉 Zero CodeQL code scanning alerts in state '{state}'![/bold green]",
+                title="[bold green]Clean Security State[/bold green]",
+                border_style="green",
             )
         )
         return 0
 
+    # Filter alerts
     if rule_filter:
         alerts = [
             a
             for a in alerts
             if rule_filter.lower() in a.get("rule", {}).get("id", "").lower()
         ]
-
     if severity_filter:
         alerts = [
             a
             for a in alerts
-            if severity_filter.lower() == a.get("rule", {}).get("severity", "").lower()
+            if a.get("rule", {}).get("severity", "").lower() == severity_filter.lower()
         ]
-
     if package_filter:
         alerts = [
             a
@@ -105,7 +107,13 @@ def inspect_and_bucket_alerts(
             .lower()
         ]
 
-    # Groupings
+    if not alerts:
+        console.print(
+            f"[yellow]No alerts matched the provided filters (rule: '{rule_filter}', pkg: '{package_filter}', sev: '{severity_filter}').[/yellow]"
+        )
+        return 0
+
+    # Group by Rule ID and Package
     by_rule: dict[str, list[dict[str, Any]]] = defaultdict(list)
     by_package: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
@@ -176,6 +184,12 @@ def inspect_and_bucket_alerts(
         detail_table.add_row(f"#{num}", rule, f"{path}:{line}", msg)
 
     console.print(detail_table)
+
+    # 3. Optional inline detailed view
+    if show_details:
+        for a in sorted(alerts, key=lambda x: x.get("number", 0), reverse=True):
+            inspect_single_alert(a["number"])
+
     return 0
 
 
@@ -268,6 +282,13 @@ def main() -> int:
         choices=["open", "closed", "dismissed", "all"],
         help="Alert state ('open', 'closed', 'dismissed', 'all').",
     )
+    parser.add_argument(
+        "--details",
+        "-d",
+        action="store_true",
+        default=False,
+        help="Print detailed contextual panels for all matching alerts.",
+    )
     args = parser.parse_args()
 
     try:
@@ -279,7 +300,9 @@ def main() -> int:
             package_filter=args.package,
             severity_filter=args.severity,
             state=args.state,
+            show_details=args.details,
         )
+
     except Exception as exc:
         console.print(
             f"[bold red]Error querying code scanning alerts:[/bold red] {exc}"
