@@ -36,6 +36,9 @@ class RetryMiddlewareConfig(BaseModel):
     enable: bool = Field(default=True)
     order: int = Field(default=50)
     max_attempts: int = Field(default=3, ge=1)
+    initial_backoff_seconds: float = Field(default=0.1, gt=0.0)
+    max_backoff_seconds: float = Field(default=5.0, gt=0.0)
+    jitter: bool = Field(default=True)
     circuit_breaker_threshold: int = Field(default=5, ge=1)
     recovery_timeout_seconds: float = Field(default=10.0, gt=0.0)
 

@@ -19,6 +19,7 @@
   - `CorrelationMiddleware`: Propagates correlation IDs across requests and async tasks.
   - `TimingMiddleware`: Measures and records execution latency.
   - `LoggingMiddleware`: Logs execution lifecycles and errors via `LoggerPort` (dynamically gated via `features.cqrs.logging`).
+  - `StaminaRetryMiddleware`: Modern exponential backoff with full jitter powered by `stamina` (dynamically gated via `features.cqrs.retry`).
   - `TenacityRetryMiddleware`: Exponential backoff and retry policies powered by `tenacity` (dynamically gated via `features.cqrs.retry`).
   - `UnitOfWorkMiddleware`: Automatic transaction scoping (`commit()` on success, `rollback()` on failure).
   - `ConditionalFeatureFlagMiddleware`: Evaluates dynamic feature flags before dispatching commands/queries.
@@ -49,8 +50,9 @@ hexastack_cqrs/
 | **Bootstrap** | `CqrsBootstrapper` (order=20), `CqrsConfig` |
 | **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@cached_query`, `@invalidates_cache`, `@feature_flag`, `@presenter` |
 | **Domain** | `Command`, `Query`, `Event`, `CommandHandler`, `QueryHandler`, `EventHandler` |
-| **Middlewares** | `CorrelationMiddleware`, `TimingMiddleware`, `LoggingMiddleware`, `QueryCachingMiddleware`, `CommandCacheInvalidationMiddleware`, `TenacityRetryMiddleware`, `UnitOfWorkMiddleware`, `ConditionalFeatureFlagMiddleware`, `ExecutionPipeline` |
+| **Middlewares** | `CorrelationMiddleware`, `TimingMiddleware`, `LoggingMiddleware`, `QueryCachingMiddleware`, `CommandCacheInvalidationMiddleware`, `StaminaRetryMiddleware`, `TenacityRetryMiddleware`, `UnitOfWorkMiddleware`, `ConditionalFeatureFlagMiddleware`, `ExecutionPipeline` |
 | **Ports** | `CommandBusPort`, `QueryBusPort`, `EventBusPort`, `MiddlewarePort` |
+
 
 
 ---

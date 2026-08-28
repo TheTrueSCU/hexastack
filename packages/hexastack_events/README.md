@@ -48,7 +48,7 @@ graph TD
 
 ```
 hexastack_events/
-├── domain/          # EventContext, OutboxRecord, OutboxStatus, CloudEventEnvelope, EventError
+├── domain/          # EventContext, OutboxRecord, OutboxStatus, CloudEventEnvelope, MsgspecEnvelopeSerializer, EventError
 ├── ports/           # OutboxStoragePort, OutboxRelayPort, DistributedEventBusPort
 ├── adapters/
 │   ├── cloudevents/ # to_cloudevent, from_cloudevent, cloudevent_to_json/dict
@@ -56,6 +56,15 @@ hexastack_events/
 │   └── buses/       # InMemoryDistributedEventBus
 └── infra/           # EventsBootstrapper (order=22), HexastackEventsConfig, OutboxCaptureMiddleware
 ```
+
+### High-Throughput `msgspec` Serialization
+
+`hexastack-events` includes high-performance zero-copy serialization engines powered by `msgspec`:
+
+- `encode_cloudevent_bytes(envelope)` / `decode_cloudevent_bytes(data)`: Optimized UTF-8 JSON encoding.
+- `encode_cloudevent_msgpack(envelope)` / `decode_cloudevent_msgpack(data)`: Binary MessagePack encoding.
+- `MsgspecEnvelopeSerializer`: Reusable wire serialization adapter.
+
 
 ---
 
