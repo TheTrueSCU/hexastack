@@ -5,8 +5,8 @@ from hexastack_core.infra.bootstrap import bootstrap
 
 def main() -> None:
     """CLI script entrypoint executing the Hexastack diagnostic and inspection application."""
-    import hexastack.adapters.cli
-    import hexastack.application.diagnostics
+    import hexastack.adapters.cli as cli_module
+    import hexastack.application.diagnostics as diag_module
     from hexastack.adapters.cli import (
         add_db_commands,
         add_dev_command,
@@ -21,10 +21,11 @@ def main() -> None:
 
     result = bootstrap(
         packages_to_scan=[
-            hexastack.application.diagnostics,
-            hexastack.adapters.cli,
+            diag_module,
+            cli_module,
         ],
     )
+
     cli_app = result.get("cli_app")
     if cli_app is not None:
         add_scaffold_commands(cli_app)

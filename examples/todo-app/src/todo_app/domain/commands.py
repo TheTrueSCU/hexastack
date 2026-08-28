@@ -31,8 +31,12 @@ class DeleteTodoCommand(Command):
     """Command to remove a task from the list."""
 
     todo_id: str = Field(..., description="Unique identifier of the task.")
-    requester_id: str = Field("alice", description="Caller identifier performing the deletion.")
-    is_admin: bool = Field(False, description="Whether the caller has admin override privileges.")
+    requester_id: str = Field(
+        "alice", description="Caller identifier performing the deletion."
+    )
+    is_admin: bool = Field(
+        False, description="Whether the caller has admin override privileges."
+    )
 
 
 class TodoItemDTO(BaseModel):

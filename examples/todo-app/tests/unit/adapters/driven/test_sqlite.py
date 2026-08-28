@@ -66,7 +66,9 @@ def test_ch02_sqlite_fastapi_integration():
         client = TestClient(app)
 
         # Create todo via HTTP
-        resp = client.post("/todos", json={"title": "Write Chapter 2 Docs", "priority": "high"})
+        resp = client.post(
+            "/todos", json={"title": "Write Chapter 2 Docs", "priority": "high"}
+        )
         assert resp.status_code == 201
         created_id = resp.json()["id"]
 

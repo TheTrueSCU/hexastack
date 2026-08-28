@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import uvicorn
 from fastapi import FastAPI
-from rodi import Container
-
 from hexastack_core.adapters.ai import InMemoryLlmProvider
 from hexastack_core.adapters.feature_flags.in_memory import InMemoryFeatureFlagAdapter
 from hexastack_core.adapters.notification import InMemoryNotificationAdapter
@@ -18,8 +16,8 @@ from hexastack_core.ports.ai import LlmProviderPort
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_core.ports.notification import NotificationPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+from rodi import Container
 
-import todo_app.adapters.driving.http
 import todo_app.adapters.driving.mcp
 import todo_app.infra.handlers
 from todo_app.adapters.driven.sqlite import (

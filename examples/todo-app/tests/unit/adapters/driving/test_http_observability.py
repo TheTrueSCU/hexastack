@@ -6,15 +6,14 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from hexastack_core.adapters.logging import InMemoryLogger
-from hexastack_core.ports.logging import LoggingPort
-from rodi import Container
-
 from hexastack_core.adapters.notification import InMemoryNotificationAdapter
 from hexastack_core.infra.bootstrap import bootstrap
+from hexastack_core.ports.logging import LoggingPort
 from hexastack_core.ports.notification import NotificationPort
-from fastapi import FastAPI
+from rodi import Container
 
 import todo_app.infra.handlers
 from todo_app.adapters.driven.sqlite import (

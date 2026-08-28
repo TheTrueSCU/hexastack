@@ -31,6 +31,7 @@ class ExceptionServerInterceptor(GenericServerInterceptor):
         except Exception as exc:  # noqa: BLE001
             status_code, details = _map_exception_to_status_code(exc)
             context.abort(status_code, details)
+            return None
 
 
 class AsyncExceptionServerInterceptor(AsyncGenericServerInterceptor):
@@ -49,6 +50,7 @@ class AsyncExceptionServerInterceptor(AsyncGenericServerInterceptor):
         except Exception as exc:  # noqa: BLE001
             status_code, details = _map_exception_to_status_code(exc)
             await context.abort(status_code, details)
+            return None
 
 
 __all__ = [

@@ -144,10 +144,8 @@ markers = [
     "ch07: Tutorial Chapter 7 tests",
 ]
 
-[tool.ruff]
-exclude = ["examples/**"]
-
 [tool.ruff.lint]
+
 select = [
     "ARG",  # flake8-unused-arguments
     "B",    # flake8-bugbear
@@ -196,8 +194,10 @@ ignore = [
 # Alphabetized per-file ignore mappings
 "**/hexastack_cli/**/*.py" = ["T201"]
 "**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
-"examples/**" = ["ARG", "D", "E501", "F401", "S101", "T201", "UP042"]
+"examples/**/*.py" = ["ARG", "D", "E501", "F401", "S101", "S105", "T201", "UP042"]
 "scripts/**/*.py" = ["D", "E501", "S603", "T201", "T203"]
+
+
 
 [tool.ruff.lint.isort]
 known-first-party = [

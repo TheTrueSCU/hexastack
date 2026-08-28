@@ -9,6 +9,7 @@ from hexastack_core.ports.notification import (
     NotificationPriority,
 )
 from hexastack_cqrs.infra.decorators import command_handler, query_handler
+
 from todo_app.domain.commands import (
     CompleteTodoCommand,
     CreateTodoCommand,
@@ -17,7 +18,6 @@ from todo_app.domain.commands import (
     ListTodosQuery,
     TodoItemDTO,
 )
-from todo_app.domain.events import AdminDeletedUserTodoEvent
 from todo_app.domain.models import TodoItem, TodoNotFoundError
 from todo_app.ports.repositories import TodoRepositoryPort
 
@@ -139,7 +139,9 @@ def handle_create_todo(cmd: CreateTodoCommand, repo: TodoRepositoryPort) -> Todo
     return CreateTodoHandler(repo)(cmd)
 
 
-def handle_complete_todo(cmd: CompleteTodoCommand, repo: TodoRepositoryPort) -> TodoItemDTO:
+def handle_complete_todo(
+    cmd: CompleteTodoCommand, repo: TodoRepositoryPort
+) -> TodoItemDTO:
     return CompleteTodoHandler(repo)(cmd)
 
 
@@ -151,7 +153,9 @@ def handle_delete_todo(
     return DeleteTodoHandler(repo, notifier or InMemoryNotificationAdapter())(cmd)
 
 
-def handle_list_todos(query: ListTodosQuery, repo: TodoRepositoryPort) -> list[TodoItemDTO]:
+def handle_list_todos(
+    query: ListTodosQuery, repo: TodoRepositoryPort
+) -> list[TodoItemDTO]:
     return ListTodosHandler(repo)(query)
 
 
