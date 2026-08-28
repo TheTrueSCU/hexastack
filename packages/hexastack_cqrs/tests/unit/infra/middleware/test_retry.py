@@ -3,7 +3,10 @@ import pytest
 from hexastack_core.adapters.logging import InMemoryLogger
 from hexastack_core.domain import Command, HexastackError
 from hexastack_cqrs.infra.config import RetryMiddlewareConfig
-from hexastack_cqrs.infra.middleware.retry import TenacityRetryMiddleware
+from hexastack_cqrs.infra.middleware.retry import (
+    StaminaRetryMiddleware,
+    TenacityRetryMiddleware,
+)
 
 
 class _DummyCommand(Command):
@@ -133,3 +136,96 @@ def test_skips_retry_when_disabled():
     result = middleware(_DummyCommand(val=7), handler)
     assert result == 7
     assert len(calls) == 1
+
+
+def test_stamina_retry_middleware_success():
+    calls = 0
+
+    def handler(cmd: _DummyCommand) -> int:
+        nonlocal calls
+        calls += 1
+        return cmd.val * 2
+
+    mw = StaminaRetryMiddleware(
+        config=RetryMiddlewareConfig(max_attempts=3, initial_backoff_seconds=0.01)
+    )
+    res = mw(_DummyCommand(val=5), handler)
+    assert res == 10
+    assert calls == 1
+
+
+def test_stamina_retry_middleware_retries_transient_failure():
+    calls = 0
+    logger = InMemoryLogger()
+
+    def handler(cmd: _DummyCommand) -> int:
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            raise ConnectionResetError("transient network blip")
+        return cmd.val + 20
+
+    mw = StaminaRetryMiddleware(
+        logger=logger,
+        config=RetryMiddlewareConfig(
+            max_attempts=4,
+            initial_backoff_seconds=0.01,
+            max_backoff_seconds=0.05,
+        ),
+    )
+    res = mw(_DummyCommand(val=10), handler)
+    assert res == 30
+    assert calls == 3
+    assert any("Stamina retrying" in entry.message for entry in logger.entries)
+
+
+def test_stamina_retry_middleware_skips_hexastack_domain_error():
+    calls = 0
+    logger = InMemoryLogger()
+
+    def handler(cmd: _DummyCommand) -> int:
+        nonlocal calls
+        calls += 1
+        raise HexastackError("Deterministic business rule failed")
+
+    mw = StaminaRetryMiddleware(
+        logger=logger,
+        config=RetryMiddlewareConfig(max_attempts=3, initial_backoff_seconds=0.01),
+    )
+
+    with pytest.raises(HexastackError, match="Deterministic business rule failed"):
+        mw(_DummyCommand(val=0), handler)
+
+    assert calls == 1
+
+
+def test_stamina_retry_middleware_dynamic_feature_flag():
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+
+    flags = InMemoryFeatureFlagAdapter({"features.cqrs.retry": False})
+    middleware = StaminaRetryMiddleware(
+        flags=flags,
+        config=RetryMiddlewareConfig(max_attempts=3, initial_backoff_seconds=0.01),
+    )
+    attempts = 0
+
+    def flaky(cmd: _DummyCommand) -> int:
+        nonlocal attempts
+        attempts += 1
+        if attempts < 2:
+            raise RuntimeError("flaky fail")
+        return cmd.val
+
+    # When flag is False, retry is disabled dynamically
+    with pytest.raises(RuntimeError, match="flaky fail"):
+        middleware(_DummyCommand(val=10), flaky)
+    assert attempts == 1
+
+    # When flag is True, retry activates dynamically
+    flags.set_flag("features.cqrs.retry", True)
+    attempts = 0
+    res = middleware(_DummyCommand(val=10), flaky)
+    assert res == 10
+    assert attempts == 2

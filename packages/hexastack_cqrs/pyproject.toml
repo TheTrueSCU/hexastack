@@ -10,6 +10,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "hexastack-core",
+    "stamina>=24.2.0",
     "tenacity>=9.0.0",
 ]
 
@@ -17,6 +18,7 @@ dependencies = [
 huey = [
     "huey>=3.3.4",
 ]
+
 
 [project.entry-points."hexastack.bootstrappers"]
 cqrs = "hexastack_cqrs.infra.bootstrap:CqrsBootstrapper"
