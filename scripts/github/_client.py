@@ -161,3 +161,39 @@ class GitHubClient:
         )
         resp.raise_for_status()
         return [item for item in resp.json() if "pull_request" not in item]
+
+    def list_workflow_runs(
+        self,
+        workflow_name_or_file: str = "release.yml",
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        """List recent workflow runs for a specific workflow file.
+
+        Args:
+            workflow_name_or_file: Workflow filename (e.g. 'release.yml', 'ci.yml').
+            limit: Maximum runs to retrieve.
+
+        Returns:
+            List of workflow run summary dictionaries.
+        """
+        resp = self._client.get(
+            f"/repos/{self.owner}/{self.repo}/actions/workflows/{workflow_name_or_file}/runs",
+            params={"per_page": limit},
+        )
+        resp.raise_for_status()
+        return resp.json().get("workflow_runs", [])
+
+    def get_workflow_run(self, run_id: int) -> dict[str, Any]:
+        """Retrieve details of a specific workflow run.
+
+        Args:
+            run_id: GitHub Actions workflow run ID.
+
+        Returns:
+            Workflow run details dictionary.
+        """
+        resp = self._client.get(
+            f"/repos/{self.owner}/{self.repo}/actions/runs/{run_id}"
+        )
+        resp.raise_for_status()
+        return resp.json()

@@ -75,24 +75,12 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install dependencies
+        run: uv sync --all-packages --all-extras --all-groups
+
       - name: Build All Monorepo Distribution Packages
-        run: |
-          mkdir -p dist
-          uv build --package hexastack --out-dir dist/
-          uv build --package hexastack-core --out-dir dist/
-          uv build --package hexastack-cqrs --out-dir dist/
-          uv build --package hexastack-logging --out-dir dist/
-          uv build --package hexastack-fastapi --out-dir dist/
-          uv build --package hexastack-cli --out-dir dist/
-          uv build --package hexastack-db --out-dir dist/
-          uv build --package hexastack-auth --out-dir dist/
-          uv build --package hexastack-events --out-dir dist/
-          uv build --package hexastack-ai --out-dir dist/
-          uv build --package hexastack-mcp --out-dir dist/
-          uv build --package hexastack-flags --out-dir dist/
-          uv build --package hexastack-graphql --out-dir dist/
-          uv build --package hexastack-grpc --out-dir dist/
-          uv build --package hexastack-otel --out-dir dist/
+        run: uv run pypi-build --out-dir dist/
+
 
       - name: Publish Distribution Packages to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
