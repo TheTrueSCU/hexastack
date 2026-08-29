@@ -8,31 +8,30 @@ dependencies = [
 ]
 
 [project.scripts]
-alphabetizer = "scripts.rope.alphabetizer:main"
-check-all-statements = "scripts.pre_commit.all_statements:main_check"
-check-test-parity = "scripts.pre_commit.check_test_parity:main"
-codeql-scan = "scripts.codeql.scan:main"
-deptry-run = "scripts.deptry.run:main"
-fix-all-statements = "scripts.pre_commit.all_statements:main_fix"
-gh-checks = "scripts.github.checks:main"
-gh-code-scanning = "scripts.github.code_scanning:main"
-gh-security = "scripts.github.security:main"
+alphabetizer = "hexastack_tools.commands.rope:alphabetize_main"
+check-all-statements = "hexastack_tools.commands.all_statements:check_main"
+check-test-parity = "hexastack_tools.commands.test_parity:main"
+codeql-scan = "hexastack_tools.commands.codeql_scan:main"
+deptry-run = "hexastack_tools.commands.deptry:main"
+fix-all-statements = "hexastack_tools.commands.all_statements:fix_main"
+gh-checks = "hexastack_tools.commands.checks:main"
+gh-code-scanning = "hexastack_tools.commands.code_scanning:main"
+gh-pr-examine = "hexastack_tools.commands.pr_examine:main"
+gh-security = "hexastack_tools.commands.security:main"
+import-linter-generate = "hexastack_tools.commands.import_linter:generate_main"
+import-linter-run = "hexastack_tools.commands.import_linter:run_main"
+inline-snapshot-update = "hexastack_tools.commands.inline_snapshot:main"
+mutmut-inspect = "hexastack_tools.commands.mutmut:inspect_main"
+mutmut-run = "hexastack_tools.commands.mutmut:run_main"
+pydeps-generate = "hexastack_tools.commands.pydeps:generate_main"
+pypi-build = "hexastack_tools.commands.pypi:build_main"
+pypi-check = "hexastack_tools.commands.pypi:check_main"
+pypi-publish = "hexastack_tools.commands.pypi:publish_main"
+pytest-archon-generate = "hexastack_tools.commands.pytest_runner:archon_generate_main"
+pytest-run = "hexastack_tools.commands.pytest_runner:run_main"
+rope-alphabetizer = "hexastack_tools.commands.rope:alphabetize_main"
+rope-run = "hexastack_tools.commands.rope:run_main"
 
-
-import-linter-generate = "scripts.import_linter.generate:main"
-import-linter-run = "scripts.import_linter.run:main"
-inline-snapshot-update = "scripts.inline_snapshot.update:main"
-mutmut-inspect = "scripts.mutmut.inspect:main"
-mutmut-run = "scripts.mutmut.run:main"
-pydeps-generate = "scripts.pydeps.generate:main"
-pypi-build = "scripts.pypi.build:main"
-pypi-check = "scripts.pypi.check:main"
-pypi-publish = "scripts.pypi.publish:main"
-pytest-archon-generate = "scripts.pytest_archon.generate:main"
-pytest-run = "scripts.pytest.run:main"
-
-rope-alphabetizer = "scripts.rope.alphabetizer:main"
-rope-run = "scripts.rope.run:main"
 
 
 [build-system]
@@ -60,6 +59,8 @@ hexastack-grpc = { workspace = true }
 hexastack-logging = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
+hexastack-tools = { workspace = true }
+
 
 [dependency-groups]
 dev = [
@@ -113,7 +114,9 @@ omit = [
     "*/__pycache__/*",
     "*/testing/*",
     "*/tests/*",
+    "packages/hexastack_tools/*",
 ]
+
 
 [tool.coverage.report]
 fail_under = 90
@@ -198,13 +201,11 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Alphabetized per-file ignore mappings
 "**/hexastack_cli/**/*.py" = ["T201"]
+"**/hexastack_tools/**/*.py" = ["D", "E501", "S112", "S603", "S608", "T201", "T203"]
 "**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
+
 "examples/**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
 "examples/**/*.py" = ["ARG", "D", "E501", "F401", "S101", "S105", "T201", "UP042"]
-"scripts/**/*.py" = ["D", "E501", "S603", "T201", "T203"]
-
-
-
 
 [tool.ruff.lint.isort]
 known-first-party = [
@@ -217,13 +218,16 @@ known-first-party = [
     "hexastack_db",
     "hexastack_events",
     "hexastack_fastapi",
+    "hexastack_flags",
     "hexastack_graphql",
     "hexastack_grpc",
     "hexastack_logging",
     "hexastack_mcp",
     "hexastack_otel",
-    "scripts",
+    "hexastack_tools",
 ]
+
+
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -241,6 +245,8 @@ ignore_names = [
     "message_path",
     "model_config",
     "visit_*",
+    "leave_*",
     "on_connect",
+    "original_node",
     "Huey",
 ]

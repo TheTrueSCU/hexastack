@@ -23,6 +23,7 @@ members = [
     "hexastack-logging",
     "hexastack-mcp",
     "hexastack-otel",
+    "hexastack-tools",
     "hexastack-workspace",
 ]
 
@@ -1733,6 +1734,7 @@ all = [
     { name = "hexastack-grpc" },
     { name = "hexastack-mcp" },
     { name = "hexastack-otel" },
+    { name = "hexastack-tools" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 auth = [
@@ -1779,6 +1781,9 @@ testing = [
     { name = "pytest-archon" },
     { name = "schemathesis" },
 ]
+tools = [
+    { name = "hexastack-tools" },
+]
 ui = [
     { name = "hexastack-fastapi", extra = ["ui"] },
 ]
@@ -1819,6 +1824,8 @@ requires-dist = [
     { name = "hexastack-mcp", marker = "extra == 'mcp'", editable = "packages/hexastack_mcp" },
     { name = "hexastack-otel", marker = "extra == 'all'", editable = "packages/hexastack_otel" },
     { name = "hexastack-otel", marker = "extra == 'otel'", editable = "packages/hexastack_otel" },
+    { name = "hexastack-tools", marker = "extra == 'all'", editable = "packages/hexastack_tools" },
+    { name = "hexastack-tools", marker = "extra == 'tools'", editable = "packages/hexastack_tools" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=6.100.0" },
     { name = "inline-snapshot", marker = "extra == 'testing'", specifier = ">=0.35.4" },
     { name = "playwright", marker = "extra == 'testing'", specifier = ">=1.49.0" },
@@ -1827,7 +1834,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "auth", "cli", "db", "sql", "docs", "events", "fastapi", "graphql", "grpc", "mcp", "otel", "web", "flags", "ui", "testing", "all"]
+provides-extras = ["ai", "auth", "cli", "db", "sql", "docs", "events", "fastapi", "graphql", "grpc", "mcp", "otel", "web", "flags", "ui", "testing", "tools", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2273,6 +2280,29 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.10.0" },
 ]
 provides-extras = ["otlp"]
+
+[[package]]
+name = "hexastack-tools"
+version = "0.1.0"
+source = { editable = "packages/hexastack_tools" }
+dependencies = [
+    { name = "hexastack-cli" },
+    { name = "hexastack-core" },
+    { name = "hexastack-cqrs" },
+    { name = "httpx" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "hexastack-cli", editable = "packages/hexastack_cli" },
+    { name = "hexastack-core", editable = "packages/hexastack_core" },
+    { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "httpx", specifier = ">=0.28.0" },
+    { name = "rich", specifier = ">=13.8.0" },
+    { name = "typer", specifier = ">=0.27.1" },
+]
 
 [[package]]
 name = "hexastack-workspace"

@@ -29,8 +29,6 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 
-[tool.importlinter]
-root_packages = ["hexastack_flags"]
 
 [[tool.importlinter.contracts]]
 name = "Hexagonal architecture layer hierarchy"
@@ -59,4 +57,18 @@ source_modules = ["hexastack_flags.ports"]
 forbidden_modules = [
     "hexastack_flags.adapters",
     "hexastack_flags.infra",
+]
+
+[tool.importlinter]
+root_packages = ["hexastack_flags"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_flags"]
+layers = [
+    "adapters",
+    "infra",
+    "ports",
+    "domain",
 ]

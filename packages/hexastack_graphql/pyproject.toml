@@ -32,8 +32,6 @@ hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 hexastack-fastapi = { workspace = true }
 
-[tool.importlinter]
-root_packages = ["hexastack_graphql"]
 
 [[tool.importlinter.contracts]]
 name = "Hexagonal architecture layer hierarchy"
@@ -51,4 +49,17 @@ source_modules = ["hexastack_graphql.domain"]
 forbidden_modules = [
     "hexastack_graphql.adapters",
     "hexastack_graphql.infra",
+]
+
+[tool.importlinter]
+root_packages = ["hexastack_graphql"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_graphql"]
+layers = [
+    "adapters",
+    "infra",
+    "domain",
 ]

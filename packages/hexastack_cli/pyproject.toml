@@ -33,3 +33,28 @@ hexastack-cqrs = { workspace = true }
 
 [tool.importlinter]
 root_packages = ["hexastack_cli"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_cli"]
+layers = [
+    "adapters",
+    "infra",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for adapters"
+type = "forbidden"
+source_modules = ["hexastack_cli.adapters"]
+forbidden_modules = [
+    "hexastack_cli.testing",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for infra"
+type = "forbidden"
+source_modules = ["hexastack_cli.infra"]
+forbidden_modules = [
+    "hexastack_cli.testing",
+]

@@ -31,8 +31,6 @@ build-backend = "uv_build"
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 
-[tool.importlinter]
-root_packages = ["hexastack_grpc"]
 
 [[tool.importlinter.contracts]]
 name = "Hexagonal architecture layer hierarchy"
@@ -50,4 +48,17 @@ source_modules = ["hexastack_grpc.domain"]
 forbidden_modules = [
     "hexastack_grpc.adapters",
     "hexastack_grpc.infra",
+]
+
+[tool.importlinter]
+root_packages = ["hexastack_grpc"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_grpc"]
+layers = [
+    "adapters",
+    "infra",
+    "domain",
 ]

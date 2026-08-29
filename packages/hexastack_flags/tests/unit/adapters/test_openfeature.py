@@ -1,8 +1,7 @@
+from hexastack_core.domain.feature_flags import EvaluationContext
 from hexastack_flags.adapters.openfeature import OpenFeatureFlagAdapter
 from hexastack_flags.adapters.providers.factory import initialize_openfeature_provider
 from hexastack_flags.domain.models import FeatureFlagProviderType
-
-from hexastack_core.domain.feature_flags import EvaluationContext
 
 
 def test_openfeature_adapter_in_memory():
@@ -65,14 +64,14 @@ def test_openfeature_factory_missing_dependencies():
     from unittest.mock import patch
 
     import pytest
+
+    from hexastack_core.domain.exceptions import MissingDependencyError
     from hexastack_flags.adapters.providers.factory import (
         _build_flagd_provider,
         _build_flipt_provider,
         _build_unleash_provider,
     )
     from hexastack_flags.domain.models import FlagProviderOptions
-
-    from hexastack_core.domain.exceptions import MissingDependencyError
 
     opts = FlagProviderOptions(host="127.0.0.1", port=8080)
     with patch("importlib.import_module", side_effect=ImportError("No module")):
@@ -93,6 +92,7 @@ def test_openfeature_adapter_details_unknown_reason_and_custom_provider_flags():
     from unittest.mock import MagicMock
 
     import openfeature.api as of_api
+
     from hexastack_flags.adapters.openfeature import OpenFeatureFlagAdapter
 
     mock_client = MagicMock()
