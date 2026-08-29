@@ -114,7 +114,9 @@ omit = [
     "*/__pycache__/*",
     "*/testing/*",
     "*/tests/*",
+    "packages/hexastack_tools/*",
 ]
+
 
 [tool.coverage.report]
 fail_under = 90
