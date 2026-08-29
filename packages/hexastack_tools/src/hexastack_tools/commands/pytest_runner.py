@@ -53,10 +53,16 @@ def _resolve_test_targets(
     packages: list[str] | None,
     affected: bool,
     unit_only: bool,
+    properties_only: bool,
     root: Path,
 ) -> list[str]:
     """Resolve target test directory paths based on CLI flags."""
-    sub_dir = "tests/unit" if unit_only else "tests"
+    if properties_only:
+        sub_dir = "tests/properties"
+    elif unit_only:
+        sub_dir = "tests/unit"
+    else:
+        sub_dir = "tests"
 
     if packages:
         return [str(get_package_directory(p, root) / sub_dir) for p in packages]
@@ -66,7 +72,9 @@ def _resolve_test_targets(
         affected_pkgs = resolve_affected_packages(changed, root)
         if affected_pkgs is not None:
             return [
-                str(get_package_directory(p, root) / sub_dir) for p in affected_pkgs
+                str(target)
+                for p in affected_pkgs
+                if (target := get_package_directory(p, root) / sub_dir).is_dir()
             ]
         # None indicates workspace-wide impact -> fall through to all packages
 
@@ -85,6 +93,7 @@ def run_main() -> None:
     )
     parser.add_argument("-A", "--affected", action="store_true")
     parser.add_argument("-U", "--unit", action="store_true")
+    parser.add_argument("-P", "--properties", action="store_true")
     args, unknown = parser.parse_known_args()
 
     root = get_repo_root()
@@ -92,6 +101,7 @@ def run_main() -> None:
         packages=args.packages,
         affected=args.affected,
         unit_only=args.unit,
+        properties_only=args.properties,
         root=root,
     )
 
