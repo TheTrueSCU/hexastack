@@ -17,8 +17,10 @@ nav = [
     ]},
     { "Architecture" = "architecture.md" },
     { "Developer Tools" = "tools.md" },
-    { "Packages" = "packages.md" }
+    { "Packages" = "packages.md" },
+    { "Compliance & Regulatory" = "compliance.md" }
 ]
+
 
 
 [project.markdown_extensions]
