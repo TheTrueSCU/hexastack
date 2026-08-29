@@ -13,11 +13,14 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 
 ---
 
-## 🚀 Near-Term Priorities (v0.2.0)
-- **High-Throughput Serialization**: Zero-copy `msgspec` JSON & MessagePack codec engine for high-throughput CQRS bus dispatches.
-- **Async gRPC Server Reflection**: Native streaming RPC support with bidirectional flow control in `hexastack-grpc`.
+## 🚀 Near-Term Priorities (v0.2.0: Developer Ergonomics, Tooling & High-Throughput Core)
+- [x] **Developer Tooling Suite**: Dogfood Hexagonal architecture across all internal developer tools via `hexastack-tools` (replacing legacy `scripts/`).
+- [x] **Enterprise Compliance & Regulatory Guide**: Comprehensive HIPAA, FedRAMP (NIST SP 800-53), SOC 2, and PCI-DSS compliance mapping (`COMPLIANCE.md`).
+- **High-Throughput Serialization**: Zero-copy `msgspec` JSON & MessagePack codec engine for high-throughput CQRS bus dispatches and CloudEvents 1.0.
+- **Async gRPC Server Reflection & Streaming**: Native bidirectional streaming RPC support with chunking and backpressure control in `hexastack-grpc`.
 - **WebSocket & SSE Outbox Streaming**: Real-time frontend client notifications dispatched from the Transactional Outbox.
-- **OpenTelemetry Metrics Export**: Prometheus and OTLP metrics emission alongside existing distributed trace spans.
+- **Turnkey Observability**: Native Prometheus `/metrics` scraping and Sentry SDK error tracking integration.
+
 
 ---
 
