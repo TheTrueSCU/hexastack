@@ -272,7 +272,7 @@ def _resolve_file_impact(
             return True, set()
         return False, set()
 
-    if parts[0] in (".github", "scripts"):
+    if parts[0] in (".github", "examples"):
         return True, set()
 
     if parts[0] == "packages" and len(parts) > 1:

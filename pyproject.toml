@@ -32,8 +32,6 @@ pytest-run = "hexastack_tools.commands.pytest_runner:run_main"
 rope-alphabetizer = "hexastack_tools.commands.rope:alphabetize_main"
 rope-run = "hexastack_tools.commands.rope:run_main"
 
-
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -130,13 +128,13 @@ exclude_lines = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["scripts"]
+packages = ["packages/hexastack-tools/src"]
 
 [tool.inline-snapshot]
 format-command = "uv run ruff format --stdin-filename {filename} -"
 
 [tool.pytest.ini_options]
-addopts = "-n auto --import-mode=importlib --ignore=tests/e2e --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
+addopts = "-n auto --import-mode=importlib --ignore=examples --ignore=tests/e2e --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
 markers = [
     "e2e: End-to-end browser and UI tests (run with uv run pytest tests/e2e)",
     "demo: Feature demo recording test (run with RECORD_DEMO=1 uv run pytest tests/e2e -m demo)",
@@ -226,8 +224,6 @@ known-first-party = [
     "hexastack_otel",
     "hexastack_tools",
 ]
-
-
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
