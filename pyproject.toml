@@ -32,6 +32,9 @@ pytest-run = "hexastack_tools.commands.pytest_runner:run_main"
 rope-alphabetizer = "hexastack_tools.commands.rope:alphabetize_main"
 rope-run = "hexastack_tools.commands.rope:run_main"
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.uv.workspace]
 members = [
@@ -123,6 +126,9 @@ exclude_lines = [
     "raise NotImplementedError",
     "return NotImplemented",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["packages/hexastack-tools/src"]
 
 [tool.inline-snapshot]
 format-command = "uv run ruff format --stdin-filename {filename} -"
@@ -218,8 +224,6 @@ known-first-party = [
     "hexastack_otel",
     "hexastack_tools",
 ]
-
-
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

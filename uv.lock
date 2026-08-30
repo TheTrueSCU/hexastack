@@ -2307,7 +2307,7 @@ requires-dist = [
 [[package]]
 name = "hexastack-workspace"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },
     { name = "openfeature-provider-flagd" },
