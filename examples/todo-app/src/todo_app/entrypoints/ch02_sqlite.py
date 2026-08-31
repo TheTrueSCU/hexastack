@@ -20,7 +20,7 @@ from todo_app.adapters.driving.http import router
 from todo_app.ports.repositories import TodoRepositoryPort
 
 
-def build_app(db_url: str = "sqlite:///todos.db") -> FastAPI:
+def build_app(db_url: str = "sqlite:///todos_ch02.db") -> FastAPI:
     """Build FastAPI app with SQLite repository adapter."""
     di = Container()
     session_factory = create_sqlite_session_factory(db_url=db_url)
