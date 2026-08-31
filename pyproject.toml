@@ -88,6 +88,7 @@ dev = [
     "pydeps>=3.0.7",
     "pytest>=9.1.1",
     "pytest-archon>=0.0.7",
+    "pytest-asyncio>=0.24.0",
     "pytest-cov>=7.1.0",
     "pytest-playwright>=0.6.0",
     "pytest-randomly>=4.1.0",
@@ -146,6 +147,7 @@ markers = [
     "ch06: Tutorial Chapter 6 tests",
     "ch07: Tutorial Chapter 7 tests",
 ]
+asyncio_mode = "auto"
 
 [tool.ruff.lint]
 
