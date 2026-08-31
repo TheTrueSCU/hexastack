@@ -37,6 +37,7 @@ flowchart LR
         SQL[SQLAlchemy DB]
         OTEL[OTel Tracing]
         OUTBOX[CloudEvents Outbox]
+        NATS["NATS JetStream\n(NatsJetStreamEventBusAdapter)"]
     end
 
     REST --> CBUS
@@ -49,6 +50,7 @@ flowchart LR
     ENTITY --> SQL
     ENTITY --> OTEL
     ENTITY --> OUTBOX
+    ENTITY --> NATS
 ```
 
 ---

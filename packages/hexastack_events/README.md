@@ -2,7 +2,7 @@
 
 # hexastack-events
 
-**CNCF CloudEvents 1.0 serialization, Transactional Outbox pattern, and distributed event streaming for Hexastack.**
+**CNCF CloudEvents 1.0 serialization, Transactional Outbox pattern, NATS JetStream distributed event bus, and janus async-sync thread bridge for Hexastack.**
 
 Part of the [Hexastack Framework](https://github.com/TheTrueSCU/hexastack).
 
@@ -15,15 +15,16 @@ Part of the [Hexastack Framework](https://github.com/TheTrueSCU/hexastack).
 
 ## 1. Architectural Overview
 
-`hexastack-events` extends Hexastack's in-process CQRS buses with enterprise distributed event streaming and reliability patterns:
+`hexastack-events` extends Hexastack's in-process CQRS buses with enterprise distributed event streaming, reliability patterns, and async-sync thread bridging:
 
 1. **CNCF CloudEvents 1.0 Protocol**: Automatic serialization and deserialization of domain `Event` models into standardized CloudEvents JSON envelopes with W3C correlation ID and multi-tenant partitioning.
-2. **Transactional Outbox Engine (Gap 6)**: Guarantees at-least-once delivery by staging uncommitted domain events in an `OutboxStoragePort` within the same transaction as business state mutations.
+2. **Transactional Outbox Engine**: Guarantees at-least-once delivery by staging uncommitted domain events in an `OutboxStoragePort` within the same transaction as business state mutations.
 3. **Dual Relay Engines**:
-   - **Native Asyncio (`AsyncioOutboxRelay`)**: In-process background task running with zero external dependencies.
+   - **Native Asyncio (`AsyncioOutboxRelay`)**: In-process background task with zero external dependencies.
    - **Huey Worker (`HueyOutboxRelay`)**: Multi-process worker executing outbox polling in separate worker nodes (`pip install hexastack-events[huey]`).
 4. **Relational Database Outbox Storage (`SqlAlchemyOutboxStorage`)**: Pluggable storage adapter supporting SQLAlchemy tables and transactions (`pip install hexastack-events[sql]`).
-5. **Distributed Event Bus ([`DistributedEventBusPort`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events/src/hexastack_events/ports/buses.py))**: Standardized cross-service messaging interface for Redis, NATS, Kafka, and in-memory brokers.
+5. **NATS JetStream Distributed Event Bus (`NatsJetStreamEventBusAdapter`)**: Production-grade at-least-once delivery via NATS JetStream — durable push consumers, WorkQueue stream retention, dead-letter routing, and msgspec zero-copy encoding (`pip install hexastack-events[nats]`).
+6. **Janus Async-Sync Thread Bridge (`JanusEventChannel`, `JanusCommandQueue[T]`)**: Thread-safe ↔ asyncio-safe queue bridges enabling synchronous OS threads (gRPC servicers, CLI handlers) to enqueue events and commands for dispatch by async event-loop consumers (`pip install hexastack-events[janus]`).
 
 ```mermaid
 graph TD
@@ -32,7 +33,17 @@ graph TD
     OUTBOX_MW["OutboxCaptureMiddleware"]
     OUTBOX_STORE["OutboxStoragePort\n(SQLAlchemy / DB Outbox Table)"]
     RELAY["OutboxRelayPort\n(Asyncio / Huey Worker)"]
-    BUS["DistributedEventBusPort\n(Redis / NATS / Kafka)"]
+    BUS["DistributedEventBusPort"]
+
+    subgraph Brokers["Broker Adapters"]
+        INMEM["InMemoryDistributedEventBus\n(Testing / Local Dev)"]
+        NATS["NatsJetStreamEventBusAdapter\n(NATS JetStream — pip install hexastack-events[nats])"]
+    end
+
+    subgraph ThreadBridge["Async-Sync Thread Bridge"]
+        JANUS_EV["JanusEventChannel\n(sync_put / drain)"]
+        JANUS_CMD["JanusCommandQueue[T]\n(sync_put / async_get)"]
+    end
 
     CMD --> UOW
     CMD --> OUTBOX_MW
@@ -40,6 +51,13 @@ graph TD
     UOW -->|Atomic Commit| OUTBOX_STORE
     RELAY -->|Polls Pending| OUTBOX_STORE
     RELAY -->|Publishes CloudEvent| BUS
+    BUS --> INMEM
+    BUS --> NATS
+
+    GRPC["gRPC Sync Thread"] -->|sync_put| JANUS_EV
+    JANUS_EV -->|drain → handler| BUS
+    GRPC -->|sync_put| JANUS_CMD
+    JANUS_CMD -->|async_get| CMD
 ```
 
 ---
@@ -48,23 +66,34 @@ graph TD
 
 ```
 hexastack_events/
-├── domain/          # EventContext, OutboxRecord, OutboxStatus, CloudEventEnvelope, MsgspecEnvelopeSerializer, EventError
-├── ports/           # OutboxStoragePort, OutboxRelayPort, DistributedEventBusPort
+├── domain/
+│   ├── models.py        # CloudEventEnvelope, OutboxRecord, OutboxStatus
+│   ├── serialization.py # MsgspecEnvelopeSerializer, encode/decode helpers
+│   ├── exceptions.py    # EventError, EventDeliveryError, EventSerializationError, …
+│   └── context.py       # EventContext (correlation, tenant)
+├── ports/
+│   ├── buses.py         # DistributedEventBusPort
+│   └── outbox.py        # OutboxStoragePort, OutboxRelayPort
 ├── adapters/
-│   ├── cloudevents/ # to_cloudevent, from_cloudevent, cloudevent_to_json/dict
-│   ├── outbox/      # AsyncioOutboxRelay, HueyOutboxRelay, InMemoryOutboxStorage, SqlAlchemyOutboxStorage
-│   └── buses/       # InMemoryDistributedEventBus
-└── infra/           # EventsBootstrapper (order=22), HexastackEventsConfig, OutboxCaptureMiddleware
+│   ├── cloudevents/     # to_cloudevent, from_cloudevent, cloudevent_to_json/dict
+│   ├── outbox/          # AsyncioOutboxRelay, HueyOutboxRelay, InMemoryOutboxStorage, SqlAlchemyOutboxStorage
+│   └── buses/
+│       ├── in_memory.py     # InMemoryDistributedEventBus (testing)
+│       ├── nats.py          # NatsJetStreamEventBusAdapter [nats]
+│       └── janus_bridge.py  # JanusEventChannel, JanusCommandQueue[T] [janus]
+└── infra/
+    ├── bootstrap.py     # EventsBootstrapper (order=22)
+    ├── config.py        # HexastackEventsConfig
+    └── middleware.py    # OutboxCaptureMiddleware
 ```
 
 ### High-Throughput `msgspec` Serialization
 
-`hexastack-events` includes high-performance zero-copy serialization engines powered by `msgspec`:
+`hexastack-events` includes zero-copy serialization engines powered by `msgspec`:
 
 - `encode_cloudevent_bytes(envelope)` / `decode_cloudevent_bytes(data)`: Optimized UTF-8 JSON encoding.
 - `encode_cloudevent_msgpack(envelope)` / `decode_cloudevent_msgpack(data)`: Binary MessagePack encoding.
-- `MsgspecEnvelopeSerializer`: Reusable wire serialization adapter.
-
+- `MsgspecEnvelopeSerializer`: Reusable wire serialization adapter (used internally by `NatsJetStreamEventBusAdapter`).
 
 ---
 
@@ -79,6 +108,15 @@ pip install "hexastack-events[sql]"
 
 # With Huey multi-process worker support
 pip install "hexastack-events[huey]"
+
+# With NATS JetStream distributed event bus
+pip install "hexastack-events[nats]"
+
+# With janus async-sync thread bridge (usable with any bus adapter)
+pip install "hexastack-events[janus]"
+
+# Full stack: NATS + janus bridge
+pip install "hexastack-events[nats,janus]"
 ```
 
 ### Configuration (`hexastack.toml` or `pyproject.toml`)
@@ -114,3 +152,180 @@ class OrderPlacedEvent(Event):
     total_amount: float
     customer_id: str
 ```
+
+---
+
+## 4. NATS JetStream Adapter
+
+`NatsJetStreamEventBusAdapter` implements `DistributedEventBusPort` backed by **NATS JetStream** for production at-least-once distributed event delivery.
+
+### Design
+
+| Property | Detail |
+|---|---|
+| **Lazy import** | `nats-py` imported only at call-time; package loads cleanly without `[nats]` installed |
+| **Lazy connect** | No network I/O until `await adapter.connect()` |
+| **Stream provisioning** | `WorkQueue` retention, `File` storage; calls `update_stream` if stream already exists |
+| **Subject routing** | `{prefix}.{envelope.type}` — one NATS subject per CloudEvent type |
+| **Wire encoding** | msgspec JSON (zero-copy, sub-millisecond) |
+| **Consumer resilience** | Durable push consumers; configurable `max_deliver` + `ack_wait`; messages `nak`'d on handler failure |
+| **Sync bridge** | Background asyncio thread loop + `run_coroutine_threadsafe` — sync callers never block the event loop |
+| **Lifecycle** | `async with adapter:` context manager for connect/disconnect |
+
+### Usage
+
+```python
+import asyncio
+from hexastack_events.adapters.buses.nats import NatsJetStreamEventBusAdapter
+from hexastack_events.domain.models import CloudEventEnvelope
+
+
+async def main():
+    adapter = NatsJetStreamEventBusAdapter(
+        servers=["nats://localhost:4222"],
+        stream_name="my-service",
+        subject_prefix="my-service.events",
+        max_deliver=5,
+        ack_wait_seconds=30.0,
+    )
+
+    async with adapter:
+        # Publish a CloudEvent envelope
+        envelope = CloudEventEnvelope(
+            id="evt-001",
+            source="order-service",
+            type="OrderPlaced",
+            time="2026-08-31T00:00:00Z",
+            data={"order_id": "o-42", "total": 199.0},
+        )
+        adapter.publish_envelope(envelope)
+
+        # Subscribe a handler
+        def on_order_placed(env: CloudEventEnvelope) -> None:
+            print(f"Received: {env.type} — {env.data}")
+
+        adapter.subscribe("OrderPlaced", on_order_placed)
+        await asyncio.sleep(1)  # let messages arrive
+
+
+asyncio.run(main())
+```
+
+### DI Bootstrap Integration
+
+```python
+from hexastack_events.adapters.buses.nats import NatsJetStreamEventBusAdapter
+from hexastack_events.ports.buses import DistributedEventBusPort
+
+# In your application bootstrap / DI wiring:
+nats_bus = NatsJetStreamEventBusAdapter(servers=["nats://nats:4222"])
+container.add_instance(nats_bus, declared_class=DistributedEventBusPort)
+```
+
+---
+
+## 5. Janus Async-Sync Thread Bridge
+
+`JanusEventChannel` and `JanusCommandQueue[T]` solve the hard problem of getting synchronous OS threads (gRPC servicers, CLI processes, background OS threads) to publish events or dispatch commands into an async event-loop — without nesting event loops or blocking I/O.
+
+```mermaid
+sequenceDiagram
+    participant GrpcThread as gRPC Sync Thread
+    participant Janus as JanusEventChannel
+    participant Loop as asyncio Event Loop
+    participant Bus as DistributedEventBusPort
+
+    GrpcThread->>Janus: sync_put(envelope)
+    Note right of Janus: Thread-safe enqueue
+    Loop->>Janus: await async_get() [drain]
+    Janus-->>Loop: envelope
+    Loop->>Bus: await publish_envelope(envelope)
+```
+
+### `JanusEventChannel` — CloudEvent envelope bridge
+
+```python
+import asyncio
+from hexastack_events.adapters.buses.janus_bridge import JanusEventChannel
+from hexastack_events.domain.models import CloudEventEnvelope
+
+
+async def start_drain(channel: JanusEventChannel, bus) -> None:
+    async def handler(env: CloudEventEnvelope) -> None:
+        await bus.async_publish_envelope(env)
+
+    await channel.drain(handler)
+
+
+async def main():
+    channel = JanusEventChannel(maxsize=1000)
+    bus = ...  # your DistributedEventBusPort
+
+    # Start the async drainer
+    asyncio.create_task(start_drain(channel, bus))
+
+    # In a gRPC sync thread:
+    import threading
+
+    def grpc_handler():
+        envelope = CloudEventEnvelope(
+            id="evt-grpc-1",
+            source="grpc-service",
+            type="PaymentReceived",
+            time="2026-08-31T00:00:00Z",
+            data={"amount": 50.0},
+        )
+        channel.sync_put(envelope)  # non-blocking, thread-safe
+
+    threading.Thread(target=grpc_handler).start()
+    await asyncio.sleep(0.1)
+```
+
+### `JanusCommandQueue[T]` — Generic CQRS command bridge
+
+```python
+import asyncio
+import threading
+from hexastack_events.adapters.buses.janus_bridge import JanusCommandQueue
+from my_app.commands import CreateOrderCommand
+
+
+queue: JanusCommandQueue[CreateOrderCommand] = JanusCommandQueue()
+
+
+async def dispatcher(bus) -> None:
+    """Drain commands from sync threads into the async command bus."""
+    async def dispatch(cmd: CreateOrderCommand) -> None:
+        await bus.dispatch(cmd)
+
+    await queue.drain(dispatch)
+
+
+# In a sync gRPC servicer:
+def grpc_create_order(request, context):
+    queue.sync_put(CreateOrderCommand(order_id=request.order_id))
+```
+
+---
+
+## 6. Adapter Comparison
+
+| Adapter | Install | Use Case |
+|---|---|---|
+| `InMemoryDistributedEventBus` | *(core)* | Unit tests, local development |
+| `NatsJetStreamEventBusAdapter` | `[nats]` | Production at-least-once delivery, consumer groups, DLQ |
+| `JanusEventChannel` | `[janus]` | Sync thread → async event loop bridge (gRPC, CLI) |
+| `JanusCommandQueue[T]` | `[janus]` | Sync thread → async CQRS command dispatch |
+
+---
+
+## 7. Optional Extras Summary
+
+| Extra | Installs | Unlocks |
+|---|---|---|
+| *(none)* | `cloudevents`, `msgspec`, `pydantic` | CloudEvents serialization, Asyncio outbox relay |
+| `[sql]` | `sqlalchemy` | Relational database outbox storage |
+| `[huey]` | `huey` | Multi-process Huey outbox relay worker |
+| `[apprise]` | `apprise` | Multi-channel notification adapter |
+| `[nats]` | `nats-py` | NATS JetStream distributed event bus |
+| `[janus]` | `janus` | Async-sync thread bridge for events and commands |

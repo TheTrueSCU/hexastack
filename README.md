@@ -54,7 +54,7 @@ graph TD
         AI["hexastack-ai (LiteLLM, Instructor & PydanticAI)"]
         AUTH["hexastack-auth (RBAC & @authorize Middleware)"]
         BUS["hexastack-cqrs (Command, Query & Event Buses)"]
-        EVENTS["hexastack-events (CloudEvents & Transactional Outbox)"]
+        EVENTS["hexastack-events (CloudEvents, Outbox & NATS JetStream)"]
         MW["Middleware (Correlation, Auth, Tracing, Retry, UnitOfWork)"]
     end
 
@@ -113,7 +113,7 @@ graph TD
     Core["hexastack-core (Kernel)"]
     CQRS["hexastack-cqrs (Buses & Pipelines)"]
     DB["hexastack-db (Persistence & Migrations)"]
-    Events["hexastack-events (CloudEvents & Outbox)"]
+    Events["hexastack-events (CloudEvents, Outbox & NATS JetStream)"]
     FastAPI["hexastack-fastapi (REST API)"]
     GraphQL["hexastack-graphql (Strawberry GraphQL)"]
     GRPC["hexastack-grpc (gRPC / Protobuf)"]
@@ -169,7 +169,7 @@ graph TD
 | [`hexastack-core`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core) | Core domain abstractions, ports, DI container (`rodi`), feature flags, testing & property fuzzing toolkit (`pytest-archon`, `hypothesis`), bootstrap engine | `pip install hexastack-core` | *(Included by default)* |
 | [`hexastack-cqrs`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cqrs) | Synchronous & asynchronous command, query, and event buses with extensible middleware pipelines | `pip install hexastack-cqrs` | *(Included by default)* |
 | [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, pgvector, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
-| [`hexastack-events`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), distributed event buses | `pip install hexastack-events` | `hexastack[events]` |
+| [`hexastack-events`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), NATS JetStream distributed event bus, and janus async-sync thread bridge | `pip install hexastack-events` | `hexastack[events]` |
 | [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
 | [`hexastack-flags`](file:///home/rjdw/Projects/hexastack/packages/hexastack_flags) | CNCF OpenFeature provider adapters (Flagd, In-Memory, Env) and enterprise feature toggling | `pip install hexastack-flags` | `hexastack[flags]` |
 | [`hexastack-graphql`](file:///home/rjdw/Projects/hexastack/packages/hexastack_graphql) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
