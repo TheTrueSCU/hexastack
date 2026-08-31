@@ -76,7 +76,7 @@ dev = [
     "import-linter>=2.13",
     "inline-snapshot>=0.35.4",
     "libcst>=1.9.0",
-    "locust>=2.46.3",
+    "locust>=2.46.4",
     "memray>=1.20.0",
     "mutmut<3",
     "nicegui>=3.16.0",
