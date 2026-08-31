@@ -129,8 +129,7 @@ def test_import_error_without_nats():
         # Re-import to trigger the _require_nats() guard.
         import importlib
 
-        import hexastack_events.adapters.buses.nats as nats_mod
-
+        nats_mod = importlib.import_module("hexastack_events.adapters.buses.nats")
         importlib.reload(nats_mod)
 
         with pytest.raises(ImportError, match="hexastack-events\\[nats\\]"):

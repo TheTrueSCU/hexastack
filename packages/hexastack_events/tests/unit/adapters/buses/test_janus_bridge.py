@@ -54,8 +54,9 @@ def test_import_error_without_janus():
     with patch.dict("sys.modules", {"janus": None}):
         import importlib
 
-        import hexastack_events.adapters.buses.janus_bridge as janus_mod
-
+        janus_mod = importlib.import_module(
+            "hexastack_events.adapters.buses.janus_bridge"
+        )
         importlib.reload(janus_mod)
 
         with pytest.raises(ImportError, match="hexastack-events\\[janus\\]"):
@@ -150,7 +151,7 @@ async def test_janus_event_channel_drain_respects_cancellation():
 
     drain_task = asyncio.create_task(channel.drain(handler))
     await asyncio.sleep(0.01)
-    drain_task.cancel()
+    _ = drain_task.cancel()
 
     with contextlib.suppress(asyncio.CancelledError):
         await drain_task
@@ -258,7 +259,7 @@ async def test_janus_command_queue_drain_cancels_cleanly():
 
     task = asyncio.create_task(queue.drain(dispatch))
     await asyncio.sleep(0.01)
-    task.cancel()
+    _ = task.cancel()
 
     with contextlib.suppress(asyncio.CancelledError):
         await task
