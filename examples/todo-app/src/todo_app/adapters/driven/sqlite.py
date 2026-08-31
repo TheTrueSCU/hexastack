@@ -24,7 +24,7 @@ class TodoItemModel(Base):
     priority = Column(String(20), default="medium", nullable=False)
 
 
-def create_sqlite_session_factory(db_url: str = "sqlite:///todos.db") -> sessionmaker:
+def create_sqlite_session_factory(db_url: str = "sqlite:///todos_ch02.db") -> sessionmaker:
     """Create configured SQLite SQLAlchemy session factory and create schema tables."""
     engine = create_engine(db_url, connect_args={"check_same_thread": False})
     Base.metadata.create_all(engine)
