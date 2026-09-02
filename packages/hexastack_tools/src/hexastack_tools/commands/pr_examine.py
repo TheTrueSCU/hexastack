@@ -60,8 +60,10 @@ def _fetch_failed_ci_logs(
             log_text = client.get_failed_run_logs(run_id)
             if log_text:
                 failed_logs[getattr(c, "name", "job")] = log_text
-        except Exception:
-            pass
+        except (IndexError, ValueError):
+            # Skip runs with non-standard details_url formats
+            continue
+
     return failed_logs
 
 
@@ -202,7 +204,8 @@ def runs(
                 check=False,
             )
             target_branch = res.stdout.strip() or None
-        except Exception:
+        except (subprocess.SubprocessError, OSError):
+            # Ignore git subprocess failures if running outside a git workspace
             pass
 
     with GitHubHttpAdapter() as client:

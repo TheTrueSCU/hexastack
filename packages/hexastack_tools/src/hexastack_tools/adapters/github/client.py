@@ -335,7 +335,9 @@ class GitHubHttpAdapter(GitHubApiPort):
                 if res.returncode == 0 and res.stdout.strip():
                     return res.stdout.strip()
             except (subprocess.SubprocessError, OSError):
+                # Ignore subprocess failure when retrieving failed run logs via gh CLI
                 pass
+
         return None
 
     def get_workflow_runs(
@@ -362,7 +364,8 @@ class GitHubHttpAdapter(GitHubApiPort):
                     import json
 
                     return json.loads(res.stdout.strip())
-            except Exception:
+            except (subprocess.SubprocessError, OSError, json.JSONDecodeError):
+                # Fall back to GitHub REST API if local gh CLI execution fails
                 pass
 
         params: dict[str, Any] = {"per_page": limit}
