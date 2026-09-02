@@ -55,8 +55,8 @@ def _resolve_test_targets(
     unit_only: bool,
     properties_only: bool,
     root: Path,
-) -> list[str]:
-    """Resolve target test directory paths based on CLI flags."""
+) -> tuple[list[str], set[str] | None]:
+    """Resolve target test directory paths and active package set based on CLI flags."""
     if properties_only:
         sub_dir = "tests/properties"
     elif unit_only:
@@ -65,24 +65,27 @@ def _resolve_test_targets(
         sub_dir = "tests"
 
     if packages:
-        return [str(get_package_directory(p, root) / sub_dir) for p in packages]
+        paths = [str(get_package_directory(p, root) / sub_dir) for p in packages]
+        return paths, set(packages)
 
     if affected:
         changed = _get_git_changed_files()
         affected_pkgs = resolve_affected_packages(changed, root)
         if affected_pkgs is not None:
-            return [
+            paths = [
                 str(target)
                 for p in affected_pkgs
                 if (target := get_package_directory(p, root) / sub_dir).is_dir()
             ]
+            return paths, affected_pkgs
         # None indicates workspace-wide impact -> fall through to all packages
 
-    return [
+    paths = [
         str(target)
         for pkg_dir in get_package_directories(root)
         if (target := pkg_dir / sub_dir).is_dir()
     ]
+    return paths, None
 
 
 def run_main() -> None:
@@ -97,7 +100,7 @@ def run_main() -> None:
     args, unknown = parser.parse_known_args()
 
     root = get_repo_root()
-    test_paths = _resolve_test_targets(
+    test_paths, active_pkgs = _resolve_test_targets(
         packages=args.packages,
         affected=args.affected,
         unit_only=args.unit,
@@ -105,7 +108,24 @@ def run_main() -> None:
         root=root,
     )
 
-    call_args = test_paths + (unknown or [])
+    cov_args: list[str] = []
+    if active_pkgs is not None:
+        # Dynamically scope coverage only to tested packages
+        cov_pkgs = [
+            p
+            for p in active_pkgs
+            if p != "tools" and (get_package_directory(p, root) / "src").is_dir()
+        ]
+        if cov_pkgs:
+            cov_args.append("--cov-reset")
+            for p in cov_pkgs:
+                pkg_src = get_package_directory(p, root) / "src"
+                cov_args.append(f"--cov={pkg_src}")
+        else:
+            # Only test tooling/non-covered packages: disable coverage fail-under
+            cov_args.append("--no-cov")
+
+    call_args = test_paths + cov_args + (unknown or [])
     sys.exit(pytest.main(call_args))
 
 
