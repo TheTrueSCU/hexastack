@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import subprocess
 import sys
 import tomllib
@@ -115,6 +116,11 @@ def build_main() -> None:
 
 def check_main() -> None:
     """CLI entrypoint for pypi-check."""
+    parser = argparse.ArgumentParser(
+        description="Verify package release version availability against PyPI index."
+    )
+    parser.parse_args()
+
     packages = get_workspace_packages_metadata()
     table = Table(
         title="[bold cyan]PyPI Release Version Availability Checker[/bold cyan]",
@@ -139,6 +145,11 @@ def check_main() -> None:
 
 def publish_main() -> None:
     """CLI entrypoint for pypi-publish."""
+    parser = argparse.ArgumentParser(
+        description="Build distribution packages and prepare for PyPI release publishing."
+    )
+    parser.parse_args()
+
     console.print("[bold cyan]Executing PyPI publishing pipeline...[/bold cyan]")
     build_all_packages()
 
