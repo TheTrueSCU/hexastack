@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+import pytest
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.testclient import TestClient
 
 from hexastack_core.adapters.ratelimit import InMemoryRateLimiter
@@ -254,3 +255,27 @@ def test_cqrs_router_query_rate_limit():
 
     r2 = client.get("/query-limited?param=abc")
     assert r2.status_code == 429
+
+
+def test_get_remote_address_fallbacks():
+    app = FastAPI()
+    # 1. No X-Forwarded-For and no client host -> fallback 127.0.0.1
+    req_empty = Request(scope={"type": "http", "app": app, "headers": []})
+    assert get_remote_address(req_empty) == "127.0.0.1"
+
+
+def test_rate_limit_decorator_positional_request_arg():
+    app = FastAPI()
+    limiter = InMemoryRateLimiter()
+    app.state.rate_limiter = limiter
+
+    req = Request(scope={"type": "http", "app": app, "headers": []})
+
+    @rate_limit("1/minute")
+    def positional_ep(r: Request):
+        return {"pos": True}
+
+    assert positional_ep(req) == {"pos": True}
+    with pytest.raises(HTTPException) as exc_info:
+        positional_ep(req)
+    assert exc_info.value.status_code == 429

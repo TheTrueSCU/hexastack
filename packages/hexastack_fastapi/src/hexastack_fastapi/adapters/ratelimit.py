@@ -118,9 +118,9 @@ class SlowapiRateLimiterAdapter(RateLimiterPort):
 
 def _extract_request(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Request | None:
     """Extract FastAPI Request instance from positional or keyword arguments."""
-    req = kwargs.get("request")
-    if isinstance(req, Request):
-        return req
+    for v in kwargs.values():
+        if isinstance(v, Request):
+            return v
     for arg in args:
         if isinstance(arg, Request):
             return arg
