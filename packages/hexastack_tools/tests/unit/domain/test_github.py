@@ -56,3 +56,19 @@ def test_pr_summary_unresolved_thread_is_not_clean() -> None:
         review_threads=(unresolved_thread,),
     )
     assert summary.is_clean is False
+
+
+def test_pr_summary_dirty_mergeable_is_not_clean() -> None:
+    """Verify PrSummary with dirty/conflicting mergeable state is marked unclean."""
+    summary = PrSummary(
+        number=3,
+        title="Test PR Conflicts",
+        author="charlie",
+        state="open",
+        mergeable="dirty",
+        is_draft=False,
+        head_ref="feat/conflict",
+        base_ref="main",
+        html_url="https://github.com/org/repo/pull/3",
+    )
+    assert summary.is_clean is False

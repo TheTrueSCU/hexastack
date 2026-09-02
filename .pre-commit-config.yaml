@@ -82,6 +82,13 @@ repos:
         language: system
         files: ^(docs/|zensical\.toml|mkdocs\.yml)
         pass_filenames: false
+      - id: usage-docs
+        name: usage docs integrity (generate-usage-docs --check)
+        entry: uv run generate-usage-docs --check
+        language: system
+        files: ^packages/(hexastack|hexastack_tools)/.*$
+        pass_filenames: false
+
       - id: import-linter-root
         name: import-linter (package boundaries)
         entry: uv run lint-imports

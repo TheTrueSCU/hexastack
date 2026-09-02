@@ -7,7 +7,7 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from hexastack_tools.domain.github import (
     CheckRunFinding,
@@ -78,4 +78,29 @@ class GitHubApiPort(Protocol):
 
         Returns:
             SecurityAlert domain model.
+        """
+
+    def get_failed_run_logs(self, run_id: int | str) -> str | None:
+        """Fetch failed log snippets for a specific workflow run.
+
+        Args:
+            run_id: GitHub Actions workflow run database ID.
+
+        Returns:
+            String log snippet or None if not accessible.
+        """
+
+    def get_workflow_runs(
+        self,
+        branch: str | None = None,
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Fetch recent workflow runs for a branch.
+
+        Args:
+            branch: Optional branch name filter.
+            limit: Maximum number of runs to fetch.
+
+        Returns:
+            List of workflow run summary dictionaries.
         """
