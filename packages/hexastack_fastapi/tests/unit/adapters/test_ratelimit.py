@@ -153,3 +153,104 @@ def test_require_rate_limit_dependency_and_cqrs_router():
     r2 = client.post("/cmd-limited", json={"msg": "hello"})
     assert r2.status_code == 429
     assert "Retry-After" in r2.headers
+
+
+def test_rate_limiter_dependency_fallback_and_container():
+    from rodi import Container
+
+    from hexastack_fastapi.adapters.dependencies import (
+        get_rate_limiter,
+        require_rate_limit,
+    )
+
+    app = FastAPI()
+    container = Container()
+    limiter = InMemoryRateLimiter()
+    container.add_instance(limiter, declared_class=RateLimiterPort)
+    app.state.container = container
+
+    req = Request(scope={"type": "http", "app": app})
+    resolved = get_rate_limiter(req)
+    assert resolved is limiter
+
+    from fastapi import Depends
+
+    # Endpoint with require_rate_limit using container
+    @app.get(
+        "/container-limited", dependencies=[Depends(require_rate_limit("1/minute"))]
+    )
+    def limited_ep():
+        return {"ok": True}
+
+    client = TestClient(app)
+    res1 = client.get("/container-limited")
+    assert res1.status_code == 200
+    res2 = client.get("/container-limited")
+    assert res2.status_code == 429
+
+
+def test_rate_limit_decorator_positional_request_and_no_limiter():
+    app = FastAPI()
+
+    # When no rate limiter is attached to app state, decorator is a no-op passthrough
+    @app.get("/no-limiter")
+    @rate_limit("1/minute")
+    def ep_no_limiter(request: Request):
+        return {"no_limiter": True}
+
+    client = TestClient(app)
+    assert client.get("/no-limiter").status_code == 200
+    assert client.get("/no-limiter").status_code == 200
+
+
+def test_slowapi_adapter_missing_dependency_and_properties():
+    import sys
+    from unittest.mock import patch
+
+    adapter = SlowapiRateLimiterAdapter(storage_uri="memory://")
+    assert adapter.limiter is not None
+
+    with patch.dict(sys.modules, {"slowapi": None}):
+        import pytest
+
+        from hexastack_core.domain.exceptions import MissingDependencyError
+
+        with pytest.raises(MissingDependencyError):
+            SlowapiRateLimiterAdapter()
+
+
+def test_cqrs_router_query_rate_limit():
+    from hexastack_core.domain import Query
+    from hexastack_cqrs.adapters.buses.query.synchronous import SynchronousQueryBus
+    from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+    from hexastack_cqrs.infra.registries.handler import HandlerRegistry
+    from hexastack_cqrs.infra.registries.query import QueryRegistry
+    from hexastack_fastapi.adapters.routing import CqrsRouter
+
+    class TestQry(Query):
+        param: str
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(TestQry, lambda qry: f"found {qry.param}")
+
+    pipeline = ExecutionPipeline(
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+    )
+
+    router = CqrsRouter()
+    router.add_query("/query-limited", TestQry, rate_limit="1/minute")
+
+    app = FastAPI()
+    app.state.pipeline = pipeline
+    app.state.rate_limiter = InMemoryRateLimiter()
+    app.include_router(router)
+
+    client = TestClient(app)
+    r1 = client.get("/query-limited?param=abc")
+    assert r1.status_code == 200
+    assert r1.json() == "found abc"
+
+    r2 = client.get("/query-limited?param=abc")
+    assert r2.status_code == 429
