@@ -176,7 +176,8 @@ def test_asyncio_outbox_relay_with_lock_concurrency():
             )
         )
         # External process acquires lock
-        assert external_lock.acquire() is True
+        ext_acq = external_lock.acquire()
+        assert ext_acq is True
         count_skipped = relay.publish_pending_batch(limit=10)
         assert count_skipped == 0
         external_lock.release()

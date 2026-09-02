@@ -19,22 +19,26 @@ def test_file_lock_adapter_sync_lifecycle():
         assert lock1.locked() is False
 
         # Acquire lock1
-        assert lock1.acquire() is True
+        acq1 = lock1.acquire()
+        assert acq1 is True
         assert lock1.locked() is True
 
         # Lock2 non-blocking acquire fails
-        assert lock2.acquire(blocking=False) is False
+        acq2_non_blocking = lock2.acquire(blocking=False)
+        assert acq2_non_blocking is False
         assert lock2.locked() is False
 
         # Lock2 timeout acquire fails
-        assert lock2.acquire(blocking=True, timeout=0.05) is False
+        acq2_timeout = lock2.acquire(blocking=True, timeout=0.05)
+        assert acq2_timeout is False
 
         # Release lock1
         lock1.release()
         assert lock1.locked() is False
 
         # Now lock2 can acquire
-        assert lock2.acquire() is True
+        acq2 = lock2.acquire()
+        assert acq2 is True
         assert lock2.locked() is True
         lock2.release()
         assert lock2.locked() is False
@@ -60,11 +64,13 @@ async def test_async_file_lock_adapter_lifecycle():
 
         assert await lock1.locked() is False
 
-        assert await lock1.acquire() is True
+        acq1 = await lock1.acquire()
+        assert acq1 is True
         assert await lock1.locked() is True
 
         # Lock2 non-blocking acquire fails
-        assert await lock2.acquire(blocking=False) is False
+        acq2_non_blocking = await lock2.acquire(blocking=False)
+        assert acq2_non_blocking is False
 
         await lock1.release()
         assert await lock1.locked() is False

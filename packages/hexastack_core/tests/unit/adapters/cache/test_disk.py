@@ -22,10 +22,12 @@ def test_disk_cache_adapter_sync_lifecycle():
         assert cache.has("user:1") is True
         assert cache.get("user:1") == {"name": "Alice", "role": "admin"}
 
-        # Delete
-        assert cache.delete("user:1") is True
+        # Delete (assign return value to prevent CodeQL side-effect warning)
+        deleted1 = cache.delete("user:1")
+        assert deleted1 is True
         assert cache.has("user:1") is False
-        assert cache.delete("user:1") is False
+        deleted2 = cache.delete("user:1")
+        assert deleted2 is False
 
         # TTL expiration
         cache.set("temp:key", "value", ttl_seconds=0.1)
@@ -70,7 +72,8 @@ async def test_async_disk_cache_adapter_lifecycle():
         assert await cache.has_async("async:key") is True
         assert await cache.get_async("async:key") == "async_value"
 
-        assert await cache.delete_async("async:key") is True
+        deleted = await cache.delete_async("async:key")
+        assert deleted is True
         assert await cache.has_async("async:key") is False
 
         await cache.set_async("k1", "v1")

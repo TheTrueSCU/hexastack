@@ -136,6 +136,8 @@ def test_huey_outbox_relay_with_lock_concurrency():
                 payload={"refund_id": "ref-1000"},
             )
         )
-        assert peer_lock.acquire() is True
-        assert relay.publish_pending_batch(limit=10) == 0
+        peer_acq = peer_lock.acquire()
+        assert peer_acq is True
+        count_skipped = relay.publish_pending_batch(limit=10)
+        assert count_skipped == 0
         peer_lock.release()
