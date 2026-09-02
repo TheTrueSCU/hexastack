@@ -1,6 +1,7 @@
 from typing import Any, cast
 
 from hexastack_core.domain import Event
+from hexastack_core.ports.lock import LockPort
 from hexastack_cqrs.ports.buses import EventBusPort
 from hexastack_events.domain.models import CloudEventEnvelope
 from hexastack_events.ports.buses import DistributedEventBusPort
@@ -16,6 +17,8 @@ class HueyOutboxRelay(OutboxRelayPort):
     Notes/Architectural Intent:
         Executes outbox polling across separate worker processes using Huey,
         decoupling database polling from API request threads.
+        Accepts an optional LockPort (e.g. FileLockAdapter) to prevent concurrent
+        worker contention.
     """
 
     def __init__(
@@ -24,11 +27,13 @@ class HueyOutboxRelay(OutboxRelayPort):
         bus: EventBusPort,
         huey_instance: Any | None = None,
         batch_size: int = 50,
+        lock: LockPort | None = None,
     ) -> None:
         self._storage = storage
         self._bus = bus
         self._huey = huey_instance
         self._batch_size = batch_size
+        self._lock = lock
         self._is_active: bool = False
 
     def publish_pending_batch(self, limit: int = 50) -> int:
@@ -40,6 +45,19 @@ class HueyOutboxRelay(OutboxRelayPort):
         Returns:
             Count of successfully published records.
         """
+        if self._lock is not None:
+            acquired = self._lock.acquire(blocking=False)
+            if not acquired:
+                return 0
+            try:
+                return self._drain_and_publish(limit=limit)
+            finally:
+                self._lock.release()
+
+        return self._drain_and_publish(limit=limit)
+
+    def _drain_and_publish(self, limit: int = 50) -> int:
+        """Internal worker fetching and publishing pending records."""
         records = self._storage.fetch_pending(limit=limit)
         published_count = 0
 

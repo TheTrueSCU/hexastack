@@ -3,6 +3,7 @@ import logging
 from typing import Any, cast
 
 from hexastack_core.domain import Event
+from hexastack_core.ports.lock import AsyncLockPort, LockPort
 from hexastack_cqrs.ports.buses import EventBusPort
 from hexastack_events.domain.models import CloudEventEnvelope
 from hexastack_events.ports.buses import DistributedEventBusPort
@@ -21,6 +22,8 @@ class AsyncioOutboxRelay(OutboxRelayPort):
         Runs as an in-process asyncio task during application lifespan. Periodically
         fetches pending records from OutboxStoragePort, publishes them via
         DistributedEventBusPort or EventBusPort, and updates delivery state.
+        Accepts an optional LockPort or AsyncLockPort (such as FileLockAdapter or RedisLockAdapter)
+        to prevent race conditions and duplicate event dispatch across multi-process daemons.
     """
 
     def __init__(
@@ -29,11 +32,13 @@ class AsyncioOutboxRelay(OutboxRelayPort):
         bus: EventBusPort,
         poll_interval_seconds: float = 1.0,
         batch_size: int = 50,
+        lock: LockPort | AsyncLockPort | None = None,
     ) -> None:
         self._storage = storage
         self._bus = bus
         self._poll_interval = poll_interval_seconds
         self._batch_size = batch_size
+        self._lock = lock
         self._task: asyncio.Task[Any] | None = None
         self._running: bool = False
 
@@ -61,6 +66,19 @@ class AsyncioOutboxRelay(OutboxRelayPort):
         Returns:
             Number of successfully published records.
         """
+        if isinstance(self._lock, LockPort):
+            acquired = self._lock.acquire(blocking=False)
+            if not acquired:
+                return 0
+            try:
+                return self._drain_and_publish(limit=limit)
+            finally:
+                self._lock.release()
+
+        return self._drain_and_publish(limit=limit)
+
+    def _drain_and_publish(self, limit: int = 50) -> int:
+        """Internal worker fetching and publishing pending records."""
         records = self._storage.fetch_pending(limit=limit)
         published_count = 0
 
