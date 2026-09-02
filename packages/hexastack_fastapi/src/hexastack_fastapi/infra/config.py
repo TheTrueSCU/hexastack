@@ -49,6 +49,26 @@ class RequestLoggingConfig(BaseModel):
     )
 
 
+class RateLimitConfig(BaseModel):
+    """Configuration schema for rate limiting and request quota enforcement.
+
+    Notes/Architectural Intent:
+        Controls global and endpoint-level rate limits, key extraction strategy
+        (IP, user_id, tenant_id), and storage backend connection.
+    """
+
+    enable: bool = Field(default=False)
+    default_limits: list[str] = Field(default_factory=lambda: ["100/minute"])
+    key_func: str = Field(
+        default="ip",
+        description="Key extraction strategy: 'ip', 'user', 'tenant', or 'combined'.",
+    )
+    storage_uri: str = Field(
+        default="memory://",
+        description="Backend storage URI: 'memory://' or 'redis://localhost:6379'.",
+    )
+
+
 class ZensicalDocsConfig(BaseModel):
     """Configuration schema for mounting pre-built Zensical documentation onto FastAPI.
 
@@ -83,6 +103,7 @@ class HexastackFastApiConfig(BaseModel):
     cors: CorsConfig = Field(default_factory=CorsConfig)
     health: HealthConfig = Field(default_factory=HealthConfig)
     logging: RequestLoggingConfig = Field(default_factory=RequestLoggingConfig)
+    ratelimit: RateLimitConfig = Field(default_factory=RateLimitConfig)
     zensical: ZensicalDocsConfig = Field(default_factory=ZensicalDocsConfig)
     auto_register_routes: bool = Field(default=True)
     packages_to_scan: list[str] = Field(default_factory=list)
@@ -92,6 +113,7 @@ __all__ = [
     "CorsConfig",
     "HealthConfig",
     "HexastackFastApiConfig",
+    "RateLimitConfig",
     "register_fastapi_config",
     "RequestLoggingConfig",
     "ZensicalDocsConfig",

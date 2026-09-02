@@ -29,6 +29,7 @@ class CqrsRouter(APIRouter):
         summary: str | None = None,
         tags: list[str | Enum] | None = None,
         feature_flag: str | None = None,
+        rate_limit: str | None = None,
     ) -> None:
         """Register an HTTP endpoint for executing a domain Command.
 
@@ -41,6 +42,7 @@ class CqrsRouter(APIRouter):
             summary: Optional OpenAPI summary string.
             tags: Optional OpenAPI tags list.
             feature_flag: Optional feature flag key required for endpoint execution.
+            rate_limit: Optional rate limit string (e.g. '10/minute').
 
         Returns:
             None.
@@ -54,6 +56,10 @@ class CqrsRouter(APIRouter):
             from hexastack_fastapi.adapters.dependencies import require_feature
 
             dependencies.append(Depends(require_feature(feature_flag)))
+        if rate_limit:
+            from hexastack_fastapi.adapters.dependencies import require_rate_limit
+
+            dependencies.append(Depends(require_rate_limit(rate_limit)))
 
         self.add_api_route(
             path=path,
@@ -77,6 +83,7 @@ class CqrsRouter(APIRouter):
         summary: str | None = None,
         tags: list[str | Enum] | None = None,
         feature_flag: str | None = None,
+        rate_limit: str | None = None,
     ) -> None:
         """Register an HTTP endpoint for executing a domain Query.
 
@@ -89,6 +96,7 @@ class CqrsRouter(APIRouter):
             summary: Optional OpenAPI summary string.
             tags: Optional OpenAPI tags list.
             feature_flag: Optional feature flag key required for endpoint execution.
+            rate_limit: Optional rate limit string (e.g. '10/minute').
 
         Returns:
             None.
@@ -102,6 +110,10 @@ class CqrsRouter(APIRouter):
             from hexastack_fastapi.adapters.dependencies import require_feature
 
             dependencies.append(Depends(require_feature(feature_flag)))
+        if rate_limit:
+            from hexastack_fastapi.adapters.dependencies import require_rate_limit
+
+            dependencies.append(Depends(require_rate_limit(rate_limit)))
 
         self.add_api_route(
             path=path,

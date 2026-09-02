@@ -12,6 +12,7 @@ from hexastack_core.ports.notification import (
     NotificationPriority,
 )
 from hexastack_core.ports.presenter import PresenterPort
+from hexastack_core.ports.ratelimit import RateLimiterPort
 from hexastack_core.ports.repository import (
     AsyncRepositoryPort,
     RepositoryPort,
@@ -35,6 +36,7 @@ __all__ = [
     "NotificationPort",
     "NotificationPriority",
     "PresenterPort",
+    "RateLimiterPort",
     "RepositoryPort",
     "UnitOfWorkPort",
     "VectorStorePort",

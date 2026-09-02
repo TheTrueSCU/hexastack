@@ -37,14 +37,16 @@ hexastack_fastapi/
 | Category | Exports |
 |---|---|
 | **Application Factory** | `create_app`, `FastApiBootstrapper` (order=30) |
-| **Decorators** | `@api_command`, `@api_query`, `@feature_flag_route`, `RouteMetadata` |
-| **Dependencies** | `get_container`, `get_pipeline`, `get_feature_flags`, `require_feature` |
+| **Decorators** | `@api_command`, `@api_query`, `@feature_flag_route`, `@rate_limit`, `RouteMetadata` |
+| **Dependencies** | `get_container`, `get_pipeline`, `get_feature_flags`, `require_feature`, `get_rate_limiter`, `require_rate_limit` |
 | **Documentation Mounting** | `mount_zensical_docs`, `DocumentationNotFoundError`, `ZensicalDocsConfig` |
 | **Exception Handlers** | `register_exception_handlers`, `domain_exception_handler` |
 | **Middlewares** | `DbSessionMiddleware`, `AsyncDbSessionMiddleware`, `add_db_session_middleware`, `CorrelationMiddleware`, `HttpLoggingMiddleware` |
+| **Rate Limiting** | `SlowapiRateLimiterAdapter`, `get_remote_address`, `get_user_or_ip_key`, `RateLimitConfig` |
 | **Reactive UI (NiceGUI)** | `dispatch_command`, `dispatch_query`, `mount_devtools_dashboard`, `mount_ui_app`, `ui_page` |
 | **Routing** | `CqrsRouter`, `autodiscover_routes` |
 | **Testing, E2E & Demo Narration** | `create_test_client`, `check_openapi_conformance`, `EphemeralServer`, `ephemeral_server`, `find_free_port`, `smart_click`, `DemoNarrator`, `VIRTUAL_CURSOR_SCRIPT` |
+
 
 ---
 

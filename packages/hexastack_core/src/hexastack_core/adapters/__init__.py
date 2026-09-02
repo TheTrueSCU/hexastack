@@ -21,6 +21,7 @@ from hexastack_core.adapters.notification import (
     NotificationRecord,
     StdoutNotificationAdapter,
 )
+from hexastack_core.adapters.ratelimit import InMemoryRateLimiter
 from hexastack_core.adapters.repository import (
     AsyncInMemoryRepository,
     InMemoryRepository,
@@ -40,6 +41,7 @@ __all__ = [
     "InMemoryLlmProvider",
     "InMemoryLogger",
     "InMemoryNotificationAdapter",
+    "InMemoryRateLimiter",
     "InMemoryRepository",
     "InMemoryUnitOfWork",
     "InMemoryVectorStore",
