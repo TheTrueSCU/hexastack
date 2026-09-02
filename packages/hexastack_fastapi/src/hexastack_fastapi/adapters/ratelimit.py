@@ -116,6 +116,44 @@ class SlowapiRateLimiterAdapter(RateLimiterPort):
             storage.reset()
 
 
+def _extract_request(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Request | None:
+    """Extract FastAPI Request instance from positional or keyword arguments."""
+    req = kwargs.get("request")
+    if isinstance(req, Request):
+        return req
+    for arg in args:
+        if isinstance(arg, Request):
+            return arg
+    return None
+
+
+def _enforce_rate_limit(
+    request: Request | None,
+    fn_name: str,
+    limit: str,
+    key_extractor: Callable[[Request], str],
+    detail: str | None,
+) -> None:
+    """Check rate limit quota against application rate limiter and raise HTTPException if exceeded."""
+    if request is None:
+        return
+    limiter_port: RateLimiterPort | None = getattr(
+        request.app.state, "rate_limiter", None
+    )
+    if limiter_port is None:
+        return
+
+    base_key = key_extractor(request)
+    key = f"{base_key}:{fn_name}"
+    if not limiter_port.hit(key, limit):
+        reset_sec = limiter_port.get_reset_window(key, limit)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=detail or f"Rate limit exceeded: {limit}.",
+            headers={"Retry-After": str(reset_sec)},
+        )
+
+
 def rate_limit(
     limit: str,
     key_func: Callable[[Request], str] | None = None,
@@ -145,54 +183,16 @@ def rate_limit(
 
             @wraps(fn)
             async def async_wrapped(*args: Any, **kwargs: Any) -> Any:
-                request = kwargs.get("request")
-                if request is None:
-                    for arg in args:
-                        if isinstance(arg, Request):
-                            request = arg
-                            break
-
-                if request is not None:
-                    limiter_port: RateLimiterPort | None = getattr(
-                        request.app.state, "rate_limiter", None
-                    )
-                    if limiter_port is not None:
-                        base_key = key_extractor(request)
-                        key = f"{base_key}:{fn_name}"
-                        if not limiter_port.hit(key, limit):
-                            reset_sec = limiter_port.get_reset_window(key, limit)
-                            raise HTTPException(
-                                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                                detail=detail or f"Rate limit exceeded: {limit}.",
-                                headers={"Retry-After": str(reset_sec)},
-                            )
+                req = _extract_request(args, kwargs)
+                _enforce_rate_limit(req, fn_name, limit, key_extractor, detail)
                 return await fn(*args, **kwargs)
 
             return async_wrapped
 
         @wraps(fn)
         def sync_wrapped(*args: Any, **kwargs: Any) -> Any:
-            request = kwargs.get("request")
-            if request is None:
-                for arg in args:
-                    if isinstance(arg, Request):
-                        request = arg
-                        break
-
-            if request is not None:
-                limiter_port: RateLimiterPort | None = getattr(
-                    request.app.state, "rate_limiter", None
-                )
-                if limiter_port is not None:
-                    base_key = key_extractor(request)
-                    key = f"{base_key}:{fn_name}"
-                    if not limiter_port.hit(key, limit):
-                        reset_sec = limiter_port.get_reset_window(key, limit)
-                        raise HTTPException(
-                            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                            detail=detail or f"Rate limit exceeded: {limit}.",
-                            headers={"Retry-After": str(reset_sec)},
-                        )
+            req = _extract_request(args, kwargs)
+            _enforce_rate_limit(req, fn_name, limit, key_extractor, detail)
             return fn(*args, **kwargs)
 
         return sync_wrapped

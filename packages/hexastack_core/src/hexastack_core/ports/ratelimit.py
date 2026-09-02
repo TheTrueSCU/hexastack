@@ -21,7 +21,6 @@ class RateLimiterPort(ABC):
         Returns:
             True if the hit is within quota, False if rate limit is exceeded.
         """
-        ...
 
     @abstractmethod
     def get_reset_window(self, key: str, limit: str) -> int:
@@ -34,7 +33,6 @@ class RateLimiterPort(ABC):
         Returns:
             Remaining seconds until reset (used for Retry-After headers).
         """
-        ...
 
     @abstractmethod
     def clear(self, key: str | None = None) -> None:
@@ -43,7 +41,6 @@ class RateLimiterPort(ABC):
         Args:
             key: Optional specific key to reset. If None, resets all rate limit tracking.
         """
-        ...
 
 
 __all__ = [
