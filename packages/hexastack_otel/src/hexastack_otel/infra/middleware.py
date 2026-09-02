@@ -1,21 +1,20 @@
-import inspect
-from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_core.domain.feature_flags import EvaluationContext
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_core.utils.context import get_correlation_id, get_user_context
+from hexastack_cqrs.infra.middleware.generic import InOutMiddleware
 from hexastack_otel.ports.tracing import TracingPort
 
 
-class TracingMiddleware:
+class TracingMiddleware(InOutMiddleware):
     """CQRS middleware wrapping Command and Query execution in OpenTelemetry spans.
 
     Notes/Architectural Intent:
-        Automatically creates distributed telemetry spans with correlation ID,
-        message type, tenant ID, and user ID attributes, recording execution
-        failures without altering domain handler logic.
+        Inherits from InOutMiddleware to automatically create distributed telemetry
+        spans with correlation ID, message type, tenant ID, and user ID attributes,
+        recording execution failures via on_error() without altering domain handler logic.
         Respects dynamic feature flag evaluation via FeatureFlagPort.
     """
 
@@ -36,48 +35,61 @@ class TracingMiddleware:
         self._enabled = enabled
         self._flags = flags
 
-    def __call__[G: Generic, R](
-        self,
-        instance: G,
-        next_call: Callable[[G], R],
-    ) -> R:
-        """Execute handler within a scoped telemetry span.
+    def before(self, instance: Generic) -> Any:
+        """Open a scoped telemetry span before downstream handler execution.
 
         Args:
             instance: Dispatched message instance.
-            next_call: Downstream handler or next middleware in chain.
 
         Returns:
-            The handler result of type R.
+            Dictionary context with active span and context manager or inactive flag.
         """
         if not self._enabled:
-            return next_call(instance)
+            return {"active": False}
 
         if self._flags is not None:
             eval_ctx = EvaluationContext.from_current_context()
             if not self._flags.is_enabled(
                 "features.otel.tracing", default=True, context=eval_ctx
             ):
-                return next_call(instance)
+                return {"active": False}
 
         span_name = f"cqrs.{instance.__class__.__name__}"
         attrs = self._build_attributes(instance)
 
-        with self._tracer.trace_scope(span_name, attributes=attrs) as span:
-            result = next_call(instance)
+        scope = self._tracer.trace_scope(span_name, attributes=attrs)
+        span = scope.__enter__()
+        return {"active": True, "scope": scope, "span": span}
 
-            if inspect.isawaitable(result):
+    def after(self, instance: Generic, result: Any, context: Any) -> Any:
+        """Close the scoped telemetry span on successful execution.
 
-                async def _async_wrap() -> Any:
-                    try:
-                        return await result
-                    except BaseException as exc:
-                        span.record_exception(exc)
-                        raise
+        Args:
+            instance: Dispatched message instance.
+            result: Handler return value.
+            context: Context dictionary returned by before().
 
-                return cast("R", _async_wrap())
+        Returns:
+            Unmodified handler result.
+        """
+        if isinstance(context, dict) and context.get("active"):
+            scope = context.get("scope")
+            if scope is not None:
+                scope.__exit__(None, None, None)
+        return result
 
-            return result
+    def on_error(self, instance: Generic, exc: Exception, context: Any) -> None:
+        """Close the telemetry scope when an exception occurs during execution.
+
+        Args:
+            instance: Dispatched message instance.
+            exc: Exception raised during execution.
+            context: Context dictionary returned by before().
+        """
+        if isinstance(context, dict) and context.get("active"):
+            scope = context.get("scope")
+            if scope is not None:
+                scope.__exit__(type(exc), exc, exc.__traceback__)
 
     def _build_attributes(self, instance: Generic) -> dict[str, Any]:
         """Construct standard telemetry attributes from message context."""

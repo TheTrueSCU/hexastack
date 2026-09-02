@@ -1,6 +1,4 @@
-import inspect
-from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from hexastack_auth.domain.exceptions import (
     InsufficientPermissionsError,
@@ -10,15 +8,16 @@ from hexastack_auth.domain.models import AnonymousIdentity, Identity
 from hexastack_auth.infra.decorators import AuthMetadata, get_auth_metadata
 from hexastack_core.domain import Generic
 from hexastack_core.utils.context import UserContext, get_user_context
+from hexastack_cqrs.infra.middleware.generic import InOutMiddleware
 
 
-class AuthorizationMiddleware:
+class AuthorizationMiddleware(InOutMiddleware):
     """CQRS middleware evaluating declarative @authorize rules on dispatched messages.
 
     Notes/Architectural Intent:
-        Intercepts Command and Query execution before reaching handlers.
-        Enforces security invariants centrally (RBAC, OPA, OpenFGA, SPIFFE)
-        regardless of driving transport.
+        Inherits from InOutMiddleware to intercept Command and Query execution before
+        reaching handlers. Enforces security invariants centrally (RBAC, OPA, OpenFGA,
+        SPIFFE) regardless of driving transport.
     """
 
     def __init__(
@@ -35,19 +34,14 @@ class AuthorizationMiddleware:
         self._enabled = enabled
         self._policy_adapter = policy_adapter
 
-    def __call__[G: Generic, R](
-        self,
-        instance: G,
-        next_call: Callable[[G], R],
-    ) -> R:
+    def before(self, instance: Generic) -> Any:
         """Execute authorization evaluation before dispatching to the next handler.
 
         Args:
-            instance: The command or query message instance.
-            next_call: The downstream handler or next middleware in chain.
+            instance: Dispatched command or query message instance.
 
         Returns:
-            The handler return value.
+            None.
 
         Raises:
             InvalidCredentialsError: If caller is not authenticated.
@@ -61,15 +55,7 @@ class AuthorizationMiddleware:
                     instance=instance,
                     policy_adapter=self._policy_adapter,
                 )
-
-        result = next_call(instance)
-        if inspect.isawaitable(result):
-
-            async def _async_wrap() -> Any:
-                return await result
-
-            return cast("R", _async_wrap())
-        return result
+        return None
 
     @property
     def enabled(self) -> bool:

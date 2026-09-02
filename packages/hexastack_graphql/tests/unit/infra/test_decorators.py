@@ -76,6 +76,7 @@ def test_feature_flag_field_decorator_sync_and_async():
 
 def test_graphql_decorators():
     registry = get_schema_registry()
+    registry.clear()
 
     @graphql_query_type
     class CustomQuery:
