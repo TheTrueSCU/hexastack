@@ -104,3 +104,14 @@ async def test_in_out_middleware_async_error():
         "before:SampleCommand",
         "error:async failure:42",
     ]
+
+
+def test_default_in_out_middleware_hooks():
+    mw = InOutMiddleware()
+    cmd = SampleCommand(text="default")
+    assert mw.before(cmd) is None
+    assert mw.after(cmd, "res", None) == "res"
+    # on_error should be a safe no-op
+    mw.on_error(cmd, ValueError("ignored"), None)
+    res = mw(cmd, lambda c: "ok")
+    assert res == "ok"
