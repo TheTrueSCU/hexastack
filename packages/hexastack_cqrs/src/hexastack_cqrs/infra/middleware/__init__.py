@@ -5,7 +5,10 @@ from hexastack_cqrs.infra.middleware.caching import (
 from hexastack_cqrs.infra.middleware.correlation import (
     CorrelationMiddleware,
 )
-from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
+from hexastack_cqrs.infra.middleware.generic import (
+    GenericMiddleware,
+    InOutMiddleware,
+)
 from hexastack_cqrs.infra.middleware.logging import LoggingMiddleware
 from hexastack_cqrs.infra.middleware.retry import (
     StaminaRetryMiddleware,
@@ -18,6 +21,7 @@ __all__ = [
     "CommandCacheInvalidationMiddleware",
     "CorrelationMiddleware",
     "GenericMiddleware",
+    "InOutMiddleware",
     "LoggingMiddleware",
     "QueryCachingMiddleware",
     "StaminaRetryMiddleware",

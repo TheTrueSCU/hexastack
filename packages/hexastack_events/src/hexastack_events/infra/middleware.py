@@ -1,21 +1,21 @@
-import inspect
 import uuid
-from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any
 
 from hexastack_core.domain import Event, Generic
 from hexastack_core.utils.context import get_correlation_id, get_user_context
+from hexastack_cqrs.infra.middleware.generic import InOutMiddleware
 from hexastack_events.domain.models import OutboxRecord
 from hexastack_events.ports.outbox import OutboxStoragePort
 
 
-class OutboxCaptureMiddleware:
+class OutboxCaptureMiddleware(InOutMiddleware):
     """CQRS middleware capturing emitted events into the Transactional Outbox.
 
     Notes/Architectural Intent:
-        Intercepts Event messages or results to stage OutboxRecord instances in
-        OutboxStoragePort, guaranteeing at-least-once cross-service delivery.
+        Inherits from InOutMiddleware to intercept Event messages or results to
+        stage OutboxRecord instances in OutboxStoragePort, guaranteeing at-least-once
+        cross-service delivery across synchronous and asynchronous handlers.
     """
 
     def __init__(
@@ -24,42 +24,43 @@ class OutboxCaptureMiddleware:
         source: str = "hexastack",
         enabled: bool = True,
     ) -> None:
+        """Initialize outbox capture middleware with storage port, source, and enabled flag.
+
+        Args:
+            storage: OutboxStoragePort implementation.
+            source: Source service identifier for staged OutboxRecord instances.
+            enabled: Whether event capture is active.
+        """
         self._storage = storage
         self._source = source
         self._enabled = enabled
 
-    def __call__[G: Generic, R](
-        self,
-        instance: G,
-        next_call: Callable[[G], R],
-    ) -> R:
-        """Intercept message execution and stage event if message is an Event instance.
+    def before(self, instance: Generic) -> Any:
+        """Stage event if the dispatched message instance is an Event.
 
         Args:
-            instance: Dispatched message instance.
-            next_call: Next middleware or handler in chain.
+            instance: Dispatched command, query, or event message.
 
         Returns:
-            Handler execution result.
+            None.
         """
         if self._enabled and isinstance(instance, Event):
             self._stage_event(instance)
+        return None
 
-        result = next_call(instance)
+    def after(self, instance: Generic, result: Any, context: Any) -> Any:
+        """Stage event if the handler returned an Event instance.
 
-        if inspect.isawaitable(result):
+        Args:
+            instance: Dispatched message instance.
+            result: Handler return value.
+            context: Context object returned by before().
 
-            async def _async_wrap() -> Any:
-                res = await result
-                if self._enabled and isinstance(res, Event):
-                    self._stage_event(res)
-                return res
-
-            return cast("R", _async_wrap())
-
+        Returns:
+            Unmodified handler result.
+        """
         if self._enabled and isinstance(result, Event):
             self._stage_event(result)
-
         return result
 
     def _stage_event(self, event: Event) -> None:
