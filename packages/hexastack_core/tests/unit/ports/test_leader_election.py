@@ -48,9 +48,9 @@ class DummyAsyncLeaderElection(AsyncLeaderElectionPort):
 
 def test_leader_election_port_instantiation():
     obj = DummyLeaderElection()
-    assert obj.is_leader() is None
-    assert obj.acquire_leadership() is None
-    assert obj.renew_leadership() is None
+    assert obj.is_leader() is False
+    assert obj.acquire_leadership() is False
+    assert obj.renew_leadership() is False
     assert obj.step_down() is None
     assert obj.get_leader() is None
     assert obj.on_leadership_change(lambda a, b: None) is None
@@ -59,9 +59,9 @@ def test_leader_election_port_instantiation():
 @pytest.mark.anyio
 async def test_async_leader_election_port_instantiation():
     obj = DummyAsyncLeaderElection()
-    assert await obj.is_leader() is None
-    assert await obj.acquire_leadership() is None
-    assert await obj.renew_leadership() is None
+    assert await obj.is_leader() is False
+    assert await obj.acquire_leadership() is False
+    assert await obj.renew_leadership() is False
     assert await obj.step_down() is None
     assert await obj.get_leader() is None
     assert obj.on_leadership_change(lambda a, b: None) is None

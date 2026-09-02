@@ -15,10 +15,15 @@ def test_in_memory_lock_basic_flow():
     assert lock.acquire() is True
     assert lock.locked() is True
 
-    # Reentrant / secondary acquire
+    # Reentrant acquire increments count
     assert lock.acquire() is True
+    assert lock.locked() is True
 
-    # Release
+    # First release leaves it locked because of reentrancy
+    lock.release()
+    assert lock.locked() is True
+
+    # Final release frees lock
     lock.release()
     assert lock.locked() is False
 
@@ -43,12 +48,15 @@ async def test_async_in_memory_lock_basic_flow():
     assert await lock.acquire() is True
     assert await lock.locked() is True
 
-    # Non-blocking acquire fails when locked
-    assert await lock.acquire(blocking=False) is False
+    # Reentrant acquire succeeds from the same Task
+    assert await lock.acquire(blocking=False) is True
+    assert await lock.locked() is True
 
-    # Timeout acquire fails when locked
-    assert await lock.acquire(blocking=True, timeout=0.01) is False
+    # First release decrements count
+    await lock.release()
+    assert await lock.locked() is True
 
+    # Final release
     await lock.release()
     assert await lock.locked() is False
 
@@ -63,4 +71,43 @@ async def test_async_in_memory_lock_context_manager():
     async with lock:
         assert await lock.locked() is True
 
+    assert await lock.locked() is False
+
+
+def test_in_memory_lock_reentrancy():
+    lock = InMemoryLock()
+    assert lock.acquire() is True
+    assert lock.acquire() is True
+    assert lock.locked() is True
+
+    # Nested context manager
+    with lock:
+        assert lock.locked() is True
+
+    # Still locked because of the outer acquires
+    assert lock.locked() is True
+
+    lock.release()
+    assert lock.locked() is True
+    lock.release()
+    assert lock.locked() is False
+
+
+@pytest.mark.anyio
+async def test_async_in_memory_lock_reentrancy():
+    lock = AsyncInMemoryLock()
+    assert await lock.acquire() is True
+    assert await lock.acquire() is True
+    assert await lock.locked() is True
+
+    # Nested async context manager within the same task
+    async with lock:
+        assert await lock.locked() is True
+
+    # Still locked because outer acquires must be unwound
+    assert await lock.locked() is True
+
+    await lock.release()
+    assert await lock.locked() is True
+    await lock.release()
     assert await lock.locked() is False
