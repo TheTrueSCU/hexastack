@@ -151,20 +151,29 @@ def render_pr_summary_rich(
     """Render full PR inspection dashboard using Rich components."""
 
     state_style = "bold green" if summary.state == "open" else "bold purple"
+    has_conflicts = summary.mergeable.lower() in ("dirty", "false", "conflicting")
+    mergeable_style = "bold red" if has_conflicts else "bold green"
+
     clean_badge = (
         "[bold green]✓ CLEAN (Ready for Merge)[/bold green]"
         if summary.is_clean
-        else "[bold red]✗ BLOCKED (Has Failures/Unresolved Threads)[/bold red]"
+        else "[bold red]✗ BLOCKED (Has Conflicts/Failures/Unresolved Reviews)[/bold red]"
     )
 
     header_body = (
         f"[bold white]Title:[/bold white] {summary.title}\n"
         f"[bold white]Author:[/bold white] [cyan]@{summary.author}[/cyan]\n"
         f"[bold white]Branch:[/bold white] [bold cyan]{summary.head_ref}[/bold cyan] ➔ [bold cyan]{summary.base_ref}[/bold cyan]\n"
-        f"[bold white]State:[/bold white] [{state_style}]{summary.state.upper()}[/{state_style}] (mergeable: [bold]{summary.mergeable}[/bold])\n"
+        f"[bold white]State:[/bold white] [{state_style}]{summary.state.upper()}[/{state_style}] (mergeable: [{mergeable_style}]{summary.mergeable.upper()}[/{mergeable_style}])\n"
         f"[bold white]URL:[/bold white] [blue]{summary.html_url}[/blue]\n"
         f"[bold white]Status:[/bold white] {clean_badge}"
     )
+    if has_conflicts:
+        header_body += (
+            "\n\n[bold red]⚠️ BASE BRANCH MERGE CONFLICT DETECTED:[/bold red] "
+            f"Branch '{summary.head_ref}' cannot be merged cleanly into '{summary.base_ref}'."
+        )
+
     console.print(
         Panel(
             header_body,

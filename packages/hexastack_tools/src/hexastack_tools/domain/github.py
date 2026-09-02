@@ -102,7 +102,9 @@ class PrSummary:
 
     @property
     def is_clean(self) -> bool:
-        """Check if PR has zero failures, all threads resolved, and no blocker alerts."""
+        """Check if PR has zero failures, all threads resolved, no conflicts, and no blocker alerts."""
+        if self.mergeable.lower() in ("dirty", "false", "conflicting"):
+            return False
         checks_ok = all(
             c.conclusion.lower() in ("success", "skipped", "neutral")
             for c in self.check_runs
