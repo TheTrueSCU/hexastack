@@ -132,3 +132,52 @@ async def test_asyncio_outbox_relay_start_stop_lifecycle():
 
     relay.stop()
     assert relay._running is False
+
+
+def test_asyncio_outbox_relay_with_lock_concurrency():
+    import tempfile
+    from pathlib import Path
+
+    from hexastack_core.adapters.lock.file import FileLockAdapter
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        lock_path = Path(tmpdir) / "outbox.lock"
+        relay_lock = FileLockAdapter(lock_path)
+        external_lock = FileLockAdapter(lock_path)
+
+        storage = InMemoryOutboxStorage()
+        bus = InMemoryDistributedEventBus()
+
+        storage.save(
+            OutboxRecord(
+                id="rec-lock-1",
+                event_type="LockedTestEvent",
+                payload={"locked": True},
+            )
+        )
+
+        relay = AsyncioOutboxRelay(
+            storage=storage,
+            bus=bus,
+            lock=relay_lock,
+        )
+
+        # 1. When lock is available, publishing succeeds
+        count = relay.publish_pending_batch(limit=10)
+        assert count == 1
+        assert relay_lock.locked() is False
+
+        # 2. When lock is held by external worker process, relay skips without blocking
+        storage.save(
+            OutboxRecord(
+                id="rec-lock-2",
+                event_type="LockedTestEvent2",
+                payload={"locked": True},
+            )
+        )
+        # External process acquires lock
+        ext_acq = external_lock.acquire()
+        assert ext_acq is True
+        count_skipped = relay.publish_pending_batch(limit=10)
+        assert count_skipped == 0
+        external_lock.release()

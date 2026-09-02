@@ -1038,6 +1038,15 @@ wheels = [
 ]
 
 [[package]]
+name = "diskcache"
+version = "5.6.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/21/1c1ffc1a039ddcc459db43cc108658f32c57d271d7289a2794e401d0fdb6/diskcache-5.6.3.tar.gz", hash = "sha256:2c3a3fa2743d8535d832ec61c2054a1641f41775aa7c556758a109941e33e4fc", size = 67916, upload-time = "2023-08-31T06:12:00.316Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/27/4570e78fc0bf5ea0ca45eb1de3818a23787af9b390c0b0a0033a1b8236f9/diskcache-5.6.3-py3-none-any.whl", hash = "sha256:5e31b2d5fbad117cc363ebaf6b689474db18a1f6438bc82358b024abd4c2ca19", size = 45550, upload-time = "2023-08-31T06:11:58.822Z" },
+]
+
+[[package]]
 name = "distlib"
 version = "0.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1966,6 +1975,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+diskcache = [
+    { name = "diskcache" },
+]
 redis = [
     { name = "redis", extra = ["hiredis"] },
 ]
@@ -1981,6 +1993,7 @@ valkey = [
 
 [package.metadata]
 requires-dist = [
+    { name = "diskcache", marker = "extra == 'diskcache'", specifier = ">=5.6.3" },
     { name = "faker", marker = "extra == 'testing'", specifier = ">=33.0.0" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=6.100.0" },
     { name = "inline-snapshot", marker = "extra == 'testing'", specifier = ">=0.35.4" },
@@ -1990,7 +2003,7 @@ requires-dist = [
     { name = "rodi", specifier = ">=2.1.0" },
     { name = "valkey", extras = ["libvalkey"], marker = "extra == 'valkey'", specifier = ">=6.0.0" },
 ]
-provides-extras = ["redis", "testing", "valkey"]
+provides-extras = ["diskcache", "redis", "testing", "valkey"]
 
 [[package]]
 name = "hexastack-cqrs"
@@ -2084,6 +2097,9 @@ dependencies = [
 apprise = [
     { name = "apprise" },
 ]
+filelock = [
+    { name = "filelock" },
+]
 huey = [
     { name = "huey" },
 ]
@@ -2104,6 +2120,7 @@ sql = [
 requires-dist = [
     { name = "apprise", marker = "extra == 'apprise'", specifier = ">=1.9.0" },
     { name = "cloudevents", specifier = ">=1.11.0" },
+    { name = "filelock", marker = "extra == 'filelock'", specifier = ">=3.16.0" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "huey", marker = "extra == 'huey'", specifier = ">=3.3.4" },
@@ -2114,7 +2131,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.10.0" },
     { name = "sqlalchemy", marker = "extra == 'sql'", specifier = ">=2.0.0" },
 ]
-provides-extras = ["apprise", "huey", "msgspec", "janus", "nats", "sql"]
+provides-extras = ["apprise", "filelock", "huey", "janus", "msgspec", "nats", "sql"]
 
 [[package]]
 name = "hexastack-fastapi"
@@ -2367,8 +2384,10 @@ dev = [
     { name = "deptry" },
     { name = "detect-secrets" },
     { name = "dirty-equals" },
+    { name = "diskcache" },
     { name = "faker" },
     { name = "fakeredis" },
+    { name = "filelock" },
     { name = "grpcio-reflection" },
     { name = "grpcio-tools" },
     { name = "httpx" },
@@ -2376,11 +2395,13 @@ dev = [
     { name = "hypothesis" },
     { name = "import-linter" },
     { name = "inline-snapshot" },
+    { name = "janus" },
     { name = "libcst" },
     { name = "limits" },
     { name = "locust" },
     { name = "memray" },
     { name = "mutmut" },
+    { name = "nats-py" },
     { name = "nicegui" },
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "pip-audit" },
@@ -2417,8 +2438,10 @@ dev = [
     { name = "deptry", specifier = ">=0.23.0" },
     { name = "detect-secrets", specifier = ">=1.5.0" },
     { name = "dirty-equals", specifier = ">=0.11" },
+    { name = "diskcache", specifier = ">=5.6.3" },
     { name = "faker", specifier = ">=33.0.0" },
     { name = "fakeredis", specifier = ">=2.26.0" },
+    { name = "filelock", specifier = ">=3.16.0" },
     { name = "grpcio-reflection", specifier = ">=1.83.0" },
     { name = "grpcio-tools", specifier = ">=1.83.0" },
     { name = "httpx", specifier = ">=0.27.0" },
@@ -2426,11 +2449,13 @@ dev = [
     { name = "hypothesis", specifier = ">=6.165.10" },
     { name = "import-linter", specifier = ">=2.13" },
     { name = "inline-snapshot", specifier = ">=0.35.4" },
+    { name = "janus", specifier = ">=2.0.0" },
     { name = "libcst", specifier = ">=1.9.0" },
     { name = "limits", specifier = ">=3.14.0" },
     { name = "locust", specifier = ">=2.46.4" },
     { name = "memray", specifier = ">=1.20.0" },
     { name = "mutmut", specifier = "<3" },
+    { name = "nats-py", specifier = ">=2.3.0" },
     { name = "nicegui", specifier = ">=3.16.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.44.0" },
     { name = "pip-audit", specifier = ">=2.10.1" },

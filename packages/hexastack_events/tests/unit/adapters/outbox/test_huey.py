@@ -93,3 +93,51 @@ def test_huey_outbox_relay_standard_bus_and_error():
     assert failed_record.status == OutboxStatus.FAILED
     assert failed_record.retry_count == 1
     assert "Huey broker error" in str(failed_record.last_error)
+
+
+def test_huey_outbox_relay_with_lock_concurrency():
+    import tempfile
+    from pathlib import Path
+
+    from hexastack_core.adapters.lock.file import FileLockAdapter
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        lock_path = Path(tmpdir) / "huey_outbox.lock"
+        relay_lock = FileLockAdapter(lock_path)
+        peer_lock = FileLockAdapter(lock_path)
+
+        storage = InMemoryOutboxStorage()
+        bus = InMemoryDistributedEventBus()
+
+        storage.save(
+            OutboxRecord(
+                id="rec-huey-lock-1",
+                event_type="RefundLockedEvent",
+                payload={"refund_id": "ref-999"},
+            )
+        )
+
+        relay = HueyOutboxRelay(
+            storage=storage,
+            bus=bus,
+            lock=relay_lock,
+        )
+
+        # 1. Publishes when lock available
+        count = relay.publish_pending_batch(limit=10)
+        assert count == 1
+        assert relay_lock.locked() is False
+
+        # 2. Skips when lock held by peer worker process
+        storage.save(
+            OutboxRecord(
+                id="rec-huey-lock-2",
+                event_type="RefundLockedEvent2",
+                payload={"refund_id": "ref-1000"},
+            )
+        )
+        peer_acq = peer_lock.acquire()
+        assert peer_acq is True
+        count_skipped = relay.publish_pending_batch(limit=10)
+        assert count_skipped == 0
+        peer_lock.release()
