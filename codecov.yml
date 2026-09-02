@@ -11,9 +11,12 @@ coverage:
       default:
         target: 90%
         threshold: 1%       # allow up to 1% drop without failing
+        informational: true
     patch:
       default:
-        target: 85%         # new code on PRs must be at least 85% covered
+        target: 85%         # new code on PRs target 85%
+        threshold: 1%
+        informational: true # informational status check to avoid blocking on affected-only PR test runs
 
 comment:
   layout: "reach,diff,flags,components,tree"
@@ -27,6 +30,10 @@ component_management:
     statuses:
       - type: project
         target: 90%
+      - type: patch
+        target: 85%
+        informational: true
+
   individual_components:
     - component_id: hexastack
       name: hexastack
