@@ -111,5 +111,5 @@ Hexastack maintains a strict **Cryptographic Agility Policy**:
 ## 5. Security & Compliance Inquiries
 
 For security vulnerability reports or formal compliance mapping inquiries:
-* **Security Policy**: Consult [SECURITY.md](SECURITY.md) for our coordinated vulnerability disclosure process.
+* **Security Policy**: Consult [SECURITY.md](https://github.com/TheTrueSCU/hexastack/blob/main/SECURITY.md) for our coordinated vulnerability disclosure process.
 * **Reporting Email**: Contact `security@dopplereffect.us` (PGP key available upon request).

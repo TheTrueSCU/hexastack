@@ -1780,6 +1780,9 @@ cli = [
 db = [
     { name = "hexastack-db" },
 ]
+diskcache = [
+    { name = "hexastack-core", extra = ["diskcache"] },
+]
 docs = [
     { name = "hexastack-fastapi", extra = ["docs"] },
 ]
@@ -1788,6 +1791,10 @@ events = [
 ]
 fastapi = [
     { name = "hexastack-fastapi" },
+]
+filelock = [
+    { name = "hexastack-core", extra = ["filelock"] },
+    { name = "hexastack-events", extra = ["filelock"] },
 ]
 flags = [
     { name = "hexastack-flags" },
@@ -1798,11 +1805,23 @@ graphql = [
 grpc = [
     { name = "hexastack-grpc" },
 ]
+janus = [
+    { name = "hexastack-events", extra = ["janus"] },
+]
 mcp = [
     { name = "hexastack-mcp" },
 ]
+nats = [
+    { name = "hexastack-events", extra = ["nats"] },
+]
 otel = [
     { name = "hexastack-otel" },
+]
+ratelimit = [
+    { name = "hexastack-fastapi", extra = ["ratelimit"] },
+]
+redis = [
+    { name = "hexastack-core", extra = ["redis"] },
 ]
 sql = [
     { name = "hexastack-db" },
@@ -1821,6 +1840,9 @@ tools = [
 ui = [
     { name = "hexastack-fastapi", extra = ["ui"] },
 ]
+valkey = [
+    { name = "hexastack-core", extra = ["valkey"] },
+]
 web = [
     { name = "hexastack-fastapi" },
     { name = "uvicorn", extra = ["standard"] },
@@ -1836,16 +1858,24 @@ requires-dist = [
     { name = "hexastack-cli", marker = "extra == 'all'", editable = "packages/hexastack_cli" },
     { name = "hexastack-cli", marker = "extra == 'cli'", editable = "packages/hexastack_cli" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
+    { name = "hexastack-core", extras = ["diskcache"], marker = "extra == 'diskcache'", editable = "packages/hexastack_core" },
+    { name = "hexastack-core", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_core" },
+    { name = "hexastack-core", extras = ["redis"], marker = "extra == 'redis'", editable = "packages/hexastack_core" },
+    { name = "hexastack-core", extras = ["valkey"], marker = "extra == 'valkey'", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-db", marker = "extra == 'all'", editable = "packages/hexastack_db" },
     { name = "hexastack-db", marker = "extra == 'db'", editable = "packages/hexastack_db" },
     { name = "hexastack-db", marker = "extra == 'sql'", editable = "packages/hexastack_db" },
     { name = "hexastack-events", marker = "extra == 'all'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", marker = "extra == 'events'", editable = "packages/hexastack_events" },
+    { name = "hexastack-events", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_events" },
+    { name = "hexastack-events", extras = ["janus"], marker = "extra == 'janus'", editable = "packages/hexastack_events" },
+    { name = "hexastack-events", extras = ["nats"], marker = "extra == 'nats'", editable = "packages/hexastack_events" },
     { name = "hexastack-fastapi", marker = "extra == 'all'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", marker = "extra == 'fastapi'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", marker = "extra == 'web'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["docs"], marker = "extra == 'docs'", editable = "packages/hexastack_fastapi" },
+    { name = "hexastack-fastapi", extras = ["ratelimit"], marker = "extra == 'ratelimit'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["ui"], marker = "extra == 'ui'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-flags", marker = "extra == 'all'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", marker = "extra == 'flags'", editable = "packages/hexastack_flags" },
@@ -1868,7 +1898,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "auth", "cli", "db", "sql", "docs", "events", "fastapi", "graphql", "grpc", "mcp", "otel", "web", "flags", "ui", "testing", "tools", "all"]
+provides-extras = ["ai", "auth", "cli", "db", "diskcache", "docs", "events", "fastapi", "filelock", "flags", "graphql", "grpc", "janus", "mcp", "nats", "otel", "ratelimit", "redis", "sql", "testing", "tools", "ui", "valkey", "web", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -1978,6 +2008,9 @@ dependencies = [
 diskcache = [
     { name = "diskcache" },
 ]
+filelock = [
+    { name = "filelock" },
+]
 redis = [
     { name = "redis", extra = ["hiredis"] },
 ]
@@ -1995,6 +2028,7 @@ valkey = [
 requires-dist = [
     { name = "diskcache", marker = "extra == 'diskcache'", specifier = ">=5.6.3" },
     { name = "faker", marker = "extra == 'testing'", specifier = ">=33.0.0" },
+    { name = "filelock", marker = "extra == 'filelock'", specifier = ">=3.16.0" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=6.100.0" },
     { name = "inline-snapshot", marker = "extra == 'testing'", specifier = ">=0.35.4" },
     { name = "pydantic", specifier = ">=2.13.4" },
@@ -2003,7 +2037,7 @@ requires-dist = [
     { name = "rodi", specifier = ">=2.1.0" },
     { name = "valkey", extras = ["libvalkey"], marker = "extra == 'valkey'", specifier = ">=6.0.0" },
 ]
-provides-extras = ["diskcache", "redis", "testing", "valkey"]
+provides-extras = ["diskcache", "filelock", "redis", "testing", "valkey"]
 
 [[package]]
 name = "hexastack-cqrs"
@@ -2099,6 +2133,7 @@ apprise = [
 ]
 filelock = [
     { name = "filelock" },
+    { name = "hexastack-core", extra = ["filelock"] },
 ]
 huey = [
     { name = "huey" },
@@ -2122,6 +2157,7 @@ requires-dist = [
     { name = "cloudevents", specifier = ">=1.11.0" },
     { name = "filelock", marker = "extra == 'filelock'", specifier = ">=3.16.0" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
+    { name = "hexastack-core", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "huey", marker = "extra == 'huey'", specifier = ">=3.3.4" },
     { name = "janus", marker = "extra == 'janus'", specifier = ">=2.0.0" },
