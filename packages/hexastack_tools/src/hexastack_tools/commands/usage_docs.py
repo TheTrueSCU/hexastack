@@ -221,6 +221,19 @@ def process_package_usage(
             console.print(
                 f"[bold red]❌ {rel_path} is out of date. Run 'uv run generate-usage-docs --fix' to update.[/bold red]"
             )
+            import difflib
+
+            diff_lines = list(
+                difflib.unified_diff(
+                    current_content.splitlines(),
+                    new_content.splitlines(),
+                    fromfile=f"a/{rel_path}",
+                    tofile=f"b/{rel_path}",
+                    lineterm="",
+                )
+            )
+            if diff_lines:
+                console.print("\n".join(diff_lines[:40]))
             return False
         console.print(f"[bold green]✓ {rel_path} is up to date.[/bold green]")
         return True

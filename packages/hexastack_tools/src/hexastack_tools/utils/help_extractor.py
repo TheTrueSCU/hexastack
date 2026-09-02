@@ -33,7 +33,7 @@ def clean_help_output(output: str) -> str:
     return "\n".join(final_lines)
 
 
-def extract_command_help(cmd: list[str], timeout: int = 15) -> str:
+def extract_command_help(cmd: list[str], timeout: int = 30) -> str:
     """Execute a command with --help and capture formatted text output."""
     env = dict(os.environ, NO_COLOR="1", TERM="dumb")
     try:
@@ -46,6 +46,20 @@ def extract_command_help(cmd: list[str], timeout: int = 15) -> str:
         )
         raw = res.stdout if res.stdout.strip() else res.stderr
         return clean_help_output(raw)
+    except subprocess.TimeoutExpired:
+        # Retry once with longer timeout in case of initial environment sync latency
+        try:
+            res = subprocess.run(
+                ["uv", "run"] + cmd + ["--help"],
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=60,
+            )
+            raw = res.stdout if res.stdout.strip() else res.stderr
+            return clean_help_output(raw)
+        except Exception as exc:
+            return f"Error extracting help for '{' '.join(cmd)}': {exc}"
     except Exception as exc:
         return f"Error extracting help for '{' '.join(cmd)}': {exc}"
 
