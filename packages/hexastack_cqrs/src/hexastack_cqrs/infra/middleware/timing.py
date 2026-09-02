@@ -1,20 +1,19 @@
-import inspect
 import time
-from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from hexastack_core.domain import Generic
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.config import TimingMiddlewareConfig
+from hexastack_cqrs.infra.middleware.generic import InOutMiddleware
 
 
-class TimingMiddleware:
+class TimingMiddleware(InOutMiddleware):
     """Middleware measuring execution time and logging warnings for slow commands.
 
     Notes/Architectural Intent:
-        Captures high-resolution execution duration using perf_counter, recording
-        duration metrics and warning on commands exceeding configured performance limits.
-        Supports both synchronous handlers and asynchronous coroutines.
+        Inherits from InOutMiddleware to capture execution duration using perf_counter,
+        recording duration metrics and warning on commands exceeding configured performance
+        limits for both synchronous and asynchronous handlers.
     """
 
     def __init__(
@@ -31,38 +30,43 @@ class TimingMiddleware:
         self._logger = logger
         self._config = config or TimingMiddlewareConfig()
 
-    def __call__[G: Generic, R](self, instance: G, next_call: Callable[[G], R]) -> R:
-        """Measure next_call execution time and log elapsed duration with slow warnings.
+    def before(self, instance: Generic) -> Any:
+        """Capture the start timestamp before downstream execution.
 
         Args:
-            instance: The command or query Generic message instance.
-            next_call: Callable representing the remaining middleware/handler chain.
+            instance: Dispatched command or query message instance.
 
         Returns:
-            The result returned by next_call of type R (or an async coroutine if next_call is async).
-
-        Raises:
-            Exception: Propagates any error raised during handler execution after duration logging.
+            Float start timestamp from time.perf_counter().
         """
-        message_name = instance.__class__.__name__
-        start_time = time.perf_counter()
+        return time.perf_counter()
 
-        result = next_call(instance)
+    def after(self, instance: Generic, result: Any, context: Any) -> Any:
+        """Calculate elapsed duration and log timing summary upon successful completion.
 
-        if inspect.iscoroutine(result):
+        Args:
+            instance: Dispatched command or query message instance.
+            result: Result returned from downstream execution.
+            context: Start timestamp float returned by before().
 
-            async def _async_wrapped() -> Any:
-                try:
-                    return await result
-                finally:
-                    duration = time.perf_counter() - start_time
-                    self._log_duration(message_name, duration)
-
-            return cast("R", _async_wrapped())
-
-        duration = time.perf_counter() - start_time
-        self._log_duration(message_name, duration)
+        Returns:
+            Unmodified result from downstream processing.
+        """
+        duration = time.perf_counter() - float(context)
+        self._log_duration(instance.__class__.__name__, duration)
         return result
+
+    def on_error(self, instance: Generic, exc: Exception, context: Any) -> None:
+        """Log elapsed duration when downstream execution raises an error.
+
+        Args:
+            instance: Dispatched command or query message instance.
+            exc: Exception raised during execution.
+            context: Start timestamp float returned by before().
+        """
+        if context is not None:
+            duration = time.perf_counter() - float(context)
+            self._log_duration(instance.__class__.__name__, duration)
 
     def _log_duration(self, message_name: str, duration: float) -> None:
         """Helper method to format and emit duration log records.
@@ -89,3 +93,8 @@ class TimingMiddleware:
                 f"Executed {message_name} in {duration:.4f}s",
                 extra=extra,
             )
+
+
+__all__ = [
+    "TimingMiddleware",
+]
