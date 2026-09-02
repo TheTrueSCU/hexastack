@@ -400,28 +400,12 @@ options:
 #### `pypi-build`
 
 ```text
-PyPI Monorepo Distribution Builder ->
-          /home/rjdw/Projects/hexastack/dist
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
-┃ Package Name      ┃ Version      ┃ Status           ┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
-│ hexastack         │ 0.1.0        │ ✓ Built          │
-│ hexastack-ai      │ 0.1.0        │ ✓ Built          │
-│ hexastack-auth    │ 0.1.0        │ ✓ Built          │
-│ hexastack-cli     │ 0.1.0        │ ✓ Built          │
-│ hexastack-core    │ 0.1.0        │ ✓ Built          │
-│ hexastack-cqrs    │ 0.1.0        │ ✓ Built          │
-│ hexastack-db      │ 0.1.0        │ ✓ Built          │
-│ hexastack-events  │ 0.1.0        │ ✓ Built          │
-│ hexastack-fastapi │ 0.1.0        │ ✓ Built          │
-│ hexastack-flags   │ 0.1.0        │ ✓ Built          │
-│ hexastack-graphql │ 0.1.0        │ ✓ Built          │
-│ hexastack-grpc    │ 0.1.0        │ ✓ Built          │
-│ hexastack-logging │ 0.1.0        │ ✓ Built          │
-│ hexastack-mcp     │ 0.1.0        │ ✓ Built          │
-│ hexastack-otel    │ 0.1.0        │ ✓ Built          │
-│ hexastack-tools   │ 0.1.0        │ ✓ Built          │
-└───────────────────┴──────────────┴──────────────────┘
+usage: pypi-build [-h]
+
+Build distribution packages (wheels and sdists) for all workspace packages.
+
+options:
+  -h, --help  show this help message and exit
 ```
 
 #### `pypi-publish`

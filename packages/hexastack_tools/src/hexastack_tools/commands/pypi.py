@@ -111,6 +111,10 @@ def build_all_packages(out_dir: Path | None = None) -> int:
 
 def build_main() -> None:
     """CLI entrypoint for pypi-build."""
+    parser = argparse.ArgumentParser(
+        description="Build distribution packages (wheels and sdists) for all workspace packages."
+    )
+    parser.parse_args()
     sys.exit(build_all_packages())
 
 

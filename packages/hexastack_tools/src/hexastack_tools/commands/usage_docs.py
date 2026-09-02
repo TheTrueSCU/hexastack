@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import subprocess
 import sys
 import tomllib
@@ -11,7 +12,8 @@ from pathlib import Path
 from rich.console import Console
 
 from hexastack_tools.utils.help_extractor import (
-    extract_command_help,
+    extract_command_tree_bfs,
+    extract_commands_parallel,
     extract_subcommands_from_help,
 )
 from hexastack_tools.utils.workspace import (
@@ -57,10 +59,14 @@ _TOOLS_SECTION_MAP: dict[str, list[str]] = {
 
 
 def build_tools_usage_markdown(root: Path) -> str:
-    """Generate canonical USAGE.md for hexastack-tools by introspecting entrypoints."""
+    """Generate canonical USAGE.md for hexastack-tools using parallel command help extraction."""
     pyproject_path = root / "packages" / "hexastack_tools" / "pyproject.toml"
     data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
     scripts: dict[str, str] = data.get("project", {}).get("scripts", {})
+
+    # Extract help for all registered scripts concurrently
+    all_cmds = [[cmd] for cmd in sorted(scripts.keys())]
+    help_map = extract_commands_parallel(all_cmds)
 
     lines: list[str] = [
         "# Hexastack Developer Tools & Usage Guide (`hexastack-tools`)",
@@ -102,7 +108,7 @@ def build_tools_usage_markdown(root: Path) -> str:
             if cmd not in scripts:
                 continue
             documented_cmds.add(cmd)
-            help_text = extract_command_help([cmd])
+            help_text = help_map.get((cmd,), "")
             lines.append(f"#### `{cmd}`\n")
             lines.append("```text")
             lines.append(help_text)
@@ -112,7 +118,7 @@ def build_tools_usage_markdown(root: Path) -> str:
     if unmapped:
         lines.append("### 🔧 Additional Workspace Tools\n")
         for cmd in unmapped:
-            help_text = extract_command_help([cmd])
+            help_text = help_map.get((cmd,), "")
             lines.append(f"#### `{cmd}`\n")
             lines.append("```text")
             lines.append(help_text)
@@ -122,8 +128,9 @@ def build_tools_usage_markdown(root: Path) -> str:
 
 
 def build_umbrella_usage_markdown(root: Path) -> str:
-    """Generate canonical USAGE.md for the umbrella hexastack package and subcommands."""
-    main_help = extract_command_help(["hexastack"])
+    """Generate canonical USAGE.md for the umbrella hexastack package using BFS command tree traversal."""
+    tree = extract_command_tree_bfs(["hexastack"])
+    main_help = tree.get(("hexastack",), "")
     subcommands = extract_subcommands_from_help(main_help)
 
     lines: list[str] = [
@@ -146,7 +153,7 @@ def build_umbrella_usage_markdown(root: Path) -> str:
     ]
 
     for sub in subcommands:
-        sub_help = extract_command_help(["hexastack", sub])
+        sub_help = tree.get(("hexastack", sub), "")
         lines.append(f"### `hexastack {sub}`\n")
         lines.append("```text")
         lines.append(sub_help)
@@ -221,8 +228,6 @@ def process_package_usage(
             console.print(
                 f"[bold red]❌ {rel_path} is out of date. Run 'uv run generate-usage-docs --fix' to update.[/bold red]"
             )
-            import difflib
-
             diff_lines = list(
                 difflib.unified_diff(
                     current_content.splitlines(),
