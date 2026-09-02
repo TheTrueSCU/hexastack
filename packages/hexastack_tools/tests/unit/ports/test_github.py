@@ -19,6 +19,12 @@ class DummyGitHubAdapter:
     def get_single_alert(self, alert_number: int):
         pass
 
+    def get_failed_run_logs(self, run_id):
+        pass
+
+    def get_workflow_runs(self, branch=None, limit=5):
+        pass
+
 
 def test_github_api_port_runtime_checkable() -> None:
     """Verify GitHubApiPort protocol runtime checkability."""

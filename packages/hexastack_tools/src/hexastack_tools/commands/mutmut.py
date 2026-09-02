@@ -77,6 +77,11 @@ def run_main() -> None:
 
 def inspect_main() -> None:
     """CLI entrypoint for mutmut-inspect."""
+    parser = argparse.ArgumentParser(
+        description="Inspect mutation testing results and cached mutants."
+    )
+    parser.parse_args()
+
     cmd = ["mutmut", "results"]
     sys.exit(subprocess.run(cmd, cwd=ROOT_DIR).returncode)
 
