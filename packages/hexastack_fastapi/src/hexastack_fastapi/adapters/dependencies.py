@@ -19,7 +19,9 @@ __all__ = [
     "get_container",
     "get_feature_flags",
     "get_pipeline",
+    "get_rate_limiter",
     "require_feature",
+    "require_rate_limit",
 ]
 
 
@@ -186,5 +188,66 @@ def require_feature(
                 status_code=status_code,
                 detail=detail or f"Feature '{flag_key}' is disabled.",
             )
+
+    return _dependency
+
+
+def get_rate_limiter(request: Request) -> Any | None:
+    """FastAPI dependency resolving the registered RateLimiterPort instance if available.
+
+    Args:
+        request: Incoming FastAPI Request object.
+
+    Returns:
+        RateLimiterPort instance from app.state or DI container, or None.
+    """
+    limiter = getattr(request.app.state, "rate_limiter", None)
+    if limiter is not None:
+        return limiter
+
+    container = getattr(request.app.state, "container", None)
+    if isinstance(container, Container):
+        from hexastack_core.ports.ratelimit import RateLimiterPort
+
+        if RateLimiterPort in container:
+            return container.resolve(RateLimiterPort)
+    return None
+
+
+def require_rate_limit(
+    limit: str,
+    *,
+    key_func: Any | None = None,
+    detail: str | None = None,
+) -> Any:
+    """Create a FastAPI dependency that enforces rate limiting on an endpoint.
+
+    Notes/Architectural Intent:
+        Checks rate limit against registered RateLimiterPort. If quota is exceeded,
+        raises an HTTPException with status 429 and Retry-After header.
+
+    Args:
+        limit: Rate limit specification string (e.g. '10/minute').
+        key_func: Optional callable to extract bucket key from request.
+        detail: Optional error message string.
+
+    Returns:
+        A FastAPI dependency callable.
+    """
+    from hexastack_fastapi.adapters.ratelimit import get_user_or_ip_key
+
+    key_extractor = key_func or get_user_or_ip_key
+
+    async def _dependency(request: Request) -> None:
+        limiter = get_rate_limiter(request)
+        if limiter is not None:
+            key = key_extractor(request)
+            if not limiter.hit(key, limit):
+                reset_sec = limiter.get_reset_window(key, limit)
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=detail or f"Rate limit exceeded: {limit}.",
+                    headers={"Retry-After": str(reset_sec)},
+                )
 
     return _dependency

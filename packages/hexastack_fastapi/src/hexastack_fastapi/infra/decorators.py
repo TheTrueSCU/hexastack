@@ -17,7 +17,7 @@ class RouteMetadata:
 
     Notes/Architectural Intent:
         Carries routing parameters attached by decorators for automated endpoint registration,
-        including optional feature flag gating.
+        including optional feature flag gating and rate limiting.
     """
 
     path: str
@@ -28,13 +28,14 @@ class RouteMetadata:
     summary: str | None = None
     tags: tuple[str | Enum, ...] | None = None
     feature_flag: str | None = None
+    rate_limit: str | None = None
 
 
 __all__ = [
+    "RouteMetadata",
     "api_command",
     "api_query",
     "feature_flag_route",
-    "RouteMetadata",
 ]
 
 
@@ -47,6 +48,7 @@ def api_command(
     summary: str | None = None,
     tags: list[str | Enum] | None = None,
     feature_flag: str | None = None,
+    rate_limit: str | None = None,
 ) -> Callable[[type[TCommand]], type[TCommand]]:
     """Decorator marking a Command class for automatic HTTP endpoint exposure.
 
@@ -58,6 +60,7 @@ def api_command(
         summary: Optional OpenAPI summary.
         tags: Optional OpenAPI tags list.
         feature_flag: Optional feature flag key required for route access.
+        rate_limit: Optional rate limit string (e.g. '10/minute').
 
     Returns:
         Decorated Command class with attached routing metadata.
@@ -76,6 +79,7 @@ def api_command(
             summary=summary,
             tags=tuple(tags) if tags else None,
             feature_flag=feature_flag,
+            rate_limit=rate_limit,
         )
         setattr(cls, _ROUTE_METADATA_ATTR, meta)
         return cls
@@ -92,6 +96,7 @@ def api_query(
     summary: str | None = None,
     tags: list[str | Enum] | None = None,
     feature_flag: str | None = None,
+    rate_limit: str | None = None,
 ) -> Callable[[type[TQuery]], type[TQuery]]:
     """Decorator marking a Query class for automatic HTTP endpoint exposure.
 
@@ -103,6 +108,7 @@ def api_query(
         summary: Optional OpenAPI summary.
         tags: Optional OpenAPI tags list.
         feature_flag: Optional feature flag key required for route access.
+        rate_limit: Optional rate limit string (e.g. '10/minute').
 
     Returns:
         Decorated Query class with attached routing metadata.
@@ -121,6 +127,7 @@ def api_query(
             summary=summary,
             tags=tuple(tags) if tags else None,
             feature_flag=feature_flag,
+            rate_limit=rate_limit,
         )
         setattr(cls, _ROUTE_METADATA_ATTR, meta)
         return cls

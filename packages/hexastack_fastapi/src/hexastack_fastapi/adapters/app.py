@@ -78,6 +78,32 @@ def create_fastapi_app(
     if pipeline is not None:
         app.state.pipeline = pipeline
 
+    # Attach rate limiter if enabled
+    if cfg.ratelimit.enable:
+        try:
+            from hexastack_fastapi.adapters.ratelimit import SlowapiRateLimiterAdapter
+
+            rate_limiter = SlowapiRateLimiterAdapter(
+                default_limits=cfg.ratelimit.default_limits,
+                storage_uri=cfg.ratelimit.storage_uri,
+            )
+            app.state.rate_limiter = rate_limiter
+            if container is not None:
+                from hexastack_core.ports.ratelimit import RateLimiterPort
+
+                container.add_instance(rate_limiter, declared_class=RateLimiterPort)
+        except Exception:
+            # Fall back to InMemoryRateLimiter if slowapi is not installed
+            from hexastack_core.adapters.ratelimit import InMemoryRateLimiter
+            from hexastack_core.ports.ratelimit import RateLimiterPort
+
+            in_memory_limiter = InMemoryRateLimiter()
+            app.state.rate_limiter = in_memory_limiter
+            if container is not None:
+                container.add_instance(
+                    in_memory_limiter, declared_class=RateLimiterPort
+                )
+
     # Attach CORS middleware if enabled
     if cfg.cors.enable:
         app.add_middleware(

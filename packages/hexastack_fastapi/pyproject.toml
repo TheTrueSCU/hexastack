@@ -21,6 +21,10 @@ auth = [
 docs = [
     "zensical>=0.0.56",
 ]
+ratelimit = [
+    "limits>=3.14.0",
+    "slowapi>=0.1.9",
+]
 testing = [
     "playwright>=1.49.0",
     "schemathesis>=3.39.0",
@@ -28,6 +32,7 @@ testing = [
 ui = [
     "nicegui>=2.0.0",
 ]
+
 
 [project.entry-points."hexastack.bootstrappers"]
 fastapi = "hexastack_fastapi.infra.bootstrap:FastApiBootstrapper"
