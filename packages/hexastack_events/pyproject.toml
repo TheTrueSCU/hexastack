@@ -22,7 +22,9 @@ apprise = [
 ]
 filelock = [
     "filelock>=3.16.0",
+    "hexastack-core[filelock]",
 ]
+
 huey = [
     "huey>=3.3.4",
 ]

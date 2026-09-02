@@ -19,12 +19,14 @@ Part of the [Hexastack Framework](https://github.com/TheTrueSCU/hexastack).
 
 1. **CNCF CloudEvents 1.0 Protocol**: Automatic serialization and deserialization of domain `Event` models into standardized CloudEvents JSON envelopes with W3C correlation ID and multi-tenant partitioning.
 2. **Transactional Outbox Engine**: Guarantees at-least-once delivery by staging uncommitted domain events in an `OutboxStoragePort` within the same transaction as business state mutations.
-3. **Dual Relay Engines**:
-   - **Native Asyncio (`AsyncioOutboxRelay`)**: In-process background task with zero external dependencies.
-   - **Huey Worker (`HueyOutboxRelay`)**: Multi-process worker executing outbox polling in separate worker nodes (`pip install hexastack-events[huey]`).
+3. **Dual Relay Engines with Multi-Process Locking**:
+   - **Native Asyncio (`AsyncioOutboxRelay`)**: In-process background task with zero external dependencies, supporting optional `LockPort` / `filelock` coordination.
+   - **Huey Worker (`HueyOutboxRelay`)**: Multi-process worker executing outbox polling in separate worker nodes (`pip install hexastack-events[huey]`), supporting optional `LockPort` / `filelock` mutual exclusion.
 4. **Relational Database Outbox Storage (`SqlAlchemyOutboxStorage`)**: Pluggable storage adapter supporting SQLAlchemy tables and transactions (`pip install hexastack-events[sql]`).
 5. **NATS JetStream Distributed Event Bus (`NatsJetStreamEventBusAdapter`)**: Production-grade at-least-once delivery via NATS JetStream — durable push consumers, WorkQueue stream retention, dead-letter routing, and msgspec zero-copy encoding (`pip install hexastack-events[nats]`).
 6. **Janus Async-Sync Thread Bridge (`JanusEventChannel`, `JanusCommandQueue[T]`)**: Thread-safe ↔ asyncio-safe queue bridges enabling synchronous OS threads (gRPC servicers, CLI handlers) to enqueue events and commands for dispatch by async event-loop consumers (`pip install hexastack-events[janus]`).
+7. **Multi-Process Concurrency Protection (`filelock`)**: Inter-process file locking prevents competing workers or pollers from creating lock contention or duplicate event dispatches on SQLite and filesystem backends (`pip install hexastack-events[filelock]`).
+
 
 ```mermaid
 graph TD

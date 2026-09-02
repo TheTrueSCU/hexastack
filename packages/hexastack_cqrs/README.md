@@ -16,6 +16,7 @@
 
 - **Synchronous & Asynchronous Buses**: `SynchronousCommandBus`, `SynchronousQueryBus`, `SynchronousEventBus`, and async/distributed buses.
 - **Composable Middleware Pipeline**: Pluggable middlewares executed sequentially before and after command/query handling:
+  - `InOutMiddleware` & `AsyncInOutMiddleware`: Standardized base class template with `before`, `after`, and `on_error` lifecycle hooks.
   - `CorrelationMiddleware`: Propagates correlation IDs across requests and async tasks.
   - `TimingMiddleware`: Measures and records execution latency.
   - `LoggingMiddleware`: Logs execution lifecycles and errors via `LoggerPort` (dynamically gated via `features.cqrs.logging`).
@@ -39,7 +40,7 @@ hexastack_cqrs/
 ├── domain/          # Command, Query, Event, Handler protocols, CQRS exceptions
 ├── ports/           # CommandBusPort, QueryBusPort, EventBusPort, MiddlewarePort
 ├── adapters/        # Buses (Synchronous & Asynchronous with Huey)
-└── infra/           # CqrsBootstrapper (order=20), Middleware pipeline, Registries, @cached_query, @feature_flag
+└── infra/           # CqrsBootstrapper (order=20), Middleware pipeline, InOutMiddleware, Registries, @cached_query, @feature_flag
 ```
 
 ### Key Exports
@@ -50,8 +51,9 @@ hexastack_cqrs/
 | **Bootstrap** | `CqrsBootstrapper` (order=20), `CqrsConfig` |
 | **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@cached_query`, `@invalidates_cache`, `@feature_flag`, `@presenter` |
 | **Domain** | `Command`, `Query`, `Event`, `CommandHandler`, `QueryHandler`, `EventHandler` |
-| **Middlewares** | `CorrelationMiddleware`, `TimingMiddleware`, `LoggingMiddleware`, `QueryCachingMiddleware`, `CommandCacheInvalidationMiddleware`, `StaminaRetryMiddleware`, `TenacityRetryMiddleware`, `UnitOfWorkMiddleware`, `ConditionalFeatureFlagMiddleware`, `ExecutionPipeline` |
+| **Middlewares** | `AsyncInOutMiddleware`, `CommandCacheInvalidationMiddleware`, `ConditionalFeatureFlagMiddleware`, `CorrelationMiddleware`, `ExecutionPipeline`, `InOutMiddleware`, `LoggingMiddleware`, `QueryCachingMiddleware`, `StaminaRetryMiddleware`, `TenacityRetryMiddleware`, `TimingMiddleware`, `UnitOfWorkMiddleware` |
 | **Ports** | `CommandBusPort`, `QueryBusPort`, `EventBusPort`, `MiddlewarePort` |
+
 
 
 

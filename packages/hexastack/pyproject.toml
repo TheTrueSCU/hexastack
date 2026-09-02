@@ -27,8 +27,8 @@ cli = [
 db = [
     "hexastack-db",
 ]
-sql = [
-    "hexastack-db",
+diskcache = [
+    "hexastack-core[diskcache]",
 ]
 docs = [
     "hexastack-fastapi[docs]",
@@ -39,27 +39,39 @@ events = [
 fastapi = [
     "hexastack-fastapi",
 ]
+filelock = [
+    "hexastack-core[filelock]",
+    "hexastack-events[filelock]",
+]
+flags = [
+    "hexastack-flags",
+]
 graphql = [
     "hexastack-graphql",
 ]
 grpc = [
     "hexastack-grpc",
 ]
+janus = [
+    "hexastack-events[janus]",
+]
 mcp = [
     "hexastack-mcp",
+]
+nats = [
+    "hexastack-events[nats]",
 ]
 otel = [
     "hexastack-otel",
 ]
-web = [
-    "hexastack-fastapi",
-    "uvicorn[standard]>=0.30.0",
+ratelimit = [
+    "hexastack-fastapi[ratelimit]",
 ]
-flags = [
-    "hexastack-flags",
+redis = [
+    "hexastack-core[redis]",
 ]
-ui = [
-    "hexastack-fastapi[ui]",
+sql = [
+    "hexastack-db",
 ]
 testing = [
     "faker>=33.0.0",
@@ -72,6 +84,17 @@ testing = [
 tools = [
     "hexastack-tools",
 ]
+ui = [
+    "hexastack-fastapi[ui]",
+]
+valkey = [
+    "hexastack-core[valkey]",
+]
+web = [
+    "hexastack-fastapi",
+    "uvicorn[standard]>=0.30.0",
+]
+
 all = [
     "hexastack-ai",
     "hexastack-auth",
