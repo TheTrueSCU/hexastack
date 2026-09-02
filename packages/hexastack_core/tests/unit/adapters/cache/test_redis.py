@@ -45,7 +45,8 @@ def test_sync_redis_cache_adapter_crud():
     deleted = cache.delete("user:1")
     assert deleted is True
     assert cache.has("user:1") is False
-    assert cache.delete("user:1") is False
+    deleted_again = cache.delete("user:1")
+    assert deleted_again is False
 
     # Clear with prefix
     cache.set("item:1", "apple")
@@ -100,7 +101,8 @@ async def test_async_redis_cache_adapter_crud():
     deleted = await cache.delete_async("user:2")
     assert deleted is True
     assert await cache.has_async("user:2") is False
-    assert await cache.delete_async("user:2") is False
+    deleted_again = await cache.delete_async("user:2")
+    assert deleted_again is False
 
     # Clear with prefix
     await cache.set_async("msg:1", "hello")
