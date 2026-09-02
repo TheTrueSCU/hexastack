@@ -60,12 +60,22 @@ class PermissionDeniedError(HexastackError):
     """Domain exception raised when an authenticated caller lacks required authorization."""
 
 
+class LockError(HexastackError):
+    """Domain exception raised when a distributed lock operation fails."""
+
+
+class LeaderElectionError(HexastackError):
+    """Domain exception raised when leader election coordination fails."""
+
+
 __all__ = [
     "AuthenticationError",
     "ConflictError",
     "DependencyResolutionError",
     "HexastackError",
     "HexastackRegistryError",
+    "LeaderElectionError",
+    "LockError",
     "MissingDependencyError",
     "NotFoundError",
     "PermissionDeniedError",
