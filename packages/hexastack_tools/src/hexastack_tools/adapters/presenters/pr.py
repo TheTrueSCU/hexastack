@@ -93,7 +93,61 @@ def _build_threads_table(threads: tuple[ReviewThread, ...]) -> Table:
     return table
 
 
-def render_pr_summary_rich(summary: PrSummary, show_details: bool = False) -> None:
+def _render_inline_review_comments(summary: PrSummary) -> None:
+    """Render inline diff review comments."""
+    review_comments = [c for c in summary.general_comments if c.is_review_comment]
+    for c in review_comments:
+        body_parts = []
+        if c.path:
+            body_parts.append(f"[bold cyan]File:[/bold cyan] {c.path}:{c.line or '-'}")
+        if c.diff_hunk:
+            body_parts.append(f"[dim]{c.diff_hunk}[/dim]\n")
+        body_parts.append(c.body)
+        console.print(
+            Panel(
+                "\n".join(body_parts),
+                title=f"[bold yellow]Inline Review Comment: @{c.author}[/bold yellow]",
+                border_style="yellow",
+            )
+        )
+
+
+def _render_failed_ci_logs(failed_logs: dict[str, str] | None) -> None:
+    """Render extracted failed CI job log snippets."""
+    if not failed_logs:
+        return
+    for job_name, log_snippet in failed_logs.items():
+        if log_snippet and log_snippet.strip():
+            lines = log_snippet.strip().splitlines()
+            display_lines = lines[-30:] if len(lines) > 30 else lines
+            console.print(
+                Panel(
+                    "\n".join(display_lines),
+                    title=f"[bold red]Failed CI Logs: {job_name}[/bold red]",
+                    border_style="red",
+                )
+            )
+
+
+def _render_unresolved_details(summary: PrSummary) -> None:
+    """Render full body of unresolved conversation threads."""
+    for t in summary.review_threads:
+        if not t.is_resolved and t.comments:
+            for c in t.comments:
+                console.print(
+                    Panel(
+                        f"[bold white]Location:[/bold white] {c.path}:{c.line}\n\n{c.body}",
+                        title=f"[bold red]Unresolved Review: @{c.author}[/bold red]",
+                        border_style="red",
+                    )
+                )
+
+
+def render_pr_summary_rich(
+    summary: PrSummary,
+    show_details: bool = False,
+    failed_logs: dict[str, str] | None = None,
+) -> None:
     """Render full PR inspection dashboard using Rich components."""
 
     state_style = "bold green" if summary.state == "open" else "bold purple"
@@ -125,17 +179,11 @@ def render_pr_summary_rich(summary: PrSummary, show_details: bool = False) -> No
     if summary.review_threads:
         console.print(_build_threads_table(summary.review_threads))
 
+    _render_inline_review_comments(summary)
+    _render_failed_ci_logs(failed_logs)
+
     if show_details:
-        for t in summary.review_threads:
-            if not t.is_resolved and t.comments:
-                for c in t.comments:
-                    console.print(
-                        Panel(
-                            f"[bold white]Location:[/bold white] {c.path}:{c.line}\n\n{c.body}",
-                            title=f"[bold red]Unresolved Review: @{c.author}[/bold red]",
-                            border_style="red",
-                        )
-                    )
+        _render_unresolved_details(summary)
 
 
 def render_pr_summary_json(summary: PrSummary) -> str:
@@ -207,6 +255,7 @@ def present_pr_summary(
     summary: PrSummary,
     output_format: OutputFormat = OutputFormat.AUTO,
     show_details: bool = False,
+    failed_logs: dict[str, str] | None = None,
 ) -> None:
     """Unified entrypoint to present PR summary in rich, json, plain, or auto-detected format."""
 
@@ -218,7 +267,9 @@ def present_pr_summary(
         sys.stdout.write(render_pr_summary_plain(summary) + "\n")
         sys.stdout.flush()
     else:
-        render_pr_summary_rich(summary, show_details=show_details)
+        render_pr_summary_rich(
+            summary, show_details=show_details, failed_logs=failed_logs
+        )
 
 
 __all__ = [

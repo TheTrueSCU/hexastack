@@ -50,6 +50,8 @@ class ReviewComment:
     path: str | None = None
     line: int | None = None
     url: str | None = None
+    diff_hunk: str | None = None
+    is_review_comment: bool = False
 
 
 @dataclass(frozen=True)

@@ -98,7 +98,7 @@ class GitHubHttpAdapter(GitHubApiPort):
         review_threads = self.get_review_threads(pr_number)
         alerts = self.get_code_scanning_alerts(ref=f"refs/pull/{pr_number}/merge")
 
-        # Fetch comments
+        # Fetch issue comments
         comments_resp = self._client.get(
             f"/repos/{self.owner}/{self.repo}/issues/{pr_number}/comments"
         )
@@ -112,6 +112,27 @@ class GitHubHttpAdapter(GitHubApiPort):
                         body=c.get("body", ""),
                         created_at=c.get("created_at", ""),
                         url=c.get("html_url", ""),
+                        is_review_comment=False,
+                    )
+                )
+
+        # Fetch inline review comments (including CodeQL and code reviews)
+        pull_comments_resp = self._client.get(
+            f"/repos/{self.owner}/{self.repo}/pulls/{pr_number}/comments"
+        )
+        if pull_comments_resp.status_code == 200:
+            for c in pull_comments_resp.json():
+                general_comments.append(
+                    ReviewComment(
+                        id=c.get("id", 0),
+                        author=c.get("user", {}).get("login", "unknown"),
+                        body=c.get("body", ""),
+                        created_at=c.get("created_at", ""),
+                        path=c.get("path"),
+                        line=c.get("line") or c.get("original_line"),
+                        url=c.get("html_url", ""),
+                        diff_hunk=c.get("diff_hunk"),
+                        is_review_comment=True,
                     )
                 )
 
@@ -300,6 +321,72 @@ class GitHubHttpAdapter(GitHubApiPort):
             message=inst.get("message", {}).get("text", ""),
             help_markdown=rule.get("help"),
         )
+
+    def get_failed_run_logs(self, run_id: int | str) -> str | None:
+        """Fetch failed log output for a workflow run using gh CLI or REST API."""
+        if shutil.which("gh"):
+            try:
+                res = subprocess.run(
+                    ["gh", "run", "view", str(run_id), "--log-failed"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if res.returncode == 0 and res.stdout.strip():
+                    return res.stdout.strip()
+            except (subprocess.SubprocessError, OSError):
+                pass
+        return None
+
+    def get_workflow_runs(
+        self,
+        branch: str | None = None,
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Fetch recent workflow runs for a branch."""
+        if shutil.which("gh"):
+            cmd = [
+                "gh",
+                "run",
+                "list",
+                "--json",
+                "databaseId,name,conclusion,headSha,event,status,displayTitle,url",
+                "--limit",
+                str(limit),
+            ]
+            if branch:
+                cmd.extend(["--branch", branch])
+            try:
+                res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+                if res.returncode == 0 and res.stdout.strip():
+                    import json
+
+                    return json.loads(res.stdout.strip())
+            except Exception:
+                pass
+
+        params: dict[str, Any] = {"per_page": limit}
+        if branch:
+            params["branch"] = branch
+        resp = self._client.get(
+            f"/repos/{self.owner}/{self.repo}/actions/runs", params=params
+        )
+        if resp.status_code != 200:
+            return []
+        data = resp.json().get("workflow_runs", [])
+        return [
+            {
+                "databaseId": r.get("id"),
+                "name": r.get("name"),
+                "conclusion": r.get("conclusion") or "",
+                "headSha": r.get("head_sha", ""),
+                "event": r.get("event", ""),
+                "status": r.get("status", ""),
+                "displayTitle": r.get("display_title", ""),
+                "url": r.get("html_url", ""),
+            }
+            for r in data
+        ]
 
 
 __all__ = [

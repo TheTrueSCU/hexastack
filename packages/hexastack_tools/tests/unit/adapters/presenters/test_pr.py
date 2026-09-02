@@ -96,7 +96,13 @@ def test_render_pr_summary_rich() -> None:
         check_runs=(check,),
         review_threads=(thread,),
     )
-    render_pr_summary_rich(summary, show_details=True)
+    render_pr_summary_rich(
+        summary,
+        show_details=True,
+        failed_logs={
+            "Linter": "AssertionError: Expected 200 got 500\nDetails on line 42"
+        },
+    )
 
 
 def test_render_pr_summary_json_and_plain() -> None:
