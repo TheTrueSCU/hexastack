@@ -32,10 +32,10 @@ class RouteMetadata:
 
 
 __all__ = [
-    "RouteMetadata",
     "api_command",
     "api_query",
     "feature_flag_route",
+    "RouteMetadata",
 ]
 
 

@@ -201,8 +201,8 @@ def rate_limit(
 
 
 __all__ = [
-    "SlowapiRateLimiterAdapter",
     "get_remote_address",
     "get_user_or_ip_key",
     "rate_limit",
+    "SlowapiRateLimiterAdapter",
 ]

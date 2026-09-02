@@ -29,15 +29,14 @@ from hexastack_fastapi.adapters.ui import (
 )
 
 __all__ = [
-    "CqrsRouter",
-    "DocumentationNotFoundError",
-    "SlowapiRateLimiterAdapter",
     "check_openapi_conformance",
+    "CqrsRouter",
     "create_fastapi_app",
     "create_health_router",
     "create_test_client",
     "dispatch_command",
     "dispatch_query",
+    "DocumentationNotFoundError",
     "get_container",
     "get_feature_flags",
     "get_pipeline",
@@ -50,5 +49,6 @@ __all__ = [
     "rate_limit",
     "require_feature",
     "require_rate_limit",
+    "SlowapiRateLimiterAdapter",
     "ui_page",
 ]

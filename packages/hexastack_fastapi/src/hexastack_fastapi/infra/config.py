@@ -114,9 +114,9 @@ __all__ = [
     "HealthConfig",
     "HexastackFastApiConfig",
     "RateLimitConfig",
+    "register_fastapi_config",
     "RequestLoggingConfig",
     "ZensicalDocsConfig",
-    "register_fastapi_config",
 ]
 
 
