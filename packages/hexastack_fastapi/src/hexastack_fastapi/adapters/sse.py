@@ -151,7 +151,7 @@ class EventSourceResponse(Response):
             if not producer_task.done():
                 producer_task.cancel()
                 with contextlib.suppress(asyncio.CancelledError, Exception):
-                    await producer_task
+                    _res = await producer_task
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """ASGI response streaming callable."""
