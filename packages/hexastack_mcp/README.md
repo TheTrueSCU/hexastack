@@ -20,7 +20,9 @@
 - **Multiple Transports**:
   - **Standard I/O (`stdio`)**: Local process communication for desktop assistants and subprocess agents.
   - **Server-Sent Events (`sse`)**: HTTP SSE transport via FastAPI for remote agent networks.
+- **Metrics & Observability (`McpMetricsMiddleware`)**: Tracks tool, resource, and prompt execution throughput and duration metrics against `MetricsPort`.
 - **Single-Pass Reflection**: Discovers decorated tools and resources in Phase 3 module scanning via `create_mcp_visitor`.
+
 
 ---
 

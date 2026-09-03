@@ -19,9 +19,10 @@
 - **WebSockets Real-Time Channel Manager & CQRS Bridge**: `WebSocketConnectionManager` managing connection pools, room/channel groupings, and broadcasts, alongside `WebSocketCqrsBridge` mapping incoming socket JSON actions into CQRS Commands and Queries.
 - **Decoupled Database Session Middleware**: `DbSessionMiddleware` (sync) and `AsyncDbSessionMiddleware` (async) manage session-per-request lifecycles by consuming sessionmakers from DI without a hard dependency on `hexastack-db`.
 - **Standardized Exception Handlers**: Automatically translates domain exceptions (`EntityNotFoundError`, `UniqueConstraintViolationError`, `HexastackError`) into appropriate HTTP status codes (404, 409, 500) and structured JSON error envelopes.
-- **Observability & Correlation Middleware**: Injects `X-Correlation-ID` headers and logs HTTP request lifecycles.
+- **Observability & Correlation Middleware**: Injects `X-Correlation-ID` headers, logs HTTP request lifecycles, and captures HTTP RED metrics (`HttpMetricsMiddleware`) exposing a standard `/metrics` endpoint.
 - **Built-in Health Checks**: Configurable `/health` and `/ready` endpoints verifying container and subsystem readiness.
 - **NiceGUI Reactive UI & DevTools Dashboard**: Optional `[ui]` presentation adapter providing `ui_page`, `dispatch_command`, `dispatch_query`, and a zero-config interactive developer console (`mount_devtools_dashboard`) for inspecting CQRS buses, feature flags, and DI services.
+
 
 ---
 

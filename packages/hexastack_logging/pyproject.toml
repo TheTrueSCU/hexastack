@@ -21,6 +21,9 @@ all = [
     "rich>=13.0.0",
     "structlog>=24.0.0",
 ]
+sentry = [
+    "sentry-sdk>=2.0.0",
+]
 
 [project.entry-points."hexastack.bootstrappers"]
 logging = "hexastack_logging.infra.bootstrap:LoggingBootstrapper"

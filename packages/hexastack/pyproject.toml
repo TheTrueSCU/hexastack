@@ -74,9 +74,13 @@ ratelimit = [
 redis = [
     "hexastack-core[redis]",
 ]
+sentry = [
+    "hexastack-logging[sentry]",
+]
 sql = [
     "hexastack-db",
 ]
+
 testing = [
     "faker>=33.0.0",
     "hypothesis>=6.100.0",

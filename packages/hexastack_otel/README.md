@@ -15,9 +15,11 @@ Part of the [Hexastack Framework](https://github.com/TheTrueSCU/hexastack).
 
 ## 1. Architectural Overview
 
-`hexastack-otel` provides a pure hexagonal port interface ([`TracingPort`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel/src/hexastack_otel/ports/tracing.py)) backed by the official **OpenTelemetry Python SDK**.
+`hexastack-otel` provides pure hexagonal port interfaces for distributed tracing ([`TracingPort`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel/src/hexastack_otel/ports/tracing.py)) and metrics collection ([`MetricsPort`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel/src/hexastack_otel/ports/metrics.py)).
 
-It enables 100% vendor-agnostic distributed tracing, automatically linking correlation IDs and creating spans across CQRS Command/Query executions, HTTP endpoints, and gRPC RPCs.
+- **Distributed Tracing**: Backed by the official **OpenTelemetry Python SDK** (`OtelTracingAdapter`, `InMemoryTracingAdapter`), linking correlation IDs and creating spans across CQRS Command/Query executions, HTTP endpoints, and gRPC RPCs.
+- **Prometheus Metrics Engine**: Backed by `prometheus_client` (`PrometheusMetricsAdapter`), tracking throughput counters, execution duration histograms, and system gauges exposed over `/metrics`.
+
 
 ```mermaid
 graph TD

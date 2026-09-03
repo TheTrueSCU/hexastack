@@ -21,8 +21,10 @@
   - `CorrelationServerInterceptor`: Propagates `x-correlation-id` from incoming metadata into `ContextVar`.
   - `LoggingServerInterceptor`: Structured telemetry for RPC method invocations.
   - `TimingServerInterceptor`: Measures RPC execution latency in milliseconds.
+  - `MetricsServerInterceptor`: Records RPC request rates, statuses, and handling durations to `MetricsPort`.
 - **Single-Pass Reflection**: Automatically discovers and registers decorated servicers in Phase 3 module scanning via `create_grpc_visitor`.
 - **gRPC Server Reflection**: Automatically enables gRPC Server Reflection Protocol when `grpcio-reflection` is installed.
+
 
 ---
 

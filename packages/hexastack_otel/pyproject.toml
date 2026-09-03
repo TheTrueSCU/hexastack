@@ -13,6 +13,7 @@ dependencies = [
     "hexastack-cqrs",
     "opentelemetry-api>=1.27.0",
     "opentelemetry-sdk>=1.27.0",
+    "prometheus-client>=0.21.0",
     "pydantic>=2.10.0",
 ]
 
@@ -35,16 +36,6 @@ hexastack-cqrs = { workspace = true }
 
 
 [[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_otel"]
-layers = [
-    "adapters",
-    "ports",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
 name = "Forbidden imports for domain"
 type = "forbidden"
 source_modules = ["hexastack_otel.domain"]
@@ -63,6 +54,14 @@ forbidden_modules = [
     "hexastack_otel.infra",
 ]
 
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for adapters"
+type = "forbidden"
+source_modules = ["hexastack_otel.adapters"]
+forbidden_modules = [
+    "hexastack_otel.infra",
+]
+
 [tool.importlinter]
 root_packages = ["hexastack_otel"]
 
@@ -71,8 +70,8 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_otel"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "ports",
     "domain",
 ]

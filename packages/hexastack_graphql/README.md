@@ -21,7 +21,10 @@
   - `@graphql_query` and `@graphql_mutation`: Register standalone resolver functions as top-level fields.
 - **Dynamic Field Resolver Feature Flagging**:
   - `@feature_flag_field("flag_key", raise_error=True, fallback=...)`: Evaluates feature flags dynamically before executing field resolvers, raising a `GraphQLError` or returning a safe fallback value.
+- **Observability & Metrics**:
+  - `StrawberryMetricsExtension`: Captures operation execution duration histograms and throughput counters pushed to `MetricsPort`.
 - **FastAPI Mount & GraphiQL Playground**: Seamless mounting as a `GraphQLRouter` into FastAPI applications with interactive GraphiQL playground enabled.
+
 
 ---
 

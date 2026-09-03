@@ -9,6 +9,7 @@ from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_fastapi.adapters.docs import mount_zensical_docs
 from hexastack_fastapi.adapters.health import create_health_router
+from hexastack_fastapi.adapters.metrics import create_metrics_router
 from hexastack_fastapi.infra.config import HexastackFastApiConfig
 from hexastack_fastapi.infra.exception_handlers import (
     register_exception_handlers,
@@ -18,6 +19,9 @@ from hexastack_fastapi.infra.middleware.correlation import (
 )
 from hexastack_fastapi.infra.middleware.logging import (
     RequestLoggingHttpMiddleware,
+)
+from hexastack_fastapi.infra.middleware.metrics import (
+    HttpMetricsMiddleware,
 )
 
 __all__ = [
@@ -122,6 +126,13 @@ def create_fastapi_app(
             container=container,
         )
 
+    # Attach HTTP metrics middleware
+    app.add_middleware(
+        HttpMetricsMiddleware,
+        config=cfg,
+        container=container,
+    )
+
     # Attach correlation middleware
     app.add_middleware(CorrelationHttpMiddleware, config=cfg)
 
@@ -132,6 +143,10 @@ def create_fastapi_app(
     if cfg.health.enable:
         health_router = create_health_router(container=container, config=cfg.health)
         app.include_router(health_router)
+
+    # Mount metrics endpoint
+    metrics_router = create_metrics_router(container=container)
+    app.include_router(metrics_router)
 
     # Mount Zensical documentation site if enabled
     if cfg.zensical.enable:
