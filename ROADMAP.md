@@ -28,6 +28,7 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 
 ## 🚀 Active Milestone: v0.3.0 (HexaQueue Flagship, Edge & gRPC Streaming)
 - [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal.
+- [x] **Unified Object & Cloud Storage**: `StoragePort` / `AsyncStoragePort` with `InMemoryStorage`, `LocalStorageAdapter`, and `FsspecStorageAdapter` (`hexastack-core[fsspec]` - Issue #85, PR #88).
 - [ ] **Async gRPC Server Reflection & Streaming**: Bidirectional streaming RPC support in `hexastack-grpc`.
 - [ ] **Turnkey Observability & Sentry**: Prometheus `/metrics` endpoint and Sentry error tracking integration.
 - [ ] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]`).

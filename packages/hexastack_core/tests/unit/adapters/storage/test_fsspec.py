@@ -7,10 +7,7 @@ from typing import Any
 
 import pytest
 
-from hexastack_core.adapters.storage.fsspec import (
-    AsyncFsspecStorageAdapter,
-    FsspecStorageAdapter,
-)
+from hexastack_core.adapters.storage import fsspec as fsspec_adapter
 from hexastack_core.domain.exceptions import (
     MissingDependencyError,
     StorageError,
@@ -20,7 +17,9 @@ from hexastack_core.domain.exceptions import (
 
 def test_fsspec_storage_memory_protocol() -> None:
     """Verify FsspecStorageAdapter with in-memory virtual filesystem."""
-    storage = FsspecStorageAdapter(protocol="memory", base_path="mybucket")
+    storage = fsspec_adapter.FsspecStorageAdapter(
+        protocol="memory", base_path="mybucket"
+    )
 
     # Exists & Get non-existent
     assert storage.exists("obj1.dat") is False
@@ -64,7 +63,9 @@ def test_fsspec_storage_memory_protocol() -> None:
 @pytest.mark.anyio
 async def test_async_fsspec_storage_memory_protocol() -> None:
     """Verify AsyncFsspecStorageAdapter with memory protocol."""
-    storage = AsyncFsspecStorageAdapter(protocol="memory", base_path="async_bucket")
+    storage = fsspec_adapter.AsyncFsspecStorageAdapter(
+        protocol="memory", base_path="async_bucket"
+    )
 
     assert await storage.exists_async("async_blob.bin") is False
     with pytest.raises(StorageNotFoundError):
@@ -84,8 +85,9 @@ async def test_async_fsspec_storage_memory_protocol() -> None:
 
 def test_fsspec_missing_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify MissingDependencyError when fsspec is not available."""
-    import hexastack_core.adapters.storage.fsspec as fsspec_module
+    import sys
 
-    monkeypatch.setattr(fsspec_module, "fsspec", None)
+    monkeypatch.setitem(sys.modules, "fsspec", None)
+    monkeypatch.setattr(fsspec_adapter, "fsspec", None)
     with pytest.raises(MissingDependencyError, match="fsspec is required"):
-        FsspecStorageAdapter(protocol="memory")
+        fsspec_adapter.FsspecStorageAdapter(protocol="memory")

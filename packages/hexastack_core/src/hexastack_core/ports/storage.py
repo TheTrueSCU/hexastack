@@ -27,7 +27,6 @@ class StoragePort(ABC):
             StorageNotFoundError: If the object does not exist.
             StorageError: If storage retrieval fails.
         """
-        ...
 
     @abstractmethod
     def put(self, path: str, data: bytes | BinaryIO) -> str:
@@ -43,7 +42,6 @@ class StoragePort(ABC):
         Raises:
             StorageError: If the persistence operation fails.
         """
-        ...
 
     @abstractmethod
     def delete(self, path: str) -> bool:
@@ -58,7 +56,6 @@ class StoragePort(ABC):
         Raises:
             StorageError: If deletion fails due to permissions or connection issues.
         """
-        ...
 
     @abstractmethod
     def exists(self, path: str) -> bool:
@@ -73,7 +70,6 @@ class StoragePort(ABC):
         Raises:
             StorageError: If existence check encounters an underlying error.
         """
-        ...
 
     @abstractmethod
     def list_files(self, prefix: str = "") -> list[str]:
@@ -88,7 +84,6 @@ class StoragePort(ABC):
         Raises:
             StorageError: If directory or bucket listing fails.
         """
-        ...
 
 
 class AsyncStoragePort(ABC):
@@ -113,7 +108,6 @@ class AsyncStoragePort(ABC):
             StorageNotFoundError: If the object does not exist.
             StorageError: If storage retrieval fails.
         """
-        ...
 
     @abstractmethod
     async def put_async(self, path: str, data: bytes | BinaryIO) -> str:
@@ -129,7 +123,6 @@ class AsyncStoragePort(ABC):
         Raises:
             StorageError: If the persistence operation fails.
         """
-        ...
 
     @abstractmethod
     async def delete_async(self, path: str) -> bool:
@@ -144,7 +137,6 @@ class AsyncStoragePort(ABC):
         Raises:
             StorageError: If deletion fails due to permissions or connection issues.
         """
-        ...
 
     @abstractmethod
     async def exists_async(self, path: str) -> bool:
@@ -159,7 +151,6 @@ class AsyncStoragePort(ABC):
         Raises:
             StorageError: If existence check encounters an underlying error.
         """
-        ...
 
     @abstractmethod
     async def list_files_async(self, prefix: str = "") -> list[str]:
@@ -174,7 +165,6 @@ class AsyncStoragePort(ABC):
         Raises:
             StorageError: If directory or bucket listing fails.
         """
-        ...
 
 
 __all__ = [

@@ -17,8 +17,9 @@
 - **Dependency Injection Engine**: Powered by `rodi`, managing service lifecycles (singleton, scoped, transient).
 - **Distributed & Persistent Cache Adapters**: `CachePort` and `AsyncCachePort` with in-memory (`InMemoryCache`, `AsyncInMemoryCache`), distributed Redis/Valkey (`RedisCacheAdapter`, `AsyncRedisCacheAdapter`), and persistent L2 filesystem storage (`DiskCacheAdapter`, `AsyncDiskCacheAdapter`).
 - **High-Availability Primitives & Locks**: `LockPort` and `AsyncLockPort` (reentrant in-memory, OS `FileLockAdapter`, and distributed `RedisLockAdapter`) and `LeaderElectionPort` / `AsyncLeaderElectionPort` (single-process and distributed Redis lease coordination).
-- **Core Domain Primitives**: Generic `Result[T, E]`, generic types, and standard exception hierarchies (`HexastackError`, `ConfigurationError`, `MissingDependencyError`, `LockError`, `LeaderElectionError`).
-- **Core Port Contracts**: Standard abstract protocols and ABCs for repositories (`Repository[E, ID]`), unit of work (`UnitOfWork`), caching (`CachePort`), distributed locks (`LockPort`), leader election (`LeaderElectionPort`), logging (`LoggerPort`), presenters (`PresenterPort`), feature flags (`FeatureFlagPort`), and bootstrappers (`BootstrapperPort`).
+- **Unified Object & File Storage**: `StoragePort` and `AsyncStoragePort` with in-memory (`InMemoryStorage`, `AsyncInMemoryStorage`), local filesystem (`LocalStorageAdapter`, `AsyncLocalStorageAdapter`), and unified multi-cloud storage via `fsspec` (`FsspecStorageAdapter`, `AsyncFsspecStorageAdapter` for S3, GCS, Azure Blob Storage).
+- **Core Domain Primitives**: Generic `Result[T, E]`, generic types, and standard exception hierarchies (`HexastackError`, `ConfigurationError`, `MissingDependencyError`, `LockError`, `LeaderElectionError`, `StorageError`, `StorageNotFoundError`).
+- **Core Port Contracts**: Standard abstract protocols and ABCs for repositories (`Repository[E, ID]`), unit of work (`UnitOfWork`), caching (`CachePort`), object storage (`StoragePort`), distributed locks (`LockPort`), leader election (`LeaderElectionPort`), logging (`LoggerPort`), presenters (`PresenterPort`), feature flags (`FeatureFlagPort`), and bootstrappers (`BootstrapperPort`).
 - **Configuration & Type Registries**: Type-safe Pydantic configuration parsing from TOML (`ConfigRegistry`) and generic type registries (`GenericTypeRegistry`).
 - **Three-Phase Bootstrap Engine**: Deterministic orchestration of Phase 1 config registration, Phase 2 container assembly, and Phase 3 reflective scanning.
 - **Testing & Quality Toolkit**:
@@ -35,8 +36,8 @@
 ```
 hexastack_core/
 ├── domain/          # Result[T, E], HexastackError, Entity, ValueObject, EvaluationContext
-├── ports/           # Repository, UnitOfWork, BootstrapperPort, LoggerPort, CachePort, LockPort, LeaderElectionPort
-├── adapters/        # InMemory, Redis, DiskCache, FileLock implementations
+├── ports/           # Repository, UnitOfWork, BootstrapperPort, LoggerPort, CachePort, StoragePort, LockPort, LeaderElectionPort
+├── adapters/        # InMemory, Redis, DiskCache, FileLock, Storage (InMemory, Local, Fsspec) implementations
 ├── infra/           # Bootstrap engine, ConfigRegistry, GenericTypeRegistry, decorators
 ├── testing/         # assert_clean_architecture, create_test_runtime, cqrs_strategy, flag_scope, isolation
 └── utils/           # Context variable utilities, reflection helpers
@@ -50,12 +51,14 @@ hexastack_core/
 | **Cache** | `CachePort`, `AsyncCachePort`, `InMemoryCache`, `AsyncInMemoryCache`, `RedisCacheAdapter`, `AsyncRedisCacheAdapter`, `DiskCacheAdapter`, `AsyncDiskCacheAdapter` |
 | **Config** | `ConfigRegistry`, `HexastackConfig`, `HexastackCoreConfig`, `@config_section` |
 | **Context** | `get_correlation_id`, `set_correlation_id`, `correlation_scope`, `UserContext` |
-| **Domain** | `Result`, `Ok`, `Err`, `HexastackError`, `ConfigurationError`, `MissingDependencyError`, `EntityNotFoundError`, `LockError`, `LeaderElectionError` |
+| **Domain** | `Result`, `Ok`, `Err`, `HexastackError`, `ConfigurationError`, `MissingDependencyError`, `EntityNotFoundError`, `LockError`, `LeaderElectionError`, `StorageError`, `StorageNotFoundError` |
 | **Feature Flags** | `EvaluationContext`, `FlagEvaluationDetails`, `InMemoryFeatureFlagAdapter`, `ConfigFeatureFlagAdapter` |
 | **High Availability & Locks** | `LockPort`, `AsyncLockPort`, `InMemoryLock`, `AsyncInMemoryLock`, `FileLockAdapter`, `AsyncFileLockAdapter`, `RedisLockAdapter`, `AsyncRedisLockAdapter`, `LeaderElectionPort`, `AsyncLeaderElectionPort`, `SingleProcessLeaderElection`, `AsyncSingleProcessLeaderElection`, `RedisLeaderElectionAdapter`, `AsyncRedisLeaderElectionAdapter` |
-| **Ports** | `BootstrapperPort`, `CachePort`, `AsyncCachePort`, `LockPort`, `AsyncLockPort`, `LeaderElectionPort`, `AsyncLeaderElectionPort`, `Repository`, `AsyncRepository`, `UnitOfWork`, `AsyncUnitOfWork`, `LoggerPort`, `PresenterPort`, `FeatureFlagPort` |
+| **Ports** | `BootstrapperPort`, `CachePort`, `AsyncCachePort`, `StoragePort`, `AsyncStoragePort`, `LockPort`, `AsyncLockPort`, `LeaderElectionPort`, `AsyncLeaderElectionPort`, `Repository`, `AsyncRepository`, `UnitOfWork`, `AsyncUnitOfWork`, `LoggerPort`, `PresenterPort`, `FeatureFlagPort` |
 | **Registries** | `GenericTypeRegistry`, `ExceptionRegistry` |
+| **Storage** | `StoragePort`, `AsyncStoragePort`, `InMemoryStorage`, `AsyncInMemoryStorage`, `LocalStorageAdapter`, `AsyncLocalStorageAdapter`, `FsspecStorageAdapter`, `AsyncFsspecStorageAdapter` |
 | **Testing** | `assert_clean_architecture`, `create_test_runtime`, `TestRuntime`, `cqrs_strategy`, `faker_strategy`, `flag_scope`, `generate_synthetic_payload`, `isolate_registries`, `parametrize_flags`, `@require_extra`, `@require_feature`, `seeded_faker` |
+
 
 
 
