@@ -10,6 +10,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "grpcio>=1.68.0",
+    "grpcio-health-checking>=1.68.0",
     "hexastack-core",
     "hexastack-cqrs",
     "protobuf>=5.29.0",

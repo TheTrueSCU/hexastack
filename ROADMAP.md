@@ -30,9 +30,9 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal (Issue #74).
 - [x] **Unified Object & Cloud Storage**: `StoragePort` / `AsyncStoragePort` with `InMemoryStorage`, `LocalStorageAdapter`, and `FsspecStorageAdapter` (`hexastack-core[fsspec]` - Issue #85, PR #88).
 - [x] **Native Async Circuit Breaker Resilience Engine**: `CircuitBreakerPort` / `AsyncCircuitBreakerPort` with `InMemoryCircuitBreaker`, `CacheCircuitBreaker` (Redis/Valkey), `CircuitBreakerMiddleware`, and `@circuit_breaker` (Issue #83, PR #89).
-- [x] **Server-Sent Events (SSE) Real-Time Streaming Adapter**: `ServerSentEvent`, `EventSourceResponse`, and CQRS streaming queries (`hexastack-fastapi` - Issue #90).
-- [x] **WebSockets Connection Manager & Channel Bridge**: Bidirectional real-time channels with Redis clustering (`hexastack-fastapi` - Issue #91).
-- [ ] **Async gRPC Server Reflection & Streaming**: Bidirectional streaming RPC support in `hexastack-grpc` (Issue #77).
+- [x] **Server-Sent Events (SSE) Real-Time Streaming Adapter**: `ServerSentEvent`, `EventSourceResponse`, and CQRS streaming queries (`hexastack-fastapi` - Issue #90, PR #93).
+- [x] **WebSockets Connection Manager & Channel Bridge**: Bidirectional real-time channels with Redis clustering (`hexastack-fastapi` - Issue #91, PR #94).
+- [x] **Async gRPC Server Reflection, Health Checking & Streaming**: `GrpcHealthServicer`, server reflection, and bidirectional streaming dispatch (`hexastack-grpc` - Issue #77, PR #95).
 
 
 - [ ] **Turnkey Observability & Sentry**: Prometheus `/metrics` endpoint and Sentry error tracking integration (Issue #76).

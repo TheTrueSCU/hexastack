@@ -34,6 +34,7 @@ hexastack_fastapi/
 └── infra/           # FastApiBootstrapper (order=30), exception handlers, correlation/logging middlewares
 ```
 
+
 ### Key Exports
 
 | Category | Exports |
@@ -50,10 +51,8 @@ hexastack_fastapi/
 | **Routing** | `CqrsRouter`, `autodiscover_routes` |
 | **Testing, E2E & Demo Narration** | `create_test_client`, `check_openapi_conformance`, `EphemeralServer`, `ephemeral_server`, `find_free_port`, `smart_click`, `DemoNarrator`, `VIRTUAL_CURSOR_SCRIPT` |
 
-
-
-
 ---
+
 
 ## 3. Monorepo & Sibling Relationships
 
