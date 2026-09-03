@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-events"
-version = "0.1.0"
+version = "0.2.0"
 description = "CloudEvents serialization, Transactional Outbox pattern, and distributed event streaming for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
