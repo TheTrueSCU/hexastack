@@ -33,7 +33,8 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Server-Sent Events (SSE) Real-Time Streaming Adapter**: `ServerSentEvent`, `EventSourceResponse`, and CQRS streaming queries (`hexastack-fastapi` - Issue #90, PR #93).
 - [x] **WebSockets Connection Manager & Channel Bridge**: Bidirectional real-time channels with Redis clustering (`hexastack-fastapi` - Issue #91, PR #94).
 - [x] **Async gRPC Server Reflection, Health Checking & Streaming**: `GrpcHealthServicer`, server reflection, and bidirectional streaming dispatch (`hexastack-grpc` - Issue #77, PR #95).
-- [x] **Turnkey Observability, Prometheus & Sentry**: `MetricsPort`, `PrometheusMetricsAdapter`, `/metrics` endpoint, and `SentryErrorAdapter` (`hexastack-otel`, `hexastack-logging`, `hexastack-fastapi` - Issue #76).
+- [x] **Turnkey Observability, Prometheus & Sentry**: `MetricsPort`, `PrometheusMetricsAdapter`, `/metrics` endpoint, and `SentryErrorAdapter` (`hexastack-otel`, `hexastack-logging`, `hexastack-fastapi` - Issue #76, PR #96).
+
 - [ ] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]` - Issue #75).
 - [ ] **AI Agent Long-Term Memory**: Vector database driven adapters (Qdrant, pgvector) with CQRS query caching (`hexastack-ai` - Issue #78).
 - [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
