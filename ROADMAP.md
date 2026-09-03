@@ -26,15 +26,28 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 
 ---
 
-## 🚀 Active Milestone: v0.3.0 (HexaQueue Flagship, Real-Time Streams & Edge)
-- [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal (Issue #74).
+## 🚀 Active Milestone: v0.3.0 (HexaQueue Flagship, Real-Time Streams & Quality Gate)
 - [x] **Unified Object & Cloud Storage**: `StoragePort` / `AsyncStoragePort` with `InMemoryStorage`, `LocalStorageAdapter`, and `FsspecStorageAdapter` (`hexastack-core[fsspec]` - Issue #85, PR #88).
 - [x] **Native Async Circuit Breaker Resilience Engine**: `CircuitBreakerPort` / `AsyncCircuitBreakerPort` with `InMemoryCircuitBreaker`, `CacheCircuitBreaker` (Redis/Valkey), `CircuitBreakerMiddleware`, and `@circuit_breaker` (Issue #83, PR #89).
 - [x] **Server-Sent Events (SSE) Real-Time Streaming Adapter**: `ServerSentEvent`, `EventSourceResponse`, and CQRS streaming queries (`hexastack-fastapi` - Issue #90, PR #93).
 - [x] **WebSockets Connection Manager & Channel Bridge**: Bidirectional real-time channels with Redis clustering (`hexastack-fastapi` - Issue #91, PR #94).
 - [x] **Async gRPC Server Reflection, Health Checking & Streaming**: `GrpcHealthServicer`, server reflection, and bidirectional streaming dispatch (`hexastack-grpc` - Issue #77, PR #95).
 - [x] **Turnkey Observability, Prometheus & Sentry**: `MetricsPort`, `PrometheusMetricsAdapter`, `/metrics` endpoint, and `SentryErrorAdapter` (`hexastack-otel`, `hexastack-logging`, `hexastack-fastapi` - Issue #76, PR #96).
+- [ ] **Optional Extras Parity Auditor**: CLI validator enforcing subpackage extras forwarding into umbrella package (`hexastack-tools` - Issue #97).
+- [ ] **Standardized In-Memory Test Harness**: Unify unit test mocks onto canonical `InMemory*` adapters (`hexastack-core` - Issue #98).
+- [ ] **Hypothesis Invariant Fuzzing**: Property-based fuzzing for CircuitBreaker, Storage, SSE/WS, and Metrics (Issue #99).
+- [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal (Issue #74).
 
+---
+
+## 🔮 Upcoming Milestones
+
+### v0.4.0 (Interactive Frontends, AI Memory & Enterprise Mesh)
+- [ ] **Hexastack UI Presentation Package**: Spin out NiceGUI reactive UI and interactive DevTools dashboard into `hexastack-ui` (Issue #100).
 - [ ] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]` - Issue #75).
 - [ ] **AI Agent Long-Term Memory**: Vector database driven adapters (Qdrant, pgvector) with CQRS query caching (`hexastack-ai` - Issue #78).
+
+### v0.5.0 (Edge, WASM & Multimodal Consoles)
 - [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
+- [ ] **Textual Interactive Terminal UI**: Fullscreen terminal monitoring and operations console (`hexastack-ui[textual]`).
+- [ ] **Voice & WebRTC Audio Pipeline**: Real-time conversational audio bridge (`hexastack-ui[voice]`).
