@@ -6,32 +6,8 @@ from typing import Any
 
 import grpc
 
-from hexastack_core.ports.metrics import MetricsPort
+from hexastack_core.adapters.metrics import InMemoryMetricsAdapter
 from hexastack_grpc.infra.interceptors.metrics import MetricsServerInterceptor
-
-
-class MockMetrics(MetricsPort):
-    def __init__(self) -> None:
-        self.counters: list[dict] = []
-        self.histograms: list[dict] = []
-
-    def increment_counter(
-        self, name: str, value: float = 1.0, labels=None, description: str = ""
-    ) -> None:
-        self.counters.append({"name": name, "value": value, "labels": labels})
-
-    def record_histogram(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        self.histograms.append({"name": name, "value": value, "labels": labels})
-
-    def set_gauge(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        pass
-
-    def generate_metrics_text(self) -> bytes:
-        return b"# mock"
 
 
 class MockCallDetails:
@@ -42,7 +18,8 @@ class MockCallDetails:
 
 def test_metrics_server_interceptor_records_rpc_metrics() -> None:
     """Verify MetricsServerInterceptor intercepts unary RPC and records metrics."""
-    metrics = MockMetrics()
+    metrics = InMemoryMetricsAdapter()
+
     interceptor = MetricsServerInterceptor(metrics=metrics)
 
     def dummy_handler(request: Any, context: Any) -> str:

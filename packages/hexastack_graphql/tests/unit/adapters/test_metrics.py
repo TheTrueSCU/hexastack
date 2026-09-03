@@ -4,37 +4,14 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from hexastack_core.ports.metrics import MetricsPort
+from hexastack_core.adapters.metrics import InMemoryMetricsAdapter
 from hexastack_graphql.adapters.metrics import StrawberryMetricsExtension
-
-
-class MockMetrics(MetricsPort):
-    def __init__(self) -> None:
-        self.counters: list[dict] = []
-        self.histograms: list[dict] = []
-
-    def increment_counter(
-        self, name: str, value: float = 1.0, labels=None, description: str = ""
-    ) -> None:
-        self.counters.append({"name": name, "value": value, "labels": labels})
-
-    def record_histogram(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        self.histograms.append({"name": name, "value": value, "labels": labels})
-
-    def set_gauge(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        pass
-
-    def generate_metrics_text(self) -> bytes:
-        return b"# mock"
 
 
 def test_strawberry_metrics_extension_records_metrics() -> None:
     """Verify StrawberryMetricsExtension measures and records GraphQL operations."""
-    metrics = MockMetrics()
+    metrics = InMemoryMetricsAdapter()
+
     ctx = MagicMock()
     ctx.operation_name = "GetUsersQuery"
     ctx.query = "{ users { id name } }"

@@ -28,6 +28,10 @@ from hexastack_core.adapters.logging import (
     LogEntry,
     StandardLogger,
 )
+from hexastack_core.adapters.metrics import (
+    InMemoryMetricsAdapter,
+    MetricRecord,
+)
 from hexastack_core.adapters.notification import (
     InMemoryNotificationAdapter,
     NotificationRecord,
@@ -62,6 +66,7 @@ __all__ = [
     "InMemoryLlmProvider",
     "InMemoryLock",
     "InMemoryLogger",
+    "InMemoryMetricsAdapter",
     "InMemoryNotificationAdapter",
     "InMemoryRateLimiter",
     "InMemoryRepository",
@@ -70,6 +75,7 @@ __all__ = [
     "InMemoryVectorStore",
     "LlmCallRecord",
     "LogEntry",
+    "MetricRecord",
     "NotificationRecord",
     "SingleProcessLeaderElection",
     "StandardLogger",

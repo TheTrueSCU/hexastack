@@ -4,33 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from hexastack_core.adapters.metrics import InMemoryMetricsAdapter
 from hexastack_core.domain import Command
-from hexastack_core.ports.metrics import MetricsPort
 from hexastack_otel.infra.middleware_metrics import CqrsMetricsMiddleware
-
-
-class MockMetrics(MetricsPort):
-    def __init__(self) -> None:
-        self.counters: list[dict] = []
-        self.histograms: list[dict] = []
-
-    def increment_counter(
-        self, name: str, value: float = 1.0, labels=None, description: str = ""
-    ) -> None:
-        self.counters.append({"name": name, "value": value, "labels": labels})
-
-    def record_histogram(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        self.histograms.append({"name": name, "value": value, "labels": labels})
-
-    def set_gauge(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        pass
-
-    def generate_metrics_text(self) -> bytes:
-        return b"# mock"
 
 
 @dataclass(frozen=True)
@@ -40,7 +16,7 @@ class CreateOrderCommand(Command):
 
 def test_cqrs_metrics_middleware_success() -> None:
     """Verify CqrsMetricsMiddleware records success metrics."""
-    metrics = MockMetrics()
+    metrics = InMemoryMetricsAdapter()
     mw = CqrsMetricsMiddleware(metrics=metrics)
 
     cmd = CreateOrderCommand(order_id="ord-1")
@@ -59,7 +35,7 @@ def test_cqrs_metrics_middleware_success() -> None:
 
 def test_cqrs_metrics_middleware_error() -> None:
     """Verify CqrsMetricsMiddleware records error metrics."""
-    metrics = MockMetrics()
+    metrics = InMemoryMetricsAdapter()
     mw = CqrsMetricsMiddleware(metrics=metrics)
 
     cmd = CreateOrderCommand(order_id="ord-2")
