@@ -31,6 +31,10 @@ from hexastack_fastapi.adapters.ui import (
     mount_ui_app,
     ui_page,
 )
+from hexastack_fastapi.adapters.websockets import (
+    WebSocketConnectionManager,
+    WebSocketCqrsBridge,
+)
 
 __all__ = [
     "check_openapi_conformance",
@@ -57,4 +61,6 @@ __all__ = [
     "ServerSentEvent",
     "SlowapiRateLimiterAdapter",
     "ui_page",
+    "WebSocketConnectionManager",
+    "WebSocketCqrsBridge",
 ]

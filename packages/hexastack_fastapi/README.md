@@ -16,6 +16,7 @@
 
 - **Automatic CQRS Routing & Feature Gating**: Map HTTP endpoints directly to `CommandBusPort` or `QueryBusPort` using `@api_command` and `@api_query`, with native feature flag route guards (`@feature_flag_route` and `require_feature(...)`).
 - **Server-Sent Events (SSE) Real-Time Streaming**: Native `ServerSentEvent` formatting and `EventSourceResponse` supporting chunked transfer encoding, keep-alive heartbeat pings, and direct streaming queries on `CqrsRouter.add_streaming_query`.
+- **WebSockets Real-Time Channel Manager & CQRS Bridge**: `WebSocketConnectionManager` managing connection pools, room/channel groupings, and broadcasts, alongside `WebSocketCqrsBridge` mapping incoming socket JSON actions into CQRS Commands and Queries.
 - **Decoupled Database Session Middleware**: `DbSessionMiddleware` (sync) and `AsyncDbSessionMiddleware` (async) manage session-per-request lifecycles by consuming sessionmakers from DI without a hard dependency on `hexastack-db`.
 - **Standardized Exception Handlers**: Automatically translates domain exceptions (`EntityNotFoundError`, `UniqueConstraintViolationError`, `HexastackError`) into appropriate HTTP status codes (404, 409, 500) and structured JSON error envelopes.
 - **Observability & Correlation Middleware**: Injects `X-Correlation-ID` headers and logs HTTP request lifecycles.
@@ -29,7 +30,7 @@
 ```
 hexastack_fastapi/
 ├── domain/          # HealthStatus, HTTP error envelope models
-├── adapters/        # create_app, routing decorators, SSE streaming, health endpoints, db_session middleware, dependencies, NiceGUI UI adapter
+├── adapters/        # create_app, routing decorators, SSE streaming, WebSockets, health endpoints, db_session middleware, dependencies, NiceGUI UI adapter
 └── infra/           # FastApiBootstrapper (order=30), exception handlers, correlation/logging middlewares
 ```
 
@@ -45,9 +46,10 @@ hexastack_fastapi/
 | **Middlewares** | `DbSessionMiddleware`, `AsyncDbSessionMiddleware`, `add_db_session_middleware`, `CorrelationMiddleware`, `HttpLoggingMiddleware` |
 | **Rate Limiting** | `SlowapiRateLimiterAdapter`, `get_remote_address`, `get_user_or_ip_key`, `RateLimitConfig` |
 | **Reactive UI (NiceGUI)** | `dispatch_command`, `dispatch_query`, `mount_devtools_dashboard`, `mount_ui_app`, `ui_page` |
-| **Real-Time Streaming (SSE)** | `EventSourceResponse`, `ServerSentEvent` |
+| **Real-Time Streaming (SSE & WebSockets)** | `EventSourceResponse`, `ServerSentEvent`, `WebSocketConnectionManager`, `WebSocketCqrsBridge` |
 | **Routing** | `CqrsRouter`, `autodiscover_routes` |
 | **Testing, E2E & Demo Narration** | `create_test_client`, `check_openapi_conformance`, `EphemeralServer`, `ephemeral_server`, `find_free_port`, `smart_click`, `DemoNarrator`, `VIRTUAL_CURSOR_SCRIPT` |
+
 
 
 
