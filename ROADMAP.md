@@ -26,12 +26,15 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 
 ---
 
-## 🚀 Active Milestone: v0.3.0 (HexaQueue Flagship, Edge & gRPC Streaming)
-- [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal.
+## 🚀 Active Milestone: v0.3.0 (HexaQueue Flagship, Real-Time Streams & Edge)
+- [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal (Issue #74).
 - [x] **Unified Object & Cloud Storage**: `StoragePort` / `AsyncStoragePort` with `InMemoryStorage`, `LocalStorageAdapter`, and `FsspecStorageAdapter` (`hexastack-core[fsspec]` - Issue #85, PR #88).
-- [x] **Native Async Circuit Breaker Resilience Engine**: `CircuitBreakerPort` / `AsyncCircuitBreakerPort` with `InMemoryCircuitBreaker`, `CacheCircuitBreaker` (Redis/Valkey), `CircuitBreakerMiddleware`, and `@circuit_breaker` (Issue #83).
-- [ ] **Async gRPC Server Reflection & Streaming**: Bidirectional streaming RPC support in `hexastack-grpc`.
-- [ ] **Turnkey Observability & Sentry**: Prometheus `/metrics` endpoint and Sentry error tracking integration.
-- [ ] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]`).
-- [ ] **AI Agent Long-Term Memory**: Vector database driven adapters (Qdrant, pgvector) with CQRS query caching (`hexastack-ai`).
-- [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile.
+- [x] **Native Async Circuit Breaker Resilience Engine**: `CircuitBreakerPort` / `AsyncCircuitBreakerPort` with `InMemoryCircuitBreaker`, `CacheCircuitBreaker` (Redis/Valkey), `CircuitBreakerMiddleware`, and `@circuit_breaker` (Issue #83, PR #89).
+- [x] **Server-Sent Events (SSE) Real-Time Streaming Adapter**: `ServerSentEvent`, `EventSourceResponse`, and CQRS streaming queries (`hexastack-fastapi` - Issue #90).
+- [ ] **WebSockets Connection Manager & Channel Bridge**: Bidirectional real-time channels with Redis clustering (`hexastack-fastapi` - Issue #91).
+- [ ] **Async gRPC Server Reflection & Streaming**: Bidirectional streaming RPC support in `hexastack-grpc` (Issue #77).
+
+- [ ] **Turnkey Observability & Sentry**: Prometheus `/metrics` endpoint and Sentry error tracking integration (Issue #76).
+- [ ] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]` - Issue #75).
+- [ ] **AI Agent Long-Term Memory**: Vector database driven adapters (Qdrant, pgvector) with CQRS query caching (`hexastack-ai` - Issue #78).
+- [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).

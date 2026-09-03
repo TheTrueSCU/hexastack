@@ -20,6 +20,10 @@ from hexastack_fastapi.adapters.ratelimit import (
     rate_limit,
 )
 from hexastack_fastapi.adapters.routing import CqrsRouter
+from hexastack_fastapi.adapters.sse import (
+    EventSourceResponse,
+    ServerSentEvent,
+)
 from hexastack_fastapi.adapters.ui import (
     dispatch_command,
     dispatch_query,
@@ -37,6 +41,7 @@ __all__ = [
     "dispatch_command",
     "dispatch_query",
     "DocumentationNotFoundError",
+    "EventSourceResponse",
     "get_container",
     "get_feature_flags",
     "get_pipeline",
@@ -49,6 +54,7 @@ __all__ = [
     "rate_limit",
     "require_feature",
     "require_rate_limit",
+    "ServerSentEvent",
     "SlowapiRateLimiterAdapter",
     "ui_page",
 ]

@@ -375,6 +375,7 @@ def test_cqrs_router_query_post_method_and_feature_flags():
     client = TestClient(app)
 
     # 1. Enabled POST query
+
     res_q = client.post("/users/search", json={"user_id": "456"})
     assert res_q.status_code == 200
 
@@ -383,3 +384,58 @@ def test_cqrs_router_query_post_method_and_feature_flags():
         "/users/flagged-reg", json={"user_id": "789", "username": "flagged"}
     )
     assert res_c.status_code == 404
+
+
+def test_cqrs_router_streaming_query():
+    """Verify add_streaming_query registers SSE endpoints on CqrsRouter."""
+    handler_reg = HandlerRegistry()
+
+    class StreamTaskProgress(Query):
+        task_id: str
+
+    async def progress_generator(qry: StreamTaskProgress):
+        yield {"step": 1, "status": "running"}
+        yield {"step": 2, "status": "complete"}
+
+    handler_reg.register(StreamTaskProgress, progress_generator)
+
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=CommandRegistry(),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+        presenter_registry=PresenterRegistry(),
+    )
+
+    router = CqrsRouter()
+    router.add_streaming_query(
+        path="/tasks/{task_id}/progress",
+        query_cls=StreamTaskProgress,
+        method="GET",
+    )
+    router.add_streaming_query(
+        path="/tasks/progress-post",
+        query_cls=StreamTaskProgress,
+        method="POST",
+    )
+
+    app = FastAPI()
+    app.include_router(router)
+    app.state.pipeline = pipeline
+
+    client = TestClient(app)
+
+    # 1. GET SSE Stream
+    res_get = client.get("/tasks/task-99/progress")
+    assert res_get.status_code == 200
+    assert "text/event-stream" in res_get.headers["content-type"]
+    assert 'data: {"step": 1, "status": "running"}\n\n' in res_get.text
+    assert 'data: {"step": 2, "status": "complete"}\n\n' in res_get.text
+
+    # 2. POST SSE Stream
+    res_post = client.post("/tasks/progress-post", json={"task_id": "task-100"})
+    assert res_post.status_code == 200
+    assert "text/event-stream" in res_post.headers["content-type"]
+    assert 'data: {"step": 1, "status": "running"}\n\n' in res_post.text
