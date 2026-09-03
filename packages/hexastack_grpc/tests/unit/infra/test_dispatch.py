@@ -103,10 +103,72 @@ async def test_dispatch_rpc_async_with_awaitable_handlers():
     container.add_instance(AsyncMockCmdBus(), declared_class=CommandBusPort)
     container.add_instance(AsyncMockQryBus(), declared_class=QueryBusPort)
 
-    cmd_req = MockProtoRequest(order_id="async-bus-1", amount=1.0)
-    res_cmd = await dispatch_rpc_command_async(cmd_req, CreateOrderCommand, container)
-    assert res_cmd == "async-bus-cmd-async-bus-1"
+    cmd_req = MockProtoRequest(order_id="async-awaitable-1")
+    cmd_res = await dispatch_rpc_command_async(
+        request=cmd_req,
+        command_cls=CreateOrderCommand,
+        container=container,
+    )
+    assert cmd_res == "async-bus-cmd-async-awaitable-1"
 
-    qry_req = MockProtoRequest(order_id="async-bus-2")
-    res_qry = await dispatch_rpc_query_async(qry_req, GetOrderQuery, container)
-    assert res_qry == "async-bus-qry-async-bus-2"
+    qry_req = MockProtoRequest(order_id="async-awaitable-2")
+    qry_res = await dispatch_rpc_query_async(
+        request=qry_req,
+        query_cls=GetOrderQuery,
+        container=container,
+    )
+    assert qry_res == "async-bus-qry-async-awaitable-2"
+
+
+@pytest.mark.anyio
+async def test_dispatch_rpc_streaming_helpers():
+    """Verify dispatch_rpc_stream_query and dispatch_rpc_bidirectional_stream."""
+    from rodi import Container
+
+    from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
+    from hexastack_grpc.infra.dispatch import (
+        dispatch_rpc_bidirectional_stream,
+        dispatch_rpc_stream_query,
+    )
+
+    class MockStreamBus:
+        def dispatch(self, msg):
+            if isinstance(msg, GetOrderQuery):
+
+                async def gen():
+                    yield f"chunk1_{msg.order_id}"
+                    yield f"chunk2_{msg.order_id}"
+
+                return gen()
+            if isinstance(msg, CreateOrderCommand):
+                return f"processed_{msg.order_id}"
+            return None
+
+    container = Container()
+    container.add_instance(MockStreamBus(), declared_class=CommandBusPort)
+    container.add_instance(MockStreamBus(), declared_class=QueryBusPort)
+
+    # 1. Server stream query
+    req = MockProtoRequest(order_id="stream-99")
+    chunks = [
+        c
+        async for c in dispatch_rpc_stream_query(
+            request=req, query_cls=GetOrderQuery, container=container
+        )
+    ]
+    assert chunks == ["chunk1_stream-99", "chunk2_stream-99"]
+
+    # 2. Bidirectional stream
+    async def request_stream():
+        yield MockProtoRequest(order_id="bidi-1", amount=10.0)
+        yield MockProtoRequest(order_id="bidi-2", amount=20.0)
+
+    out_chunks = [
+        c
+        async for c in dispatch_rpc_bidirectional_stream(
+            requests_iterator=request_stream(),
+            command_cls=CreateOrderCommand,
+            container=container,
+        )
+    ]
+    assert out_chunks == ["processed_bidi-1", "processed_bidi-2"]
