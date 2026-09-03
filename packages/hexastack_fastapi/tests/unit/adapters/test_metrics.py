@@ -6,36 +6,18 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from rodi import Container
 
+from hexastack_core.adapters.metrics import InMemoryMetricsAdapter
 from hexastack_core.ports.metrics import MetricsPort
 from hexastack_fastapi.adapters.metrics import create_metrics_router
 
 
-class DummyMetrics(MetricsPort):
-    def increment_counter(
-        self, name: str, value: float = 1.0, labels=None, description: str = ""
-    ) -> None:
-        pass
-
-    def record_histogram(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        pass
-
-    def set_gauge(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        pass
-
-    def generate_metrics_text(self) -> bytes:
-        return (
-            b"# HELP test_metric Test\n# TYPE test_metric counter\ntest_metric 42.0\n"
-        )
-
-
 def test_metrics_endpoint_with_container() -> None:
     """Verify /metrics route returns formatted Prometheus metrics."""
+    metrics = InMemoryMetricsAdapter()
+    metrics.increment_counter("test_metric", 42.0)
+
     container = Container()
-    container.add_instance(DummyMetrics(), declared_class=MetricsPort)
+    container.add_instance(metrics, declared_class=MetricsPort)
 
     app = FastAPI()
     router = create_metrics_router(container=container)

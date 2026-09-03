@@ -6,37 +6,15 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from rodi import Container
 
+from hexastack_core.adapters.metrics import InMemoryMetricsAdapter
 from hexastack_core.ports.metrics import MetricsPort
 from hexastack_fastapi.infra.middleware.metrics import HttpMetricsMiddleware
 
 
-class MockMetrics(MetricsPort):
-    def __init__(self) -> None:
-        self.counters: list[dict] = []
-        self.histograms: list[dict] = []
-
-    def increment_counter(
-        self, name: str, value: float = 1.0, labels=None, description: str = ""
-    ) -> None:
-        self.counters.append({"name": name, "value": value, "labels": labels})
-
-    def record_histogram(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        self.histograms.append({"name": name, "value": value, "labels": labels})
-
-    def set_gauge(
-        self, name: str, value: float, labels=None, description: str = ""
-    ) -> None:
-        pass
-
-    def generate_metrics_text(self) -> bytes:
-        return b"# mock"
-
-
 def test_http_metrics_middleware_captures_red_metrics() -> None:
     """Verify HttpMetricsMiddleware records counter and histogram for requests."""
-    metrics = MockMetrics()
+    metrics = InMemoryMetricsAdapter()
+
     container = Container()
     container.add_instance(metrics, declared_class=MetricsPort)
 

@@ -1,24 +1,11 @@
 import pytest
 
+from hexastack_core.adapters.unit_of_work import InMemoryUnitOfWork
 from hexastack_core.domain import UnitOfWorkError
-from hexastack_core.ports.unit_of_work import UnitOfWorkPort
-
-
-class MockUnitOfWork(UnitOfWorkPort):
-    def __init__(self, reraise: bool = False) -> None:
-        super().__init__(reraise=reraise)
-        self.committed = False
-        self.rolled_back = False
-
-    def commit(self) -> None:
-        self.committed = True
-
-    def rollback(self) -> None:
-        self.rolled_back = True
 
 
 def test_unit_of_work_exception_reraises_as_unit_of_work_error():
-    uow = MockUnitOfWork(reraise=True)
+    uow = InMemoryUnitOfWork(reraise=True)
 
     with pytest.raises(UnitOfWorkError) as exc_info, uow:
         raise ValueError("original error")
@@ -29,7 +16,7 @@ def test_unit_of_work_exception_reraises_as_unit_of_work_error():
 
 
 def test_unit_of_work_exception_rolls_back_and_propagates():
-    uow = MockUnitOfWork(reraise=False)
+    uow = InMemoryUnitOfWork(reraise=False)
 
     with pytest.raises(ValueError, match="test exception"), uow:
         raise ValueError("test exception")
@@ -39,7 +26,7 @@ def test_unit_of_work_exception_rolls_back_and_propagates():
 
 
 def test_unit_of_work_success_commits():
-    uow = MockUnitOfWork()
+    uow = InMemoryUnitOfWork()
     with uow:
         pass
 
