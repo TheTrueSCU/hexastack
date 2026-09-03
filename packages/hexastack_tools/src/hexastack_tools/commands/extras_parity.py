@@ -201,7 +201,7 @@ def generate_extras_mermaid_diagram(repo_root: Path) -> str:
                 target_id = pkg_base.replace("-", "_")
                 lines.append(f"    U_{extra} --> P_{target_id}")
 
-    lines.append("```")
+    lines.append("```\n")
     return "\n".join(lines)
 
 
