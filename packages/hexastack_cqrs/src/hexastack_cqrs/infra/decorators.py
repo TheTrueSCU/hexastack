@@ -55,6 +55,8 @@ class FeatureFlagMetadata:
 
 __all__ = [
     "cached_query",
+    "circuit_breaker",
+    "CircuitBreakerMetadata",
     "command_handler",
     "CommandInvalidationMetadata",
     "config_section",
@@ -326,6 +328,49 @@ def invalidates_cache(
             cls,
             _COMMAND_INVALIDATION_META_ATTR,
             CommandInvalidationMetadata(tags=normalized_tags),
+        )
+        return cls
+
+    return decorator
+
+
+_CIRCUIT_BREAKER_META_ATTR = "__hexastack_circuit_breaker__"
+
+
+@dataclass(frozen=True)
+class CircuitBreakerMetadata:
+    """Metadata tag attached to command or query classes for declarative circuit breaker protection.
+
+    Notes/Architectural Intent:
+        Associates custom failure threshold and recovery timeout directly with domain messages.
+    """
+
+    failure_threshold: int = 5
+    recovery_timeout_seconds: float = 10.0
+
+
+def circuit_breaker(
+    failure_threshold: int = 5,
+    recovery_timeout_seconds: float = 10.0,
+) -> Callable[[type[Generic]], type[Generic]]:
+    """Decorate a Command or Query class for declarative circuit breaker protection.
+
+    Args:
+        failure_threshold: Number of consecutive failures before tripping the circuit.
+        recovery_timeout_seconds: Seconds to wait before probing recovery in HALF_OPEN.
+
+    Returns:
+        Decorator function attaching CircuitBreakerMetadata.
+    """
+
+    def decorator[G: Generic](cls: type[G]) -> type[G]:
+        setattr(
+            cls,
+            _CIRCUIT_BREAKER_META_ATTR,
+            CircuitBreakerMetadata(
+                failure_threshold=failure_threshold,
+                recovery_timeout_seconds=recovery_timeout_seconds,
+            ),
         )
         return cls
 

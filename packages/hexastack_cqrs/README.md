@@ -20,11 +20,12 @@
   - `CorrelationMiddleware`: Propagates correlation IDs across requests and async tasks.
   - `TimingMiddleware`: Measures and records execution latency.
   - `LoggingMiddleware`: Logs execution lifecycles and errors via `LoggerPort` (dynamically gated via `features.cqrs.logging`).
+  - `CircuitBreakerMiddleware` & `AsyncCircuitBreakerMiddleware`: Non-blocking fail-fast circuit breaker protecting commands/queries from cascading outages.
   - `StaminaRetryMiddleware`: Modern exponential backoff with full jitter powered by `stamina` (dynamically gated via `features.cqrs.retry`).
   - `TenacityRetryMiddleware`: Exponential backoff and retry policies powered by `tenacity` (dynamically gated via `features.cqrs.retry`).
   - `UnitOfWorkMiddleware`: Automatic transaction scoping (`commit()` on success, `rollback()` on failure).
   - `ConditionalFeatureFlagMiddleware`: Evaluates dynamic feature flags before dispatching commands/queries.
-- **Declarative Decorators & Scanning**: `@command_handler`, `@query_handler`, `@event_handler`, and `@feature_flag` registered via reflective module scanning.
+- **Declarative Decorators & Scanning**: `@command_handler`, `@query_handler`, `@event_handler`, `@circuit_breaker`, and `@feature_flag` registered via reflective module scanning.
 - **Declarative Query Caching & Tag Invalidation**:
   - `@cached_query(ttl_seconds, tags, key_fields)`: Declaratively caches read projections in `CachePort` / `AsyncCachePort`.
   - `@invalidates_cache(tags)`: Automatically invalidates related cached tag groups when modifying Commands succeed.
@@ -40,7 +41,7 @@ hexastack_cqrs/
 ├── domain/          # Command, Query, Event, Handler protocols, CQRS exceptions
 ├── ports/           # CommandBusPort, QueryBusPort, EventBusPort, MiddlewarePort
 ├── adapters/        # Buses (Synchronous & Asynchronous with Huey)
-└── infra/           # CqrsBootstrapper (order=20), Middleware pipeline, InOutMiddleware, Registries, @cached_query, @feature_flag
+└── infra/           # CqrsBootstrapper (order=20), Middleware pipeline, InOutMiddleware, Registries, @cached_query, @circuit_breaker, @feature_flag
 ```
 
 ### Key Exports
@@ -49,10 +50,11 @@ hexastack_cqrs/
 |---|---|
 | **Adapters** | `SynchronousCommandBus`, `SynchronousQueryBus`, `SynchronousEventBus`, `HueyCommandBus`, `HueyEventBus` |
 | **Bootstrap** | `CqrsBootstrapper` (order=20), `CqrsConfig` |
-| **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@cached_query`, `@invalidates_cache`, `@feature_flag`, `@presenter` |
+| **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@circuit_breaker`, `@cached_query`, `@invalidates_cache`, `@feature_flag`, `@presenter` |
 | **Domain** | `Command`, `Query`, `Event`, `CommandHandler`, `QueryHandler`, `EventHandler` |
-| **Middlewares** | `AsyncInOutMiddleware`, `CommandCacheInvalidationMiddleware`, `ConditionalFeatureFlagMiddleware`, `CorrelationMiddleware`, `ExecutionPipeline`, `InOutMiddleware`, `LoggingMiddleware`, `QueryCachingMiddleware`, `StaminaRetryMiddleware`, `TenacityRetryMiddleware`, `TimingMiddleware`, `UnitOfWorkMiddleware` |
+| **Middlewares** | `AsyncCircuitBreakerMiddleware`, `AsyncInOutMiddleware`, `CircuitBreakerMiddleware`, `CommandCacheInvalidationMiddleware`, `ConditionalFeatureFlagMiddleware`, `CorrelationMiddleware`, `ExecutionPipeline`, `InOutMiddleware`, `LoggingMiddleware`, `QueryCachingMiddleware`, `StaminaRetryMiddleware`, `TenacityRetryMiddleware`, `TimingMiddleware`, `UnitOfWorkMiddleware` |
 | **Ports** | `CommandBusPort`, `QueryBusPort`, `EventBusPort`, `MiddlewarePort` |
+
 
 
 

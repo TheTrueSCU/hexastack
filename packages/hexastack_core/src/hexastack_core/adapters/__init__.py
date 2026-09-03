@@ -7,6 +7,10 @@ from hexastack_core.adapters.cache import (
     AsyncInMemoryCache,
     InMemoryCache,
 )
+from hexastack_core.adapters.circuit_breaker import (
+    AsyncInMemoryCircuitBreaker,
+    InMemoryCircuitBreaker,
+)
 from hexastack_core.adapters.clock import (
     FrozenClock,
     InMemoryClock,
@@ -45,6 +49,7 @@ from hexastack_core.adapters.unit_of_work import (
 
 __all__ = [
     "AsyncInMemoryCache",
+    "AsyncInMemoryCircuitBreaker",
     "AsyncInMemoryLock",
     "AsyncInMemoryRepository",
     "AsyncInMemoryStorage",
@@ -52,6 +57,7 @@ __all__ = [
     "AsyncSingleProcessLeaderElection",
     "FrozenClock",
     "InMemoryCache",
+    "InMemoryCircuitBreaker",
     "InMemoryClock",
     "InMemoryLlmProvider",
     "InMemoryLock",

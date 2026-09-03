@@ -44,16 +44,24 @@ class NotFoundError(HexastackError):
     """Domain exception raised when a requested entity or aggregate is not found."""
 
 
+class AuthenticationError(HexastackError):
+    """Domain exception raised when authentication credentials are missing or invalid."""
+
+
+class CircuitBreakerError(HexastackError):
+    """Domain exception raised when a circuit breaker operation or failure occurs."""
+
+
+class CircuitBreakerOpenError(CircuitBreakerError):
+    """Domain exception raised when execution is rejected because the circuit breaker is OPEN."""
+
+
 class ValidationError(HexastackError):
     """Domain exception raised when business validation or invariant checking fails."""
 
 
 class ConflictError(HexastackError):
     """Domain exception raised when a resource state conflict occurs (e.g. duplicate key)."""
-
-
-class AuthenticationError(HexastackError):
-    """Domain exception raised when authentication credentials are missing or invalid."""
 
 
 class PermissionDeniedError(HexastackError):
@@ -78,6 +86,8 @@ class StorageNotFoundError(StorageError, NotFoundError):
 
 __all__ = [
     "AuthenticationError",
+    "CircuitBreakerError",
+    "CircuitBreakerOpenError",
     "ConflictError",
     "DependencyResolutionError",
     "HexastackError",

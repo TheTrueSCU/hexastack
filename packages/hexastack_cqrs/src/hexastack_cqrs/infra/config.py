@@ -3,6 +3,20 @@ from pydantic import BaseModel, Field
 from hexastack_core.infra import ConfigRegistry
 
 
+class CircuitBreakerMiddlewareConfig(BaseModel):
+    """Configuration schema for CQRS circuit breaker resilience middleware.
+
+    Notes/Architectural Intent:
+        Controls fail-fast circuit trip threshold, recovery probe timeout, and pipeline order.
+    """
+
+    enable: bool = Field(default=True)
+    order: int = Field(default=45)
+    failure_threshold: int = Field(default=5, ge=1)
+    recovery_timeout_seconds: float = Field(default=10.0, gt=0.0)
+    half_open_max_trials: int = Field(default=1, ge=1)
+
+
 class CorrelationMiddlewareConfig(BaseModel):
     """Configuration schema for CQRS correlation context middleware.
 
@@ -73,6 +87,9 @@ class CqrsMiddlewareConfig(BaseModel):
         Groups middleware settings under `hexastack.cqrs.middleware.<name>`.
     """
 
+    circuit_breaker: CircuitBreakerMiddlewareConfig = Field(
+        default_factory=CircuitBreakerMiddlewareConfig
+    )
     correlation: CorrelationMiddlewareConfig = Field(
         default_factory=CorrelationMiddlewareConfig
     )

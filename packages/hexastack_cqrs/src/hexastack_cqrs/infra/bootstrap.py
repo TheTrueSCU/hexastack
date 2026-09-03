@@ -4,6 +4,7 @@ from types import ModuleType
 
 from rodi import Container
 
+from hexastack_core.adapters.circuit_breaker import InMemoryCircuitBreaker
 from hexastack_core.adapters.logging import StandardLogger
 from hexastack_core.infra.bootstrap import (
     BootstrapContext,
@@ -16,6 +17,7 @@ from hexastack_core.infra.config import HexastackConfig
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_core.ports.circuit_breaker import CircuitBreakerPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from hexastack_cqrs.adapters.buses.command.synchronous import (
@@ -32,6 +34,9 @@ from hexastack_cqrs.infra.config import (
     CqrsMiddlewareConfig,
     HexastackCqrsConfig,
     register_cqrs_config,
+)
+from hexastack_cqrs.infra.middleware.circuit_breaker import (
+    CircuitBreakerMiddleware,
 )
 from hexastack_cqrs.infra.middleware.correlation import CorrelationMiddleware
 from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
@@ -150,6 +155,27 @@ class CqrsBootstrapper(BootstrapperPort):
                 (
                     mw_conf.unit_of_work.order,
                     UnitOfWorkMiddleware(lambda: di.resolve(UnitOfWorkPort)),
+                )
+            )
+        if mw_conf.circuit_breaker.enable:
+            active_cb: CircuitBreakerPort
+            if CircuitBreakerPort in di:
+                active_cb = di.resolve(CircuitBreakerPort)
+            else:
+                active_cb = InMemoryCircuitBreaker(
+                    failure_threshold=mw_conf.circuit_breaker.failure_threshold,
+                    recovery_timeout_seconds=mw_conf.circuit_breaker.recovery_timeout_seconds,
+                    half_open_max_trials=mw_conf.circuit_breaker.half_open_max_trials,
+                )
+                di.add_instance(active_cb, declared_class=CircuitBreakerPort)
+            ordered_middlewares.append(
+                (
+                    mw_conf.circuit_breaker.order,
+                    CircuitBreakerMiddleware(
+                        breaker=active_cb,
+                        config=mw_conf.circuit_breaker,
+                        logger=active_logger,
+                    ),
                 )
             )
         if mw_conf.retry.enable:

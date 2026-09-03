@@ -5,6 +5,11 @@ from hexastack_core.ports.ai import (
 )
 from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_core.ports.cache import AsyncCachePort, CachePort
+from hexastack_core.ports.circuit_breaker import (
+    AsyncCircuitBreakerPort,
+    CircuitBreakerPort,
+    CircuitState,
+)
 from hexastack_core.ports.clock import ClockPort
 from hexastack_core.ports.leader_election import (
     AsyncLeaderElectionPort,
@@ -30,6 +35,7 @@ from hexastack_core.ports.unit_of_work import (
 
 __all__ = [
     "AsyncCachePort",
+    "AsyncCircuitBreakerPort",
     "AsyncLeaderElectionPort",
     "AsyncLockPort",
     "AsyncRepositoryPort",
@@ -37,6 +43,8 @@ __all__ = [
     "AsyncUnitOfWorkPort",
     "BootstrapperPort",
     "CachePort",
+    "CircuitBreakerPort",
+    "CircuitState",
     "ClockPort",
     "Extras",
     "LeaderElectionPort",

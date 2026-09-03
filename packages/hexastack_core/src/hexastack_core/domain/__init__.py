@@ -2,6 +2,8 @@ from hexastack_core.domain.command import Command
 from hexastack_core.domain.event import Event
 from hexastack_core.domain.exceptions import (
     AuthenticationError,
+    CircuitBreakerError,
+    CircuitBreakerOpenError,
     ConflictError,
     DependencyResolutionError,
     HexastackError,
@@ -22,6 +24,8 @@ from hexastack_core.domain.result import Result
 
 __all__ = [
     "AuthenticationError",
+    "CircuitBreakerError",
+    "CircuitBreakerOpenError",
     "Command",
     "ConflictError",
     "DependencyResolutionError",
