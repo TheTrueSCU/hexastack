@@ -30,6 +30,82 @@ class ExtraParityViolation:
     suggested_fix: str
 
 
+def _is_extra_forwarded(
+    pkg_name: str,
+    extra_name: str,
+    reqs: list[str],
+    umbrella_extras: dict[str, list[str]],
+    all_umbrella_reqs: set[str],
+) -> bool:
+    """Check if a subpackage extra is satisfied in the umbrella package."""
+    if extra_name == "testing":
+        return True
+
+    # First-party integrations like hexastack-auth[fastapi]
+    if extra_name in ("fastapi", "grpc", "auth") and all(
+        r.startswith(("hexastack-", "fastapi", "grpcio")) for r in reqs
+    ):
+        return True
+
+    expected_forward = f"{pkg_name}[{extra_name}]"
+    matching_umbrella_extra = umbrella_extras.get(extra_name, [])
+
+    if any(
+        expected_forward == r
+        or expected_forward in r
+        or any(expected_forward == part.strip() for part in r.split("["))
+        for r in matching_umbrella_extra
+    ):
+        return True
+
+    if any(
+        expected_forward in r or (extra_name in r and pkg_name in r)
+        for r in all_umbrella_reqs
+    ):
+        return True
+
+    if extra_name == "all":
+        return any(pkg_name in r for r in umbrella_extras.get("all", []))
+
+    return False
+
+
+def _audit_package_extras(
+    pkg_dir: Path,
+    umbrella_extras: dict[str, list[str]],
+    all_umbrella_reqs: set[str],
+) -> list[ExtraParityViolation]:
+    """Audit optional extras for a single subpackage directory."""
+    pyproject = pkg_dir / "pyproject.toml"
+    if not pyproject.is_file():
+        return []
+
+    with pyproject.open("rb") as f:
+        data = tomllib.load(f)
+
+    pkg_name = data.get("project", {}).get("name", pkg_dir.name)
+    pkg_extras = data.get("project", {}).get("optional-dependencies", {})
+    violations: list[ExtraParityViolation] = []
+
+    for extra_name, reqs in pkg_extras.items():
+        if not _is_extra_forwarded(
+            pkg_name, extra_name, reqs, umbrella_extras, all_umbrella_reqs
+        ):
+            expected_forward = f"{pkg_name}[{extra_name}]"
+            violations.append(
+                ExtraParityViolation(
+                    subpackage=pkg_name,
+                    extra_name=extra_name,
+                    dependencies=reqs,
+                    suggested_fix=(
+                        f"Add `{expected_forward}` to `packages/hexastack/pyproject.toml` "
+                        f"under `[project.optional-dependencies].{extra_name}` or `all`."
+                    ),
+                )
+            )
+    return violations
+
+
 def audit_extras_parity(repo_root: Path) -> list[ExtraParityViolation]:
     """Audit subpackage optional dependencies against umbrella package extras.
 
@@ -60,77 +136,16 @@ def audit_extras_parity(repo_root: Path) -> list[ExtraParityViolation]:
         umbrella_data = tomllib.load(f)
 
     umbrella_extras = umbrella_data.get("project", {}).get("optional-dependencies", {})
-
-    # Flatten all declared requirements across umbrella extras
-    all_umbrella_reqs: set[str] = set()
-    for reqs in umbrella_extras.values():
-        for req in reqs:
-            all_umbrella_reqs.add(req)
+    all_umbrella_reqs: set[str] = {
+        req for reqs in umbrella_extras.values() for req in reqs
+    }
 
     violations: list[ExtraParityViolation] = []
-
     for pkg_dir in get_package_directories(repo_root):
-        if pkg_dir.name in ("hexastack", "hexastack_tools", "hexastack_cli"):
-            continue
-
-        pyproject = pkg_dir / "pyproject.toml"
-        if not pyproject.is_file():
-            continue
-
-        with pyproject.open("rb") as f:
-            data = tomllib.load(f)
-
-        pkg_name = data.get("project", {}).get("name", pkg_dir.name)
-        pkg_extras = data.get("project", {}).get("optional-dependencies", {})
-
-        for extra_name, reqs in pkg_extras.items():
-            if extra_name == "testing":
-                # Testing extras are development-only and tested via workspace dev dependencies
-                continue
-
-            # Check if this subpackage extra is simply an optional integration of another first-party package
-            # e.g., hexastack-auth[fastapi] depends on fastapi, or hexastack-fastapi[auth] depends on hexastack-auth
-            # In the umbrella package, installing `auth` or `fastapi` already pulls in both packages.
-            first_party_internal = extra_name in ("fastapi", "grpc", "auth") and all(
-                r.startswith(("hexastack-", "fastapi", "grpcio")) for r in reqs
+        if pkg_dir.name not in ("hexastack", "hexastack_tools", "hexastack_cli"):
+            violations.extend(
+                _audit_package_extras(pkg_dir, umbrella_extras, all_umbrella_reqs)
             )
-            if first_party_internal:
-                continue
-
-            expected_forward = f"{pkg_name}[{extra_name}]"
-
-            matching_umbrella_extra = umbrella_extras.get(extra_name, [])
-            is_forwarded_directly = any(
-                expected_forward == r
-                or expected_forward in r
-                or any(expected_forward == part.strip() for part in r.split("["))
-                for r in matching_umbrella_extra
-            )
-            is_in_any_umbrella_extra = any(
-                expected_forward in r or (extra_name in r and pkg_name in r)
-                for r in all_umbrella_reqs
-            )
-
-            # Special case for subpackage [all] extra: satisfied if umbrella[all] includes pkg[all] or pkg[all,sentry]
-            if extra_name == "all":
-                is_satisfied = any(
-                    pkg_name in r for r in umbrella_extras.get("all", [])
-                )
-            else:
-                is_satisfied = is_forwarded_directly or is_in_any_umbrella_extra
-
-            if not is_satisfied:
-                violations.append(
-                    ExtraParityViolation(
-                        subpackage=pkg_name,
-                        extra_name=extra_name,
-                        dependencies=reqs,
-                        suggested_fix=(
-                            f"Add `{expected_forward}` to `packages/hexastack/pyproject.toml` "
-                            f"under `[project.optional-dependencies].{extra_name}` or `all`."
-                        ),
-                    )
-                )
 
     return violations
 
@@ -246,8 +261,8 @@ def main() -> int:
 
 
 __all__ = [
-    "ExtraParityViolation",
     "audit_extras_parity",
+    "ExtraParityViolation",
     "generate_extras_mermaid_diagram",
     "main",
 ]

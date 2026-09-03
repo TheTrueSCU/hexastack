@@ -106,13 +106,17 @@ def main() -> int:
     )
 
     if args.diagrams:
-        console.print("[yellow]Generating Pydeps SVGs and Mermaid Extras Diagram...[/yellow]")
+        console.print(
+            "[yellow]Generating Pydeps SVGs and Mermaid Extras Diagram...[/yellow]"
+        )
         generate_all_diagrams(repo_root)
         mermaid_diag = generate_extras_mermaid_diagram(repo_root)
         diagram_file = repo_root / "docs" / "assets" / "pydeps" / "hexastack_extras.mmd"
         diagram_file.parent.mkdir(parents=True, exist_ok=True)
         diagram_file.write_text(mermaid_diag, encoding="utf-8")
-        console.print(f"[bold green]✓ Diagram written to {diagram_file.relative_to(repo_root)}[/bold green]")
+        console.print(
+            f"[bold green]✓ Diagram written to {diagram_file.relative_to(repo_root)}[/bold green]"
+        )
 
     is_healthy, errors = audit_workspace_dependencies(
         repo_root,

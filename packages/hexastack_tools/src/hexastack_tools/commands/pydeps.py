@@ -157,4 +157,3 @@ __all__ = [
     "generate_overview_diagram",
     "generate_package_diagram",
 ]
-
