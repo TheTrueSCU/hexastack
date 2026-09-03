@@ -128,7 +128,31 @@ def generate_main() -> None:
     )
 
 
+def generate_all_diagrams(root: Path) -> list[tuple[str, str]]:
+    """Programmatically generate overview and all package SVGs."""
+    packages = get_package_directories(root)
+    results: list[tuple[str, str]] = []
+
+    overview_path = generate_overview_diagram(root)
+    if overview_path:
+        results.append(("Monorepo Overview", overview_path))
+
+    with ProcessPoolExecutor() as executor:
+        futures = {
+            executor.submit(generate_package_diagram, pkg, root): pkg.name
+            for pkg in packages
+        }
+        for future in futures:
+            pkg_name = futures[future]
+            path = future.result()
+            if path:
+                results.append((pkg_name, path))
+
+    return results
+
+
 __all__ = [
+    "generate_all_diagrams",
     "generate_main",
     "generate_overview_diagram",
     "generate_package_diagram",

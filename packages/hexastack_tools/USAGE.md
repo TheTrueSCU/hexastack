@@ -467,6 +467,34 @@ options:
 
 ### 🔧 Additional Workspace Tools
 
+#### `check-extras-parity`
+
+```text
+usage: check-extras-parity [-h] [--diagram]
+
+Audit optional extras parity across workspace subpackages and umbrella
+package.
+
+options:
+  -h, --help  show this help message and exit
+  --diagram   Generate and print Mermaid dependency diagram of package extras.
+```
+
+#### `deps-audit`
+
+```text
+usage: deps-audit [-h] [--diagrams] [--deptry-only] [--extras-only]
+
+Unified dependency, optional extras, and architecture auditor for Hexastack.
+
+options:
+  -h, --help     show this help message and exit
+  --diagrams     Regenerate all Pydeps SVG import graphs and Mermaid extras
+                 diagrams.
+  --deptry-only  Only run deptry source import audits.
+  --extras-only  Only run optional extras parity checks.
+```
+
 #### `rope-alphabetizer`
 
 ```text

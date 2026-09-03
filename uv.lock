@@ -1778,12 +1778,15 @@ all = [
     { name = "hexastack-fastapi" },
     { name = "hexastack-flags" },
     { name = "hexastack-graphql" },
-    { name = "hexastack-grpc" },
-    { name = "hexastack-logging", extra = ["sentry"] },
+    { name = "hexastack-grpc", extra = ["reflection"] },
+    { name = "hexastack-logging", extra = ["all", "sentry"] },
     { name = "hexastack-mcp" },
-    { name = "hexastack-otel" },
+    { name = "hexastack-otel", extra = ["otlp"] },
     { name = "hexastack-tools" },
     { name = "uvicorn", extra = ["standard"] },
+]
+apprise = [
+    { name = "hexastack-events", extra = ["apprise"] },
 ]
 auth = [
     { name = "hexastack-auth" },
@@ -1810,6 +1813,9 @@ filelock = [
     { name = "hexastack-core", extra = ["filelock"] },
     { name = "hexastack-events", extra = ["filelock"] },
 ]
+flagd = [
+    { name = "hexastack-flags", extra = ["flagd"] },
+]
 flags = [
     { name = "hexastack-flags" },
 ]
@@ -1822,17 +1828,45 @@ graphql = [
 grpc = [
     { name = "hexastack-grpc" },
 ]
+huey = [
+    { name = "hexastack-cqrs", extra = ["huey"] },
+    { name = "hexastack-events", extra = ["huey"] },
+]
 janus = [
     { name = "hexastack-events", extra = ["janus"] },
+]
+loguru = [
+    { name = "hexastack-logging", extra = ["loguru"] },
 ]
 mcp = [
     { name = "hexastack-mcp" },
 ]
+migrations = [
+    { name = "hexastack-db", extra = ["migrations"] },
+]
+msgspec = [
+    { name = "hexastack-events", extra = ["msgspec"] },
+]
 nats = [
     { name = "hexastack-events", extra = ["nats"] },
 ]
+opa = [
+    { name = "hexastack-auth", extra = ["opa"] },
+]
+openfga = [
+    { name = "hexastack-auth", extra = ["openfga"] },
+]
 otel = [
     { name = "hexastack-otel" },
+]
+otlp = [
+    { name = "hexastack-otel", extra = ["otlp"] },
+]
+pgvector = [
+    { name = "hexastack-db", extra = ["pgvector"] },
+]
+postgresql = [
+    { name = "hexastack-db", extra = ["postgresql"] },
 ]
 ratelimit = [
     { name = "hexastack-fastapi", extra = ["ratelimit"] },
@@ -1840,11 +1874,27 @@ ratelimit = [
 redis = [
     { name = "hexastack-core", extra = ["redis"] },
 ]
+reflection = [
+    { name = "hexastack-grpc", extra = ["reflection"] },
+]
+rich = [
+    { name = "hexastack-logging", extra = ["rich"] },
+]
 sentry = [
     { name = "hexastack-logging", extra = ["sentry"] },
 ]
+spiffe = [
+    { name = "hexastack-auth", extra = ["spiffe"] },
+]
 sql = [
     { name = "hexastack-db" },
+    { name = "hexastack-events", extra = ["sql"] },
+]
+sqlite = [
+    { name = "hexastack-db", extra = ["sqlite"] },
+]
+structlog = [
+    { name = "hexastack-logging", extra = ["structlog"] },
 ]
 testing = [
     { name = "faker" },
@@ -1875,6 +1925,9 @@ requires-dist = [
     { name = "hexastack-ai", marker = "extra == 'all'", editable = "packages/hexastack_ai" },
     { name = "hexastack-auth", marker = "extra == 'all'", editable = "packages/hexastack_auth" },
     { name = "hexastack-auth", marker = "extra == 'auth'", editable = "packages/hexastack_auth" },
+    { name = "hexastack-auth", extras = ["opa"], marker = "extra == 'opa'", editable = "packages/hexastack_auth" },
+    { name = "hexastack-auth", extras = ["openfga"], marker = "extra == 'openfga'", editable = "packages/hexastack_auth" },
+    { name = "hexastack-auth", extras = ["spiffe"], marker = "extra == 'spiffe'", editable = "packages/hexastack_auth" },
     { name = "hexastack-cli", marker = "extra == 'all'", editable = "packages/hexastack_cli" },
     { name = "hexastack-cli", marker = "extra == 'cli'", editable = "packages/hexastack_cli" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
@@ -1884,14 +1937,23 @@ requires-dist = [
     { name = "hexastack-core", extras = ["redis"], marker = "extra == 'redis'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["valkey"], marker = "extra == 'valkey'", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "hexastack-cqrs", extras = ["huey"], marker = "extra == 'huey'", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-db", marker = "extra == 'db'", editable = "packages/hexastack_db" },
     { name = "hexastack-db", marker = "extra == 'sql'", editable = "packages/hexastack_db" },
     { name = "hexastack-db", extras = ["all"], marker = "extra == 'all'", editable = "packages/hexastack_db" },
+    { name = "hexastack-db", extras = ["migrations"], marker = "extra == 'migrations'", editable = "packages/hexastack_db" },
+    { name = "hexastack-db", extras = ["pgvector"], marker = "extra == 'pgvector'", editable = "packages/hexastack_db" },
+    { name = "hexastack-db", extras = ["postgresql"], marker = "extra == 'postgresql'", editable = "packages/hexastack_db" },
+    { name = "hexastack-db", extras = ["sqlite"], marker = "extra == 'sqlite'", editable = "packages/hexastack_db" },
     { name = "hexastack-events", marker = "extra == 'all'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", marker = "extra == 'events'", editable = "packages/hexastack_events" },
+    { name = "hexastack-events", extras = ["apprise"], marker = "extra == 'apprise'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_events" },
+    { name = "hexastack-events", extras = ["huey"], marker = "extra == 'huey'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["janus"], marker = "extra == 'janus'", editable = "packages/hexastack_events" },
+    { name = "hexastack-events", extras = ["msgspec"], marker = "extra == 'msgspec'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["nats"], marker = "extra == 'nats'", editable = "packages/hexastack_events" },
+    { name = "hexastack-events", extras = ["sql"], marker = "extra == 'sql'", editable = "packages/hexastack_events" },
     { name = "hexastack-fastapi", marker = "extra == 'all'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", marker = "extra == 'fastapi'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", marker = "extra == 'web'", editable = "packages/hexastack_fastapi" },
@@ -1900,17 +1962,23 @@ requires-dist = [
     { name = "hexastack-fastapi", extras = ["ui"], marker = "extra == 'ui'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-flags", marker = "extra == 'all'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", marker = "extra == 'flags'", editable = "packages/hexastack_flags" },
+    { name = "hexastack-flags", extras = ["flagd"], marker = "extra == 'flagd'", editable = "packages/hexastack_flags" },
     { name = "hexastack-graphql", marker = "extra == 'all'", editable = "packages/hexastack_graphql" },
     { name = "hexastack-graphql", marker = "extra == 'graphql'", editable = "packages/hexastack_graphql" },
-    { name = "hexastack-grpc", marker = "extra == 'all'", editable = "packages/hexastack_grpc" },
     { name = "hexastack-grpc", marker = "extra == 'grpc'", editable = "packages/hexastack_grpc" },
+    { name = "hexastack-grpc", extras = ["reflection"], marker = "extra == 'all'", editable = "packages/hexastack_grpc" },
+    { name = "hexastack-grpc", extras = ["reflection"], marker = "extra == 'reflection'", editable = "packages/hexastack_grpc" },
     { name = "hexastack-logging", editable = "packages/hexastack_logging" },
-    { name = "hexastack-logging", extras = ["sentry"], marker = "extra == 'all'", editable = "packages/hexastack_logging" },
+    { name = "hexastack-logging", extras = ["all", "sentry"], marker = "extra == 'all'", editable = "packages/hexastack_logging" },
+    { name = "hexastack-logging", extras = ["loguru"], marker = "extra == 'loguru'", editable = "packages/hexastack_logging" },
+    { name = "hexastack-logging", extras = ["rich"], marker = "extra == 'rich'", editable = "packages/hexastack_logging" },
     { name = "hexastack-logging", extras = ["sentry"], marker = "extra == 'sentry'", editable = "packages/hexastack_logging" },
+    { name = "hexastack-logging", extras = ["structlog"], marker = "extra == 'structlog'", editable = "packages/hexastack_logging" },
     { name = "hexastack-mcp", marker = "extra == 'all'", editable = "packages/hexastack_mcp" },
     { name = "hexastack-mcp", marker = "extra == 'mcp'", editable = "packages/hexastack_mcp" },
-    { name = "hexastack-otel", marker = "extra == 'all'", editable = "packages/hexastack_otel" },
     { name = "hexastack-otel", marker = "extra == 'otel'", editable = "packages/hexastack_otel" },
+    { name = "hexastack-otel", extras = ["otlp"], marker = "extra == 'all'", editable = "packages/hexastack_otel" },
+    { name = "hexastack-otel", extras = ["otlp"], marker = "extra == 'otlp'", editable = "packages/hexastack_otel" },
     { name = "hexastack-tools", marker = "extra == 'all'", editable = "packages/hexastack_tools" },
     { name = "hexastack-tools", marker = "extra == 'tools'", editable = "packages/hexastack_tools" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=6.100.0" },
@@ -1921,7 +1989,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "auth", "cli", "db", "diskcache", "docs", "events", "fastapi", "filelock", "flags", "fsspec", "graphql", "grpc", "janus", "mcp", "nats", "otel", "ratelimit", "redis", "sentry", "sql", "testing", "tools", "ui", "valkey", "web", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "diskcache", "docs", "events", "fastapi", "filelock", "flagd", "flags", "fsspec", "graphql", "grpc", "huey", "janus", "loguru", "mcp", "migrations", "msgspec", "nats", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "sql", "sqlite", "structlog", "testing", "tools", "ui", "valkey", "web", "all"]
 
 [[package]]
 name = "hexastack-ai"

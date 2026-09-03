@@ -18,6 +18,9 @@ dependencies = [
 ai = [
     "hexastack-ai",
 ]
+apprise = [
+    "hexastack-events[apprise]",
+]
 auth = [
     "hexastack-auth",
 ]
@@ -43,6 +46,9 @@ filelock = [
     "hexastack-core[filelock]",
     "hexastack-events[filelock]",
 ]
+flagd = [
+    "hexastack-flags[flagd]",
+]
 flags = [
     "hexastack-flags",
 ]
@@ -50,23 +56,50 @@ fsspec = [
     "hexastack-core[fsspec]",
 ]
 graphql = [
-
     "hexastack-graphql",
 ]
 grpc = [
     "hexastack-grpc",
 ]
+huey = [
+    "hexastack-cqrs[huey]",
+    "hexastack-events[huey]",
+]
 janus = [
     "hexastack-events[janus]",
+]
+loguru = [
+    "hexastack-logging[loguru]",
 ]
 mcp = [
     "hexastack-mcp",
 ]
+migrations = [
+    "hexastack-db[migrations]",
+]
+msgspec = [
+    "hexastack-events[msgspec]",
+]
 nats = [
     "hexastack-events[nats]",
 ]
+opa = [
+    "hexastack-auth[opa]",
+]
+openfga = [
+    "hexastack-auth[openfga]",
+]
 otel = [
     "hexastack-otel",
+]
+otlp = [
+    "hexastack-otel[otlp]",
+]
+pgvector = [
+    "hexastack-db[pgvector]",
+]
+postgresql = [
+    "hexastack-db[postgresql]",
 ]
 ratelimit = [
     "hexastack-fastapi[ratelimit]",
@@ -74,13 +107,28 @@ ratelimit = [
 redis = [
     "hexastack-core[redis]",
 ]
+reflection = [
+    "hexastack-grpc[reflection]",
+]
+rich = [
+    "hexastack-logging[rich]",
+]
 sentry = [
     "hexastack-logging[sentry]",
 ]
+spiffe = [
+    "hexastack-auth[spiffe]",
+]
 sql = [
     "hexastack-db",
+    "hexastack-events[sql]",
 ]
-
+sqlite = [
+    "hexastack-db[sqlite]",
+]
+structlog = [
+    "hexastack-logging[structlog]",
+]
 testing = [
     "faker>=33.0.0",
     "hypothesis>=6.100.0",
@@ -112,13 +160,14 @@ all = [
     "hexastack-fastapi",
     "hexastack-flags",
     "hexastack-graphql",
-    "hexastack-grpc",
-    "hexastack-logging[sentry]",
+    "hexastack-grpc[reflection]",
+    "hexastack-logging[all,sentry]",
     "hexastack-mcp",
-    "hexastack-otel",
+    "hexastack-otel[otlp]",
     "hexastack-tools",
     "uvicorn[standard]>=0.30.0",
 ]
+
 
 
 [project.scripts]

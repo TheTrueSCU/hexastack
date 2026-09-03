@@ -20,9 +20,13 @@ dependencies = [
 [project.scripts]
 alphabetizer = "hexastack_tools.commands.rope:alphabetize_main"
 check-all-statements = "hexastack_tools.commands.all_statements:check_main"
+check-extras-parity = "hexastack_tools.commands.extras_parity:main"
 check-test-parity = "hexastack_tools.commands.test_parity:main"
+
 codeql-scan = "hexastack_tools.commands.codeql_scan:main"
+deps-audit = "hexastack_tools.commands.deps_audit:main"
 deptry-run = "hexastack_tools.commands.deptry:main"
+
 fix-all-statements = "hexastack_tools.commands.all_statements:fix_main"
 generate-usage-docs = "hexastack_tools.commands.usage_docs:main"
 gh-checks = "hexastack_tools.commands.checks:main"

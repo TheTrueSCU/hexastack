@@ -43,7 +43,10 @@ All CLI commands support multi-format presenters:
 | `uv run check-test-parity` | Validates 1:1 mirroring between `src/` and `tests/unit/`. |
 | `uv run check-all-statements` | Validates `__all__` alphabetical sorting. |
 | `uv run fix-all-statements` | Automatically sorts and alphabetizes `__all__`. |
+| `uv run check-extras-parity` | Audits subpackage optional extras forwarding into umbrella packaging. |
+| `uv run deps-audit` | Unified dependency runner (deptry + extras parity audit across workspace). |
 | `uv run import-linter-run` | Validates package and hexagonal architecture layer boundaries. |
+
 | `uv run pypi-build` | Builds sdist and wheel packages across workspace. |
 | `uv run pypi-check` | Verifies build metadata and checks for PyPI release collisions. |
 | `uv run codeql-scan` | Runs local SARIF CodeQL SAST security scan. |
