@@ -11,6 +11,8 @@ from hexastack_core.domain.exceptions import (
     MissingDependencyError,
     NotFoundError,
     PermissionDeniedError,
+    StorageError,
+    StorageNotFoundError,
     UnitOfWorkError,
     ValidationError,
 )
@@ -34,6 +36,8 @@ __all__ = [
     "PermissionDeniedError",
     "Query",
     "Result",
+    "StorageError",
+    "StorageNotFoundError",
     "UnitOfWorkError",
     "ValidationError",
 ]

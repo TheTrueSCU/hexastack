@@ -46,7 +46,11 @@ filelock = [
 flags = [
     "hexastack-flags",
 ]
+fsspec = [
+    "hexastack-core[fsspec]",
+]
 graphql = [
+
     "hexastack-graphql",
 ]
 grpc = [

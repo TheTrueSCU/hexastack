@@ -34,6 +34,10 @@ from hexastack_core.adapters.repository import (
     AsyncInMemoryRepository,
     InMemoryRepository,
 )
+from hexastack_core.adapters.storage import (
+    AsyncInMemoryStorage,
+    InMemoryStorage,
+)
 from hexastack_core.adapters.unit_of_work import (
     AsyncInMemoryUnitOfWork,
     InMemoryUnitOfWork,
@@ -43,6 +47,7 @@ __all__ = [
     "AsyncInMemoryCache",
     "AsyncInMemoryLock",
     "AsyncInMemoryRepository",
+    "AsyncInMemoryStorage",
     "AsyncInMemoryUnitOfWork",
     "AsyncSingleProcessLeaderElection",
     "FrozenClock",
@@ -54,6 +59,7 @@ __all__ = [
     "InMemoryNotificationAdapter",
     "InMemoryRateLimiter",
     "InMemoryRepository",
+    "InMemoryStorage",
     "InMemoryUnitOfWork",
     "InMemoryVectorStore",
     "LlmCallRecord",
