@@ -15,6 +15,8 @@
 `hexastack-grpc` provides a binary RPC presentation adapter for Hexastack applications:
 
 - **Declarative Service Registration (`@grpc_service`)**: Mounts generated protobuf RPC servicers onto the `grpc.Server` with automatic DI resolution.
+- **gRPC Health Checking Protocol**: Standard `grpc.health.v1.Health` servicer (`GrpcHealthServicer`) supporting Kubernetes liveness, readiness, and stream health probes.
+- **Bidirectional & Server-Streaming RPC Dispatch**: `dispatch_rpc_stream_query` and `dispatch_rpc_bidirectional_stream` streaming CQRS command and query pipelines over HTTP/2.
 - **Cross-Cutting Interceptor Pipeline**:
   - `CorrelationServerInterceptor`: Propagates `x-correlation-id` from incoming metadata into `ContextVar`.
   - `LoggingServerInterceptor`: Structured telemetry for RPC method invocations.
@@ -29,14 +31,17 @@
 ```
 hexastack_grpc/
 ├── domain/          # GrpcError, ServiceRegistrationError, RpcExecutionError
+├── adapters/        # create_async_grpc_server, run_grpc_server, GrpcHealthServicer
 └── infra/
     ├── bootstrap.py # GrpcBootstrapper (order=40)
     ├── config.py    # HexastackGrpcConfig
     ├── decorators.py# @grpc_service
+    ├── dispatch.py  # dispatch_rpc_command, dispatch_rpc_query, dispatch_rpc_stream_query, dispatch_rpc_bidirectional_stream
     ├── autodiscovery.py # create_grpc_visitor, autodiscover_grpc_services
     ├── interceptors/# correlation, logging, timing interceptors
     └── registries/  # service.py (GrpcServiceRegistry)
 ```
+
 
 ---
 
