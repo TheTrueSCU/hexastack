@@ -400,12 +400,14 @@ options:
 #### `pypi-build`
 
 ```text
-usage: pypi-build [-h]
+usage: pypi-build [-h] [--out-dir OUT_DIR]
 
 Build distribution packages (wheels and sdists) for all workspace packages.
 
 options:
-  -h, --help  show this help message and exit
+  -h, --help         show this help message and exit
+  --out-dir OUT_DIR  Target directory for generated distribution packages
+                     (default: dist/)
 ```
 
 #### `pypi-publish`

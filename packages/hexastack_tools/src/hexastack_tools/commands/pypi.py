@@ -114,8 +114,14 @@ def build_main() -> None:
     parser = argparse.ArgumentParser(
         description="Build distribution packages (wheels and sdists) for all workspace packages."
     )
-    parser.parse_args()
-    sys.exit(build_all_packages())
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=None,
+        help="Target directory for generated distribution packages (default: dist/)",
+    )
+    args = parser.parse_args()
+    sys.exit(build_all_packages(out_dir=args.out_dir))
 
 
 def check_main() -> None:
