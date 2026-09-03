@@ -297,6 +297,7 @@ queue: JanusCommandQueue[CreateOrderCommand] = JanusCommandQueue()
 
 async def dispatcher(bus) -> None:
     """Drain commands from sync threads into the async command bus."""
+
     async def dispatch(cmd: CreateOrderCommand) -> None:
         await bus.dispatch(cmd)
 

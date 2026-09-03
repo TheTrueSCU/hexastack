@@ -81,11 +81,18 @@ class OtelBootstrapper(BootstrapperPort):
         # 5. Instantiate & Register MetricsPort
         from hexastack_core.ports.metrics import MetricsPort
         from hexastack_otel.adapters.metrics.prometheus import PrometheusMetricsAdapter
+        from hexastack_otel.infra.middleware_metrics import CqrsMetricsMiddleware
 
         metrics_adapter = PrometheusMetricsAdapter()
         di.add_instance(metrics_adapter, declared_class=MetricsPort)
 
-        # 6. Store in context properties
+        # 6. Instantiate & Register CqrsMetricsMiddleware
+        cqrs_metrics_mw = CqrsMetricsMiddleware(
+            metrics=metrics_adapter, enabled=cfg.enabled
+        )
+        di.add_instance(cqrs_metrics_mw, declared_class=CqrsMetricsMiddleware)
+
+        # 7. Store in context properties
         context.properties["tracing_port"] = tracer
         context.properties["metrics_port"] = metrics_adapter
         context.properties["otel_config"] = cfg
