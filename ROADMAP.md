@@ -35,8 +35,9 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Turnkey Observability, Prometheus & Sentry**: `MetricsPort`, `PrometheusMetricsAdapter`, `/metrics` endpoint, and `SentryErrorAdapter` (`hexastack-otel`, `hexastack-logging`, `hexastack-fastapi` - Issue #76, PR #96).
 - [x] **Optional Extras Parity Auditor**: CLI validator enforcing subpackage extras forwarding into umbrella package (`hexastack-tools` - Issue #97, PR #102).
 
-- [ ] **Standardized In-Memory Test Harness**: Unify unit test mocks onto canonical `InMemory*` adapters (`hexastack-core` - Issue #98).
+- [x] **Standardized In-Memory Test Harness**: Unify unit test mocks onto canonical `InMemory*` adapters (`hexastack-core` - Issue #98, PR #103).
 - [ ] **Hypothesis Invariant Fuzzing**: Property-based fuzzing for CircuitBreaker, Storage, SSE/WS, and Metrics (Issue #99).
+
 - [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal (Issue #74).
 
 ---
