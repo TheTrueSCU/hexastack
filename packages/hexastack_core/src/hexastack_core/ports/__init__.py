@@ -22,6 +22,7 @@ from hexastack_core.ports.repository import (
     AsyncRepositoryPort,
     RepositoryPort,
 )
+from hexastack_core.ports.storage import AsyncStoragePort, StoragePort
 from hexastack_core.ports.unit_of_work import (
     AsyncUnitOfWorkPort,
     UnitOfWorkPort,
@@ -32,6 +33,7 @@ __all__ = [
     "AsyncLeaderElectionPort",
     "AsyncLockPort",
     "AsyncRepositoryPort",
+    "AsyncStoragePort",
     "AsyncUnitOfWorkPort",
     "BootstrapperPort",
     "CachePort",
@@ -47,6 +49,7 @@ __all__ = [
     "PresenterPort",
     "RateLimiterPort",
     "RepositoryPort",
+    "StoragePort",
     "UnitOfWorkPort",
     "VectorStorePort",
 ]

@@ -20,6 +20,9 @@ diskcache = [
 filelock = [
     "filelock>=3.16.0",
 ]
+fsspec = [
+    "fsspec>=2024.1.0",
+]
 redis = [
     "redis[hiredis]>=5.0.0",
 ]
@@ -32,6 +35,7 @@ testing = [
 valkey = [
     "valkey[libvalkey]>=6.0.0",
 ]
+
 
 
 

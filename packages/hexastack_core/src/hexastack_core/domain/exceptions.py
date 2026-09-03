@@ -68,6 +68,14 @@ class LeaderElectionError(HexastackError):
     """Domain exception raised when leader election coordination fails."""
 
 
+class StorageError(HexastackError):
+    """Domain exception raised when an object or file storage operation fails."""
+
+
+class StorageNotFoundError(StorageError, NotFoundError):
+    """Domain exception raised when a requested storage object or path does not exist."""
+
+
 __all__ = [
     "AuthenticationError",
     "ConflictError",
@@ -79,6 +87,8 @@ __all__ = [
     "MissingDependencyError",
     "NotFoundError",
     "PermissionDeniedError",
+    "StorageError",
+    "StorageNotFoundError",
     "UnitOfWorkError",
     "ValidationError",
 ]
