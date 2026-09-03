@@ -467,6 +467,19 @@ options:
 
 ### 🔧 Additional Workspace Tools
 
+#### `check-extras-parity`
+
+```text
+usage: check-extras-parity [-h] [--diagram]
+
+Audit optional extras parity across workspace subpackages and umbrella
+package.
+
+options:
+  -h, --help  show this help message and exit
+  --diagram   Generate and print Mermaid dependency diagram of package extras.
+```
+
 #### `rope-alphabetizer`
 
 ```text

@@ -18,6 +18,9 @@ from hexastack_tools.commands.codeql_scan import (
 from hexastack_tools.commands.deptry import (
     main as deptry_main,
 )
+from hexastack_tools.commands.extras_parity import (
+    main as extras_parity_main,
+)
 from hexastack_tools.commands.import_linter import (
     generate_main as import_linter_generate_main,
 )
@@ -74,6 +77,7 @@ __all__ = [
     "code_scanning_main",
     "codeql_scan_main",
     "deptry_main",
+    "extras_parity_main",
     "import_linter_generate_main",
     "import_linter_run_main",
     "inline_snapshot_main",

@@ -60,7 +60,14 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: extras-parity
+        name: optional extras parity (check-extras-parity)
+        entry: uv run check-extras-parity
+        language: system
+        files: ^(packages/.*/pyproject\.toml|pyproject\.toml)$
+        pass_filenames: false
       - id: complexipy
+
         name: complexipy
         entry: uv run complexipy packages --max-complexity-allowed 25
         language: system
