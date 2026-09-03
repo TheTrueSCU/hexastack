@@ -15,6 +15,9 @@ from hexastack_tools.commands.code_scanning import (
 from hexastack_tools.commands.codeql_scan import (
     main as codeql_scan_main,
 )
+from hexastack_tools.commands.deps_audit import (
+    main as deps_audit_main,
+)
 from hexastack_tools.commands.deptry import (
     main as deptry_main,
 )
@@ -76,6 +79,7 @@ __all__ = [
     "checks_main",
     "code_scanning_main",
     "codeql_scan_main",
+    "deps_audit_main",
     "deptry_main",
     "extras_parity_main",
     "import_linter_generate_main",
@@ -95,3 +99,4 @@ __all__ = [
     "security_main",
     "test_parity_main",
 ]
+

@@ -1,0 +1,121 @@
+```mermaid
+graph LR
+    subgraph Umbrella ["hexastack (Umbrella Package)"]
+        U_ai["[ai]"]
+        U_all["[all]"]
+        U_apprise["[apprise]"]
+        U_auth["[auth]"]
+        U_cli["[cli]"]
+        U_db["[db]"]
+        U_diskcache["[diskcache]"]
+        U_docs["[docs]"]
+        U_events["[events]"]
+        U_fastapi["[fastapi]"]
+        U_filelock["[filelock]"]
+        U_flagd["[flagd]"]
+        U_flags["[flags]"]
+        U_fsspec["[fsspec]"]
+        U_graphql["[graphql]"]
+        U_grpc["[grpc]"]
+        U_huey["[huey]"]
+        U_janus["[janus]"]
+        U_loguru["[loguru]"]
+        U_mcp["[mcp]"]
+        U_migrations["[migrations]"]
+        U_msgspec["[msgspec]"]
+        U_nats["[nats]"]
+        U_opa["[opa]"]
+        U_openfga["[openfga]"]
+        U_otel["[otel]"]
+        U_otlp["[otlp]"]
+        U_pgvector["[pgvector]"]
+        U_postgresql["[postgresql]"]
+        U_ratelimit["[ratelimit]"]
+        U_redis["[redis]"]
+        U_reflection["[reflection]"]
+        U_rich["[rich]"]
+        U_sentry["[sentry]"]
+        U_spiffe["[spiffe]"]
+        U_sql["[sql]"]
+        U_sqlite["[sqlite]"]
+        U_structlog["[structlog]"]
+        U_tools["[tools]"]
+        U_ui["[ui]"]
+        U_valkey["[valkey]"]
+        U_web["[web]"]
+    end
+
+    subgraph Subpackages ["Workspace Subpackages"]
+        P_hexastack_ai["hexastack-ai"]
+        P_hexastack_auth["hexastack-auth"]
+        P_hexastack_core["hexastack-core"]
+        P_hexastack_cqrs["hexastack-cqrs"]
+        P_hexastack_db["hexastack-db"]
+        P_hexastack_events["hexastack-events"]
+        P_hexastack_fastapi["hexastack-fastapi"]
+        P_hexastack_flags["hexastack-flags"]
+        P_hexastack_graphql["hexastack-graphql"]
+        P_hexastack_grpc["hexastack-grpc"]
+        P_hexastack_logging["hexastack-logging"]
+        P_hexastack_mcp["hexastack-mcp"]
+        P_hexastack_otel["hexastack-otel"]
+    end
+
+    U_ai --> P_hexastack_ai
+    U_all --> P_hexastack_ai
+    U_all --> P_hexastack_auth
+    U_all --> P_hexastack_cli
+    U_all --> P_hexastack_db
+    U_all --> P_hexastack_events
+    U_all --> P_hexastack_fastapi
+    U_all --> P_hexastack_flags
+    U_all --> P_hexastack_graphql
+    U_all --> P_hexastack_grpc
+    U_all --> P_hexastack_logging
+    U_all --> P_hexastack_mcp
+    U_all --> P_hexastack_otel
+    U_all --> P_hexastack_tools
+    U_apprise --> P_hexastack_events
+    U_auth --> P_hexastack_auth
+    U_cli --> P_hexastack_cli
+    U_db --> P_hexastack_db
+    U_diskcache --> P_hexastack_core
+    U_docs --> P_hexastack_fastapi
+    U_events --> P_hexastack_events
+    U_fastapi --> P_hexastack_fastapi
+    U_filelock --> P_hexastack_core
+    U_filelock --> P_hexastack_events
+    U_flagd --> P_hexastack_flags
+    U_flags --> P_hexastack_flags
+    U_fsspec --> P_hexastack_core
+    U_graphql --> P_hexastack_graphql
+    U_grpc --> P_hexastack_grpc
+    U_huey --> P_hexastack_cqrs
+    U_huey --> P_hexastack_events
+    U_janus --> P_hexastack_events
+    U_loguru --> P_hexastack_logging
+    U_mcp --> P_hexastack_mcp
+    U_migrations --> P_hexastack_db
+    U_msgspec --> P_hexastack_events
+    U_nats --> P_hexastack_events
+    U_opa --> P_hexastack_auth
+    U_openfga --> P_hexastack_auth
+    U_otel --> P_hexastack_otel
+    U_otlp --> P_hexastack_otel
+    U_pgvector --> P_hexastack_db
+    U_postgresql --> P_hexastack_db
+    U_ratelimit --> P_hexastack_fastapi
+    U_redis --> P_hexastack_core
+    U_reflection --> P_hexastack_grpc
+    U_rich --> P_hexastack_logging
+    U_sentry --> P_hexastack_logging
+    U_spiffe --> P_hexastack_auth
+    U_sql --> P_hexastack_db
+    U_sql --> P_hexastack_events
+    U_sqlite --> P_hexastack_db
+    U_structlog --> P_hexastack_logging
+    U_tools --> P_hexastack_tools
+    U_ui --> P_hexastack_fastapi
+    U_valkey --> P_hexastack_core
+    U_web --> P_hexastack_fastapi
+```
