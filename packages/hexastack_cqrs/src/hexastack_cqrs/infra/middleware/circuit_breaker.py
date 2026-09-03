@@ -17,7 +17,6 @@ from hexastack_cqrs.infra.config import CircuitBreakerMiddlewareConfig
 from hexastack_cqrs.infra.middleware.generic import InOutMiddleware
 
 G = TypeVar("G", bound=Generic)
-R = TypeVar("R")
 
 
 class CircuitBreakerMiddleware(InOutMiddleware):
