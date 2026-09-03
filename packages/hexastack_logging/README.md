@@ -14,7 +14,7 @@
 
 `hexastack-logging` provides high-performance, structured telemetry across the entire Hexastack lifecycle:
 
-- **Multiple Backend Adapters**: Native implementations for `Loguru`, `Rich`, `Structlog`, and standard library structured logging.
+- **Multiple Backend Adapters**: Native implementations for `Loguru`, `Rich`, `Structlog`, `SentryErrorAdapter` (Sentry SDK integration), and standard library structured logging.
 - **Security & PII Sanitization**: Automatic masking of sensitive fields (passwords, tokens, authorization headers, credit cards).
 - **Formatters**: JSON formatting for cloud aggregators (Datadog, CloudWatch) and colored console formatting for local development.
 - **Context & Correlation Integration**: Injects active `correlation_id` from async context into all log outputs.
@@ -28,7 +28,7 @@
 hexastack_logging/
 ├── domain/          # LogRecord, LogLevel, Logging exceptions
 ├── ports/           # LoggerPort, FormatterPort, FilterPort, SanitizerPort
-├── adapters/        # LoguruAdapter, RichAdapter, StructlogAdapter, StructuredLogger
+├── adapters/        # LoguruAdapter, RichAdapter, StructlogAdapter, StructuredLogger, SentryErrorAdapter
 └── infra/           # LoggingBootstrapper (order=10), Formatters, Sanitizers, Config
 ```
 
@@ -36,10 +36,11 @@ hexastack_logging/
 
 | Category | Exports |
 |---|---|
-| **Adapters** | `StructuredLogger`, `LoguruAdapter`, `RichAdapter`, `StructlogAdapter` |
+| **Adapters** | `StructuredLogger`, `LoguruAdapter`, `RichAdapter`, `StructlogAdapter`, `SentryErrorAdapter` |
 | **Bootstrap** | `LoggingBootstrapper` (order=10), `HexastackLoggingConfig` |
 | **Formatters** | `JsonFormatter`, `ConsoleFormatter` |
 | **Sanitization** | `SanitizerFilter`, `mask_sensitive_data` |
+
 
 ---
 

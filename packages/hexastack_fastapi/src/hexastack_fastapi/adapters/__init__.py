@@ -13,6 +13,7 @@ from hexastack_fastapi.adapters.docs import (
     mount_zensical_docs,
 )
 from hexastack_fastapi.adapters.health import create_health_router
+from hexastack_fastapi.adapters.metrics import create_metrics_router
 from hexastack_fastapi.adapters.ratelimit import (
     SlowapiRateLimiterAdapter,
     get_remote_address,
@@ -33,6 +34,7 @@ __all__ = [
     "CqrsRouter",
     "create_fastapi_app",
     "create_health_router",
+    "create_metrics_router",
     "create_test_client",
     "dispatch_command",
     "dispatch_query",

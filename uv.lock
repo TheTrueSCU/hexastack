@@ -1826,6 +1826,9 @@ ratelimit = [
 redis = [
     { name = "hexastack-core", extra = ["redis"] },
 ]
+sentry = [
+    { name = "hexastack-logging", extra = ["sentry"] },
+]
 sql = [
     { name = "hexastack-db" },
 ]
@@ -1888,6 +1891,7 @@ requires-dist = [
     { name = "hexastack-grpc", marker = "extra == 'all'", editable = "packages/hexastack_grpc" },
     { name = "hexastack-grpc", marker = "extra == 'grpc'", editable = "packages/hexastack_grpc" },
     { name = "hexastack-logging", editable = "packages/hexastack_logging" },
+    { name = "hexastack-logging", extras = ["sentry"], marker = "extra == 'sentry'", editable = "packages/hexastack_logging" },
     { name = "hexastack-mcp", marker = "extra == 'all'", editable = "packages/hexastack_mcp" },
     { name = "hexastack-mcp", marker = "extra == 'mcp'", editable = "packages/hexastack_mcp" },
     { name = "hexastack-otel", marker = "extra == 'all'", editable = "packages/hexastack_otel" },
@@ -1902,7 +1906,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "auth", "cli", "db", "diskcache", "docs", "events", "fastapi", "filelock", "flags", "fsspec", "graphql", "grpc", "janus", "mcp", "nats", "otel", "ratelimit", "redis", "sql", "testing", "tools", "ui", "valkey", "web", "all"]
+provides-extras = ["ai", "auth", "cli", "db", "diskcache", "docs", "events", "fastapi", "filelock", "flags", "fsspec", "graphql", "grpc", "janus", "mcp", "nats", "otel", "ratelimit", "redis", "sentry", "sql", "testing", "tools", "ui", "valkey", "web", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2317,6 +2321,9 @@ loguru = [
 rich = [
     { name = "rich" },
 ]
+sentry = [
+    { name = "sentry-sdk" },
+]
 structlog = [
     { name = "structlog" },
 ]
@@ -2328,10 +2335,11 @@ requires-dist = [
     { name = "loguru", marker = "extra == 'loguru'", specifier = ">=0.7.0" },
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.0.0" },
     { name = "rich", marker = "extra == 'rich'", specifier = ">=13.0.0" },
+    { name = "sentry-sdk", marker = "extra == 'sentry'", specifier = ">=2.0.0" },
     { name = "structlog", marker = "extra == 'all'", specifier = ">=24.0.0" },
     { name = "structlog", marker = "extra == 'structlog'", specifier = ">=24.0.0" },
 ]
-provides-extras = ["loguru", "rich", "structlog", "all"]
+provides-extras = ["loguru", "rich", "structlog", "all", "sentry"]
 
 [[package]]
 name = "hexastack-mcp"
@@ -2368,6 +2376,7 @@ dependencies = [
     { name = "hexastack-cqrs" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-sdk" },
+    { name = "prometheus-client" },
     { name = "pydantic" },
 ]
 
@@ -2385,6 +2394,7 @@ requires-dist = [
     { name = "opentelemetry-exporter-otlp-proto-grpc", marker = "extra == 'otlp'", specifier = ">=1.27.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", marker = "extra == 'otlp'", specifier = ">=1.27.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
+    { name = "prometheus-client", specifier = ">=0.21.0" },
     { name = "pydantic", specifier = ">=2.10.0" },
 ]
 provides-extras = ["otlp"]
@@ -4320,6 +4330,15 @@ wheels = [
 ]
 
 [[package]]
+name = "prometheus-client"
+version = "0.26.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/73/f1334c29c2af4cd9dba6c7817e61b611bd0215e2eb5565c6064a4de18802/prometheus_client-0.26.0.tar.gz", hash = "sha256:04a91bcf94e2cf74a44a1a874d651a2e853ed354b6e822f3b7487751465d5c2b", size = 92910, upload-time = "2026-07-24T19:36:41.893Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/a3/b69efbf4143b5b9859b977770bbbabcc2796b702fa69dc40271e45cd5a56/prometheus_client-0.26.0-py3-none-any.whl", hash = "sha256:fa93d06737aa02bacd05794768508bb97d2fbee28cb3bca04eaae92f0ca953d6", size = 64494, upload-time = "2026-07-24T19:36:40.854Z" },
+]
+
+[[package]]
 name = "prompt-toolkit"
 version = "3.0.53"
 source = { registry = "https://pypi.org/simple" }
@@ -5525,6 +5544,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/72/d1/d3159231aec234a59dd7d601e9dd9fe96f3afff15efd33c1070019b26132/semver-3.0.4.tar.gz", hash = "sha256:afc7d8c584a5ed0a11033af086e8af226a9c0b206f313e0301f8dd7b6b589602", size = 269730, upload-time = "2025-01-24T13:19:27.617Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a6/24/4d91e05817e92e3a61c8a21e08fd0f390f5301f1c448b137c57c4bc6e543/semver-3.0.4-py3-none-any.whl", hash = "sha256:9c824d87ba7f7ab4a1890799cec8596f15c1241cb473404ea1cb0c55e4b04746", size = 17912, upload-time = "2025-01-24T13:19:24.949Z" },
+]
+
+[[package]]
+name = "sentry-sdk"
+version = "2.68.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9a/e7/c504a4bd2d95df2e0ab73714a9161ff1cf6ff1486922685e5f46dfd9eba8/sentry_sdk-2.68.1.tar.gz", hash = "sha256:6a97895230b04bc35d4d8d2e51e3b9e21902dfb0086ccf1f131a80c15c7b997a", size = 1019262, upload-time = "2026-08-24T13:09:38.108Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2b/28/465ad9382be98f2172e691f5836cf87f936773913ad7ab85ba1ba1d6706e/sentry_sdk-2.68.1-py3-none-any.whl", hash = "sha256:775b78871783a0ffd758276ad01b3bb2b1ebcdad8f9d2f0a7723f76b73c99b65", size = 520851, upload-time = "2026-08-24T13:09:36.186Z" },
 ]
 
 [[package]]

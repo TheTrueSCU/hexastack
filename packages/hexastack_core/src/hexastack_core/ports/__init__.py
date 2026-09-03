@@ -17,6 +17,7 @@ from hexastack_core.ports.leader_election import (
 )
 from hexastack_core.ports.lock import AsyncLockPort, LockPort
 from hexastack_core.ports.logging import Extras, LoggingPort
+from hexastack_core.ports.metrics import MetricsPort
 from hexastack_core.ports.notification import (
     NotificationPort,
     NotificationPriority,
@@ -52,6 +53,7 @@ __all__ = [
     "LockPort",
     "LoggingPort",
     "Metadata",
+    "MetricsPort",
     "NotificationPort",
     "NotificationPriority",
     "PresenterPort",
