@@ -8,6 +8,7 @@ from hexastack_cqrs.infra.bootstrap import (
     bootstrap_cqrs,
 )
 from hexastack_cqrs.infra.config import (
+    CircuitBreakerMiddlewareConfig,
     CorrelationMiddlewareConfig,
     CqrsMiddlewareConfig,
     HexastackCqrsConfig,
@@ -18,10 +19,12 @@ from hexastack_cqrs.infra.config import (
     register_cqrs_config,
 )
 from hexastack_cqrs.infra.decorators import (
+    CircuitBreakerMetadata,
     ConfigMetadata,
     ExceptionMetadata,
     HandlerMetadata,
     PresenterMetadata,
+    circuit_breaker,
     command_handler,
     config_section,
     event_listener,
@@ -30,6 +33,8 @@ from hexastack_cqrs.infra.decorators import (
     query_handler,
 )
 from hexastack_cqrs.infra.middleware import (
+    AsyncCircuitBreakerMiddleware,
+    CircuitBreakerMiddleware,
     CorrelationMiddleware,
     GenericMiddleware,
     LoggingMiddleware,
@@ -56,8 +61,13 @@ from hexastack_cqrs.infra.registries import (
 
 __all__ = [
     "AmbiguousMessageError",
+    "AsyncCircuitBreakerMiddleware",
     "autodiscover_cqrs",
     "bootstrap_cqrs",
+    "circuit_breaker",
+    "CircuitBreakerMetadata",
+    "CircuitBreakerMiddleware",
+    "CircuitBreakerMiddlewareConfig",
     "command_handler",
     "CommandRegistry",
     "CommandRegistryError",
