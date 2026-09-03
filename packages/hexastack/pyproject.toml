@@ -107,17 +107,19 @@ all = [
     "hexastack-ai",
     "hexastack-auth",
     "hexastack-cli",
-    "hexastack-db",
+    "hexastack-db[all]",
     "hexastack-events",
     "hexastack-fastapi",
     "hexastack-flags",
     "hexastack-graphql",
     "hexastack-grpc",
+    "hexastack-logging[sentry]",
     "hexastack-mcp",
     "hexastack-otel",
     "hexastack-tools",
     "uvicorn[standard]>=0.30.0",
 ]
+
 
 [project.scripts]
 hexastack = "hexastack.entrypoint:main"
