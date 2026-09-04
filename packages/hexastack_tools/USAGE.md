@@ -158,9 +158,7 @@ options:
 #### `check-all-statements`
 
 ```text
-usage: check-all-statements [-h]
-                            [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                            [--path CUSTOM_PATHS] [-a]
+usage: check-all-statements [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                             [files ...]
 
 Verify __all__ is deduplicated and sorted.
@@ -171,7 +169,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
@@ -180,9 +178,7 @@ options:
 #### `fix-all-statements`
 
 ```text
-usage: fix-all-statements [-h]
-                          [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                          [--path CUSTOM_PATHS] [-a]
+usage: fix-all-statements [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                           [files ...]
 
 Format, alphabetize, and deduplicate __all__ statements.
@@ -193,7 +189,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
@@ -217,9 +213,7 @@ options:
 #### `import-linter-generate`
 
 ```text
-usage: import-linter-generate [-h]
-                              [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                              [--path CUSTOM_PATHS] [-a]
+usage: import-linter-generate [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                               [files ...]
 
 Generate [tool.importlinter] contracts in pyproject.toml.
@@ -230,7 +224,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
@@ -274,14 +268,14 @@ options:
 
 ```text
 usage: pytest-run [-h]
-                  [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
+                  [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}]
                   [-A] [-U] [-P]
 
 Run pytest test suite.
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}
   -A, --affected
   -U, --unit
   -P, --properties
@@ -290,9 +284,7 @@ options:
 #### `pytest-archon-generate`
 
 ```text
-usage: pytest-archon-generate [-h]
-                              [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                              [--path CUSTOM_PATHS] [-a]
+usage: pytest-archon-generate [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                               [files ...]
 
 Generate pytest-archon boundary tests for packages.
@@ -303,7 +295,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
@@ -312,9 +304,7 @@ options:
 #### `inline-snapshot-update`
 
 ```text
-usage: inline-snapshot-update [-h]
-                              [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                              [--path CUSTOM_PATHS] [-a]
+usage: inline-snapshot-update [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                               [--mode {create,fix,review}]
                               [files ...]
 
@@ -326,7 +316,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
@@ -340,14 +330,14 @@ options:
 
 ```text
 usage: mutmut-run [-h]
-                  [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
+                  [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}]
                   [-a]
 
 Run mutation tests.
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}
   -a, --all
 ```
 
@@ -367,9 +357,7 @@ options:
 #### `pydeps-generate`
 
 ```text
-usage: pydeps-generate [-h]
-                       [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                       [--path CUSTOM_PATHS] [-a]
+usage: pydeps-generate [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                        [files ...]
 
 Generate architecture dependency diagrams using pydeps.
@@ -380,7 +368,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
@@ -424,10 +412,7 @@ options:
 #### `alphabetizer`
 
 ```text
-usage: alphabetizer [-h]
-                    [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                    [--path CUSTOM_PATHS] [-a]
-                    [files ...]
+usage: alphabetizer [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a] [files ...]
 
 Alphabetize functions and class methods across packages deterministically.
 
@@ -437,7 +422,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
@@ -446,10 +431,7 @@ options:
 #### `rope-run`
 
 ```text
-usage: rope-run [-h]
-                [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                [--path CUSTOM_PATHS] [-a]
-                [files ...]
+usage: rope-run [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a] [files ...]
 
 Alphabetize functions and class methods across packages deterministically.
 
@@ -459,7 +441,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
@@ -498,9 +480,7 @@ options:
 #### `rope-alphabetizer`
 
 ```text
-usage: rope-alphabetizer [-h]
-                         [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}]
-                         [--path CUSTOM_PATHS] [-a]
+usage: rope-alphabetizer [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                          [files ...]
 
 Alphabetize functions and class methods across packages deterministically.
@@ -511,7 +491,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,logging,mcp,otel,tools}
+  -p, --package PACKAGES
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
