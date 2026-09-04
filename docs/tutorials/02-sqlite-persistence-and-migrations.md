@@ -207,13 +207,22 @@ Open `http://127.0.0.1:8000/docs` in your browser to create and query To-Do item
 
 ---
 
-## 6. Next Steps: The Security Dilemma
+## 6. Summary & Up Next
 
+### What You've Learned 🎓
+- How to implement a concrete SQLAlchemy/SQLModel SQLite adapter satisfying `TodoRepositoryPort`.
+- How to wire database session lifecycles using Hexastack's `UnitOfWorkPort`.
+- How to generate and apply version-controlled Alembic migrations.
+
+### Up Next: The Security Dilemma 🔐
 We now have persistent storage across server restarts! But notice a critical vulnerability: **any caller can delete any To-Do item by ID**.
 
 > *"What is stopping Bob from deleting Alice's tasks, or modifying tasks he doesn't own?"*
 
 In Chapter 3, we introduce Hexastack's authentication kernel, JWT verification, and Role-Based Access Control (RBAC) to enforce task ownership and grant admin escalation privileges:
 
-- **[Tutorial 3: Role-Based Access Control (RBAC) & JWT Auth](./03-jwt-authentication-and-rbac.md)**
+- **[Tutorial 3: Role-Based Access Control (RBAC) & JWT Auth](./03-jwt-authentication-and-rbac.md) ➔**
 - **[Tutorial 4: Event-Driven Architecture with Outbox & CloudEvents](./04-events-outbox-and-notifications.md)**
+- **[Tutorial 5: Experimental AI Agent & MCP Tool Server](./05-experimental-ai-and-mcp.md)**
+- **[Tutorial 6: Production Observability, Metrics & Distributed Tracing](./06-production-observability-and-tracing.md)**
+- **[Tutorial 7: High-Performance gRPC & Dual Transport Parity](./07-high-performance-grpc-and-microservices.md)**
