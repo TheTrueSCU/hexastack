@@ -231,13 +231,21 @@ Trigger the flow through the interactive Swagger UI:
 
 ---
 
-## 8. Next Steps: Gated AI Capabilities
+## 8. Summary & Up Next
 
+### What You've Learned 🎓
+- How to define structured CloudEvent envelopes for domain events.
+- How to implement the Transactional Outbox pattern to atomically record events within SQLite transactions.
+- How to dispatch multi-channel alerts (webhooks, email, Discord, Slack) via `NotificationPort` (Apprise).
+- How to run the background outbox relay daemon in continuous polling or `--once` cron mode.
+
+### Up Next: Gated AI Capabilities 🤖
 Now our microservice has persistence, authentication, and event notifications.
 
 > *"Can an AI assistant converse with us to prioritize our tasks and expose these commands to LLMs via Model Context Protocol (MCP), while safely gating these experimental features behind feature flags?"*
 
 In Chapter 5, we introduce **Dynamic Feature Flags**, **MCP Tool Servers**, and **AI Autonomous Assistants**:
 
-- **[Tutorial 5: Experimental AI Agent & MCP Tool Server (Gated by Feature Flags)](./05-experimental-ai-and-mcp.md)**
-- **[Tutorial 6: Production Observability & Distributed Tracing](./06-production-observability-and-tracing.md)**
+- **[Tutorial 5: Experimental AI Agent & MCP Tool Server (Gated by Feature Flags)](./05-experimental-ai-and-mcp.md) ➔**
+- **[Tutorial 6: Production Observability, Metrics & Distributed Tracing](./06-production-observability-and-tracing.md)**
+- **[Tutorial 7: High-Performance gRPC & Dual Transport Parity](./07-high-performance-grpc-and-microservices.md)**

@@ -210,12 +210,19 @@ Test the AI integration via CLI and Swagger UI:
 
 ---
 
-## 7. Next Steps: Production Telemetry & Observability
+## 7. Summary & Up Next
 
+### What You've Learned 🎓
+- How to guard experimental endpoints and logic with dynamic `FeatureFlagPort` flags.
+- How to expose CQRS commands as Model Context Protocol (MCP) tools for LLM agent interaction.
+- How to implement autonomous agent tool execution and priority suggestion handlers.
+
+### Up Next: Production Telemetry & Observability 📊
 Our system is now multi-transport (FastAPI, CLI, MCP), multi-channel (Apprise, Webhooks), and intelligent (AI Agents).
 
 > *"With requests arriving from HTTP, background outbox workers, and autonomous AI agents over MCP, how do we trace and observe end-to-end execution across all components?"*
 
-In the final chapter, we implement **OpenTelemetry Distributed Tracing**, **Structured JSON Logs**, and **Hexastack DevTools Live Telemetry**:
+In Chapter 6, we implement **OpenTelemetry Distributed Tracing**, **Structured JSON Logs**, **Prometheus `/metrics` Telemetry**, and the **Hexastack DevTools Dashboard**:
 
-- **[Tutorial 6: Production Observability & Distributed Tracing](./06-production-observability-and-tracing.md)**
+- **[Tutorial 6: Production Observability, Metrics & Distributed Tracing](./06-production-observability-and-tracing.md) ➔**
+- **[Tutorial 7: High-Performance gRPC & Dual Transport Parity](./07-high-performance-grpc-and-microservices.md)**

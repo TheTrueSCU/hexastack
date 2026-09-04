@@ -457,24 +457,31 @@ uv run hexastack fastapi routes
 uv run hexastack inspect info
 ```
 
-### Interactive OpenAPI Testing & Swagger UI
+### Interactive OpenAPI Testing & Telemetry Verification
 
-Launch the dev server to explore the Swagger UI and interactive OpenAPI schema:
+Launch the dev server to explore Swagger UI, OpenAPI schema, and live Prometheus telemetry:
 
 ```bash
 uv run hexastack serve --port 8000
 ```
 
-Open your browser at `http://127.0.0.1:8000/docs` to test endpoints interactively with real-time JSON validation.
+1. **OpenAPI Docs**: Open `http://127.0.0.1:8000/docs` to test endpoints interactively with real-time JSON schema validation.
+2. **Prometheus Metrics**: Query `http://127.0.0.1:8000/metrics` to verify that request counts, latency histograms, and CQRS message metrics are streaming live out-of-the-box.
 
 ---
 
-## 10. Next Steps & Advanced Modules
+## 10. Summary & Up Next
 
-Congratulations! You now have a complete, fully tested hexagonal microservice.
+### What You've Learned 🎓
+- How to structure a zero-dependency domain entity and CQRS command/query definitions.
+- How to decouple business logic handlers from HTTP and CLI presentation adapters.
+- How to bootstrap dependency injection with canonical `InMemory*` repositories.
+- How to verify architectural layer contracts using `import-linter` and test /metrics endpoints.
 
-Choose what to build next:
-
-- **[Tutorial 2: Adding SQLite Persistence & Alembic Migrations](./02-sqlite-persistence-and-migrations.md)**
+### Up Next 🚀
+- **[Tutorial 2: Adding SQLite Persistence & Alembic Migrations](./02-sqlite-persistence-and-migrations.md) ➔**
 - **[Tutorial 3: Role-Based Access Control (RBAC) & JWT Auth](./03-jwt-authentication-and-rbac.md)**
 - **[Tutorial 4: Event-Driven Architecture with Outbox & CloudEvents](./04-events-outbox-and-notifications.md)**
+- **[Tutorial 5: Experimental AI Agent & MCP Tool Server](./05-experimental-ai-and-mcp.md)**
+- **[Tutorial 6: Production Observability, Metrics & Distributed Tracing](./06-production-observability-and-tracing.md)**
+- **[Tutorial 7: High-Performance gRPC & Dual Transport Parity](./07-high-performance-grpc-and-microservices.md)**

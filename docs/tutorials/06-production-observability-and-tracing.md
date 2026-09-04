@@ -143,25 +143,30 @@ Watch the CLI setup for a production-grade microservice:
 
 ---
 
+---
+
 ## 5. Verification: Observability & Endpoints
 
-Inspect real-time telemetry spans and structured execution traces:
+Inspect real-time telemetry spans, metrics exposition, and structured execution traces:
 
-1. **Send Requests**: Issue several commands and queries via HTTP REST or CLI.
-2. **Inspect Spans**: Open DevTools UI (`http://127.0.0.1:8000/_devtools`) to view active pipeline execution telemetry.
-3. **Structured Logs**: View contextual JSON log outputs with correlation IDs and redactions.
+1. **Send Requests**: Issue several commands and queries via HTTP REST, CLI, or MCP.
+2. **Prometheus Metrics**: Fetch `http://127.0.0.1:8000/metrics` to verify that HTTP request counters, handler latency histograms, and domain gauges are continuously tracked.
+3. **Inspect Spans**: Open DevTools UI (`http://127.0.0.1:8000/_devtools`) to view active pipeline execution telemetry.
+4. **Structured Logs**: View contextual JSON log outputs with correlation IDs and redactions.
 
 ---
 
-## 6. Course Conclusion & Next Steps
+## 6. Summary & Up Next
 
-🎉 **Congratulations!** You have built a complete, production-grade microservice with Hexastack:
+### What You've Learned 🎓
+- How ambient correlation IDs propagate across async Coroutines and middlewares.
+- How to emit structured JSON logs with sensitive field redaction.
+- How to export turnkey Prometheus metrics via `/metrics` and trace spans via OpenTelemetry.
+- How to inspect runtime CQRS pipeline diagnostics using Hexastack DevTools.
 
-1. ✅ **Pure Domain Invariants & CQRS Separation**
-2. ✅ **Swappable SQLite & In-Memory Persistence**
-3. ✅ **JWT Authentication & RBAC Task Ownership**
-4. ✅ **Transactional Outbox & Multi-Channel Alerting (Apprise, Stdout, File)**
-5. ✅ **Model Context Protocol (MCP) AI Tools & Feature Flag Gating**
-6. ✅ **Distributed Tracing, Structured Logging & DevTools Visualizer**
+### Up Next: High-Performance Binary Transports ⚡
+Our service handles HTTP, CLI, and MCP seamlessly. But internal microservices often demand ultra-low latency and binary serialization.
 
-Explore the source code on [GitHub](https://github.com/TheTrueSCU/hexastack) or check out the [Architecture Reference Guide](../index.md).
+In Chapter 7, we introduce **gRPC Service Adapters**, **Protobuf Schemas**, and **Server Reflection**:
+
+- **[Tutorial 7: High-Performance gRPC & Dual Transport Parity](./07-high-performance-grpc-and-microservices.md) ➔**

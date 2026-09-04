@@ -181,12 +181,21 @@ uv run hexastack serve --port 8000
 
 ---
 
-## 6. Next Steps: The Event Dilemma
+## 6. Summary & Up Next
 
+### What You've Learned 🎓
+- How to implement JWT signature validation and user identity extraction with `AuthenticationPort`.
+- How to enforce entity-level ownership and role-based access control (RBAC) in CQRS handlers.
+- How to test authenticated requests interactively using Swagger UI's Bearer token modal.
+
+### Up Next: The Event Dilemma 📡
 Now our system is secure: Bob cannot touch Alice's items, and administrators can maintain the database.
 
 > *"When an administrator deletes another user's task, how can we automatically notify the user or log an audit alert without coupling our handlers directly to third-party messaging services?"*
 
-In Chapter 4, we introduce the **Transactional Outbox Pattern**, **CloudEvents**, and our new **`NotificationPort` (Apprise)**:
+In Chapter 4, we introduce the **Transactional Outbox Pattern**, **CloudEvents**, and our **`NotificationPort` (Apprise)**:
 
-- **[Tutorial 4: Event-Driven Architecture with Outbox & CloudEvents](./04-events-outbox-and-notifications.md)**
+- **[Tutorial 4: Event-Driven Architecture with Outbox & CloudEvents](./04-events-outbox-and-notifications.md) ➔**
+- **[Tutorial 5: Experimental AI Agent & MCP Tool Server](./05-experimental-ai-and-mcp.md)**
+- **[Tutorial 6: Production Observability, Metrics & Distributed Tracing](./06-production-observability-and-tracing.md)**
+- **[Tutorial 7: High-Performance gRPC & Dual Transport Parity](./07-high-performance-grpc-and-microservices.md)**
