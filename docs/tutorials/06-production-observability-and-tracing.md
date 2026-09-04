@@ -143,9 +143,8 @@ Watch the CLI setup for a production-grade microservice:
 
 ---
 
----
-
 ## 5. Verification: Observability & Endpoints
+
 
 Inspect real-time telemetry spans, metrics exposition, and structured execution traces:
 
