@@ -14,6 +14,8 @@ from hexastack_events.adapters.outbox import (
     OutboxEventMixin,
     SqlAlchemyOutboxStorage,
 )
+from hexastack_events.adapters.streams import InMemoryStreamAdapter
+from hexastack_events.adapters.tasks import InMemoryTaskQueueAdapter
 
 __all__ = [
     "AsyncioOutboxRelay",
@@ -23,6 +25,8 @@ __all__ = [
     "HueyOutboxRelay",
     "InMemoryDistributedEventBus",
     "InMemoryOutboxStorage",
+    "InMemoryStreamAdapter",
+    "InMemoryTaskQueueAdapter",
     "OutboxEventBaseModel",
     "OutboxEventMixin",
     "SqlAlchemyOutboxStorage",
