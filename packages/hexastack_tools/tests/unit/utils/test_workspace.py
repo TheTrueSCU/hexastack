@@ -1,10 +1,16 @@
-"""Unit tests for workspace utilities."""
+"""Unit tests for workspace utilities and agnostic discovery."""
+
+import tempfile
+from pathlib import Path
 
 from hexastack_tools.utils.workspace import (
     get_package_directories,
     get_package_directory,
+    get_package_module_dir,
     get_packages_directory,
+    get_present_layers,
     get_repo_root,
+    get_valid_package_names,
 )
 
 
@@ -34,3 +40,81 @@ def test_get_package_directories() -> None:
     names = {d.name for d in dirs}
     assert "hexastack_core" in names
     assert "hexastack_tools" in names
+
+
+def test_get_valid_package_names() -> None:
+    """Verify dynamic valid package name enumeration."""
+    names = get_valid_package_names()
+    assert "core" in names
+    assert "hexastack_core" in names
+    assert "tools" in names
+
+
+def test_get_package_module_dir() -> None:
+    """Verify detection of internal module directory under src/."""
+    core_dir = get_package_directory("core")
+    mod_dir = get_package_module_dir(core_dir)
+    assert mod_dir is not None
+    assert mod_dir.name == "hexastack_core"
+
+
+def test_get_present_layers() -> None:
+    """Verify detection of hexagonal layers."""
+    core_dir = get_package_directory("core")
+    layers = get_present_layers(core_dir)
+    assert "domain" in layers
+    assert "ports" in layers
+    assert "adapters" in layers
+
+
+def test_standalone_single_package_workspace_discovery() -> None:
+    """Verify workspace tools function in a standalone single-package repo."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        (root / "pyproject.toml").write_text(
+            '[project]\nname = "my-service"\n', encoding="utf-8"
+        )
+        src_dir = root / "src" / "my_service" / "domain"
+        src_dir.mkdir(parents=True)
+        (src_dir / "models.py").write_text("# domain model", encoding="utf-8")
+
+        discovered_dirs = get_package_directories(repo_root=root)
+        assert len(discovered_dirs) == 1
+        assert discovered_dirs[0] == root
+
+        pkg_dir = get_package_directory("my-service", repo_root=root)
+        assert pkg_dir == root
+
+        mod_dir = get_package_module_dir(root)
+        assert mod_dir is not None
+        assert mod_dir.name == "my_service"
+
+        layers = get_present_layers(root)
+        assert "domain" in layers
+
+
+def test_custom_monorepo_workspace_discovery() -> None:
+    """Verify workspace tools discover custom monorepo members like hexaqueue."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = Path(tmpdir)
+        pyproject_content = """[tool.uv.workspace]
+members = [
+    "services/*",
+]
+"""
+        (root / "pyproject.toml").write_text(pyproject_content, encoding="utf-8")
+
+        for s in ("hq_server", "hq_worker"):
+            pkg_path = root / "services" / s
+            (pkg_path / "src" / s / "domain").mkdir(parents=True)
+            (pkg_path / "pyproject.toml").write_text(
+                f'[project]\nname = "{s}"\n', encoding="utf-8"
+            )
+
+        discovered_dirs = get_package_directories(repo_root=root)
+        assert len(discovered_dirs) == 2
+        dir_names = {d.name for d in discovered_dirs}
+        assert dir_names == {"hq_server", "hq_worker"}
+
+        server_dir = get_package_directory("hq_server", repo_root=root)
+        assert server_dir.name == "hq_server"

@@ -1,14 +1,16 @@
 """Shared workspace utility functions and constants for Hexastack Tools.
 
 Notes/Architectural Intent:
-    Provides common workspace root discovery, package enumeration, and path
-    resolution for all maintenance and verification tools. Ensures tools
-    run reliably regardless of CWD or invocation source.
+    Provides dynamic workspace root discovery, package enumeration, and path
+    resolution for all maintenance and verification tools across both monorepos
+    (uv workspace / packages/*) and standalone single-package Hexastack projects.
+    Ensures tools run reliably regardless of CWD or project layout.
 """
 
 from __future__ import annotations
 
 import argparse
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -37,78 +39,179 @@ LAYER_RESTRICTIONS: dict[str, list[str]] = {
 
 PACKAGES_DIR = Path("packages")
 
-VALID_PACKAGES: list[str] = sorted(
-    [
-        "ai",
-        "auth",
-        "cli",
-        "core",
-        "cqrs",
-        "db",
-        "events",
-        "fastapi",
-        "flags",
-        "graphql",
-        "grpc",
-        "hexastack",
-        "logging",
-        "mcp",
-        "otel",
-        "tools",
-    ]
-)
-
-
-def get_package_directories(repo_root: Path | None = None) -> list[Path]:
-    """Return all package directory paths inside PACKAGES_DIR."""
-    packages_dir = get_packages_directory(repo_root)
-    if not packages_dir.exists():
-        return []
-    return sorted(p for p in packages_dir.iterdir() if p.is_dir())
-
-
-def get_package_directory(package: str, repo_root: Path | None = None) -> Path:
-    """Return full directory path for a specific package name."""
-    clean_name = package.removeprefix("hexastack_").removeprefix("hexastack-")
-    packages_dir = get_packages_directory(repo_root)
-
-    if clean_name == "hexastack":
-        return packages_dir / "hexastack"
-    return packages_dir / f"hexastack_{clean_name}"
-
-
-def get_packages_directory(repo_root: Path | None = None) -> Path:
-    """Return the absolute path for PACKAGES_DIR."""
-    if repo_root is None:
-        repo_root = get_repo_root()
-
-    return repo_root / PACKAGES_DIR
-
-
-def get_present_layers(pkg_path: Path) -> set[str]:
-    """Detect which hexagonal layers exist in src/<package_name>/."""
-    src_pkg_dir = pkg_path / "src" / pkg_path.name
-    if not src_pkg_dir.is_dir():
-        return set()
-    return {layer for layer in HEX_LAYERS if (src_pkg_dir / layer).is_dir()}
-
 
 def get_repo_root(start_path: Path | None = None) -> Path:
-    """Locate the root directory of the Hexastack repository."""
-    current = (start_path or Path(__file__)).resolve()
+    """Locate the root directory of the workspace or project."""
+    current = (start_path or Path.cwd()).resolve()
     if current.is_file():
         current = current.parent
 
-    for candidate in [current, *current.parents]:
-        if (candidate / ".git").is_dir() or (
-            (candidate / "pyproject.toml").is_file()
-            and (candidate / "packages").is_dir()
-        ):
+    candidates = [current, *current.parents]
+
+    # 1. First search for .git directory or a workspace pyproject.toml
+    for candidate in candidates:
+        if (candidate / ".git").is_dir():
+            return candidate
+        pyproj = candidate / "pyproject.toml"
+        if pyproj.is_file():
+            try:
+                text = pyproj.read_text(encoding="utf-8")
+                if "[tool.uv.workspace]" in text or (candidate / "packages").is_dir():
+                    return candidate
+            except (OSError, UnicodeDecodeError):
+                # Unreadable or invalid pyproject.toml; proceed searching parent dirs
+                pass
+
+    # 2. Fallback to any pyproject.toml
+    for candidate in candidates:
+        if (candidate / "pyproject.toml").is_file():
             return candidate
 
     raise RuntimeError(
         f"Could not determine repository root starting from '{current}'."
     )
+
+
+def get_packages_directory(repo_root: Path | None = None) -> Path:
+    """Return the path for PACKAGES_DIR if present, or repo root for single-package projects."""
+    if repo_root is None:
+        repo_root = get_repo_root()
+
+    pkg_dir = repo_root / PACKAGES_DIR
+    if pkg_dir.is_dir():
+        return pkg_dir
+    return repo_root
+
+
+def _find_workspace_member_dirs(root: Path, root_pyproject: Path) -> list[Path]:
+    """Find directories matching tool.uv.workspace members."""
+    if not root_pyproject.is_file():
+        return []
+    try:
+        data = tomllib.loads(root_pyproject.read_text(encoding="utf-8"))
+        members = data.get("tool", {}).get("uv", {}).get("workspace", {}).get("members")
+        if isinstance(members, list):
+            found: list[Path] = []
+            for pattern in members:
+                for p in root.glob(pattern):
+                    if p.is_dir() and (p / "pyproject.toml").is_file():
+                        found.append(p.resolve())
+            return found
+    except (OSError, tomllib.TOMLDecodeError):
+        # Invalid TOML or unreadable workspace configuration
+        pass
+    return []
+
+
+def get_package_directories(repo_root: Path | None = None) -> list[Path]:
+    """Return all package directory paths in the workspace dynamically."""
+    root = repo_root or get_repo_root()
+    root_pyproject = root / "pyproject.toml"
+
+    found = _find_workspace_member_dirs(root, root_pyproject)
+    if found:
+        return sorted(set(found))
+
+    packages_dir = root / PACKAGES_DIR
+    if packages_dir.is_dir():
+        pkgs = [
+            p.resolve()
+            for p in packages_dir.iterdir()
+            if p.is_dir() and ((p / "pyproject.toml").is_file() or (p / "src").is_dir())
+        ]
+        if pkgs:
+            return sorted(pkgs)
+
+    if (root / "src").is_dir() and root_pyproject.is_file():
+        return [root.resolve()]
+
+    return []
+
+
+def get_valid_package_names(repo_root: Path | None = None) -> list[str]:
+    """Return sorted list of package names discovered in the workspace."""
+    root = repo_root or get_repo_root()
+    names: set[str] = set()
+    for p in get_package_directories(root):
+        names.add(p.name)
+        for prefix in ("hexastack_", "hexastack-", "hexaqueue_", "hexaqueue-"):
+            if p.name.startswith(prefix):
+                names.add(p.name[len(prefix) :])
+    return sorted(names)
+
+
+VALID_PACKAGES: list[str] = get_valid_package_names()
+
+
+def _is_single_package_root_match(root_dir: Path, target: str) -> bool:
+    """Check if single-package root directory matches the target name."""
+    clean_target = target.replace("-", "_")
+    pyproj = root_dir / "pyproject.toml"
+    if pyproj.is_file():
+        try:
+            data = tomllib.loads(pyproj.read_text(encoding="utf-8"))
+            p_name = data.get("project", {}).get("name", "")
+            if p_name in (target, clean_target, target.replace("_", "-")):
+                return True
+        except (OSError, tomllib.TOMLDecodeError):
+            # Invalid pyproject.toml, fallback to directory heuristics
+            pass
+    mod_dir = get_package_module_dir(root_dir)
+    return bool(mod_dir and mod_dir.name in (target, clean_target))
+
+
+def get_package_directory(package: str, repo_root: Path | None = None) -> Path:
+    """Return full directory path for a specific package name."""
+    root = repo_root or get_repo_root()
+    pkg_dirs = get_package_directories(root)
+    clean_target = package.replace("-", "_")
+
+    for p in pkg_dirs:
+        if p == root and _is_single_package_root_match(p, package):
+            return p
+        if p.name == package or p.name.replace("-", "_") == clean_target:
+            return p
+
+    for p in pkg_dirs:
+        p_clean = p.name.replace("-", "_")
+        if p_clean.endswith(f"_{clean_target}") or p.name.endswith(f"-{package}"):
+            return p
+
+    packages_dir = get_packages_directory(root)
+    candidate = packages_dir / f"hexastack_{clean_target}"
+    return candidate if candidate.exists() else (packages_dir / package)
+
+
+def get_package_module_dir(pkg_path: Path) -> Path | None:
+    """Detect the Python module directory under src/ for a given package path."""
+    src_dir = pkg_path / "src"
+    if not src_dir.is_dir():
+        return None
+
+    # 1. Match src/<pkg_name> or src/<normalized_pkg_name>
+    direct = src_dir / pkg_path.name
+    if direct.is_dir():
+        return direct
+    normalized = src_dir / pkg_path.name.replace("-", "_")
+    if normalized.is_dir():
+        return normalized
+
+    # 2. Pick the first top-level package directory inside src/
+    subdirs = [
+        p for p in src_dir.iterdir() if p.is_dir() and not p.name.startswith(".")
+    ]
+    if subdirs:
+        return sorted(subdirs)[0]
+
+    return None
+
+
+def get_present_layers(pkg_path: Path) -> set[str]:
+    """Detect which hexagonal layers exist in the package's Python source directory."""
+    module_dir = get_package_module_dir(pkg_path)
+    if not module_dir or not module_dir.is_dir():
+        return set()
+    return {layer for layer in HEX_LAYERS if (module_dir / layer).is_dir()}
 
 
 class HexastackScriptArgumentParser(argparse.ArgumentParser):
@@ -126,7 +229,6 @@ class HexastackScriptArgumentParser(argparse.ArgumentParser):
             "--package",
             dest="packages",
             action="append",
-            choices=VALID_PACKAGES,
             help="Target specific package(s) (e.g. -p auth -p core).",
         )
         self.add_argument(
@@ -188,16 +290,15 @@ def resolve_target_python_files(
 
 
 def get_package_dependencies(pkg_dir: Path) -> set[str]:
-    """Extract internal hexastack package dependencies from a package's pyproject.toml."""
+    """Extract internal workspace package dependencies from a package's pyproject.toml."""
     pyproject = pkg_dir / "pyproject.toml"
     if not pyproject.is_file():
         return set()
 
-    import tomllib
-
     try:
         data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, tomllib.TOMLDecodeError):
+        # Unreadable or invalid TOML
         return set()
 
     deps: set[str] = set()
@@ -327,9 +428,11 @@ __all__ = [
     "get_package_dependencies",
     "get_package_directories",
     "get_package_directory",
+    "get_package_module_dir",
     "get_packages_directory",
     "get_present_layers",
     "get_repo_root",
+    "get_valid_package_names",
     "get_workspace_dependency_graph",
     "HEX_LAYERS",
     "HexastackScriptArgumentParser",
