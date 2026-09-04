@@ -153,9 +153,11 @@ def test_in_memory_storage_roundtrip_properties(path: str, content: bytes) -> No
     assert path in files
 
     # Deletion consistency
-    assert storage.delete(path) is True
+    first_del = storage.delete(path)
+    assert first_del is True
     assert storage.exists(path) is False
-    assert storage.delete(path) is False
+    second_del = storage.delete(path)
+    assert second_del is False
 
 
 @given(
@@ -174,9 +176,11 @@ def test_local_storage_roundtrip_properties(path: str, content: bytes) -> None:
         assert storage.get(path) == content
 
         # Deletion consistency
-        assert storage.delete(path) is True
+        first_del = storage.delete(path)
+        assert first_del is True
         assert storage.exists(path) is False
-        assert storage.delete(path) is False
+        second_del = storage.delete(path)
+        assert second_del is False
 
 
 @pytest.mark.anyio
@@ -194,5 +198,6 @@ async def test_async_in_memory_storage_properties(path: str, content: bytes) -> 
     assert await storage.exists_async(path) is True
     assert await storage.get_async(path) == content
 
-    assert await storage.delete_async(path) is True
+    first_del = await storage.delete_async(path)
+    assert first_del is True
     assert await storage.exists_async(path) is False
