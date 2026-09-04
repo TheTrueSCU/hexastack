@@ -34,11 +34,12 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Async gRPC Server Reflection, Health Checking & Streaming**: `GrpcHealthServicer`, server reflection, and bidirectional streaming dispatch (`hexastack-grpc` - Issue #77, PR #95).
 - [x] **Turnkey Observability, Prometheus & Sentry**: `MetricsPort`, `PrometheusMetricsAdapter`, `/metrics` endpoint, and `SentryErrorAdapter` (`hexastack-otel`, `hexastack-logging`, `hexastack-fastapi` - Issue #76, PR #96).
 - [x] **Optional Extras Parity Auditor**: CLI validator enforcing subpackage extras forwarding into umbrella package (`hexastack-tools` - Issue #97, PR #102).
-
 - [x] **Standardized In-Memory Test Harness**: Unify unit test mocks onto canonical `InMemory*` adapters (`hexastack-core` - Issue #98, PR #103).
-- [ ] **Hypothesis Invariant Fuzzing**: Property-based fuzzing for CircuitBreaker, Storage, SSE/WS, and Metrics (Issue #99).
-
+- [x] **Hypothesis Invariant Fuzzing**: Property-based fuzzing for CircuitBreaker, Storage, SSE/WS, and Metrics (Issue #99, PR #104).
+- [ ] **Tutorial Series Refresh**: Update To-Do microservice tutorial series with `/metrics`, streaming, and unified chapter navigation (Issue #101).
 - [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal (Issue #74).
+
+
 
 ---
 
