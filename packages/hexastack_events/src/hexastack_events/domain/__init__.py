@@ -1,3 +1,5 @@
+"""Domain package init for hexastack_events."""
+
 from hexastack_events.domain.context import EventContext
 from hexastack_events.domain.exceptions import (
     DuplicateEventError,
@@ -18,6 +20,14 @@ from hexastack_events.domain.serialization import (
     encode_cloudevent_bytes,
     encode_cloudevent_msgpack,
 )
+from hexastack_events.domain.streams import (
+    StreamMessage,
+    StreamPartitionOffset,
+)
+from hexastack_events.domain.tasks import (
+    TaskRecord,
+    TaskState,
+)
 
 __all__ = [
     "CloudEventEnvelope",
@@ -34,4 +44,8 @@ __all__ = [
     "OutboxError",
     "OutboxRecord",
     "OutboxStatus",
+    "StreamMessage",
+    "StreamPartitionOffset",
+    "TaskRecord",
+    "TaskState",
 ]

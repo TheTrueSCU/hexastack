@@ -19,13 +19,15 @@ Part of the [Hexastack Framework](https://github.com/TheTrueSCU/hexastack).
 
 1. **CNCF CloudEvents 1.0 Protocol**: Automatic serialization and deserialization of domain `Event` models into standardized CloudEvents JSON envelopes with W3C correlation ID and multi-tenant partitioning.
 2. **Transactional Outbox Engine**: Guarantees at-least-once delivery by staging uncommitted domain events in an `OutboxStoragePort` within the same transaction as business state mutations.
-3. **Dual Relay Engines with Multi-Process Locking**:
+3. **Partitioned Stream Engine (`StreamPort`, `InMemoryStreamAdapter`)**: High-throughput partitioned event stream ingestion with deterministic partition key routing, consumer group offset tracking, and async/sync read slices.
+4. **Distributed Task Queue & Worker Leasing (`TaskQueuePort`, `InMemoryTaskQueueAdapter`)**: Background task execution with active worker leasing, priority-ordered execution, lease renewals/heartbeats, failure retries, and dead-letter queue routing.
+5. **Dual Relay Engines with Multi-Process Locking**:
    - **Native Asyncio (`AsyncioOutboxRelay`)**: In-process background task with zero external dependencies, supporting optional `LockPort` / `filelock` coordination.
    - **Huey Worker (`HueyOutboxRelay`)**: Multi-process worker executing outbox polling in separate worker nodes (`pip install hexastack-events[huey]`), supporting optional `LockPort` / `filelock` mutual exclusion.
-4. **Relational Database Outbox Storage (`SqlAlchemyOutboxStorage`)**: Pluggable storage adapter supporting SQLAlchemy tables and transactions (`pip install hexastack-events[sql]`).
-5. **NATS JetStream Distributed Event Bus (`NatsJetStreamEventBusAdapter`)**: Production-grade at-least-once delivery via NATS JetStream — durable push consumers, WorkQueue stream retention, dead-letter routing, and msgspec zero-copy encoding (`pip install hexastack-events[nats]`).
-6. **Janus Async-Sync Thread Bridge (`JanusEventChannel`, `JanusCommandQueue[T]`)**: Thread-safe ↔ asyncio-safe queue bridges enabling synchronous OS threads (gRPC servicers, CLI handlers) to enqueue events and commands for dispatch by async event-loop consumers (`pip install hexastack-events[janus]`).
-7. **Multi-Process Concurrency Protection (`filelock`)**: Inter-process file locking prevents competing workers or pollers from creating lock contention or duplicate event dispatches on SQLite and filesystem backends (`pip install hexastack-events[filelock]`).
+6. **Relational Database Outbox Storage (`SqlAlchemyOutboxStorage`)**: Pluggable storage adapter supporting SQLAlchemy tables and transactions (`pip install hexastack-events[sql]`).
+7. **NATS JetStream Distributed Event Bus (`NatsJetStreamEventBusAdapter`)**: Production-grade at-least-once delivery via NATS JetStream — durable push consumers, WorkQueue stream retention, dead-letter routing, and msgspec zero-copy encoding (`pip install hexastack-events[nats]`).
+8. **Janus Async-Sync Thread Bridge (`JanusEventChannel`, `JanusCommandQueue[T]`)**: Thread-safe ↔ asyncio-safe queue bridges enabling synchronous OS threads (gRPC servicers, CLI handlers) to enqueue events and commands for dispatch by async event-loop consumers (`pip install hexastack-events[janus]`).
+9. **Multi-Process Concurrency Protection (`filelock`)**: Inter-process file locking prevents competing workers or pollers from creating lock contention or duplicate event dispatches on SQLite and filesystem backends (`pip install hexastack-events[filelock]`).
 
 
 ```mermaid
@@ -36,10 +38,17 @@ graph TD
     OUTBOX_STORE["OutboxStoragePort\n(SQLAlchemy / DB Outbox Table)"]
     RELAY["OutboxRelayPort\n(Asyncio / Huey Worker)"]
     BUS["DistributedEventBusPort"]
+    STREAM["StreamPort / AsyncStreamPort\n(Partitioned Ingestion)"]
+    TASKS["TaskQueuePort / AsyncTaskQueuePort\n(Worker Leased Tasks)"]
 
-    subgraph Brokers["Broker Adapters"]
+    subgraph Brokers["Broker & Stream Adapters"]
         INMEM["InMemoryDistributedEventBus\n(Testing / Local Dev)"]
         NATS["NatsJetStreamEventBusAdapter\n(NATS JetStream — pip install hexastack-events[nats])"]
+        STREAM_INMEM["InMemoryStreamAdapter\n(Partitioned FIFO Streams)"]
+    end
+
+    subgraph TaskQueues["Task Queue Adapters"]
+        TASK_INMEM["InMemoryTaskQueueAdapter\n(Priority Leases & DLQ)"]
     end
 
     subgraph ThreadBridge["Async-Sync Thread Bridge"]
@@ -56,6 +65,9 @@ graph TD
     BUS --> INMEM
     BUS --> NATS
 
+    STREAM --> STREAM_INMEM
+    TASKS --> TASK_INMEM
+
     GRPC["gRPC Sync Thread"] -->|sync_put| JANUS_EV
     JANUS_EV -->|drain → handler| BUS
     GRPC -->|sync_put| JANUS_CMD
@@ -70,15 +82,21 @@ graph TD
 hexastack_events/
 ├── domain/
 │   ├── models.py        # CloudEventEnvelope, OutboxRecord, OutboxStatus
+│   ├── streams.py       # StreamMessage, StreamPartitionOffset
+│   ├── tasks.py         # TaskRecord, TaskState
 │   ├── serialization.py # MsgspecEnvelopeSerializer, encode/decode helpers
 │   ├── exceptions.py    # EventError, EventDeliveryError, EventSerializationError, …
 │   └── context.py       # EventContext (correlation, tenant)
 ├── ports/
 │   ├── buses.py         # DistributedEventBusPort
+│   ├── streams.py       # StreamPort, AsyncStreamPort
+│   ├── tasks.py         # TaskQueuePort, AsyncTaskQueuePort
 │   └── outbox.py        # OutboxStoragePort, OutboxRelayPort
 ├── adapters/
 │   ├── cloudevents/     # to_cloudevent, from_cloudevent, cloudevent_to_json/dict
 │   ├── outbox/          # AsyncioOutboxRelay, HueyOutboxRelay, InMemoryOutboxStorage, SqlAlchemyOutboxStorage
+│   ├── streams/         # InMemoryStreamAdapter
+│   ├── tasks/           # InMemoryTaskQueueAdapter
 │   └── buses/
 │       ├── in_memory.py     # InMemoryDistributedEventBus (testing)
 │       ├── nats.py          # NatsJetStreamEventBusAdapter [nats]
@@ -316,6 +334,8 @@ def grpc_create_order(request, context):
 | Adapter | Install | Use Case |
 |---|---|---|
 | `InMemoryDistributedEventBus` | *(core)* | Unit tests, local development |
+| `InMemoryStreamAdapter` | *(core)* | Partitioned FIFO event stream buffer, deterministic hashing, offset tracking |
+| `InMemoryTaskQueueAdapter` | *(core)* | Worker-leased background task execution, priorities, and DLQ |
 | `NatsJetStreamEventBusAdapter` | `[nats]` | Production at-least-once delivery, consumer groups, DLQ |
 | `JanusEventChannel` | `[janus]` | Sync thread → async event loop bridge (gRPC, CLI) |
 | `JanusCommandQueue[T]` | `[janus]` | Sync thread → async CQRS command dispatch |
