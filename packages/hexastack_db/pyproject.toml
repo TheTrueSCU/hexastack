@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-db"
-version = "0.2.0"
+version = "0.3.0"
 description = "SQLAlchemy database integration, repositories, Unit of Work, and bootstrap for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -47,25 +47,6 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_db"]
-layers = [
-    "adapters",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for domain"
-type = "forbidden"
-source_modules = ["hexastack_db.domain"]
-forbidden_modules = [
-    "hexastack_db.adapters",
-    "hexastack_db.infra",
-]
-
 [tool.importlinter]
 root_packages = ["hexastack_db"]
 
@@ -74,7 +55,7 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_db"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "domain",
 ]

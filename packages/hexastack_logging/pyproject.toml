@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-logging"
-version = "0.2.0"
+version = "0.3.0"
 description = "Add your description here"
 readme = "README.md"
 license = "Apache-2.0"
@@ -43,6 +43,6 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_logging"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
 ]

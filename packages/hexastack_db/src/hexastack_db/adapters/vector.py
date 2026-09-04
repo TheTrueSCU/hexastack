@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
 from hexastack_core.ports.ai import Metadata, VectorStorePort
-from hexastack_db.infra.config import PgVectorConfig
+from hexastack_db.domain.config import PgVectorConfig
 
 
 class PgVectorStoreAdapter(VectorStorePort):
@@ -32,13 +32,15 @@ class PgVectorStoreAdapter(VectorStorePort):
         self,
         session_factory: sessionmaker[Session],
         config: PgVectorConfig | None = None,
+        table_name: str | None = None,
+        dimension: int | None = None,
     ) -> None:
         """Initialize PgVectorStoreAdapter with session factory and configuration."""
         self._session_factory = session_factory
         self._config = config or PgVectorConfig()
-        self._table = create_vector_table(
-            self._config.table_name, self._config.dimension
-        )
+        self._table_name = table_name or self._config.table_name
+        self._dimension = dimension or self._config.dimension
+        self._table = create_vector_table(self._table_name, self._dimension)
 
     def clear(self) -> None:
         """Clear all records from the vector table."""
@@ -130,12 +132,14 @@ class AsyncPgVectorStoreAdapter:
         self,
         session_factory: async_sessionmaker[AsyncSession],
         config: PgVectorConfig | None = None,
+        table_name: str | None = None,
+        dimension: int | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._config = config or PgVectorConfig()
-        self._table = create_vector_table(
-            self._config.table_name, self._config.dimension
-        )
+        self._table_name = table_name or self._config.table_name
+        self._dimension = dimension or self._config.dimension
+        self._table = create_vector_table(self._table_name, self._dimension)
 
     async def clear_async(self) -> None:
         """Asynchronously clear all vector records."""

@@ -1,3 +1,4 @@
+from hexastack_fastapi.infra.app import create_fastapi_app
 from hexastack_fastapi.infra.autodiscovery import (
     autodiscover_routes,
     create_route_visitor,
@@ -29,6 +30,7 @@ __all__ = [
     "autodiscover_routes",
     "CorrelationHttpMiddleware",
     "CorsConfig",
+    "create_fastapi_app",
     "create_route_visitor",
     "FastApiBootstrapper",
     "HealthConfig",

@@ -2,10 +2,7 @@ import logging
 from logging.handlers import QueueListener
 
 from hexastack_core.ports.logging import Extras, LoggingPort
-from hexastack_logging.infra.config import (
-    HexastackLoggingConfig,
-    configure_logging,
-)
+from hexastack_logging.domain.config import HexastackLoggingConfig
 
 
 class StructuredLogger(LoggingPort):
@@ -18,26 +15,22 @@ class StructuredLogger(LoggingPort):
 
     def __init__(
         self,
-        name: str = "hexastack",
-        config: HexastackLoggingConfig | None = None,
         logger: logging.Logger | None = None,
         listener: QueueListener | None = None,
+        name: str = "hexastack",
+        config: HexastackLoggingConfig | None = None,
     ) -> None:
-        """Initialize StructuredLogger with logger name, configuration, and optional listener.
+        """Initialize StructuredLogger with logger instance, optional listener, or config.
 
         Args:
-            name: Logger hierarchy name identifier.
-            config: Optional configuration model.
-            logger: Optional pre-configured Logger instance.
+            logger: Pre-configured logging.Logger instance (or created via name).
             listener: Optional active QueueListener instance.
+            name: Default logger hierarchy name if logger is not provided.
+            config: Optional HexastackLoggingConfig instance.
         """
         self._logger = logger or logging.getLogger(name)
-        if logger is None:
-            self._listener = configure_logging(
-                config=config, target_logger=self._logger
-            )
-        else:
-            self._listener = listener
+        self._listener = listener
+        self._config = config
 
     def close(self) -> None:
         """Stop and flush the background QueueListener if active.

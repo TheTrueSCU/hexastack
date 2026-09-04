@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-events"
-version = "0.2.0"
+version = "0.3.0"
 description = "CloudEvents serialization, Transactional Outbox pattern, and distributed event streaming for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -54,44 +54,6 @@ build-backend = "uv_build"
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_events"]
-layers = [
-    "adapters",
-    "ports",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for domain"
-type = "forbidden"
-source_modules = ["hexastack_events.domain"]
-forbidden_modules = [
-    "hexastack_events.ports",
-    "hexastack_events.adapters",
-    "hexastack_events.infra",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for ports"
-type = "forbidden"
-source_modules = ["hexastack_events.ports"]
-forbidden_modules = [
-    "hexastack_events.adapters",
-    "hexastack_events.infra",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for adapters"
-type = "forbidden"
-source_modules = ["hexastack_events.adapters"]
-forbidden_modules = [
-    "hexastack_events.infra",
-]
-
 [tool.importlinter]
 root_packages = ["hexastack_events"]
 
@@ -100,8 +62,8 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_events"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "ports",
     "domain",
 ]

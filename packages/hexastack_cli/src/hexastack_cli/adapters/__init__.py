@@ -1,4 +1,3 @@
-from hexastack_cli.adapters.app import create_cli_app
 from hexastack_cli.adapters.presenter import RichTerminalPresenter
 from hexastack_cli.adapters.routing import (
     register_cqrs_command,
@@ -6,7 +5,6 @@ from hexastack_cli.adapters.routing import (
 )
 
 __all__ = [
-    "create_cli_app",
     "register_cqrs_command",
     "register_cqrs_query",
     "RichTerminalPresenter",

@@ -27,8 +27,8 @@
 ```
 hexastack_cli/
 ├── domain/          # CliContext, OutputFormat enum
-├── adapters/        # create_cli_app, Rich presenters, Typer command runners
-└── infra/           # CliBootstrapper (order=30), @cli_command, @cli_query, @cli_group, @feature_flag_command
+├── adapters/        # Rich presenters, Typer command runners
+└── infra/           # create_cli_app, CliBootstrapper (order=40), @cli_command, @cli_query, @cli_group, @feature_flag_command
 ```
 
 ### Key Exports

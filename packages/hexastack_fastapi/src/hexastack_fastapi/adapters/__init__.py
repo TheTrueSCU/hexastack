@@ -40,7 +40,6 @@ from hexastack_fastapi.adapters.websockets import (
 __all__ = [
     "check_openapi_conformance",
     "CqrsRouter",
-    "create_fastapi_app",
     "create_health_router",
     "create_metrics_router",
     "create_test_client",

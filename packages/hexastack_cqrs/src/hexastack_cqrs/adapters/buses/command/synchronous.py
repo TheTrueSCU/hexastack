@@ -2,9 +2,11 @@ from collections.abc import Callable
 from typing import Any
 
 from hexastack_core.domain import Command, Generic
-from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
-from hexastack_cqrs.infra.registries.handler import HandlerRegistry
-from hexastack_cqrs.ports.buses import CommandBusPort
+from hexastack_cqrs.ports.buses import (
+    CommandBusPort,
+    HandlerDispatcherPort,
+    MiddlewarePort,
+)
 
 
 class SynchronousCommandBus(CommandBusPort):
@@ -12,19 +14,19 @@ class SynchronousCommandBus(CommandBusPort):
 
     Notes/Architectural Intent:
         Wraps command execution in an onion-layered middleware chain and dispatches
-        to the registered handler in HandlerRegistry.
+        to the registered handler in HandlerDispatcherPort.
     """
 
     def __init__(
         self,
-        handler_registry: HandlerRegistry,
-        middleware: list[GenericMiddleware] | None = None,
+        handler_registry: HandlerDispatcherPort,
+        middleware: list[MiddlewarePort] | None = None,
     ) -> None:
         """Initialize synchronous command bus with handler registry and middleware.
 
         Args:
-            handler_registry: HandlerRegistry containing registered command handlers.
-            middleware: Optional ordered list of GenericMiddleware interceptors.
+            handler_registry: HandlerDispatcherPort containing registered command handlers.
+            middleware: Optional ordered list of MiddlewarePort interceptors.
         """
         self._registry = handler_registry
         self._middleware = list(middleware) if middleware is not None else []

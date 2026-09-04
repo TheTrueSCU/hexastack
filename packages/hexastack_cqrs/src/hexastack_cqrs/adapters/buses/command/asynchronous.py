@@ -5,9 +5,11 @@ from typing import TYPE_CHECKING, Any
 
 from hexastack_core.domain import Command, Generic
 from hexastack_core.domain.exceptions import MissingDependencyError
-from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
-from hexastack_cqrs.infra.registries.handler import HandlerRegistry
-from hexastack_cqrs.ports.buses import CommandBusPort
+from hexastack_cqrs.ports.buses import (
+    CommandBusPort,
+    HandlerDispatcherPort,
+    MiddlewarePort,
+)
 
 if TYPE_CHECKING:
     from huey import Huey
@@ -25,15 +27,15 @@ class HueyCommandBus(CommandBusPort):
     def __init__(
         self,
         huey: "Huey",
-        handler_registry: HandlerRegistry,
-        middleware: list[GenericMiddleware] | None = None,
+        handler_registry: HandlerDispatcherPort,
+        middleware: list[MiddlewarePort] | None = None,
     ) -> None:
         """Initialize Huey command bus with Huey instance and handler registry.
 
         Args:
             huey: Initialized Huey task queue instance.
-            handler_registry: HandlerRegistry containing registered command handlers.
-            middleware: Optional ordered list of GenericMiddleware interceptors.
+            handler_registry: HandlerDispatcherPort containing registered command handlers.
+            middleware: Optional ordered list of MiddlewarePort interceptors.
 
         Raises:
             MissingDependencyError: If huey package is not installed.
@@ -85,15 +87,15 @@ class AsyncNativeCommandBus(CommandBusPort):
 
     def __init__(
         self,
-        handler_registry: HandlerRegistry,
-        middleware: list[GenericMiddleware] | None = None,
+        handler_registry: HandlerDispatcherPort,
+        middleware: list[MiddlewarePort] | None = None,
         executor: ThreadPoolExecutor | None = None,
     ) -> None:
         """Initialize native async command bus.
 
         Args:
-            handler_registry: HandlerRegistry containing registered command handlers.
-            middleware: Optional ordered list of GenericMiddleware interceptors.
+            handler_registry: HandlerDispatcherPort containing registered command handlers.
+            middleware: Optional ordered list of MiddlewarePort interceptors.
             executor: Optional ThreadPoolExecutor for managing worker threads.
         """
         self._registry = handler_registry

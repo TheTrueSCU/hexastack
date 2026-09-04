@@ -2,8 +2,7 @@ from collections.abc import Callable
 from typing import Any
 
 from hexastack_core.domain import Event, Generic
-from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
-from hexastack_cqrs.ports.buses import EventBusPort
+from hexastack_cqrs.ports.buses import EventBusPort, MiddlewarePort
 
 
 class SynchronousEventBus(EventBusPort):
@@ -14,11 +13,11 @@ class SynchronousEventBus(EventBusPort):
         in-process with optional middleware chain execution per handler invocation.
     """
 
-    def __init__(self, middleware: list[GenericMiddleware] | None = None) -> None:
+    def __init__(self, middleware: list[MiddlewarePort] | None = None) -> None:
         """Initialize synchronous event bus with optional middleware pipeline.
 
         Args:
-            middleware: Optional ordered list of GenericMiddleware interceptors.
+            middleware: Optional ordered list of MiddlewarePort interceptors.
         """
         self._middleware = list(middleware) if middleware is not None else []
         self._subscribers: dict[type[Event], list[Callable[[Any], None]]] = {}

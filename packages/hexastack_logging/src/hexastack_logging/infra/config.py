@@ -7,12 +7,15 @@ from logging.handlers import (
     TimedRotatingFileHandler,
 )
 from pathlib import Path
-from typing import Literal
-
-from pydantic import BaseModel, Field
 
 from hexastack_core.infra.decorators import config_section
 from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_logging.domain.config import (
+    AsyncQueueConfig,
+    FileLoggingConfig,
+    HexastackLoggingConfig,
+    SanitizerConfig,
+)
 from hexastack_logging.infra.filters import (
     CorrelationIdFilter,
     SanitizerFilter,
@@ -20,73 +23,10 @@ from hexastack_logging.infra.filters import (
 from hexastack_logging.infra.formatters.console import ConsoleFormatter
 from hexastack_logging.infra.formatters.json import JsonFormatter
 from hexastack_logging.infra.sanitizer import (
-    _DEFAULT_MASKED_KEYS,
-    _DEFAULT_PATTERNS,
     Sanitizer,
 )
 
-
-class FileLoggingConfig(BaseModel):
-    """Configuration schema for file-based logging and log rotation.
-
-    Notes/Architectural Intent:
-        Controls disk log writing, rotation triggers (size vs. time intervals),
-        retention backup counts, and destination file paths.
-    """
-
-    enable: bool = Field(default=False)
-    path: str = Field(default="logs/app.log")
-    format: Literal["console", "json"] = Field(default="json")
-    max_bytes: int = Field(default=10_485_760)  # 10 MB
-    backup_count: int = Field(default=5)
-    rotation_type: Literal["size", "time"] = Field(default="size")
-    when: str = Field(default="midnight")
-
-
-class AsyncQueueConfig(BaseModel):
-    """Configuration schema for non-blocking queue-based background log emission.
-
-    Notes/Architectural Intent:
-        Offloads disk and stream I/O from request worker threads and async event loops
-        to a dedicated background worker thread using QueueHandler and QueueListener.
-    """
-
-    enable: bool = Field(default=False)
-    max_size: int = Field(default=10_000)
-
-
-class SanitizerConfig(BaseModel):
-    """Configuration schema for log sanitization and credential masking.
-
-    Notes/Architectural Intent:
-        Controls automatic redaction of sensitive dictionary keys and regex pattern matches.
-    """
-
-    enable: bool = Field(default=True)
-    masked_keys: list[str] = Field(default_factory=lambda: sorted(_DEFAULT_MASKED_KEYS))
-    mask_replacement: str = Field(default="***REDACTED***")
-    regex_patterns: list[str] = Field(default_factory=lambda: list(_DEFAULT_PATTERNS))
-
-
-@config_section("logging")
-class HexastackLoggingConfig(BaseModel):
-    """Configuration schema for application-wide logging.
-
-    Notes/Architectural Intent:
-        Controls log levels, output formatting (console vs. JSON), ANSI colorization,
-        context propagation settings, data sanitization, file rotation, and async queueing.
-    """
-
-    level: str = Field(default="INFO")
-    format: Literal["console", "json"] = Field(default="console")
-    colorize: bool = Field(default=True)
-    include_context: bool = Field(default=True)
-    datefmt: str = Field(default="%Y-%m-%d %H:%M:%S")
-    sanitizer: SanitizerConfig = Field(default_factory=SanitizerConfig)
-    file: FileLoggingConfig = Field(default_factory=FileLoggingConfig)
-    queue: AsyncQueueConfig = Field(default_factory=AsyncQueueConfig)
-    loggers: dict[str, str] = Field(default_factory=dict)
-
+config_section("logging")(HexastackLoggingConfig)
 
 __all__ = [
     "AsyncQueueConfig",
@@ -244,11 +184,5 @@ def register_logging_config(registry: ConfigRegistry) -> None:
 
     Args:
         registry: Target ConfigRegistry instance.
-
-    Returns:
-        None.
-
-    Raises:
-        None.
     """
     registry.register_config_section("logging", HexastackLoggingConfig)

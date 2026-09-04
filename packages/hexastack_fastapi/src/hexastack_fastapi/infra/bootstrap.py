@@ -35,8 +35,8 @@ class FastApiBootstrapper(BootstrapperPort):
         Raises:
             None.
         """
-        from hexastack_fastapi.adapters.app import create_fastapi_app
         from hexastack_fastapi.adapters.routing import CqrsRouter
+        from hexastack_fastapi.infra.app import create_fastapi_app
         from hexastack_fastapi.infra.autodiscovery import create_route_visitor
 
         cfg = context.get_config("fastapi", HexastackFastApiConfig)

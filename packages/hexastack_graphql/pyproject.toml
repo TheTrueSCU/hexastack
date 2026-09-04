@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-graphql"
-version = "0.2.0"
+version = "0.3.0"
 description = "Strawberry GraphQL presentation adapter and CQRS integration for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -32,25 +32,6 @@ hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 hexastack-fastapi = { workspace = true }
 
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_graphql"]
-layers = [
-    "adapters",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for domain"
-type = "forbidden"
-source_modules = ["hexastack_graphql.domain"]
-forbidden_modules = [
-    "hexastack_graphql.adapters",
-    "hexastack_graphql.infra",
-]
-
 [tool.importlinter]
 root_packages = ["hexastack_graphql"]
 
@@ -59,7 +40,7 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_graphql"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "domain",
 ]

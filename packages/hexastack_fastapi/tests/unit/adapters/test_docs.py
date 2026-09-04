@@ -5,9 +5,12 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from hexastack_fastapi.adapters.app import create_fastapi_app
 from hexastack_fastapi.adapters.docs import mount_zensical_docs
-from hexastack_fastapi.infra.config import HexastackFastApiConfig, ZensicalDocsConfig
+from hexastack_fastapi.domain.config import (
+    HexastackFastApiConfig,
+    ZensicalDocsConfig,
+)
+from hexastack_fastapi.infra.app import create_fastapi_app
 
 
 def test_mount_zensical_docs_explicit_helper():

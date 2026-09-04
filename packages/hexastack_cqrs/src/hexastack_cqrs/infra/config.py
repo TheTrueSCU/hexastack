@@ -1,115 +1,29 @@
-from pydantic import BaseModel, Field
+from hexastack_core.infra.decorators import config_section
+from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_cqrs.domain.config import (
+    CircuitBreakerMiddlewareConfig,
+    CorrelationMiddlewareConfig,
+    CqrsMiddlewareConfig,
+    HexastackCqrsConfig,
+    LoggingMiddlewareConfig,
+    RetryMiddlewareConfig,
+    TimingMiddlewareConfig,
+    UnitOfWorkMiddlewareConfig,
+)
 
-from hexastack_core.infra import ConfigRegistry
+config_section("cqrs")(HexastackCqrsConfig)
 
-
-class CircuitBreakerMiddlewareConfig(BaseModel):
-    """Configuration schema for CQRS circuit breaker resilience middleware.
-
-    Notes/Architectural Intent:
-        Controls fail-fast circuit trip threshold, recovery probe timeout, and pipeline order.
-    """
-
-    enable: bool = Field(default=True)
-    order: int = Field(default=45)
-    failure_threshold: int = Field(default=5, ge=1)
-    recovery_timeout_seconds: float = Field(default=10.0, gt=0.0)
-    half_open_max_trials: int = Field(default=1, ge=1)
-
-
-class CorrelationMiddlewareConfig(BaseModel):
-    """Configuration schema for CQRS correlation context middleware.
-
-    Notes/Architectural Intent:
-        Controls automatic generation and propagation of correlation IDs across message boundaries.
-    """
-
-    enable: bool = Field(default=True)
-    order: int = Field(default=10)
-
-
-class LoggingMiddlewareConfig(BaseModel):
-    """Configuration schema for CQRS message logging middleware.
-
-    Notes/Architectural Intent:
-        Controls structured logging behavior, payload serialization, and pipeline execution order.
-    """
-
-    enable: bool = Field(default=True)
-    order: int = Field(default=30)
-    log_payload: bool = Field(default=True)
-
-
-class RetryMiddlewareConfig(BaseModel):
-    """Configuration schema for CQRS retry middleware.
-
-    Notes/Architectural Intent:
-        Controls attempt limits, circuit breaker, resilience parameters, and pipeline execution order.
-    """
-
-    enable: bool = Field(default=True)
-    order: int = Field(default=50)
-    max_attempts: int = Field(default=3, ge=1)
-    initial_backoff_seconds: float = Field(default=0.1, gt=0.0)
-    max_backoff_seconds: float = Field(default=5.0, gt=0.0)
-    jitter: bool = Field(default=True)
-    circuit_breaker_threshold: int = Field(default=5, ge=1)
-    recovery_timeout_seconds: float = Field(default=10.0, gt=0.0)
-
-
-class TimingMiddlewareConfig(BaseModel):
-    """Configuration schema for CQRS execution timing middleware.
-
-    Notes/Architectural Intent:
-        Controls duration tracking, threshold limits for slow execution warnings, and pipeline order.
-    """
-
-    enable_slow_warning: bool = Field(default=True)
-    order: int = Field(default=20)
-    slow_threshold_seconds: float = Field(default=1.0, gt=0.0)
-
-
-class UnitOfWorkMiddlewareConfig(BaseModel):
-    """Configuration schema for CQRS unit of work transaction middleware.
-
-    Notes/Architectural Intent:
-        Controls automatic transaction lifecycle wrapping and pipeline execution order.
-    """
-
-    enable: bool = Field(default=True)
-    order: int = Field(default=40)
-
-
-class CqrsMiddlewareConfig(BaseModel):
-    """Container grouping configuration schemas for all CQRS middleware.
-
-    Notes/Architectural Intent:
-        Groups middleware settings under `hexastack.cqrs.middleware.<name>`.
-    """
-
-    circuit_breaker: CircuitBreakerMiddlewareConfig = Field(
-        default_factory=CircuitBreakerMiddlewareConfig
-    )
-    correlation: CorrelationMiddlewareConfig = Field(
-        default_factory=CorrelationMiddlewareConfig
-    )
-    logging: LoggingMiddlewareConfig = Field(default_factory=LoggingMiddlewareConfig)
-    retry: RetryMiddlewareConfig = Field(default_factory=RetryMiddlewareConfig)
-    timing: TimingMiddlewareConfig = Field(default_factory=TimingMiddlewareConfig)
-    unit_of_work: UnitOfWorkMiddlewareConfig = Field(
-        default_factory=UnitOfWorkMiddlewareConfig
-    )
-
-
-class HexastackCqrsConfig(BaseModel):
-    """Top-level configuration schema for the CQRS package.
-
-    Notes/Architectural Intent:
-        Aggregates bus engine options and nested middleware configuration blocks.
-    """
-
-    use_huey_async: bool = Field(default=False)
-    middleware: CqrsMiddlewareConfig = Field(default_factory=CqrsMiddlewareConfig)
+__all__ = [
+    "CircuitBreakerMiddlewareConfig",
+    "CorrelationMiddlewareConfig",
+    "CqrsMiddlewareConfig",
+    "HexastackCqrsConfig",
+    "LoggingMiddlewareConfig",
+    "register_cqrs_config",
+    "RetryMiddlewareConfig",
+    "TimingMiddlewareConfig",
+    "UnitOfWorkMiddlewareConfig",
+]
 
 
 def register_cqrs_config(registry: ConfigRegistry) -> None:
@@ -117,11 +31,5 @@ def register_cqrs_config(registry: ConfigRegistry) -> None:
 
     Args:
         registry: Target ConfigRegistry instance.
-
-    Returns:
-        None.
-
-    Raises:
-        None.
     """
     registry.register_config_section("cqrs", HexastackCqrsConfig)

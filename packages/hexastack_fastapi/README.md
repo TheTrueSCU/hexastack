@@ -30,9 +30,9 @@
 
 ```
 hexastack_fastapi/
-├── domain/          # HealthStatus, HTTP error envelope models
-├── adapters/        # create_app, routing decorators, SSE streaming, WebSockets, health endpoints, db_session middleware, dependencies, NiceGUI UI adapter
-└── infra/           # FastApiBootstrapper (order=30), exception handlers, correlation/logging middlewares
+├── domain/          # HealthStatus, HTTP error envelope models, HexastackFastApiConfig
+├── adapters/        # routing decorators, SSE streaming, WebSockets, health endpoints, db_session middleware, dependencies, NiceGUI UI adapter
+└── infra/           # create_fastapi_app, FastApiBootstrapper (order=30), exception handlers, correlation/logging middlewares
 ```
 
 
@@ -40,7 +40,7 @@ hexastack_fastapi/
 
 | Category | Exports |
 |---|---|
-| **Application Factory** | `create_app`, `FastApiBootstrapper` (order=30) |
+| **Application Factory** | `create_fastapi_app`, `FastApiBootstrapper` (order=30) |
 | **Decorators** | `@api_command`, `@api_query`, `@feature_flag_route`, `@rate_limit`, `RouteMetadata` |
 | **Dependencies** | `get_container`, `get_pipeline`, `get_feature_flags`, `require_feature`, `get_rate_limiter`, `require_rate_limit` |
 | **Documentation Mounting** | `mount_zensical_docs`, `DocumentationNotFoundError`, `ZensicalDocsConfig` |

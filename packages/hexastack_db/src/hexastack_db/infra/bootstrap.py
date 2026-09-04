@@ -102,7 +102,8 @@ class DatabaseBootstrapper(BootstrapperPort):
 
             async_vector_store = AsyncPgVectorStoreAdapter(
                 session_factory=async_factory,
-                config=db_config.vector,
+                table_name=db_config.vector.table_name,
+                dimension=db_config.vector.dimension,
             )
             if AsyncPgVectorStoreAdapter not in di:
                 di.add_instance(
@@ -137,7 +138,8 @@ class DatabaseBootstrapper(BootstrapperPort):
 
             sync_vector_store = PgVectorStoreAdapter(
                 session_factory=sync_factory,
-                config=db_config.vector,
+                table_name=db_config.vector.table_name,
+                dimension=db_config.vector.dimension,
             )
             if db_config.auto_create_tables:
                 sync_vector_store.create_table()

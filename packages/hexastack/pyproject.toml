@@ -1,6 +1,6 @@
 [project]
 name = "hexastack"
-version = "0.2.0"
+version = "0.3.0"
 description = "Hexastack - Modern Hexagonal Architecture & CQRS Framework for Python"
 readme = "README.md"
 license = "Apache-2.0"
@@ -193,17 +193,6 @@ hexastack-grpc = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
 hexastack-tools = { workspace = true }
-
-
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack"]
-layers = [
-    "adapters",
-    "domain",
-]
 
 [tool.importlinter]
 root_packages = ["hexastack"]

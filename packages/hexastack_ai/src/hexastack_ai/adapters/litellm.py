@@ -3,11 +3,11 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from hexastack_ai.domain.config import HexastackAiConfig
 from hexastack_ai.domain.exceptions import (
     LlmProviderError,
     StructuredOutputParsingError,
 )
-from hexastack_ai.infra.config import HexastackAiConfig
 from hexastack_core.ports.ai import LlmProviderPort
 
 

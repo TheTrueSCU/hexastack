@@ -77,9 +77,11 @@ def _build_forbidden_contracts(
 
 def build_import_linter_toml(pkg_name: str, present_layers: set[str]) -> str:
     """Build the complete [tool.importlinter] TOML section string for a package."""
+    # Top-to-bottom hierarchy: infra -> adapters -> ports -> domain
+    # Higher layers may import lower layers; lower layers cannot import higher layers.
     active_layers = [
         layer
-        for layer in ["adapters", "infra", "ports", "domain"]
+        for layer in ["infra", "adapters", "ports", "domain"]
         if layer in present_layers
     ]
 
@@ -112,13 +114,14 @@ def update_pyproject_toml(pkg_path: Path) -> None:
     linter_config = build_import_linter_toml(pkg_name, present_layers)
     content = pyproject_file.read_text()
 
+    # Strip existing [tool.importlinter] and [[tool.importlinter.contracts]] sections
     content = re.sub(
-        r"\[tool\.importlinter\][\s\S]*?(?=(\n\[|\Z))",
+        r"\[\[?tool\.importlinter(?:\.contracts)?\]\]?[\s\S]*?(?=(\n\[|\Z))",
         "",
         content,
     ).strip()
 
-    updated_content = content + "\n\n" + linter_config
+    updated_content = content + "\n\n" + linter_config + "\n"
     pyproject_file.write_text(updated_content.lstrip())
 
 

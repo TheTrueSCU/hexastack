@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import Any, Protocol, cast
 
 from hexastack_core.domain import Generic
+from hexastack_cqrs.ports.buses import MiddlewarePort
 
 
 class GenericMiddleware(Protocol):
@@ -32,11 +33,11 @@ class GenericMiddleware(Protocol):
         """
 
 
-class InOutMiddleware:
+class InOutMiddleware(MiddlewarePort):
     """Base class for CQRS middleware with before, after, and error lifecycle hooks.
 
     Notes/Architectural Intent:
-        Implements the Template Method pattern over GenericMiddleware. Subclasses
+        Implements the Template Method pattern over MiddlewarePort. Subclasses
         override before(), after(), and/or on_error() hooks without needing to
         manage synchronous vs. asynchronous coroutine unwrapping and closure wrapping.
     """

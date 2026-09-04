@@ -2,7 +2,7 @@ import types
 
 from typer.testing import CliRunner
 
-from hexastack_cli.adapters.app import create_cli_app
+from hexastack_cli.infra.app import create_cli_app
 from hexastack_cli.infra.autodiscovery import (
     autodiscover_cli_commands,
 )

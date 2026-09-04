@@ -2,9 +2,11 @@ from collections.abc import Callable
 from typing import Any
 
 from hexastack_core.domain import Generic, Query
-from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
-from hexastack_cqrs.infra.registries.handler import HandlerRegistry
-from hexastack_cqrs.ports.buses import QueryBusPort
+from hexastack_cqrs.ports.buses import (
+    HandlerDispatcherPort,
+    MiddlewarePort,
+    QueryBusPort,
+)
 
 
 class SynchronousQueryBus(QueryBusPort):
@@ -17,14 +19,14 @@ class SynchronousQueryBus(QueryBusPort):
 
     def __init__(
         self,
-        handler_registry: HandlerRegistry,
-        middleware: list[GenericMiddleware] | None = None,
+        handler_registry: HandlerDispatcherPort,
+        middleware: list[MiddlewarePort] | None = None,
     ) -> None:
         """Initialize synchronous query bus with handler registry and middleware.
 
         Args:
-            handler_registry: HandlerRegistry containing registered query handlers.
-            middleware: Optional ordered list of GenericMiddleware interceptors.
+            handler_registry: HandlerDispatcherPort containing registered query handlers.
+            middleware: Optional ordered list of MiddlewarePort interceptors.
         """
         self._registry = handler_registry
         self._middleware = list(middleware) if middleware is not None else []

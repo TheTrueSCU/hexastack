@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-ai"
-version = "0.2.0"
+version = "0.3.0"
 description = "AI engine, LLM provider integration (LiteLLM, Instructor, PydanticAI), and CQRS agent reflection for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -28,25 +28,6 @@ build-backend = "uv_build"
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_ai"]
-layers = [
-    "adapters",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for domain"
-type = "forbidden"
-source_modules = ["hexastack_ai.domain"]
-forbidden_modules = [
-    "hexastack_ai.adapters",
-    "hexastack_ai.infra",
-]
-
 [tool.importlinter]
 root_packages = ["hexastack_ai"]
 
@@ -55,7 +36,7 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_ai"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "domain",
 ]

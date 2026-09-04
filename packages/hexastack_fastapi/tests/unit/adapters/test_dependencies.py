@@ -21,13 +21,13 @@ from hexastack_cqrs.infra.registries.command import CommandRegistry
 from hexastack_cqrs.infra.registries.handler import HandlerRegistry
 from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 from hexastack_cqrs.infra.registries.query import QueryRegistry
-from hexastack_fastapi.adapters.app import create_fastapi_app
 from hexastack_fastapi.adapters.dependencies import (
     check_openapi_conformance,
     get_container,
     get_pipeline,
 )
 from hexastack_fastapi.adapters.routing import CqrsRouter
+from hexastack_fastapi.infra.app import create_fastapi_app
 from hexastack_fastapi.infra.config import HexastackFastApiConfig
 
 

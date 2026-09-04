@@ -5,14 +5,17 @@ from fastapi.testclient import TestClient
 from hexastack_core.adapters.ratelimit import InMemoryRateLimiter
 from hexastack_core.ports.ratelimit import RateLimiterPort
 from hexastack_core.utils.context import UserContext, set_user_context
-from hexastack_fastapi.adapters.app import create_fastapi_app
 from hexastack_fastapi.adapters.ratelimit import (
     SlowapiRateLimiterAdapter,
     get_remote_address,
     get_user_or_ip_key,
     rate_limit,
 )
-from hexastack_fastapi.infra.config import HexastackFastApiConfig, RateLimitConfig
+from hexastack_fastapi.domain.config import (
+    HexastackFastApiConfig,
+    RateLimitConfig,
+)
+from hexastack_fastapi.infra.app import create_fastapi_app
 
 
 def test_get_remote_address_and_user_key():

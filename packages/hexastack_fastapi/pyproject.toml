@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-fastapi"
-version = "0.2.0"
+version = "0.3.0"
 description = "FastAPI presentation adapter for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -54,8 +54,8 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_fastapi"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
 ]
 
 [[tool.importlinter.contracts]]

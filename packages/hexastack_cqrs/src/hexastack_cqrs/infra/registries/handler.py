@@ -5,6 +5,7 @@ from hexastack_core.infra import (
     GenericHandlerRegistry,
     GenericHandlerRegistryError,
 )
+from hexastack_cqrs.ports.buses import HandlerDispatcherPort
 
 
 class HandlerRegistryError(GenericHandlerRegistryError[Generic]):
@@ -15,7 +16,7 @@ class HandlerRegistryError(GenericHandlerRegistryError[Generic]):
     """
 
 
-class HandlerRegistry(GenericHandlerRegistry[Generic, Any]):
+class HandlerRegistry(GenericHandlerRegistry[Generic, Any], HandlerDispatcherPort):
     """Registry maintaining mappings from Generic message types to handler functions.
 
     Notes/Architectural Intent:

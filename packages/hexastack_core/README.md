@@ -35,7 +35,7 @@
 
 ```
 hexastack_core/
-├── domain/          # Result[T, E], HexastackError, Entity, ValueObject, EvaluationContext
+├── domain/          # Result[T, E], HexastackError, Entity, ValueObject, EvaluationContext, HexastackConfig, HexastackCoreConfig
 ├── ports/           # Repository, UnitOfWork, BootstrapperPort, LoggerPort, CachePort, StoragePort, LockPort, LeaderElectionPort
 ├── adapters/        # InMemory, Redis, DiskCache, FileLock, Storage (InMemory, Local, Fsspec) implementations
 ├── infra/           # Bootstrap engine, ConfigRegistry, GenericTypeRegistry, decorators

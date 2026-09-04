@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-flags"
-version = "0.2.0"
+version = "0.3.0"
 description = "CNCF OpenFeature provider adapters and enterprise feature flagging for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -29,36 +29,6 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_flags"]
-layers = [
-    "adapters",
-    "ports",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for domain"
-type = "forbidden"
-source_modules = ["hexastack_flags.domain"]
-forbidden_modules = [
-    "hexastack_flags.ports",
-    "hexastack_flags.adapters",
-    "hexastack_flags.infra",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for ports"
-type = "forbidden"
-source_modules = ["hexastack_flags.ports"]
-forbidden_modules = [
-    "hexastack_flags.adapters",
-    "hexastack_flags.infra",
-]
-
 [tool.importlinter]
 root_packages = ["hexastack_flags"]
 
@@ -67,8 +37,8 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_flags"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "ports",
     "domain",
 ]

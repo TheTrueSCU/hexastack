@@ -1,3 +1,4 @@
+from hexastack_cli.infra.app import create_cli_app
 from hexastack_cli.infra.autodiscovery import (
     autodiscover_cli_commands,
     create_cli_visitor,
@@ -22,6 +23,7 @@ __all__ = [
     "cli_query",
     "CliBootstrapper",
     "CliMetadata",
+    "create_cli_app",
     "create_cli_visitor",
     "GroupMetadata",
     "HexastackCliConfig",

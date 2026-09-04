@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-cli"
-version = "0.2.0"
+version = "0.3.0"
 description = "Hexastack CLI presentation adapter with Typer and Rich"
 readme = "README.md"
 license = "Apache-2.0"
@@ -39,8 +39,8 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_cli"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
 ]
 
 [[tool.importlinter.contracts]]

@@ -7,19 +7,27 @@ from hexastack_grpc.adapters.server import (
     create_async_grpc_server,
     run_grpc_server,
 )
-from hexastack_grpc.infra.config import HexastackGrpcConfig
 
 
 @pytest.mark.anyio
 async def test_create_async_grpc_server():
-    cfg = HexastackGrpcConfig(host="127.0.0.1", port=50055)
     mock_interceptor = MagicMock(spec=grpc.aio.ServerInterceptor)
-    server = create_async_grpc_server(config=cfg, interceptors=[mock_interceptor])
+    server = create_async_grpc_server(
+        host="127.0.0.1", port=50055, interceptors=[mock_interceptor]
+    )
     assert server is not None
     await server.stop(grace=None)
 
-    # Test with interceptors=None fallback to empty tuple
-    server_no_int = create_async_grpc_server(config=cfg, interceptors=None)
+    # Test with HexastackGrpcConfig object
+    from hexastack_grpc.domain.config import HexastackGrpcConfig
+
+    cfg = HexastackGrpcConfig(host="127.0.0.1", port=50057)
+    server_cfg = create_async_grpc_server(config=cfg)
+    assert server_cfg is not None
+    await server_cfg.stop(grace=None)
+
+    # Test with default args and interceptors=None fallback to empty tuple
+    server_no_int = create_async_grpc_server(host="127.0.0.1", port=50056)
     assert server_no_int is not None
     await server_no_int.stop(grace=None)
 

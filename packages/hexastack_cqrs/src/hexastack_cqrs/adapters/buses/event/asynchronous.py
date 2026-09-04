@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from hexastack_core.domain import Event, Generic
 from hexastack_core.domain.exceptions import MissingDependencyError
-from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
-from hexastack_cqrs.ports.buses import EventBusPort
+from hexastack_cqrs.ports.buses import EventBusPort, MiddlewarePort
 
 if TYPE_CHECKING:
     from huey import Huey
@@ -24,13 +23,13 @@ class HueyEventBus(EventBusPort):
     def __init__(
         self,
         huey: "Huey",
-        middleware: list[GenericMiddleware] | None = None,
+        middleware: list[MiddlewarePort] | None = None,
     ) -> None:
         """Initialize Huey event bus with Huey instance and optional middleware.
 
         Args:
             huey: Initialized Huey task queue instance.
-            middleware: Optional ordered list of GenericMiddleware interceptors.
+            middleware: Optional ordered list of MiddlewarePort interceptors.
 
         Raises:
             MissingDependencyError: If huey package is not installed.
@@ -134,13 +133,13 @@ class AsyncNativeEventBus(EventBusPort):
 
     def __init__(
         self,
-        middleware: list[GenericMiddleware] | None = None,
+        middleware: list[MiddlewarePort] | None = None,
         executor: ThreadPoolExecutor | None = None,
     ) -> None:
         """Initialize native async event bus.
 
         Args:
-            middleware: Optional ordered list of GenericMiddleware interceptors.
+            middleware: Optional ordered list of MiddlewarePort interceptors.
             executor: Optional ThreadPoolExecutor for managing worker threads.
         """
         self._middleware = list(middleware) if middleware is not None else []

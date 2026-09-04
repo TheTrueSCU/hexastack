@@ -34,7 +34,7 @@ class CliBootstrapper(BootstrapperPort):
         Raises:
             None.
         """
-        from hexastack_cli.adapters.app import create_cli_app
+        from hexastack_cli.infra.app import create_cli_app
         from hexastack_cli.infra.autodiscovery import create_cli_visitor
 
         cfg = HexastackCliConfig()

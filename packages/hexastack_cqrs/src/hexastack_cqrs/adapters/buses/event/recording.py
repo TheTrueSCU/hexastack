@@ -2,7 +2,7 @@ from typing import TypeVar
 
 from hexastack_core.domain import Event
 from hexastack_cqrs.adapters.buses.event.synchronous import SynchronousEventBus
-from hexastack_cqrs.infra.middleware.generic import GenericMiddleware
+from hexastack_cqrs.ports.buses import MiddlewarePort
 
 E = TypeVar("E", bound=Event)
 
@@ -16,7 +16,7 @@ class RecordingEventBus(SynchronousEventBus):
         `bus.assert_published(UserCreatedEvent)`) without requiring custom mock tracking.
     """
 
-    def __init__(self, middleware: list[GenericMiddleware] | None = None) -> None:
+    def __init__(self, middleware: list[MiddlewarePort] | None = None) -> None:
         super().__init__(middleware=middleware)
         self.published_events: list[Event] = []
 

@@ -2,12 +2,12 @@ import importlib.util
 from collections.abc import Mapping
 from typing import Any
 
+from hexastack_core.domain.config import HexastackConfig
 from hexastack_core.domain.feature_flags import (
     EvaluationContext,
     FlagEvaluationDetails,
     FlagEvaluationReason,
 )
-from hexastack_core.infra.config import HexastackConfig
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 
 

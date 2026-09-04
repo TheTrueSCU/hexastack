@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-cqrs"
-version = "0.2.0"
+version = "0.3.0"
 description = "CQRS commands, queries, events, buses, and execution pipeline for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -30,36 +30,6 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_cqrs"]
-layers = [
-    "adapters",
-    "ports",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for domain"
-type = "forbidden"
-source_modules = ["hexastack_cqrs.domain"]
-forbidden_modules = [
-    "hexastack_cqrs.ports",
-    "hexastack_cqrs.adapters",
-    "hexastack_cqrs.infra",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for ports"
-type = "forbidden"
-source_modules = ["hexastack_cqrs.ports"]
-forbidden_modules = [
-    "hexastack_cqrs.adapters",
-    "hexastack_cqrs.infra",
-]
-
 [tool.importlinter]
 root_packages = ["hexastack_cqrs"]
 
@@ -68,8 +38,8 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_cqrs"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "ports",
     "domain",
 ]

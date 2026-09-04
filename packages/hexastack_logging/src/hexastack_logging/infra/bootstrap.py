@@ -33,8 +33,14 @@ class LoggingBootstrapper(BootstrapperPort):
             None.
         """
         if LoggingPort not in context.container:
+            import logging
+
+            from hexastack_logging.infra.config import configure_logging
+
             cfg = context.get_config("logging", HexastackLoggingConfig)
-            logger = StructuredLogger(config=cfg)
+            raw_logger = logging.getLogger("hexastack")
+            listener = configure_logging(config=cfg, target_logger=raw_logger)
+            logger = StructuredLogger(logger=raw_logger, listener=listener)
             context.container.add_instance(logger, declared_class=LoggingPort)
             context.properties["logger"] = logger
         else:

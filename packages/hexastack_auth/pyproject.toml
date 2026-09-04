@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-auth"
-version = "0.2.0"
+version = "0.3.0"
 description = "Authentication, authorization, RBAC, JWT token services, and @authorize CQRS pipeline security for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -45,36 +45,6 @@ build-backend = "uv_build"
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_auth"]
-layers = [
-    "adapters",
-    "ports",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for domain"
-type = "forbidden"
-source_modules = ["hexastack_auth.domain"]
-forbidden_modules = [
-    "hexastack_auth.ports",
-    "hexastack_auth.adapters",
-    "hexastack_auth.infra",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for ports"
-type = "forbidden"
-source_modules = ["hexastack_auth.ports"]
-forbidden_modules = [
-    "hexastack_auth.adapters",
-    "hexastack_auth.infra",
-]
-
 [tool.importlinter]
 root_packages = ["hexastack_auth"]
 
@@ -83,8 +53,8 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_auth"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "ports",
     "domain",
 ]

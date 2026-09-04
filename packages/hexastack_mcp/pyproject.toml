@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-mcp"
-version = "0.2.0"
+version = "0.3.0"
 description = "Model Context Protocol (MCP) adapter and AI agent tool integration for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
@@ -32,25 +32,6 @@ hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 hexastack-fastapi = { workspace = true }
 
-
-[[tool.importlinter.contracts]]
-name = "Hexagonal architecture layer hierarchy"
-type = "layers"
-containers = ["hexastack_mcp"]
-layers = [
-    "adapters",
-    "domain",
-]
-
-[[tool.importlinter.contracts]]
-name = "Forbidden imports for domain"
-type = "forbidden"
-source_modules = ["hexastack_mcp.domain"]
-forbidden_modules = [
-    "hexastack_mcp.adapters",
-    "hexastack_mcp.infra",
-]
-
 [tool.importlinter]
 root_packages = ["hexastack_mcp"]
 
@@ -59,7 +40,7 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_mcp"]
 layers = [
-    "adapters",
     "infra",
+    "adapters",
     "domain",
 ]

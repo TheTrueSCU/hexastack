@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 import grpc
 
-from hexastack_grpc.infra.config import HexastackGrpcConfig
+from hexastack_grpc.domain.config import HexastackGrpcConfig
 
 __all__ = [
     "create_async_grpc_server",
@@ -11,20 +11,27 @@ __all__ = [
 
 
 def create_async_grpc_server(
-    config: HexastackGrpcConfig,
+    config: HexastackGrpcConfig | None = None,
+    *,
+    host: str | None = None,
+    port: int | None = None,
     interceptors: Sequence[grpc.aio.ServerInterceptor] | None = None,
 ) -> grpc.aio.Server:
     """Create an asynchronous grpc.aio.Server instance.
 
     Args:
-        config: HexastackGrpcConfig options.
+        config: Optional HexastackGrpcConfig instance.
+        host: Optional host interface to bind to.
+        port: Optional port number to bind to.
         interceptors: Optional async server interceptors.
 
     Returns:
         Configured grpc.aio.Server instance.
     """
+    bind_host = host or (config.host if config else "0.0.0.0")
+    bind_port = port if port is not None else (config.port if config else 50051)
     server = grpc.aio.server(interceptors=interceptors or ())
-    server.add_insecure_port(f"{config.host}:{config.port}")
+    server.add_insecure_port(f"{bind_host}:{bind_port}")
     return server
 
 
