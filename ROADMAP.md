@@ -36,12 +36,12 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Optional Extras Parity Auditor**: CLI validator enforcing subpackage extras forwarding into umbrella package (`hexastack-tools` - Issue #97, PR #102).
 - [x] **Standardized In-Memory Test Harness**: Unify unit test mocks onto canonical `InMemory*` adapters (`hexastack-core` - Issue #98, PR #103).
 - [x] **Hypothesis Invariant Fuzzing**: Property-based fuzzing for CircuitBreaker, Storage, SSE/WS, and Metrics (Issue #99, PR #104).
-- [ ] **Tutorial Series Refresh**: Update To-Do microservice tutorial series with `/metrics`, streaming, and unified chapter navigation (Issue #101).
+- [x] **Tutorial Series Refresh**: Update To-Do microservice tutorial series with `/metrics`, streaming, and unified chapter navigation (Issue #101, PR #105).
 - [ ] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active-standby cluster coordination, and lease renewal (Issue #74).
 
-
-
 ---
+
+
 
 ## 🔮 Upcoming Milestones
 
