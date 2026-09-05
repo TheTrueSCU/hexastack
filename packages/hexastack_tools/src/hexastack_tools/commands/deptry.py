@@ -10,7 +10,11 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from hexastack_tools.utils.workspace import get_package_directories, get_repo_root
+from hexastack_tools.utils.workspace import (
+    ensure_tool_installed,
+    get_package_directories,
+    get_repo_root,
+)
 
 console = Console()
 
@@ -41,6 +45,8 @@ def run_deptry_on_package(pkg_dir: Path) -> tuple[bool, str]:
 
 def main() -> int:
     """Run deptry across all workspace packages."""
+    ensure_tool_installed("deptry", cli_command="deptry", extra_name="governance")
+
     parser = argparse.ArgumentParser(description="Run deptry per package.")
     parser.parse_args()
 

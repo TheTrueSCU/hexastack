@@ -10,6 +10,7 @@ from pathlib import Path
 from hexastack_tools.utils.workspace import (
     LAYER_RESTRICTIONS,
     HexastackScriptArgumentParser,
+    ensure_tool_installed,
     get_package_directories,
     get_package_directory,
     get_packages_directory,
@@ -144,6 +145,10 @@ def generate_main() -> None:
 
 def run_main() -> int:
     """CLI entrypoint to run import-linter per package."""
+    ensure_tool_installed(
+        "importlinter", cli_command="lint-imports", extra_name="governance"
+    )
+
     from rich.console import Console
     from rich.table import Table
 

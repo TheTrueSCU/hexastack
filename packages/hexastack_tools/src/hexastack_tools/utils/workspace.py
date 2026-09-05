@@ -423,7 +423,64 @@ def resolve_affected_packages(
     return affected
 
 
+def check_tool_availability(
+    import_name: str,
+    cli_command: str | None = None,
+) -> tuple[bool, str]:
+    """Check if an underlying tool dependency / CLI executable is available in the current environment.
+
+    Args:
+        import_name: Python module/package name to import check (e.g. 'importlinter', 'deptry').
+        cli_command: Optional CLI binary command name to search in PATH (e.g. 'lint-imports').
+
+    Returns:
+        Tuple of (is_available: bool, status_message: str).
+    """
+    import importlib.util
+    import shutil
+
+    if importlib.util.find_spec(import_name) is None:
+        cmd_hint = f" (CLI '{cli_command}')" if cli_command else ""
+        return False, f"Python package '{import_name}'{cmd_hint} is not installed."
+
+    if cli_command and not shutil.which(cli_command):
+        return False, f"CLI executable '{cli_command}' was not found in PATH."
+
+    return True, ""
+
+
+def ensure_tool_installed(
+    import_name: str,
+    cli_command: str | None = None,
+    extra_name: str | None = None,
+) -> None:
+    """Validate tool availability and fail with a clear, actionable error message if missing.
+
+    Args:
+        import_name: Python package name to verify.
+        cli_command: Optional CLI binary command name.
+        extra_name: Optional extra group name (e.g. 'mutmut', 'pydeps', 'all').
+
+    Raises:
+        SystemExit: If the required tool is not available in the environment.
+    """
+    import sys
+
+    is_ok, err = check_tool_availability(import_name, cli_command)
+    if not is_ok:
+        extra_hint = (
+            f" or install 'hexastack-tools[{extra_name}]'" if extra_name else ""
+        )
+        sys.stderr.write(
+            f"\n❌ Tool Dependency Missing: {err}\n"
+            f"💡 To install: 'uv add --dev {import_name}'{extra_hint}\n\n"
+        )
+        sys.exit(1)
+
+
 __all__ = [
+    "check_tool_availability",
+    "ensure_tool_installed",
     "get_downstream_dependents",
     "get_package_dependencies",
     "get_package_directories",

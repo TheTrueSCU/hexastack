@@ -1,6 +1,6 @@
 [project]
 name = "hexastack"
-version = "0.3.0"
+version = "0.3.1"
 description = "Hexastack - Modern Hexagonal Architecture & CQRS Framework for Python"
 readme = "README.md"
 license = "Apache-2.0"

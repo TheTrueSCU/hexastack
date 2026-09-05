@@ -15,9 +15,23 @@ from hexastack_tools.commands.extras_parity import (
     generate_extras_mermaid_diagram,
 )
 from hexastack_tools.commands.pydeps import generate_all_diagrams
-from hexastack_tools.utils.workspace import get_package_directories, get_repo_root
+from hexastack_tools.utils.workspace import (
+    check_tool_availability,
+    get_package_directories,
+    get_repo_root,
+)
 
 console = Console()
+
+_EXPECTED_TOOLS: list[tuple[str, str, str | None]] = [
+    ("importlinter", "governance (import-linter-run)", "lint-imports"),
+    ("deptry", "governance (deptry-run)", "deptry"),
+    ("mutmut", "mutmut (mutmut-run)", "mutmut"),
+    ("pydeps", "diagrams (pydeps-generate)", "pydeps"),
+    ("libcst", "rope (alphabetizer)", None),
+    ("pytest_archon", "archon (pytest-archon-generate)", None),
+    ("inline_snapshot", "snapshots (inline-snapshot-update)", None),
+]
 
 
 def audit_workspace_dependencies(
@@ -25,26 +39,37 @@ def audit_workspace_dependencies(
     *,
     check_deptry: bool = True,
     check_extras: bool = True,
+    check_tools: bool = True,
     generate_diagrams: bool = False,
 ) -> tuple[bool, list[str]]:
-    """Execute unified audit across packaging extras, source imports, and diagrams.
+    """Execute unified audit across packaging extras, source imports, tool binaries, and diagrams.
 
     Args:
         repo_root: Root directory of the repository workspace.
         check_deptry: Whether to run deptry import audits on each package.
         check_extras: Whether to run optional extras parity auditing.
+        check_tools: Whether to verify tool dependency availability in current environment.
         generate_diagrams: Whether to regenerate Pydeps SVGs and Mermaid diagrams.
 
     Returns:
         Tuple of (is_healthy: bool, list_of_error_messages: list[str]).
 
     Notes/Architectural Intent:
-        Unifies code-level import verification (deptry) and pyproject.toml packaging
-        forwarding contracts into a single high-performance pipeline.
+        Unifies code-level import verification (deptry), tool dependency readiness,
+        and pyproject.toml packaging forwarding contracts into a single high-performance pipeline.
     """
     errors: list[str] = []
 
-    # 1. Extras Parity Check
+    # 1. Tool Availability Check
+    if check_tools:
+        for import_name, desc, cli_cmd in _EXPECTED_TOOLS:
+            ok, err = check_tool_availability(import_name, cli_cmd)
+            if not ok:
+                errors.append(
+                    f"Tools Environment: Missing dependency for {desc} -> {err}"
+                )
+
+    # 2. Extras Parity Check
     if check_extras:
         extras_violations = audit_extras_parity(repo_root)
         if extras_violations:
@@ -53,14 +78,14 @@ def audit_workspace_dependencies(
                     f"Extras Parity: {v.subpackage}[{v.extra_name}] not properly forwarded in umbrella package."
                 )
 
-    # 2. Deptry Source Code Import Check
+    # 3. Deptry Source Code Import Check
     if check_deptry:
         for pkg_dir in get_package_directories(repo_root):
             ok, err = run_deptry_on_package(pkg_dir)
             if not ok:
                 errors.append(f"Deptry [{pkg_dir.name}]: {err}")
 
-    # 3. Diagram Generation
+    # 4. Diagram Generation
     if generate_diagrams:
         try:
             generate_all_diagrams(repo_root)
@@ -122,12 +147,19 @@ def main() -> int:
         repo_root,
         check_deptry=check_deptry,
         check_extras=check_extras,
+        check_tools=True,
         generate_diagrams=False,
     )
 
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Audit Check", style="bold", width=36)
     table.add_column("Status", width=12)
+
+    tools_ok = not any(e.startswith("Tools Environment") for e in errors)
+    table.add_row(
+        "Tool Environment Readiness",
+        "[green]✅ Passed[/green]" if tools_ok else "[red]❌ Failed[/red]",
+    )
 
     if check_extras:
         extras_ok = not any(e.startswith("Extras Parity") for e in errors)

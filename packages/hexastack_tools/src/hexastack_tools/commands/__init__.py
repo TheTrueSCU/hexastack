@@ -15,6 +15,15 @@ from hexastack_tools.commands.code_scanning import (
 from hexastack_tools.commands.codeql_scan import (
     main as codeql_scan_main,
 )
+from hexastack_tools.commands.coverage import (
+    boundary_audit_main as pytest_boundary_audit_main,
+)
+from hexastack_tools.commands.coverage import (
+    impact_main as pytest_impact_main,
+)
+from hexastack_tools.commands.coverage import (
+    redundancy_audit_main as pytest_redundancy_audit_main,
+)
 from hexastack_tools.commands.deps_audit import (
     main as deps_audit_main,
 )
@@ -93,6 +102,9 @@ __all__ = [
     "pypi_check_main",
     "pypi_publish_main",
     "pytest_archon_generate_main",
+    "pytest_boundary_audit_main",
+    "pytest_impact_main",
+    "pytest_redundancy_audit_main",
     "pytest_run_main",
     "rope_alphabetize_main",
     "rope_run_main",

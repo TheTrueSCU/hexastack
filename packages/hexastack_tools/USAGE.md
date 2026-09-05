@@ -344,12 +344,29 @@ options:
 #### `mutmut-inspect`
 
 ```text
-usage: mutmut-inspect [-h]
+usage: mutmut-inspect [-h] [--summary] [-p PACKAGE] [-f FILE] [-a] [-c]
+                      [-n LIMIT]
 
-Inspect mutation testing results and cached mutants.
+Inspect .mutmut-cache with automated mutant classification (Critical vs
+Ignorable)
 
 options:
-  -h, --help  show this help message and exit
+  -h, --help            show this help message and exit
+  --summary             Display package-level and triage classification
+                        summary.
+  -p, --package PACKAGE
+                        Filter surviving mutants by package name (e.g. db,
+                        auth, events, grpc).
+  -f, --file FILE       Filter surviving mutants by filename pattern (e.g.
+                        exception.py).
+  -a, --actionable-only
+                        Only display actionable critical mutants (skip
+                        ignorable / equivalent).
+  -c, --correlate-coverage
+                        Cross-reference .coverage database to identify test
+                        functions executing mutant lines.
+  -n, --limit LIMIT     Maximum number of mutant lines to display (default:
+                        25).
 ```
 
 ### 📦 Code Architecture & Distribution
@@ -431,20 +448,28 @@ options:
 #### `rope-run`
 
 ```text
-usage: rope-run [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a] [files ...]
+usage: rope-run [-h] [--root ROOT] [--dry-run]
+                {change-signature,extract-method,extract-var,find-occurrences,inline,move-module,move-symbol,rename,sort-methods,use-function} ...
 
-Alphabetize functions and class methods across packages deterministically.
+Deterministic Python Refactoring Engine for AI Agents
 
 positional arguments:
-  files                 Files or paths to process (defaults to all if none
-                        specified).
+  {change-signature,extract-method,extract-var,find-occurrences,inline,move-module,move-symbol,rename,sort-methods,use-function}
+    change-signature    Change arguments on a function project-wide
+    extract-method      Extract code block to method
+    extract-var         Extract expression to variable
+    find-occurrences    Find all semantic occurrences of a symbol
+    inline              Inline variable, method, or function project-wide
+    move-module         Move module/package to another folder
+    move-symbol         Move function/class to another file
+    rename              Rename a symbol project-wide
+    sort-methods        Alphabetize class methods in a file
+    use-function        Replace duplicated logic with calls to this function
 
 options:
   -h, --help            show this help message and exit
-  -p, --package PACKAGES
-                        Target specific package(s) (e.g. -p auth -p core).
-  --path CUSTOM_PATHS   Target custom directory or file path(s).
-  -a, --all             Run across all packages unconditionally.
+  --root ROOT           Project root (default: .)
+  --dry-run             Preview changes without modifying source files.
 ```
 
 ### 🔧 Additional Workspace Tools
@@ -475,6 +500,50 @@ options:
                  diagrams.
   --deptry-only  Only run deptry source import audits.
   --extras-only  Only run optional extras parity checks.
+```
+
+#### `pytest-boundary-audit`
+
+```text
+usage: pytest-boundary-audit [-h] [--cov-file COV_FILE]
+
+Audit .coverage execution contexts for hexagonal architectural layer leaks.
+
+options:
+  -h, --help           show this help message and exit
+  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
+```
+
+#### `pytest-impact`
+
+```text
+usage: pytest-impact [-h] [--base BASE] [--cov-file COV_FILE] [--dry-run] ...
+
+Run only tests impacted by modified lines using git diff and .coverage data.
+
+positional arguments:
+  pytest_args          Extra flags passed directly to pytest (e.g. -- -v -s)
+
+options:
+  -h, --help           show this help message and exit
+  --base BASE          Git ref or branch to diff against (e.g. 'main',
+                       'origin/main', 'HEAD~1'). Defaults to unstaged/staged
+                       working tree.
+  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
+  --dry-run            Print selected test targets without executing pytest.
+```
+
+#### `pytest-redundancy-audit`
+
+```text
+usage: pytest-redundancy-audit [-h] [--cov-file COV_FILE] [-n LIMIT]
+
+Identify redundant unit tests providing zero unique branch coverage.
+
+options:
+  -h, --help           show this help message and exit
+  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
+  -n, --limit LIMIT    Maximum redundant tests to display (default: 25)
 ```
 
 #### `rope-alphabetizer`

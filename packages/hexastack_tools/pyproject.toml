@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-tools"
-version = "0.3.0"
+version = "0.3.1"
 description = "Developer tooling and governance suite for Hexastack dogfooding"
 readme = "README.md"
 license = "Apache-2.0"
@@ -9,12 +9,32 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "coverage>=7.6.0",
+    "deptry>=0.23.0",
     "hexastack-cli",
     "hexastack-core",
     "hexastack-cqrs",
     "httpx>=0.28.0",
+    "import-linter>=2.13",
+    "inline-snapshot>=0.35.4",
+    "libcst>=1.9.0",
+    "pytest-archon>=0.0.7",
     "rich>=13.8.0",
     "typer>=0.27.1",
+]
+
+[project.optional-dependencies]
+diagrams = [
+    "pydeps>=3.0.7",
+]
+mutmut = [
+    "mutmut<3",
+]
+rope = [
+    "rope>=1.14.0",
+]
+all = [
+    "hexastack-tools[diagrams,mutmut,rope]",
 ]
 
 [project.scripts]
@@ -44,6 +64,9 @@ pypi-build = "hexastack_tools.commands.pypi:build_main"
 pypi-check = "hexastack_tools.commands.pypi:check_main"
 pypi-publish = "hexastack_tools.commands.pypi:publish_main"
 pytest-archon-generate = "hexastack_tools.commands.pytest_runner:archon_generate_main"
+pytest-boundary-audit = "hexastack_tools.commands.coverage:boundary_audit_main"
+pytest-impact = "hexastack_tools.commands.coverage:impact_main"
+pytest-redundancy-audit = "hexastack_tools.commands.coverage:redundancy_audit_main"
 pytest-run = "hexastack_tools.commands.pytest_runner:run_main"
 rope-alphabetizer = "hexastack_tools.commands.rope:alphabetize_main"
 rope-run = "hexastack_tools.commands.rope:run_main"

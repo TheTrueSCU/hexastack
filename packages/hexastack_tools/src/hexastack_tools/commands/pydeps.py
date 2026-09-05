@@ -9,6 +9,7 @@ from pydeps.pydeps import pydeps
 
 from hexastack_tools.utils.workspace import (
     HexastackScriptArgumentParser,
+    ensure_tool_installed,
     get_package_directories,
     get_package_directory,
     get_packages_directory,
@@ -76,6 +77,8 @@ def generate_overview_diagram(root: Path) -> str | None:
 
 def generate_main() -> None:
     """CLI entrypoint for pydeps-generate."""
+    ensure_tool_installed("pydeps", cli_command="pydeps", extra_name="diagrams")
+
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
@@ -130,6 +133,7 @@ def generate_main() -> None:
 
 def generate_all_diagrams(root: Path) -> list[tuple[str, str]]:
     """Programmatically generate overview and all package SVGs."""
+    ensure_tool_installed("pydeps", cli_command="pydeps", extra_name="diagrams")
     packages = get_package_directories(root)
     results: list[tuple[str, str]] = []
 

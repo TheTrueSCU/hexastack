@@ -1757,7 +1757,7 @@ wheels = [
 
 [[package]]
 name = "hexastack"
-version = "0.3.0"
+version = "0.3.1"
 source = { editable = "packages/hexastack" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2486,33 +2486,67 @@ provides-extras = ["otlp"]
 
 [[package]]
 name = "hexastack-tools"
-version = "0.3.0"
+version = "0.3.1"
 source = { editable = "packages/hexastack_tools" }
 dependencies = [
+    { name = "coverage" },
+    { name = "deptry" },
     { name = "hexastack-cli" },
     { name = "hexastack-core" },
     { name = "hexastack-cqrs" },
     { name = "httpx" },
+    { name = "import-linter" },
+    { name = "inline-snapshot" },
+    { name = "libcst" },
+    { name = "pytest-archon" },
     { name = "rich" },
     { name = "typer" },
 ]
 
+[package.optional-dependencies]
+all = [
+    { name = "mutmut" },
+    { name = "pydeps" },
+    { name = "rope" },
+]
+diagrams = [
+    { name = "pydeps" },
+]
+mutmut = [
+    { name = "mutmut" },
+]
+rope = [
+    { name = "rope" },
+]
+
 [package.metadata]
 requires-dist = [
+    { name = "coverage", specifier = ">=7.6.0" },
+    { name = "deptry", specifier = ">=0.23.0" },
     { name = "hexastack-cli", editable = "packages/hexastack_cli" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "hexastack-tools", extras = ["diagrams", "mutmut", "rope"], marker = "extra == 'all'", editable = "packages/hexastack_tools" },
     { name = "httpx", specifier = ">=0.28.0" },
+    { name = "import-linter", specifier = ">=2.13" },
+    { name = "inline-snapshot", specifier = ">=0.35.4" },
+    { name = "libcst", specifier = ">=1.9.0" },
+    { name = "mutmut", marker = "extra == 'mutmut'", specifier = "<3" },
+    { name = "pydeps", marker = "extra == 'diagrams'", specifier = ">=3.0.7" },
+    { name = "pytest-archon", specifier = ">=0.0.7" },
     { name = "rich", specifier = ">=13.8.0" },
+    { name = "rope", marker = "extra == 'rope'", specifier = ">=1.14.0" },
     { name = "typer", specifier = ">=0.27.1" },
 ]
+provides-extras = ["diagrams", "mutmut", "rope", "all"]
 
 [[package]]
 name = "hexastack-workspace"
-version = "0.3.0"
+version = "0.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },
+    { name = "hexastack-tools", extra = ["all"] },
     { name = "openfeature-provider-flagd" },
 ]
 
@@ -2568,6 +2602,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "hexastack", extras = ["all"], editable = "packages/hexastack" },
+    { name = "hexastack-tools", extras = ["all"], editable = "packages/hexastack_tools" },
     { name = "openfeature-provider-flagd", specifier = ">=0.5.2" },
 ]
 

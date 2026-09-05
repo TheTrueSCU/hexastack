@@ -22,6 +22,7 @@ def test_audit_workspace_dependencies_passes_on_current_workspace() -> None:
         repo_root,
         check_deptry=True,
         check_extras=True,
+        check_tools=True,
         generate_diagrams=False,
     )
     assert is_healthy is True

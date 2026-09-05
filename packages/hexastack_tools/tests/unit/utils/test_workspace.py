@@ -1,9 +1,11 @@
-"""Unit tests for workspace utilities and agnostic discovery."""
-
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from hexastack_tools.utils.workspace import (
+    check_tool_availability,
+    ensure_tool_installed,
     get_package_directories,
     get_package_directory,
     get_package_module_dir,
@@ -12,6 +14,27 @@ from hexastack_tools.utils.workspace import (
     get_repo_root,
     get_valid_package_names,
 )
+
+
+def test_check_tool_availability_existing() -> None:
+    """Verify check_tool_availability for installed package."""
+    is_ok, err = check_tool_availability("rich")
+    assert is_ok is True
+    assert err == ""
+
+
+def test_check_tool_availability_missing() -> None:
+    """Verify check_tool_availability for non-existent package."""
+    is_ok, err = check_tool_availability("non_existent_package_xyz_99")
+    assert is_ok is False
+    assert "not installed" in err
+
+
+def test_ensure_tool_installed_raises_system_exit_on_missing() -> None:
+    """Verify ensure_tool_installed exits with error code 1 when missing."""
+    with pytest.raises(SystemExit) as exc_info:
+        ensure_tool_installed("non_existent_tool_123", extra_name="test-extra")
+    assert exc_info.value.code == 1
 
 
 def test_get_repo_root() -> None:
