@@ -41,12 +41,12 @@ def generate_package_diagram(pkg_path: Path, root: Path) -> str | None:
             fname=str(entry_point),
             T="svg",
             o=str(svg_path),
+            show=False,
             noshow=True,
             cluster=True,
             max_bacon=2,
             rankdir="TB",
             include_missing=False,
-            display=None,
         )
         return str(svg_path.relative_to(root))
     except Exception:
@@ -63,12 +63,12 @@ def generate_overview_diagram(root: Path) -> str | None:
             fname=str(packages_dir),
             T="svg",
             o=str(svg_path),
+            show=False,
             noshow=True,
             cluster=True,
             max_bacon=1,
             rankdir="TB",
             include_missing=False,
-            display=None,
         )
         return str(svg_path.relative_to(root))
     except Exception:

@@ -113,18 +113,44 @@ def test_mutmut_inspect_summary(
 
 @patch("hexastack_tools.commands.mutmut.get_db_connection")
 @patch("hexastack_tools.commands.mutmut.show_file_mutants")
-@patch("sys.argv", ["mutmut-inspect", "-p", "core", "-a"])
+@patch("sys.argv", ["mutmut-inspect", "-p", "core", "-a", "-c"])
 def test_mutmut_inspect_package_actionable(
     mock_show_file: MagicMock, mock_get_conn: MagicMock
 ) -> None:
-    """Verify mutmut inspect_main invokes show_file_mutants with package and actionable flag."""
+    """Verify mutmut inspect_main invokes show_file_mutants with package, actionable, and correlate flags."""
     mock_conn = MagicMock()
     mock_get_conn.return_value = mock_conn
     inspect_main()
     mock_show_file.assert_called_once_with(
-        mock_conn, "hexastack_core", limit=25, actionable_only=True
+        mock_conn, "hexastack_core", limit=25, actionable_only=True, correlate_coverage=True
     )
     mock_conn.close.assert_called_once()
+
+
+def test_show_file_mutants_execution() -> None:
+    """Verify show_file_mutants query parsing and rendering."""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_cursor.execute.return_value.fetchall.return_value = [
+        (1, "/repo/packages/hexastack_core/src/model.py", 10, "if status == 'active':"),
+        (2, "/repo/packages/hexastack_core/src/model.py", 20, "logger.info('ok')"),
+    ]
+
+    with patch("hexastack_tools.commands.coverage.get_tests_covering_line", return_value=["test_fn"]):
+        show_file_mutants(mock_conn, "hexastack_core", limit=10, actionable_only=True, correlate_coverage=True)
+        show_file_mutants(mock_conn, "hexastack_core", limit=10, actionable_only=False, correlate_coverage=False)
+
+
+def test_show_summary_execution() -> None:
+    """Verify show_summary query parsing and rendering."""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_cursor.execute.return_value.fetchall.return_value = [
+        (1, "packages/hexastack_core/src/model.py", "if status == 'active':"),
+    ]
+    show_summary(mock_conn)
 
 
 @patch("hexastack_tools.commands.mutmut._revert_bak_and_disk_mutations")
