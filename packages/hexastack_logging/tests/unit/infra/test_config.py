@@ -23,7 +23,11 @@ def test_configure_logging_async_queue_and_structured_logger(tmp_path: Path):
         file=FileLoggingConfig(enable=True, path=str(log_file)),
     )
 
-    structured = StructuredLogger(name="test_async_structured", config=cfg)
+    raw_logger = logging.getLogger("test_async_structured")
+    listener = configure_logging(config=cfg, target_logger=raw_logger)
+    structured = StructuredLogger(
+        logger=raw_logger, listener=listener, config=cfg
+    )
     assert structured.listener is not None
 
     structured.info("Async queue log message")
@@ -36,6 +40,7 @@ def test_configure_logging_async_queue_and_structured_logger(tmp_path: Path):
     assert log_file.exists()
     content = log_file.read_text(encoding="utf-8")
     assert "Async queue log message" in content
+
 
 
 def test_configure_logging_file_and_per_module_levels(tmp_path: Path):

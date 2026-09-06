@@ -40,6 +40,11 @@ def test_sanitizer_data_structures():
         "raw_tokens": ["Bearer token1", "Bearer token2"],
         "info": "plain text with Bearer abc",
         "num": 999,
+        "nested_dict": {
+            "secret_key": "api_key_12345",
+            "api_key": "raw_secret",
+            "sub": {"token": "inner_token", "normal": "value"},
+        },
     }
     san_nested = sanitizer.sanitize_dict(nested)
     assert san_nested["user"] == {
@@ -50,6 +55,12 @@ def test_sanitizer_data_structures():
     assert san_nested["raw_tokens"] == ["***REDACTED***", "***REDACTED***"]
     assert san_nested["info"] == "plain text with ***REDACTED***"
     assert san_nested["num"] == 999
+    assert san_nested["nested_dict"] == {
+        "secret_key": "api_key_12345",
+        "api_key": "***REDACTED***",
+        "sub": {"token": "***REDACTED***", "normal": "value"},
+    }
+
 
 
 @pytest.mark.snapshot
