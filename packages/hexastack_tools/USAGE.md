@@ -80,6 +80,26 @@ Usage: gh-checks [OPTIONS] {ref_or_pr}
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
+#### `gh-repo`
+
+```text
+Usage: gh-repo [OPTIONS] [repo_name]
+
+ Inspect repository configuration, Actions permissions, and environments.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│   repo_name      <str>  Optional repository in 'owner/repo' or 'repo' format │
+│                         (defaults to TheTrueSCU/hexastack).                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --format  -f      <auto|rich|json|plain>  Output format: auto (detects       │
+│                                           pipes), rich (interactive tables), │
+│                                           json (structured), plain (TSV).    │
+│                                           [default: auto]                    │
+│ --help                                    Show this message and exit.        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
 #### `gh-security`
 
 ```text

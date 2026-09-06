@@ -27,6 +27,7 @@ _TOOLS_SECTION_MAP: dict[str, list[str]] = {
     "🔍 GitHub & PR Examination Tools": [
         "gh-pr-examine",
         "gh-checks",
+        "gh-repo",
         "gh-security",
         "gh-code-scanning",
     ],

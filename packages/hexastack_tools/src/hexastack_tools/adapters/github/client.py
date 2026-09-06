@@ -12,6 +12,7 @@ import httpx
 from hexastack_tools.domain.github import (
     CheckRunFinding,
     PrSummary,
+    RepoStatus,
     ReviewComment,
     ReviewThread,
     SecurityAlert,
@@ -41,24 +42,56 @@ def get_github_token() -> str | None:
     return None
 
 
+def get_current_repo() -> tuple[str, str]:
+    """Derive owner and repository name from git remote or defaults."""
+    if shutil.which("git"):
+        try:
+            res = subprocess.run(
+                ["git", "remote", "get-url", "origin"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if res.returncode == 0 and res.stdout.strip():
+                url = res.stdout.strip()
+                # Handle git@github.com:Owner/Repo.git or https://github.com/Owner/Repo.git
+                if url.endswith(".git"):
+                    url = url[:-4]
+                if ":" in url and "@" in url:
+                    # git@github.com:Owner/Repo
+                    path_part = url.split(":", 1)[1]
+                    parts = path_part.strip("/").split("/")
+                    if len(parts) == 2:
+                        return parts[0], parts[1]
+                elif "github.com/" in url:
+                    path_part = url.split("github.com/", 1)[1]
+                    parts = path_part.strip("/").split("/")
+                    if len(parts) >= 2:
+                        return parts[0], parts[1]
+        except (subprocess.SubprocessError, OSError):
+            pass
+    return "TheTrueSCU", "hexastack"
+
+
 class GitHubHttpAdapter(GitHubApiPort):
     """Adapter executing synchronous HTTP requests to GitHub REST and GraphQL APIs."""
 
     def __init__(
         self,
         token: str | None = None,
-        owner: str = "TheTrueSCU",
-        repo: str = "hexastack",
+        owner: str | None = None,
+        repo: str | None = None,
     ) -> None:
         """Initialize GitHub HTTP client adapter.
 
         Args:
             token: Optional GitHub bearer token.
-            owner: Repository owner / organization.
-            repo: Repository name.
+            owner: Repository owner / organization (defaults to local git checkout origin).
+            repo: Repository name (defaults to local git checkout origin).
         """
-        self.owner = owner
-        self.repo = repo
+        default_owner, default_repo = get_current_repo()
+        self.owner = owner or default_owner
+        self.repo = repo or default_repo
         self.token = token or get_github_token()
         headers = {
             "Accept": "application/vnd.github+json",
@@ -84,6 +117,92 @@ class GitHubHttpAdapter(GitHubApiPort):
     def __exit__(self, *args: Any) -> None:
         """Context manager exit."""
         self.close()
+
+    def get_repo_status(
+        self,
+        owner: str | None = None,
+        repo: str | None = None,
+    ) -> RepoStatus:
+        """Fetch repository configuration, settings, permissions, and environments.
+
+        Args:
+            owner: Optional repository owner (defaults to adapter config).
+            repo: Optional repository name (defaults to adapter config).
+
+        Returns:
+            RepoStatus domain model.
+        """
+        target_owner = owner or self.owner
+        target_repo = repo or self.repo
+
+        # 1. Main repo metadata
+        resp_repo = self._client.get(f"/repos/{target_owner}/{target_repo}")
+        resp_repo.raise_for_status()
+        data_repo = resp_repo.json()
+
+        # 2. Actions permissions
+        resp_act = self._client.get(
+            f"/repos/{target_owner}/{target_repo}/actions/permissions"
+        )
+        data_act = resp_act.json() if resp_act.status_code == 200 else {}
+
+        # 3. Actions workflow permissions
+        resp_wf = self._client.get(
+            f"/repos/{target_owner}/{target_repo}/actions/permissions/workflow"
+        )
+        data_wf = resp_wf.json() if resp_wf.status_code == 200 else {}
+
+        # 4. Environments
+        resp_env = self._client.get(f"/repos/{target_owner}/{target_repo}/environments")
+        envs_list: list[str] = []
+        if resp_env.status_code == 200:
+            envs_list = [
+                e.get("name", "")
+                for e in resp_env.json().get("environments", [])
+                if e.get("name")
+            ]
+
+        # 5. Branch protection for default branch
+        default_branch = data_repo.get("default_branch", "main")
+        resp_prot = self._client.get(
+            f"/repos/{target_owner}/{target_repo}/branches/{default_branch}/protection"
+        )
+        required_checks: list[str] = []
+        require_conv_res = False
+        if resp_prot.status_code == 200:
+            data_prot = resp_prot.json()
+            required_checks = data_prot.get("required_status_checks", {}).get(
+                "contexts", []
+            )
+            require_conv_res = bool(
+                data_prot.get("required_conversation_resolution", {}).get(
+                    "enabled", False
+                )
+            )
+
+        return RepoStatus(
+            name=data_repo.get("name", target_repo),
+            owner=target_owner,
+            visibility=data_repo.get(
+                "visibility", "public" if not data_repo.get("private") else "private"
+            ),
+            private=bool(data_repo.get("private", False)),
+            default_branch=default_branch,
+            allow_auto_merge=bool(data_repo.get("allow_auto_merge", False)),
+            allow_squash_merge=bool(data_repo.get("allow_squash_merge", True)),
+            has_pages=bool(data_repo.get("has_pages", False)),
+            actions_enabled=bool(data_act.get("enabled", True)),
+            allowed_actions=str(data_act.get("allowed_actions", "all")),
+            default_workflow_permissions=str(
+                data_wf.get("default_workflow_permissions", "read")
+            ),
+            can_approve_pull_request_reviews=bool(
+                data_wf.get("can_approve_pull_request_reviews", False)
+            ),
+            environments=tuple(envs_list),
+            required_status_checks=tuple(required_checks),
+            require_conversation_resolution=require_conv_res,
+        )
 
     def get_pr_summary(self, pr_number: int) -> PrSummary:
         """Fetch full aggregate summary for a pull request."""

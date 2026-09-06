@@ -117,11 +117,33 @@ class PrSummary:
         return checks_ok and threads_ok and alerts_ok
 
 
+@dataclass(frozen=True)
+class RepoStatus:
+    """Comprehensive repository governance, permissions, and environments status."""
+
+    name: str
+    owner: str
+    visibility: str
+    private: bool
+    default_branch: str
+    allow_auto_merge: bool
+    allow_squash_merge: bool
+    has_pages: bool
+    actions_enabled: bool
+    allowed_actions: str
+    default_workflow_permissions: str
+    can_approve_pull_request_reviews: bool
+    environments: tuple[str, ...] = ()
+    required_status_checks: tuple[str, ...] = ()
+    require_conversation_resolution: bool = False
+
+
 __all__ = [
     "AlertSeverity",
     "CheckRunFinding",
     "OutputFormat",
     "PrSummary",
+    "RepoStatus",
     "ReviewComment",
     "ReviewThread",
     "SecurityAlert",

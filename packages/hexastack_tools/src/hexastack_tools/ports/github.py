@@ -12,6 +12,7 @@ from typing import Any, Protocol, runtime_checkable
 from hexastack_tools.domain.github import (
     CheckRunFinding,
     PrSummary,
+    RepoStatus,
     ReviewThread,
     SecurityAlert,
 )
@@ -24,6 +25,21 @@ __all__ = [
 @runtime_checkable
 class GitHubApiPort(Protocol):
     """Port interface for communicating with GitHub APIs."""
+
+    def get_repo_status(
+        self,
+        owner: str | None = None,
+        repo: str | None = None,
+    ) -> RepoStatus:
+        """Fetch repository configuration, settings, permissions, and environments.
+
+        Args:
+            owner: Optional repository owner (defaults to adapter config).
+            repo: Optional repository name (defaults to adapter config).
+
+        Returns:
+            RepoStatus domain model.
+        """
 
     def get_pr_summary(self, pr_number: int) -> PrSummary:
         """Fetch comprehensive Pull Request summary including checks and reviews.
