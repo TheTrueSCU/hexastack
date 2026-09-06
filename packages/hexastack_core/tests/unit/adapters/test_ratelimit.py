@@ -23,6 +23,19 @@ def test_parse_rate_limit():
     assert spec4.count == 1000
     assert spec4.window_seconds == 86400
 
+    # Test unit aliases and plurals
+    assert _parse_rate_limit("2/sec").window_seconds == 1
+    assert _parse_rate_limit("2/s").window_seconds == 1
+    assert _parse_rate_limit("2/seconds").window_seconds == 1
+    assert _parse_rate_limit("2/min").window_seconds == 60
+    assert _parse_rate_limit("2/m").window_seconds == 60
+    assert _parse_rate_limit("2/minutes").window_seconds == 60
+    assert _parse_rate_limit("2/hr").window_seconds == 3600
+    assert _parse_rate_limit("2/h").window_seconds == 3600
+    assert _parse_rate_limit("2/hours").window_seconds == 3600
+    assert _parse_rate_limit("2/d").window_seconds == 86400
+    assert _parse_rate_limit("2/days").window_seconds == 86400
+
     with pytest.raises(ValueError, match="Invalid rate limit format"):
         _parse_rate_limit("10-minute")
 
@@ -38,6 +51,8 @@ def test_in_memory_rate_limiter_hits_and_resets():
 
     key = "user:123"
     limit = "3/second"
+
+    assert limiter.get_reset_window(key, limit) == 0
 
     assert limiter.hit(key, limit) is True
     assert limiter.hit(key, limit) is True

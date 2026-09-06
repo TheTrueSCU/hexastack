@@ -38,3 +38,16 @@ def test_scan_modules_invokes_visitors():
 
     assert SampleClass in discovered_members
     assert sample_func in discovered_members
+
+
+def test_scan_modules_with_real_package_and_cycles():
+    import hexastack_core
+
+    discovered: list[Any] = []
+
+    def visitor(member: Any, module: ModuleType) -> None:
+        discovered.append(member)
+
+    # Scan package by string and by module object to test cycles/visited set
+    scan_modules(["hexastack_core.infra", hexastack_core], [visitor])
+    assert len(discovered) > 0

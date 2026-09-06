@@ -46,3 +46,10 @@ async def test_async_circuit_breaker_port_subclass_instantiation() -> None:
     await breaker.record_success_async("async_svc")
     await breaker.record_failure_async("async_svc", ValueError("err"))
     await breaker.reset_async("async_svc")
+
+
+def test_circuit_state_enum() -> None:
+    """Verify CircuitState enum values."""
+    assert CircuitState.CLOSED == "closed"
+    assert CircuitState.OPEN == "open"
+    assert CircuitState.HALF_OPEN == "half_open"

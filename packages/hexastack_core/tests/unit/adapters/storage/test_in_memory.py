@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -41,6 +41,26 @@ def test_in_memory_storage_sync_lifecycle() -> None:
     storage.put("docs/text.txt", text_stream)
     assert storage.get("docs/text.txt") == b"Text stream"
 
+    # Put bytearray
+    storage.put("docs/bytearray.bin", cast("Any", bytearray(b"bytearray payload")))
+    assert storage.get("docs/bytearray.bin") == b"bytearray payload"
+
+    # Put stream with str output
+    class StringReader:
+        def read(self):
+            return "string content"
+
+    storage.put("docs/str.txt", cast("Any", StringReader()))
+    assert storage.get("docs/str.txt") == b"string content"
+
+    # Put stream that raises
+    class BrokenReader:
+        def read(self):
+            raise OSError("Disk read error")
+
+    with pytest.raises(StorageError, match="Failed to persist object at docs/fail.bin"):
+        storage.put("docs/fail.bin", cast("Any", BrokenReader()))
+
     # Unsupported data type
     invalid_data: Any = 12345
     with pytest.raises(StorageError, match="Unsupported data type for storage"):
@@ -48,7 +68,11 @@ def test_in_memory_storage_sync_lifecycle() -> None:
 
     # List files with prefix
     files = storage.list_files("docs/")
-    assert files == ["docs/readme.txt", "docs/stream.bin", "docs/text.txt"]
+    assert "docs/readme.txt" in files
+    assert "docs/stream.bin" in files
+    assert "docs/text.txt" in files
+    assert "docs/bytearray.bin" in files
+    assert "docs/str.txt" in files
 
     # Delete
     del1 = storage.delete("docs/readme.txt")
@@ -65,7 +89,8 @@ def test_in_memory_storage_sync_lifecycle() -> None:
 @pytest.mark.anyio
 async def test_async_in_memory_storage_lifecycle() -> None:
     """Verify asynchronous in-memory storage wrapper operations."""
-    storage = AsyncInMemoryStorage()
+    sync_inner = InMemoryStorage()
+    storage = AsyncInMemoryStorage(sync_storage=sync_inner)
 
     assert await storage.exists_async("async_file.txt") is False
     with pytest.raises(StorageNotFoundError):

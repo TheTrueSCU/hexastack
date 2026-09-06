@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -32,14 +32,21 @@ def test_fsspec_storage_memory_protocol() -> None:
     assert storage.exists("obj1.dat") is True
     assert storage.get("obj1.dat") == b"Virtual memory blob"
 
+    # Put bytearray
+    storage.put("sub/bytearray.bin", cast("Any", bytearray(b"bytearray blob")))
+    assert storage.get("sub/bytearray.bin") == b"bytearray blob"
+
     # Put stream
     stream = io.BytesIO(b"Stream data in memory")
     storage.put("sub/stream.dat", stream)
     assert storage.get("sub/stream.dat") == b"Stream data in memory"
 
-    # Put stream
-    txt_stream = io.BytesIO(b"Virtual text")
-    storage.put("sub/text.txt", txt_stream)
+    # Put stream with str
+    class FsspecStrReader:
+        def read(self):
+            return "Virtual text"
+
+    storage.put("sub/text.txt", cast("Any", FsspecStrReader()))
     assert storage.get("sub/text.txt") == b"Virtual text"
 
     # Unsupported data type
@@ -51,6 +58,8 @@ def test_fsspec_storage_memory_protocol() -> None:
     files = storage.list_files("")
     assert "obj1.dat" in files
     assert "sub/stream.dat" in files
+    assert "sub/bytearray.bin" in files
+    assert "sub/text.txt" in files
 
     # Delete
     del1 = storage.delete("obj1.dat")
@@ -58,6 +67,41 @@ def test_fsspec_storage_memory_protocol() -> None:
     assert storage.exists("obj1.dat") is False
     del2 = storage.delete("obj1.dat")
     assert del2 is False
+
+
+def test_fsspec_storage_custom_fs_and_errors() -> None:
+    """Verify FsspecStorageAdapter with injected mock fs and error wrapping."""
+
+    class MockFs:
+        def exists(self, key):
+            return True
+
+        def open(self, key, mode):
+            msg = "Read I/O failure"
+            raise OSError(msg)
+
+        def rm(self, key):
+            msg = "Delete I/O failure"
+            raise OSError(msg)
+
+        def find(self, base):
+            msg = "Find I/O failure"
+            raise OSError(msg)
+
+    storage = fsspec_adapter.FsspecStorageAdapter(fs=MockFs())
+    assert storage.exists("anything") is True
+
+    with pytest.raises(StorageError, match="Failed to read fsspec object"):
+        storage.get("test.dat")
+
+    with pytest.raises(StorageError, match="Failed to write fsspec object"):
+        storage.put("test.dat", b"payload")
+
+    with pytest.raises(StorageError, match="Failed to delete fsspec object"):
+        storage.delete("test.dat")
+
+    with pytest.raises(StorageError, match="Failed to list fsspec files"):
+        storage.list_files()
 
 
 @pytest.mark.anyio

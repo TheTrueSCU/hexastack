@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -92,3 +92,34 @@ def test_config_feature_flag_adapter_overrides():
     all_flags = adapter.get_all_flags()
     assert all_flags["flag.bool"] is True
     assert all_flags["flag.str"] == "override_val"
+
+
+def test_config_feature_flag_adapter_empty_and_dict_paths():
+    # Adapter without config or overrides
+    empty_adapter = ConfigFeatureFlagAdapter()
+    assert empty_adapter.is_enabled("nonexistent", default=False) is False
+    assert empty_adapter.get_boolean_value("nonexistent", default=True) is True
+    assert empty_adapter.get_string_value("nonexistent", default="def") == "def"
+    assert empty_adapter.get_integer_value("nonexistent", default=7) == 7
+    assert empty_adapter.get_float_value("nonexistent", default=1.23) == 1.23
+    assert empty_adapter.get_object_value("nonexistent", default={"x": 1}) == {"x": 1}
+    assert empty_adapter.get_all_flags() == {}
+
+    # Adapter with dict config
+    class DictConfig:
+        data = {
+            "deep": {
+                "nested": {
+                    "flag": True,
+                    "num": 50,
+                    "ratio": 2.5,
+                    "text": "hello",
+                }
+            }
+        }
+
+    dict_adapter = ConfigFeatureFlagAdapter(config=cast("Any", DictConfig()))
+    assert dict_adapter.is_enabled("data.deep.nested.flag") is True
+    assert dict_adapter.get_integer_value("data.deep.nested.num", default=0) == 50
+    assert dict_adapter.get_float_value("data.deep.nested.ratio", default=0.0) == 2.5
+    assert dict_adapter.get_string_value("data.deep.nested.text", default="") == "hello"

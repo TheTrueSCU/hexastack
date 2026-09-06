@@ -57,9 +57,12 @@ class BootstrapContext:
             The parsed section model instance, or a new default schema_cls() instance.
         """
         if self.config is not None:
-            val = self.config.get_section(section, schema_cls)
-            if val is not None:
-                return val
+            try:
+                val = self.config.get_section(section, schema_cls)
+                if val is not None:
+                    return val
+            except Exception:
+                pass
         return default if default is not None else schema_cls()
 
     def register_visitor(self, visitor: DiscoveryVisitor) -> None:

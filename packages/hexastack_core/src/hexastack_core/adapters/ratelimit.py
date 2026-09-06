@@ -47,7 +47,7 @@ def _parse_rate_limit(limit_str: str) -> _RateLimitSpec:
         "day": 86400,
         "d": 86400,
     }
-    unit = unit_str.rstrip("s")
+    unit = unit_str if unit_str in multipliers else unit_str.removesuffix("s")
     if unit not in multipliers:
         raise ValueError(
             f"Invalid rate limit time unit '{unit_str}' in '{limit_str}'. Supported units: second, minute, hour, day."

@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -26,30 +26,35 @@ def test_local_storage_adapter_sync_lifecycle() -> None:
         with pytest.raises(StorageNotFoundError):
             storage.get("test.txt")
 
-        # Put bytes in nested path
-        res = storage.put("nested/sub/file.bin", b"binary content")
-        assert res == "nested/sub/file.bin"
-        assert storage.exists("nested/sub/file.bin") is True
-        assert storage.get("nested/sub/file.bin") == b"binary content"
+        # Put bytes in nested path (with leading slash to test _resolve_path)
+        res = storage.put("/nested/sub/file.bin", b"binary content")
+        assert res == "/nested/sub/file.bin"
+        assert storage.exists("/nested/sub/file.bin") is True
+        assert storage.get("/nested/sub/file.bin") == b"binary content"
+
+        # Put bytearray
+        storage.put("nested/bytearray.bin", cast("Any", bytearray(b"bytearray local")))
+        assert storage.get("nested/bytearray.bin") == b"bytearray local"
 
         # Put stream
         stream = io.BytesIO(b"stream payload")
         storage.put("nested/stream.dat", stream)
         assert storage.get("nested/stream.dat") == b"stream payload"
 
+        # Stream with string content
+        class LocalStringReader:
+            def read(self):
+                return "local text content"
+
+        storage.put("nested/text.txt", cast("Any", LocalStringReader()))
+        assert storage.get("nested/text.txt") == b"local text content"
+
         # List files
         files = storage.list_files("nested/")
-        assert (
-            files == ["nested/file.bin", "nested/stream.dat"]
-            or sorted(files)
-            == ["nested/file.bin", "nested/stream.dat", "nested/sub/file.bin"]
-            or len(files) == 2
-        )
-
-        # Stream
-        txt_stream = io.BytesIO(b"text content")
-        storage.put("nested/text.txt", txt_stream)
-        assert storage.get("nested/text.txt") == b"text content"
+        assert "nested/sub/file.bin" in files
+        assert "nested/bytearray.bin" in files
+        assert "nested/stream.dat" in files
+        assert "nested/text.txt" in files
 
         # Unsupported type
         invalid_data: Any = 9999
@@ -87,6 +92,21 @@ def test_local_storage_errors(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "unlink", mock_unlink)
         with pytest.raises(StorageError, match="Failed to delete file"):
             storage.delete("err.txt")
+
+        # Mock rglob error
+        def mock_rglob(self: Path, pattern: str):
+            msg = "Listing error"
+            raise OSError(msg)
+
+        monkeypatch.setattr(Path, "rglob", mock_rglob)
+        with pytest.raises(StorageError, match="Failed to list files with prefix"):
+            storage.list_files("err")
+
+
+def test_local_storage_default_root() -> None:
+    """Verify LocalStorageAdapter with default root_dir."""
+    storage = LocalStorageAdapter()
+    assert storage._root.is_dir()
 
 
 @pytest.mark.anyio

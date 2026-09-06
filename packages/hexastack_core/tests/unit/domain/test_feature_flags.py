@@ -22,7 +22,7 @@ def test_evaluation_context_from_current_context():
     assert ctx1.user_id is None
     assert ctx1.attributes == {"region": "us-east-1"}
 
-    # 2. When UserContext is present
+    # 2. When UserContext is present with user_id
     uctx = UserContext(
         user_id="usr-123",
         tenant_id="tenant-abc",
@@ -36,6 +36,15 @@ def test_evaluation_context_from_current_context():
     assert ctx2.tenant_id == "tenant-abc"
     assert ctx2.roles == ("admin", "viewer")
     assert ctx2.attributes["tier"] == "premium"
+
+    # 3. When UserContext is present with tenant_id only (no user_id)
+    uctx3 = UserContext(
+        user_id="",
+        tenant_id="tenant-only-99",
+    )
+    set_user_context(uctx3)
+    ctx3 = EvaluationContext.from_current_context()
+    assert ctx3.targeting_key == "tenant-only-99"
 
     set_user_context(None)
 
@@ -51,3 +60,17 @@ def test_flag_evaluation_details():
     assert details.value is True
     assert details.reason == FlagEvaluationReason.TARGETING_MATCH
     assert details.variant == "v1"
+
+    default_details = FlagEvaluationDetails[int](flag_key="num_retries", value=3)
+    assert default_details.reason == FlagEvaluationReason.UNKNOWN
+    assert default_details.variant is None
+    assert default_details.error_code is None
+    assert default_details.error_message is None
+
+    # Test FlagEvaluationReason enum values
+    assert FlagEvaluationReason.STATIC == "STATIC"
+    assert FlagEvaluationReason.DEFAULT == "DEFAULT"
+    assert FlagEvaluationReason.SPLIT == "SPLIT"
+    assert FlagEvaluationReason.CACHED == "CACHED"
+    assert FlagEvaluationReason.DISABLED == "DISABLED"
+    assert FlagEvaluationReason.ERROR == "ERROR"

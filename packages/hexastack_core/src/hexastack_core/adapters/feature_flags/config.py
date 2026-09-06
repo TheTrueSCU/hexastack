@@ -42,11 +42,11 @@ class ConfigFeatureFlagAdapter(FeatureFlagPort):
         """
         flags: dict[str, Any] = dict(self._overrides)
         if self._config is not None and hasattr(self._config, "_core"):
-            for attr in dir(self._config._core):
-                if not attr.startswith("_"):
-                    val = getattr(self._config._core, attr)
-                    if isinstance(val, (bool, str, int, float)):
-                        flags[f"core.{attr}"] = val
+            core_fields = getattr(type(self._config._core), "model_fields", {})
+            for attr in core_fields:
+                val = getattr(self._config._core, attr)
+                if isinstance(val, (bool, str, int, float)):
+                    flags[f"core.{attr}"] = val
         return flags
 
     def _lookup_config_path(self, path: str) -> Any:
