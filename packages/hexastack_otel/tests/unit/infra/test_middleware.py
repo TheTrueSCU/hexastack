@@ -138,6 +138,43 @@ def test_tracing_middleware_with_command():
         res = middleware(cmd, lambda c: f"created {c.invoice_id}")
         assert res == "created inv-1"
 
+    assert len(tracer.finished_spans) == 1
+    span = tracer.finished_spans[0]
+    assert span.attributes["correlation.id"] == "corr-999"
+    assert span.attributes["message.name"] == "CreateInvoiceCommand"
+    assert span.attributes["message.type"] == "command"
+    assert span.attributes["user.id"] == "usr_abc"
+    assert span.attributes["tenant.id"] == "tenant_xyz"
+
+
+def test_tracing_middleware_before_after_on_error_direct():
+    """Verify before, after, and on_error methods with various contexts directly."""
+    tracer = InMemoryTracingAdapter()
+    middleware = TracingMiddleware(tracer=tracer, enabled=True)
+
+    cmd = CreateInvoiceCommand(invoice_id="inv-direct", amount=1.0)
+    ctx = middleware.before(cmd)
+    assert ctx["active"] is True
+    assert "scope" in ctx
+    assert "span" in ctx
+
+    # after returns result unchanged
+    res = middleware.after(cmd, "some_result", ctx)
+    assert res == "some_result"
+
+    # after with inactive context
+    assert middleware.after(cmd, "res2", {"active": False}) == "res2"
+    assert middleware.after(cmd, "res3", None) == "res3"
+
+    # on_error with inactive or None context
+    middleware.on_error(cmd, RuntimeError("err"), {"active": False})
+    middleware.on_error(cmd, RuntimeError("err"), None)
+
+    # disabled before
+    middleware_disabled = TracingMiddleware(tracer=tracer, enabled=False)
+    assert middleware_disabled.before(cmd) == {"active": False}
+
+
 
 def test_tracing_middleware_with_feature_flags():
     from hexastack_core.adapters.feature_flags.in_memory import (

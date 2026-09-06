@@ -59,6 +59,7 @@ def test_otel_start_span_with_parent_context(otel_tracer: OtelTracingAdapter):
 
 def test_otel_custom_tracer_provider_and_inactive_span():
     from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
     custom_provider = TracerProvider()
     adapter = OtelTracingAdapter(
@@ -67,3 +68,37 @@ def test_otel_custom_tracer_provider_and_inactive_span():
     assert adapter._provider is custom_provider
     # Outside any active span context, get_current_span returns None
     assert adapter.get_current_span() is None
+
+    # Test default constructor (creates own provider with default service_name)
+    default_adapter = OtelTracingAdapter()
+    assert default_adapter._service_name == "hexastack-app"
+    assert default_adapter._provider.resource.attributes["service.name"] == "hexastack-app"
+
+    # Test constructor with exporter
+    exporter = ConsoleSpanExporter()
+    adapter_with_exporter = OtelTracingAdapter(
+        service_name="exporter-svc",
+        exporter=exporter,
+    )
+    assert adapter_with_exporter._service_name == "exporter-svc"
+    assert adapter_with_exporter._provider.resource.attributes["service.name"] == "exporter-svc"
+
+
+def test_otel_span_status_codes(otel_tracer: OtelTracingAdapter):
+    from opentelemetry.trace import StatusCode
+
+    # Test OK status (case-insensitive)
+    span_ok = otel_tracer.start_span("span.ok")
+    span_ok.set_status("ok", "all good")
+    assert span_ok._span.status.status_code == StatusCode.OK
+
+    # Test ERROR status
+    span_err = otel_tracer.start_span("span.err")
+    span_err.set_status("ERROR", "something failed")
+    assert span_err._span.status.status_code == StatusCode.ERROR
+
+    # Test UNSET or arbitrary status falls back to ERROR
+    span_other = otel_tracer.start_span("span.other")
+    span_other.set_status("UNKNOWN", "unknown state")
+    assert span_other._span.status.status_code == StatusCode.ERROR
+

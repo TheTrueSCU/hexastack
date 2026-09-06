@@ -212,3 +212,16 @@ def test_in_memory_span_unset_status_and_query_by_name(
 
     no_matches = in_memory_tracer.get_spans_by_name("non_existent_op")
     assert len(no_matches) == 0
+
+    # Test clear()
+    in_memory_tracer.clear()
+    assert len(in_memory_tracer.finished_spans) == 0
+
+
+def test_in_memory_span_default_context_generation():
+    span = InMemorySpan("test_default_ctx")
+    assert len(span.context.span_id) == 16
+    assert len(span.context.trace_id) == 32
+    assert span.status_description is None
+    assert span.end_time is None
+

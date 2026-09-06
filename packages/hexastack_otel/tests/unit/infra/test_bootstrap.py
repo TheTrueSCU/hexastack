@@ -60,8 +60,20 @@ def test_otel_bootstrapper_configuration_memory():
     assert isinstance(middleware, TracingMiddleware)
     assert ctx.properties.get("tracing_port") is tracer
 
+    from hexastack_core.ports.metrics import MetricsPort
+    from hexastack_otel.adapters.metrics.prometheus import PrometheusMetricsAdapter
+    from hexastack_otel.infra.middleware_metrics import CqrsMetricsMiddleware
+
+    metrics = container.resolve(MetricsPort)
+    assert isinstance(metrics, PrometheusMetricsAdapter)
+    assert ctx.properties.get("metrics_port") is metrics
+
+    metrics_mw = container.resolve(CqrsMetricsMiddleware)
+    assert isinstance(metrics_mw, CqrsMetricsMiddleware)
+
 
 def test_otel_bootstrapper_configuration_otlp_http_and_grpc():
+
     bootstrapper = OtelBootstrapper()
     container = Container()
     config_reg = ConfigRegistry()
