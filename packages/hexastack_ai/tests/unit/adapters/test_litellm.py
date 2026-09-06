@@ -157,7 +157,10 @@ async def test_litellm_adapter_generate_structured_async_retry_exception():
             await adapter.generate_structured_async(
                 "Async schema prompt", SummarySchema
             )
-        assert str(exc_info.value) == "Failed to generate structured SummarySchema: Async schema error"
+        assert (
+            str(exc_info.value)
+            == "Failed to generate structured SummarySchema: Async schema error"
+        )
 
 
 def test_litellm_adapter_generate_structured_generic_exception():
@@ -190,8 +193,10 @@ def test_litellm_adapter_generate_structured_retry_exception():
         adapter = LiteLlmAdapter()
         with pytest.raises(StructuredOutputParsingError) as exc_info:
             adapter.generate_structured("Bad JSON output", SummarySchema)
-        assert str(exc_info.value) == "Failed to generate structured SummarySchema: Validation failed repeatedly"
-
+        assert (
+            str(exc_info.value)
+            == "Failed to generate structured SummarySchema: Validation failed repeatedly"
+        )
 
 
 def test_litellm_adapter_generate_text_agent_config_system_prompt():

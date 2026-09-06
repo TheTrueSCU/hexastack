@@ -70,7 +70,9 @@ def test_ai_bootstrapper_from_context_config():
 
     core_cfg = HexastackConfig(
         core=HexastackCoreConfig(),
-        sections={"ai": HexastackAiConfig(provider="memory", model="test-custom-model")},
+        sections={
+            "ai": HexastackAiConfig(provider="memory", model="test-custom-model")
+        },
     )
     context = BootstrapContext(
         container=c,
@@ -79,17 +81,14 @@ def test_ai_bootstrapper_from_context_config():
     )
     bootstrapper.configure(context)
 
-    ai_res: AiBootstrapResult = context.properties.get("ai_result")
-    assert ai_res is not None
+    ai_res = context.properties.get("ai_result")
+    assert isinstance(ai_res, AiBootstrapResult)
     assert ai_res.config.model == "test-custom-model"
     assert ai_res.config.provider == "memory"
     assert context.properties.get("ai_provider") is ai_res.llm_provider
-
-
 
 
 def test_ai_bootstrapper_metadata():
     bootstrapper = AiBootstrapper()
     assert bootstrapper.name == "ai"
     assert bootstrapper.order == 18
-

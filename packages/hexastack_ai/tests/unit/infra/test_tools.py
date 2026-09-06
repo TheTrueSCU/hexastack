@@ -63,8 +63,9 @@ def test_create_cqrs_agent_defaults(pipeline: ExecutionPipeline):
     )
     assert agent is not None
     # Verify default system prompt
-    assert "You are an AI assistant capable of executing domain operations using the provided tools." in str(
-        agent._system_prompts
+    assert (
+        "You are an AI assistant capable of executing domain operations using the provided tools."
+        in str(agent._system_prompts)
     )
 
 
@@ -108,4 +109,3 @@ async def test_create_tool_for_message_async_handler():
     tool_fn = create_tool_for_message(CalculateTaxCommand, mock_pipeline)
     res = await tool_fn(amount=100.0, tax_rate=1.0)
     assert res == {"async_total": 200.0}
-

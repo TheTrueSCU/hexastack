@@ -33,6 +33,5 @@ def test_span_context_frozen():
         span_id="00f067aa0ba902b7",
     )
     with pytest.raises(FrozenInstanceError):
-        ctx.trace_id = "new_trace_id"  # type: ignore[misc]
-
+        setattr(ctx, "trace_id", "new_trace_id")
 

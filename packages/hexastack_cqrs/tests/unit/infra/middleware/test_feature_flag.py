@@ -47,7 +47,10 @@ def test_conditional_feature_flag_middleware_disabled_raises():
     with pytest.raises(FeatureFlagDisabledError) as exc_info:
         mw(cmd, lambda c: c.amount * 2)
 
-    assert str(exc_info.value) == "Feature flag 'feature.transfer' is disabled for current context."
+    assert (
+        str(exc_info.value)
+        == "Feature flag 'feature.transfer' is disabled for current context."
+    )
 
 
 def test_conditional_feature_flag_middleware_enabled():

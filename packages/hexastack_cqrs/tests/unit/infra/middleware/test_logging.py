@@ -151,8 +151,10 @@ def test_logging_middleware_without_log_payload_and_inactive_context():
 
     assert result == "ok"
     assert len(logger.entries) == 2
-    assert "payload" not in logger.entries[0].extra
-    assert logger.entries[0].extra == {"message_type": "_DummyCommand"}
+    extra = logger.entries[0].extra
+    assert extra is not None
+    assert "payload" not in extra
+    assert extra == {"message_type": "_DummyCommand"}
 
     # Test after and on_error with inactive context
     logger.clear()

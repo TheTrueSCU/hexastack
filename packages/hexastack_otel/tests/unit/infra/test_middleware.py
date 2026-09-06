@@ -175,7 +175,6 @@ def test_tracing_middleware_before_after_on_error_direct():
     assert middleware_disabled.before(cmd) == {"active": False}
 
 
-
 def test_tracing_middleware_with_feature_flags():
     from hexastack_core.adapters.feature_flags.in_memory import (
         InMemoryFeatureFlagAdapter,

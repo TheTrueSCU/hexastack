@@ -94,7 +94,9 @@ def test_timing_middleware_slow_warning_disabled():
     assert result == "slow"
     assert len(logger.entries) == 1
     assert logger.entries[0].level == "info"
-    assert logger.entries[0].extra["message_type"] == "_DummyCommand"
+    extra = logger.entries[0].extra
+    assert extra is not None
+    assert extra["message_type"] == "_DummyCommand"
 
 
 def test_timing_middleware_on_error():
@@ -111,8 +113,10 @@ def test_timing_middleware_on_error():
     assert len(logger.entries) == 1
     assert logger.entries[0].level == "info"
     assert "Executed _DummyCommand in" in logger.entries[0].message
-    assert logger.entries[0].extra["message_type"] == "_DummyCommand"
-    assert "duration_seconds" in logger.entries[0].extra
+    extra = logger.entries[0].extra
+    assert extra is not None
+    assert extra["message_type"] == "_DummyCommand"
+    assert "duration_seconds" in extra
 
     # on_error with None context is a safe no-op
     middleware.on_error(cmd, ValueError("error"), context=None)

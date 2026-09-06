@@ -61,4 +61,3 @@ def test_prometheus_metrics_adapter_default_registry() -> None:
     adapter = PrometheusMetricsAdapter()
     assert adapter.registry is not None
     assert isinstance(adapter.registry, CollectorRegistry)
-

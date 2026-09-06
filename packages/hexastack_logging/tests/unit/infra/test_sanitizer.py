@@ -41,8 +41,8 @@ def test_sanitizer_data_structures():
         "info": "plain text with Bearer abc",
         "num": 999,
         "nested_dict": {
-            "secret_key": "api_key_12345",
-            "api_key": "raw_secret",
+            "secret_key": "api_key_12345",  # pragma: allowlist secret
+            "api_key": "raw_secret",  # pragma: allowlist secret
             "sub": {"token": "inner_token", "normal": "value"},
         },
     }
@@ -56,11 +56,10 @@ def test_sanitizer_data_structures():
     assert san_nested["info"] == "plain text with ***REDACTED***"
     assert san_nested["num"] == 999
     assert san_nested["nested_dict"] == {
-        "secret_key": "api_key_12345",
+        "secret_key": "api_key_12345",  # pragma: allowlist secret
         "api_key": "***REDACTED***",
         "sub": {"token": "***REDACTED***", "normal": "value"},
     }
-
 
 
 @pytest.mark.snapshot

@@ -224,4 +224,3 @@ def test_in_memory_span_default_context_generation():
     assert len(span.context.trace_id) == 32
     assert span.status_description is None
     assert span.end_time is None
-

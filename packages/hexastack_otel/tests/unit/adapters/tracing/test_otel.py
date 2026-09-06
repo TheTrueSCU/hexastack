@@ -72,7 +72,9 @@ def test_otel_custom_tracer_provider_and_inactive_span():
     # Test default constructor (creates own provider with default service_name)
     default_adapter = OtelTracingAdapter()
     assert default_adapter._service_name == "hexastack-app"
-    assert default_adapter._provider.resource.attributes["service.name"] == "hexastack-app"
+    assert (
+        default_adapter._provider.resource.attributes["service.name"] == "hexastack-app"
+    )
 
     # Test constructor with exporter
     exporter = ConsoleSpanExporter()
@@ -81,7 +83,10 @@ def test_otel_custom_tracer_provider_and_inactive_span():
         exporter=exporter,
     )
     assert adapter_with_exporter._service_name == "exporter-svc"
-    assert adapter_with_exporter._provider.resource.attributes["service.name"] == "exporter-svc"
+    assert (
+        adapter_with_exporter._provider.resource.attributes["service.name"]
+        == "exporter-svc"
+    )
 
 
 def test_otel_span_status_codes(otel_tracer: OtelTracingAdapter):
@@ -90,15 +95,17 @@ def test_otel_span_status_codes(otel_tracer: OtelTracingAdapter):
     # Test OK status (case-insensitive)
     span_ok = otel_tracer.start_span("span.ok")
     span_ok.set_status("ok", "all good")
-    assert span_ok._span.status.status_code == StatusCode.OK
+    status_ok = getattr(span_ok._span, "status", None)
+    assert status_ok is not None and status_ok.status_code == StatusCode.OK
 
     # Test ERROR status
     span_err = otel_tracer.start_span("span.err")
     span_err.set_status("ERROR", "something failed")
-    assert span_err._span.status.status_code == StatusCode.ERROR
+    status_err = getattr(span_err._span, "status", None)
+    assert status_err is not None and status_err.status_code == StatusCode.ERROR
 
     # Test UNSET or arbitrary status falls back to ERROR
     span_other = otel_tracer.start_span("span.other")
     span_other.set_status("UNKNOWN", "unknown state")
-    assert span_other._span.status.status_code == StatusCode.ERROR
-
+    status_other = getattr(span_other._span, "status", None)
+    assert status_other is not None and status_other.status_code == StatusCode.ERROR

@@ -93,4 +93,3 @@ async def test_pydantic_ai_agent_adapter_run_async_error():
     with pytest.raises(AgentExecutionError) as exc_info:
         await adapter.run("Will fail async")
     assert "Async LLM error" in str(exc_info.value)
-

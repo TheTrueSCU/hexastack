@@ -64,7 +64,7 @@ def test_hexastack_ai_config_custom():
         model="claude-3-5-sonnet",
         temperature=0.7,
         max_tokens=4096,
-        api_key="sk-test-key",
+        api_key="sk-test-key",  # pragma: allowlist secret
         litellm=LiteLlmDialectConfig(api_base="https://api.litellm.ai"),
         ollama=OllamaDialectConfig(base_url="http://local-ollama:11434"),
         agent=PydanticAiDialectConfig(system_prompt="Agent prompt"),
@@ -77,4 +77,3 @@ def test_hexastack_ai_config_custom():
     assert cfg.litellm.api_base == "https://api.litellm.ai"
     assert cfg.ollama.base_url == "http://local-ollama:11434"
     assert cfg.agent.system_prompt == "Agent prompt"
-

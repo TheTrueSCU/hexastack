@@ -129,9 +129,12 @@ async def test_async_circuit_breaker_middleware_lifecycle() -> None:
     # Rejection
     with pytest.raises(CircuitBreakerOpenError) as exc_rejection:
         await middleware(query, async_handler)
-    assert "Async circuit breaker for 'GetItemQuery' is OPEN" in str(exc_rejection.value)
+    assert "Async circuit breaker for 'GetItemQuery' is OPEN" in str(
+        exc_rejection.value
+    )
     assert any(
         e.level == "error"
+        and e.extra is not None
         and e.extra.get("message_type") == "GetItemQuery"
         and "error" in e.extra
         for e in logger.entries

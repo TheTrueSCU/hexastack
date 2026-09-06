@@ -102,4 +102,3 @@ def test_cqrs_metrics_middleware_disabled_and_feature_flags() -> None:
     flags.set_flag("features.metrics.cqrs", True)
     ctx_flag_en = mw_flags.before(cmd)
     assert ctx_flag_en["active"] is True
-
