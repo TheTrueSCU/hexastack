@@ -33,5 +33,4 @@ def test_span_context_frozen():
         span_id="00f067aa0ba902b7",
     )
     with pytest.raises(FrozenInstanceError):
-        setattr(ctx, "trace_id", "new_trace_id")
-
+        setattr(ctx, "trace_id", "new_trace_id")  # noqa: B010

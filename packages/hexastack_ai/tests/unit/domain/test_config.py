@@ -73,7 +73,7 @@ def test_hexastack_ai_config_custom():
     assert cfg.model == "claude-3-5-sonnet"
     assert cfg.temperature == 0.7
     assert cfg.max_tokens == 4096
-    assert cfg.api_key == "sk-test-key"
+    assert cfg.api_key == "sk-test-key"  # pragma: allowlist secret
     assert cfg.litellm.api_base == "https://api.litellm.ai"
     assert cfg.ollama.base_url == "http://local-ollama:11434"
     assert cfg.agent.system_prompt == "Agent prompt"
