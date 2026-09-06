@@ -1757,7 +1757,7 @@ wheels = [
 
 [[package]]
 name = "hexastack"
-version = "0.3.2"
+version = "0.3.3"
 source = { editable = "packages/hexastack" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2486,7 +2486,7 @@ provides-extras = ["otlp"]
 
 [[package]]
 name = "hexastack-tools"
-version = "0.3.2"
+version = "0.3.3"
 source = { editable = "packages/hexastack_tools" }
 dependencies = [
     { name = "coverage" },
@@ -2542,7 +2542,7 @@ provides-extras = ["diagrams", "mutmut", "rope", "all"]
 
 [[package]]
 name = "hexastack-workspace"
-version = "0.3.2"
+version = "0.3.3"
 source = { editable = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },

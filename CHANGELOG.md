@@ -1,5 +1,46 @@
 # CHANGELOG
 
+## v0.3.3 (2026-09-05)
+
+### Bug Fixes & Tooling
+* **CI & Parallel Test Execution**: Resolved `pytest-cov` / `pytest-xdist` conflict by decoupling dynamic coverage context from global configuration. Parallel test execution (`-n auto`) now runs across all workers cleanly without `DistCovError`.
+* **Context-Aware Coverage**: Added `--with-context` option to `pytest-run` CLI to enable single-worker context recording (`--cov-context=test -n 0`) on demand for Test Impact Analysis (`pytest-impact`) and architectural boundary audits (`pytest-boundary-audit`).
+* **Cognitive Complexity**: Refactored `show_file_mutants` in `hexastack-tools` (`mutmut.py`), reducing function complexity from 27 down to 8.
+
+## v0.3.2 (2026-09-05)
+
+### Bug Fixes & Improvements
+* **Pydeps Generation**: Fixed empty file creation bug when invoking `pydeps` without a GUI display by setting `show=False, noshow=True`.
+* **Mutmut Inspection Suite**: Added full unit test coverage and correlation verification for `show_file_mutants`, `show_summary`, and `--correlate-coverage`.
+
+## v0.3.1 (2026-09-05)
+
+### Highlights & Features
+* **Test Impact Analysis (TIA)**: Added `pytest-impact` command to dynamically detect modified source lines from git diffs and execute only impacted test nodes.
+* **Mutation-Coverage Correlation**: Added `--correlate-coverage` option to `mutmut-inspect` to map surviving mutant source lines directly to executing test functions.
+* **Architectural Test Boundary Audit**: Added `pytest-boundary-audit` to ensure domain tests never inadvertently execute infrastructure/adapter layers.
+* **Redundant Test Audit**: Added `pytest-redundancy-audit` to detect tests that contribute zero unique branch coverage across the suite.
+
+## v0.3.0 (2026-09-04)
+
+### Highlights & Features
+* **HexaQueue Core Primitives**: Introduced partitioned streams and worker-leased task queue primitives in `hexastack-events` (Issue #74).
+* **Hexagonal Boundary Enforcement**: Enforced pure hexagonal boundaries across all packages; migrated configurations to domain layer and decoupled adapter dependencies.
+* **Universal Dependency & Extras Auditing**: Added `deps-audit` and `check-extras-parity` tools to enforce workspace-wide dependency integrity and umbrella package parity.
+* **Workspace-Agnostic Developer Tooling**: Generalized `hexastack-tools` to discover packages dynamically in standalone single-package or multi-package monorepos (Issue #106).
+* **Property-Based Fuzzing Suite**: Expanded Hypothesis property-based testing for `CircuitBreaker`, `StoragePort`, SSE/WebSocket bridges, and Prometheus metrics (Issue #99).
+
+## v0.2.0 (2026-09-02)
+
+### Highlights & Features
+* **Distributed Event Bus & Messaging**: Added NATS JetStream adapter with durable consumer management, dead-letter queues, and `janus` async/sync queue bridge (Issue #25).
+* **Distributed Coordination & HA**: Introduced `LeaderElectionPort` and `LockPort` distributed coordination primitives with Redis & Valkey implementations (Issue #59).
+* **Rate Limiting & Protection**: Added `RateLimiterPort` and `slowapi`/`limits` integration for FastAPI route protection (Issue #58).
+* **Two-Way CQRS Middleware**: Introduced `InOutMiddleware` template base class and migrated pipeline interceptors for bidirectional lifecycle wrapping (Issue #56).
+* **Caching & Resilience**: Added Redis and Valkey `CachePort` & `AsyncCachePort` adapters (Issue #57), persistent `diskcache` L2 storage, and multi-process transactional outbox filelock (Issue #32).
+* **Ultra-Fast Serialization & Retries**: Added `msgspec` JSON encoding/decoding and `stamina` exponential backoff resilience middleware (Issue #38).
+* **Dogfooded Developer Tools (`hexastack-tools`)**: Added `gh-pr-examine`, `gh-code-scanning`, `codeql-scan`, `generate-usage-docs`, and automated monorepo release automation.
+
 ## v0.1.0 (2026-08-27)
 
 ### Highlights & Features
