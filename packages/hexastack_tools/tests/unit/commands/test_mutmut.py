@@ -78,6 +78,22 @@ def test_mutmut_run_with_package(mock_exit: MagicMock, mock_run: MagicMock) -> N
     mock_exit.assert_called_once_with(0)
 
 
+@patch("hexastack_tools.commands.mutmut.clear_package_cache")
+@patch("subprocess.run")
+@patch("sys.exit")
+@patch("sys.argv", ["mutmut-run", "-p", "core", "-r"])
+def test_mutmut_run_with_refresh(
+    mock_exit: MagicMock, mock_run: MagicMock, mock_clear: MagicMock
+) -> None:
+    """Verify mutmut run_main with -r clears package cache before running."""
+    mock_clear.return_value = 5
+    mock_run.return_value.returncode = 0
+    run_main()
+    mock_clear.assert_called_once_with("core")
+    mock_run.assert_called_once()
+    mock_exit.assert_called_once_with(0)
+
+
 @patch("subprocess.run")
 @patch("sys.exit")
 @patch("sys.argv", ["mutmut-run", "-a"])

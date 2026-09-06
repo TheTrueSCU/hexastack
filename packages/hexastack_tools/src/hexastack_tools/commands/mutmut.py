@@ -327,15 +327,17 @@ def clear_package_cache(package: str) -> int:
 def _revert_bak_and_disk_mutations() -> None:
     """Clean up any leftover .bak files and restore modified working tree source files."""
     for bak in ROOT_DIR.glob("packages/**/*.py.bak"):
+        orig_file = bak.with_suffix("")
+        if orig_file.exists():
+            with contextlib.suppress(Exception):
+                subprocess.run(
+                    ["git", "checkout", "--", str(orig_file)],
+                    cwd=ROOT_DIR,
+                    capture_output=True,
+                    check=False,
+                )
         with contextlib.suppress(OSError):
             bak.unlink(missing_ok=True)
-    with contextlib.suppress(Exception):
-        subprocess.run(
-            ["git", "checkout", "--", "packages/"],
-            cwd=ROOT_DIR,
-            capture_output=True,
-            check=False,
-        )
 
 
 def run_mutmut_on_package(pkg_dir: Path) -> int:
@@ -405,9 +407,29 @@ def run_main() -> None:
     parser = argparse.ArgumentParser(description="Run mutation tests.")
     parser.add_argument("-p", "--package", choices=VALID_PACKAGES)
     parser.add_argument("-a", "--all", action="store_true")
+    parser.add_argument(
+        "-r",
+        "--refresh",
+        action="store_true",
+        help="Clear cached mutants before running mutation tests.",
+    )
     args = parser.parse_args()
 
     try:
+        if args.refresh:
+            if args.package:
+                deleted = clear_package_cache(args.package)
+                console.print(
+                    f"[yellow]Cleared {deleted} cached mutants for {args.package}.[/yellow]"
+                )
+            else:
+                pkg_dirs = get_package_directories(ROOT_DIR)
+                for pkg_dir in pkg_dirs:
+                    clear_package_cache(pkg_dir.name)
+                console.print(
+                    "[yellow]Cleared all cached mutants across packages.[/yellow]"
+                )
+
         if args.package:
             pkg_dir = get_package_directory(args.package, ROOT_DIR)
             code = run_mutmut_on_package(pkg_dir)
