@@ -191,6 +191,17 @@ def test_pipeline_execute_with_exception_registry():
     error_response = pipeline.execute(CreateUser(user_id="u4", name="ErrorUser"))
     assert error_response == {"error": "Invalid user state", "status": 400}
 
+    # Test unhandled exception in exception_registry propagates
+    class CustomUnhandledError(Exception):
+        pass
+
+    def _unhandled_failing_handler(cmd):
+        raise CustomUnhandledError("Unhandled boom")
+
+    handler_reg.register(CreateUser, _unhandled_failing_handler)
+    with pytest.raises(CustomUnhandledError, match="Unhandled boom"):
+        pipeline.execute(CreateUser(user_id="u4", name="ErrorUser"))
+
 
 def test_pipeline_execute_with_presenter():
     handler_reg = HandlerRegistry()
@@ -206,7 +217,22 @@ def test_pipeline_execute_with_presenter():
         presenter_registry=pres_reg,
     )
 
+    # 1. Matching presenter format
     presented = pipeline.execute(
         CreateUser(user_id="u1", name="Alice"), output_format="json"
     )
     assert presented == {"id": "u1", "fullName": "Alice"}
+
+    # 2. Unregistered presenter format returns raw_result
+    raw_fallback = pipeline.execute(
+        CreateUser(user_id="u1", name="Alice"), output_format="xml"
+    )
+    assert isinstance(raw_fallback, UserDTO)
+    assert raw_fallback.user_id == "u1"
+
+    # 3. Non-generic raw result ignores output_format and returns raw_result
+    handler_reg.register(CreateUser, lambda cmd: "primitive_string_result")
+    primitive_res = pipeline.execute(
+        CreateUser(user_id="u1", name="Alice"), output_format="json"
+    )
+    assert primitive_res == "primitive_string_result"

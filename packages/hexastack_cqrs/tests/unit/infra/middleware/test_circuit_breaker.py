@@ -127,8 +127,15 @@ async def test_async_circuit_breaker_middleware_lifecycle() -> None:
     assert await breaker.state_async("GetItemQuery") == CircuitState.OPEN
 
     # Rejection
-    with pytest.raises(CircuitBreakerOpenError):
+    with pytest.raises(CircuitBreakerOpenError) as exc_rejection:
         await middleware(query, async_handler)
+    assert "Async circuit breaker for 'GetItemQuery' is OPEN" in str(exc_rejection.value)
+    assert any(
+        e.level == "error"
+        and e.extra.get("message_type") == "GetItemQuery"
+        and "error" in e.extra
+        for e in logger.entries
+    )
 
     # Recovery
     time.sleep(0.06)
@@ -145,3 +152,7 @@ async def test_async_circuit_breaker_middleware_lifecycle() -> None:
     )
     res_disabled = await disabled(query, async_handler)
     assert res_disabled == "item_456"
+
+    # Async middleware without breaker
+    no_breaker_mw = AsyncCircuitBreakerMiddleware(breaker=None)
+    assert await no_breaker_mw(query, async_handler) == "item_456"

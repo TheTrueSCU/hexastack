@@ -79,6 +79,24 @@ def test_correlation_middleware_generates_when_missing():
     assert captured_cid != ""
 
 
+def test_correlation_middleware_does_not_generate_when_disabled():
+    set_correlation_id("")
+    middleware = CorrelationMiddleware(generate_if_missing=False)
+
+    captured_cid = "initial"
+
+    def handler(cmd: _CmdWithoutCid) -> str:
+        nonlocal captured_cid
+        captured_cid = get_correlation_id()
+        return "ok"
+
+    cmd = _CmdWithoutCid(name="test")
+    res = middleware(cmd, handler)
+
+    assert res == "ok"
+    assert captured_cid == ""
+
+
 def test_correlation_middleware_preserves_existing_context():
     set_correlation_id("pre-existing-cid")
     middleware = CorrelationMiddleware()

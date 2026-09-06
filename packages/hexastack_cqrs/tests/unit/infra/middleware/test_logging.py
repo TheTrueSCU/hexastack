@@ -139,3 +139,25 @@ def test_logging_middleware_successful_execution():
             },
         ]
     )
+
+
+def test_logging_middleware_without_log_payload_and_inactive_context():
+    logger = InMemoryLogger()
+    config = LoggingMiddlewareConfig(enable=True, log_payload=False)
+    middleware = LoggingMiddleware(logger=logger, config=config)
+
+    cmd = _DummyCommand(name="no-payload-cmd")
+    result = middleware(cmd, lambda c: "ok")
+
+    assert result == "ok"
+    assert len(logger.entries) == 2
+    assert "payload" not in logger.entries[0].extra
+    assert logger.entries[0].extra == {"message_type": "_DummyCommand"}
+
+    # Test after and on_error with inactive context
+    logger.clear()
+    middleware.after(cmd, "res", context={"active": False})
+    middleware.after(cmd, "res", context=None)
+    middleware.on_error(cmd, ValueError("error"), context={"active": False})
+    middleware.on_error(cmd, ValueError("error"), context=None)
+    assert len(logger.entries) == 0

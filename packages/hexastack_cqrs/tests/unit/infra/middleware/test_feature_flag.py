@@ -44,8 +44,10 @@ def test_conditional_feature_flag_middleware_disabled_raises():
     )
 
     cmd = SampleCommand(amount=100)
-    with pytest.raises(FeatureFlagDisabledError, match="is disabled"):
+    with pytest.raises(FeatureFlagDisabledError) as exc_info:
         mw(cmd, lambda c: c.amount * 2)
+
+    assert str(exc_info.value) == "Feature flag 'feature.transfer' is disabled for current context."
 
 
 def test_conditional_feature_flag_middleware_enabled():
@@ -55,6 +57,21 @@ def test_conditional_feature_flag_middleware_enabled():
     cmd = SampleCommand(amount=100)
     result = mw(cmd, lambda c: c.amount * 2)
     assert result == 200
+
+
+def test_conditional_feature_flag_middleware_default_parameter():
+    flags = InMemoryFeatureFlagAdapter({})  # empty, flag not found
+    mw_default_false = ConditionalFeatureFlagMiddleware(
+        flags, "missing.flag", default=False, bypass_on_disabled=False
+    )
+    with pytest.raises(FeatureFlagDisabledError):
+        mw_default_false(SampleCommand(amount=10), lambda c: c.amount)
+
+    mw_default_true = ConditionalFeatureFlagMiddleware(
+        flags, "missing.flag", default=True, bypass_on_disabled=False
+    )
+    res_default_true = mw_default_true(SampleCommand(amount=10), lambda c: c.amount * 5)
+    assert res_default_true == 50
 
 
 def test_feature_flag_decorator_disabled_raises():

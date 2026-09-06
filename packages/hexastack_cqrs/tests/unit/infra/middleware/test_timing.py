@@ -94,3 +94,26 @@ def test_timing_middleware_slow_warning_disabled():
     assert result == "slow"
     assert len(logger.entries) == 1
     assert logger.entries[0].level == "info"
+    assert logger.entries[0].extra["message_type"] == "_DummyCommand"
+
+
+def test_timing_middleware_on_error():
+    logger = InMemoryLogger()
+    middleware = TimingMiddleware(logger=logger)  # default config
+
+    def failing_handler(cmd: _DummyCommand) -> str:
+        raise ValueError("Handler failed")
+
+    cmd = _DummyCommand(name="err-cmd")
+    with pytest.raises(ValueError, match="Handler failed"):
+        middleware(cmd, failing_handler)
+
+    assert len(logger.entries) == 1
+    assert logger.entries[0].level == "info"
+    assert "Executed _DummyCommand in" in logger.entries[0].message
+    assert logger.entries[0].extra["message_type"] == "_DummyCommand"
+    assert "duration_seconds" in logger.entries[0].extra
+
+    # on_error with None context is a safe no-op
+    middleware.on_error(cmd, ValueError("error"), context=None)
+    assert len(logger.entries) == 1

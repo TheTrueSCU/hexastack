@@ -1,9 +1,13 @@
 from typing import Any
 
+import pytest
+
 from hexastack_core.domain import Command, Event, Query
 from hexastack_cqrs.ports.buses import (
     CommandBusPort,
     EventBusPort,
+    HandlerDispatcherPort,
+    MiddlewarePort,
     QueryBusPort,
 )
 
@@ -49,3 +53,26 @@ def test_bus_ports():
 
     query_bus = MockQueryBus()
     assert query_bus.dispatch(SampleQuery(query_param="q")) == "result of SampleQuery"
+
+
+def test_abstract_bus_ports_cannot_be_instantiated_directly():
+
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        CommandBusPort()  # type: ignore[abstract]
+
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        EventBusPort()  # type: ignore[abstract]
+
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        QueryBusPort()  # type: ignore[abstract]
+
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        HandlerDispatcherPort()  # type: ignore[abstract]
+
+    # Test MiddlewarePort runtime_checkable protocol
+    class CallableMiddleware:
+        def __call__(self, instance, next_call):
+            return next_call(instance)
+
+    assert isinstance(CallableMiddleware(), MiddlewarePort)
+    assert not isinstance(object(), MiddlewarePort)

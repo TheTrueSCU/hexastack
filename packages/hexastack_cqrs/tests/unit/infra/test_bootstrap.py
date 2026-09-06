@@ -12,6 +12,7 @@ from hexastack_core.infra.bootstrap import (
     bootstrap,
 )
 from hexastack_core.infra.config import HexastackConfig, HexastackCoreConfig
+from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from hexastack_cqrs.infra.bootstrap import (
@@ -223,3 +224,27 @@ def test_cqrs_bootstrapper_metadata():
     bootstrapper = CqrsBootstrapper()
     assert bootstrapper.name == "cqrs"
     assert bootstrapper.order == 20
+
+
+def test_bootstrap_cqrs_with_extra_bootstrappers():
+    class CustomBootstrapper(BootstrapperPort):
+        name = "custom"
+        order = 5
+
+        def configure(self, context: BootstrapContext) -> None:
+            context.properties["custom_executed"] = True
+
+    result = bootstrap_cqrs(bootstrappers=[CustomBootstrapper()])
+    assert result.container is not None
+
+
+def test_bootstrap_cqrs_with_custom_circuit_breaker_in_container():
+    from hexastack_core.adapters.circuit_breaker import InMemoryCircuitBreaker
+    from hexastack_core.ports.circuit_breaker import CircuitBreakerPort
+
+    custom_cb = InMemoryCircuitBreaker(failure_threshold=10)
+    container = Container()
+    container.add_instance(custom_cb, declared_class=CircuitBreakerPort)
+
+    result = bootstrap_cqrs(container=container)
+    assert result.container.resolve(CircuitBreakerPort) is custom_cb

@@ -296,4 +296,15 @@ def test_stamina_retry_middleware_exhausts_attempts():
 
     assert calls == 3
     # Retry log entries for attempts 1 and 2 (attempt 3 raises and is not retried)
-    assert len([e for e in logger.entries if "Stamina retrying" in e.message]) == 2
+    stamina_logs = [e for e in logger.entries if "Stamina retrying" in e.message]
+    assert len(stamina_logs) == 2
+    assert stamina_logs[0].extra == {
+        "message_type": "_DummyCommand",
+        "attempt": 1,
+        "max_attempts": 3,
+    }
+    assert stamina_logs[1].extra == {
+        "message_type": "_DummyCommand",
+        "attempt": 2,
+        "max_attempts": 3,
+    }

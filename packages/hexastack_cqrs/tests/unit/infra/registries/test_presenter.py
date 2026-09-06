@@ -49,8 +49,15 @@ def test_presenter_registry_all_clear_contains():
 def test_presenter_registry_unregistered_raises():
     registry = PresenterRegistry()
 
-    with pytest.raises(PresenterRegistryError):
+    # Explicit reraise=True
+    with pytest.raises(PresenterRegistryError) as exc_info:
         registry.present(SampleDTO(name="Bob"), "xml", reraise=True)
+    assert str(exc_info.value) == "No Presenter registered for SampleDTO as xml."
+
+    # Default reraise=True
+    with pytest.raises(PresenterRegistryError) as exc_default:
+        registry.present(SampleDTO(name="Bob"), "html")
+    assert str(exc_default.value) == "No Presenter registered for SampleDTO as html."
 
 
 def test_presenter_registry_unregistered_returns_none_when_reraise_false():
