@@ -269,7 +269,7 @@ options:
 ```text
 usage: pytest-run [-h]
                   [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}]
-                  [-A] [-U] [-P]
+                  [-A] [-U] [-P] [--with-context]
 
 Run pytest test suite.
 
@@ -279,6 +279,8 @@ options:
   -A, --affected
   -U, --unit
   -P, --properties
+  --with-context        Capture test function contexts in .coverage for Test
+                        Impact Analysis and boundary audits (disables xdist).
 ```
 
 #### `pytest-archon-generate`

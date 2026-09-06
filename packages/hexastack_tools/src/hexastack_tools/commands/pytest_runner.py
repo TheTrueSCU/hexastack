@@ -97,6 +97,11 @@ def run_main() -> None:
     parser.add_argument("-A", "--affected", action="store_true")
     parser.add_argument("-U", "--unit", action="store_true")
     parser.add_argument("-P", "--properties", action="store_true")
+    parser.add_argument(
+        "--with-context",
+        action="store_true",
+        help="Capture test function contexts in .coverage for Test Impact Analysis and boundary audits (disables xdist).",
+    )
     args, unknown = parser.parse_known_args()
 
     root = get_repo_root()
@@ -109,6 +114,9 @@ def run_main() -> None:
     )
 
     cov_args: list[str] = []
+    if args.with_context:
+        cov_args.extend(["-n", "0", "--cov-context=test"])
+
     if active_pkgs is not None:
         # Dynamically scope coverage only to tested packages
         cov_pkgs = [

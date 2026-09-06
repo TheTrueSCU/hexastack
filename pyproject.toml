@@ -128,7 +128,6 @@ extra-paths = [
 
 [tool.coverage.run]
 branch = true
-dynamic_context = "test_function"
 source = ["packages/"]
 omit = [
     "*/__pycache__/*",

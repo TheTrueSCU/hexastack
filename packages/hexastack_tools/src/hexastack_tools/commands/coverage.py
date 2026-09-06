@@ -274,7 +274,7 @@ def impact_main() -> None:
         console.print(
             Panel.fit(
                 f"[bold red]Coverage database '{cov_file}' not found.[/bold red]\n"
-                f"[yellow]Run full pytest with coverage first: [cyan]uv run pytest[/cyan][/yellow]",
+                f"[yellow]Generate coverage with test contexts first: [cyan]uv run pytest-run --with-context[/cyan][/yellow]",
                 border_style="red",
             )
         )
@@ -336,7 +336,7 @@ def boundary_audit_main() -> None:
         console.print(
             Panel.fit(
                 f"[bold red]Coverage database '{cov_file}' not found.[/bold red]\n"
-                f"[yellow]Run pytest with coverage first: [cyan]uv run pytest[/cyan][/yellow]",
+                f"[yellow]Generate coverage with test contexts first: [cyan]uv run pytest-run --with-context[/cyan][/yellow]",
                 border_style="red",
             )
         )
@@ -399,7 +399,7 @@ def redundancy_audit_main() -> None:
         console.print(
             Panel.fit(
                 f"[bold red]Coverage database '{cov_file}' not found.[/bold red]\n"
-                f"[yellow]Run pytest with branch coverage first: [cyan]uv run pytest[/cyan][/yellow]",
+                f"[yellow]Generate coverage with test contexts first: [cyan]uv run pytest-run --with-context[/cyan][/yellow]",
                 border_style="red",
             )
         )
