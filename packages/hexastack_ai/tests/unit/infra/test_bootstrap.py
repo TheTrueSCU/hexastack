@@ -23,6 +23,10 @@ def test_ai_bootstrapper_default_memory():
     ai_res: AiBootstrapResult = result.get("ai_result")
     assert ai_res is not None
     assert ai_res.config.provider == "memory"
+    assert ai_res.llm_provider is llm
+
+    ai_provider = result.get("ai_provider")
+    assert ai_provider is llm
 
 
 def test_ai_bootstrapper_litellm_provider():
@@ -44,8 +48,48 @@ def test_ai_bootstrapper_litellm_provider():
     llm = container.resolve(LlmProviderPort)
     assert isinstance(llm, LiteLlmAdapter)
 
+    ai_res: AiBootstrapResult = result.get("ai_result")
+    assert ai_res is not None
+    assert ai_res.config is config
+    assert ai_res.llm_provider is llm
+
+    ai_provider = result.get("ai_provider")
+    assert ai_provider is llm
+
+
+def test_ai_bootstrapper_from_context_config():
+    """Verify bootstrap retrieves HexastackAiConfig via context.get_config('ai', HexastackAiConfig)."""
+    from hexastack_core.infra.bootstrap import BootstrapContext
+    from hexastack_core.infra.config import HexastackConfig, HexastackCoreConfig
+    from hexastack_core.infra.registries.config import ConfigRegistry
+
+    c = Container()
+    reg = ConfigRegistry()
+    bootstrapper = AiBootstrapper()
+    bootstrapper.register_config(reg)
+
+    core_cfg = HexastackConfig(
+        core=HexastackCoreConfig(),
+        sections={"ai": HexastackAiConfig(provider="memory", model="test-custom-model")},
+    )
+    context = BootstrapContext(
+        container=c,
+        config=core_cfg,
+        config_registry=reg,
+    )
+    bootstrapper.configure(context)
+
+    ai_res: AiBootstrapResult = context.properties.get("ai_result")
+    assert ai_res is not None
+    assert ai_res.config.model == "test-custom-model"
+    assert ai_res.config.provider == "memory"
+    assert context.properties.get("ai_provider") is ai_res.llm_provider
+
+
+
 
 def test_ai_bootstrapper_metadata():
     bootstrapper = AiBootstrapper()
     assert bootstrapper.name == "ai"
     assert bootstrapper.order == 18
+

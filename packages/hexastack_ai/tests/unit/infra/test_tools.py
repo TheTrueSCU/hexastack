@@ -56,13 +56,42 @@ def test_create_cqrs_agent(pipeline: ExecutionPipeline):
     assert res is not None
 
 
+def test_create_cqrs_agent_defaults(pipeline: ExecutionPipeline):
+    agent = create_cqrs_agent(
+        pipeline=pipeline,
+        messages=[CalculateTaxCommand],
+    )
+    assert agent is not None
+    # Verify default system prompt
+    assert "You are an AI assistant capable of executing domain operations using the provided tools." in str(
+        agent._system_prompts
+    )
+
+
 @pytest.mark.anyio
 async def test_create_tool_for_message(pipeline: ExecutionPipeline):
     tool_fn = create_tool_for_message(CalculateTaxCommand, pipeline)
     assert tool_fn.__name__ == "CalculateTaxCommand"
+    assert tool_fn.__doc__ == "Execute the CalculateTaxCommand domain operation."
+    assert "amount" in tool_fn.__annotations__
+    assert tool_fn.__annotations__["amount"] is float
+    assert "tax_rate" in tool_fn.__annotations__
+    assert tool_fn.__annotations__["tax_rate"] is float
 
     res = await tool_fn(amount=100.0, tax_rate=0.2)
     assert res == {"total": 120.0}
+
+
+@pytest.mark.anyio
+async def test_create_tool_for_message_with_docstring(pipeline: ExecutionPipeline):
+    class DocumentedCommand(Command):
+        """Custom docstring for testing tool introspection."""
+
+        value: int = 42
+
+    tool_fn = create_tool_for_message(DocumentedCommand, pipeline)
+    assert tool_fn.__name__ == "DocumentedCommand"
+    assert tool_fn.__doc__ == "Custom docstring for testing tool introspection."
 
 
 @pytest.mark.anyio
@@ -79,3 +108,4 @@ async def test_create_tool_for_message_async_handler():
     tool_fn = create_tool_for_message(CalculateTaxCommand, mock_pipeline)
     res = await tool_fn(amount=100.0, tax_rate=1.0)
     assert res == {"async_total": 200.0}
+
