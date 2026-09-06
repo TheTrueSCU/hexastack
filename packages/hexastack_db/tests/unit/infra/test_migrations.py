@@ -93,9 +93,15 @@ def test_migration_commands_dispatch(tmp_path: Path):
     with patch("alembic.command.upgrade") as mock_upgrade:
         run_upgrade(cfg, revision="head")
         mock_upgrade.assert_called_once_with(cfg, "head")
+        mock_upgrade.reset_mock()
+        run_upgrade(cfg)
+        mock_upgrade.assert_called_once_with(cfg, "head")
 
     with patch("alembic.command.downgrade") as mock_downgrade:
         run_downgrade(cfg, revision="-1")
+        mock_downgrade.assert_called_once_with(cfg, "-1")
+        mock_downgrade.reset_mock()
+        run_downgrade(cfg)
         mock_downgrade.assert_called_once_with(cfg, "-1")
 
     with patch("alembic.command.revision") as mock_revision:
@@ -103,9 +109,17 @@ def test_migration_commands_dispatch(tmp_path: Path):
         mock_revision.assert_called_once_with(
             cfg, message="initial_schema", autogenerate=True
         )
+        mock_revision.reset_mock()
+        run_revision(cfg, message="schema_default")
+        mock_revision.assert_called_once_with(
+            cfg, message="schema_default", autogenerate=True
+        )
 
     with patch("alembic.command.stamp") as mock_stamp:
         stamp(cfg, revision="head")
+        mock_stamp.assert_called_once_with(cfg, "head")
+        mock_stamp.reset_mock()
+        stamp(cfg)
         mock_stamp.assert_called_once_with(cfg, "head")
 
     with patch("alembic.command.current") as mock_current:

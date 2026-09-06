@@ -78,6 +78,19 @@ async def test_async_sqlalchemy_repository():
         assert await repo.count(username="eve") == 1
         assert await repo.count(username="none") == 0
 
+        # Test default list(offset=0, limit=100)
+        default_list = await repo.list()
+        assert len(default_list) == 3
+
+        # Add 105 bulk records to test 100 limit truncation
+        bulk_users = [
+            UserRecord(username=f"async_bulk_{i}", email=f"async_{i}@example.com")
+            for i in range(105)
+        ]
+        await repo.add_many(bulk_users)
+        all_paged = await repo.list()
+        assert len(all_paged) == 100
+
         # 5. Update
         user1.email = "dave_updated@example.com"
         await repo.update(user1)
@@ -97,10 +110,8 @@ async def test_async_sqlalchemy_repository():
         assert deleted_user1 is True
         deleted_missing = await repo.delete(999999)
         assert deleted_missing is False
-        assert await repo.count() == 2
 
         # 8. Unique constraint errors
-        # Note: repo.add("eve") will fail if "eve" is already in db
         await repo.add(UserRecord(username="unique_user", email="unique@example.com"))
         with pytest.raises(UniqueConstraintViolationError) as exc_info:
             await repo.add(UserRecord(username="unique_user", email="dup@example.com"))
@@ -181,6 +192,19 @@ def test_sqlalchemy_repository_sync():
     assert repo.count(username="bob") == 1
     assert repo.count(username="missing") == 0
 
+    # Test default list(offset=0, limit=100)
+    default_sync_list = repo.list()
+    assert len(default_sync_list) == 3
+
+    # Add 105 bulk records to test 100 limit truncation
+    bulk_users = [
+        UserRecord(username=f"sync_bulk_{i}", email=f"sync_{i}@example.com")
+        for i in range(105)
+    ]
+    repo.add_many(bulk_users)
+    all_paged = repo.list()
+    assert len(all_paged) == 100
+
     # 5. Update
     user1.email = "alice_updated@example.com"
     merged = repo.update(user1)
@@ -194,12 +218,13 @@ def test_sqlalchemy_repository_sync():
     assert deleted_sync is True
     deleted_sync_missing = repo.delete(999999)
     assert deleted_sync_missing is False
-    assert repo.count() == 2
 
     # 7. Unique constraint errors on add, add_many, and update
     repo.add(UserRecord(username="sync_unique", email="sync@example.com"))
-    with pytest.raises(UniqueConstraintViolationError):
+    with pytest.raises(UniqueConstraintViolationError) as exc_info_sync:
         repo.add(UserRecord(username="sync_unique", email="duplicate@example.com"))
+    assert exc_info_sync.value is not None
+    assert "unique" in str(exc_info_sync.value).lower()
     session.rollback()
 
     repo.add(UserRecord(username="sync_unique", email="sync@example.com"))
@@ -297,3 +322,60 @@ async def test_async_sqlalchemy_repository_general_exception_handling():
 
     with pytest.raises(DatabaseError):
         await repo.delete(1)
+
+
+def test_sqlalchemy_repository_integrity_error_without_orig():
+    """Verify UniqueConstraintViolationError handles IntegrityError when orig is None."""
+    from unittest.mock import MagicMock
+
+    from sqlalchemy.exc import IntegrityError
+
+    mock_session = MagicMock()
+    # Create an IntegrityError where orig is None
+    integrity_err = IntegrityError("statement", {}, Exception("wrapped_orig"))
+    integrity_err.orig = None
+    mock_session.flush.side_effect = integrity_err
+    mock_session.merge.side_effect = integrity_err
+
+    repo = SqlAlchemyRepository(session=mock_session, model_cls=UserRecord)
+
+    with pytest.raises(UniqueConstraintViolationError) as exc_add:
+        repo.add(UserRecord(username="user1", email="u1@test.com"))
+    assert "statement" in str(exc_add.value)
+
+    with pytest.raises(UniqueConstraintViolationError) as exc_add_many:
+        repo.add_many([UserRecord(username="user1", email="u1@test.com")])
+    assert "statement" in str(exc_add_many.value)
+
+    with pytest.raises(UniqueConstraintViolationError) as exc_upd:
+        repo.update(UserRecord(id=1, username="user1", email="u1@test.com"))
+    assert "statement" in str(exc_upd.value)
+
+
+@pytest.mark.anyio
+async def test_async_sqlalchemy_repository_integrity_error_without_orig():
+    """Verify async UniqueConstraintViolationError handles IntegrityError when orig is None."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from sqlalchemy.exc import IntegrityError
+
+    integrity_err = IntegrityError("async_statement", {}, Exception("async_orig"))
+    integrity_err.orig = None
+
+    mock_session = MagicMock()
+    mock_session.flush = AsyncMock(side_effect=integrity_err)
+    mock_session.merge = MagicMock(side_effect=integrity_err)
+
+    repo = AsyncSqlAlchemyRepository(session=mock_session, model_cls=UserRecord)
+
+    with pytest.raises(UniqueConstraintViolationError) as exc_add:
+        await repo.add(UserRecord(username="async1", email="a1@test.com"))
+    assert "async_statement" in str(exc_add.value)
+
+    with pytest.raises(UniqueConstraintViolationError) as exc_add_many:
+        await repo.add_many([UserRecord(username="async1", email="a1@test.com")])
+    assert "async_statement" in str(exc_add_many.value)
+
+    with pytest.raises(UniqueConstraintViolationError) as exc_upd:
+        await repo.update(UserRecord(id=1, username="async1", email="a1@test.com"))
+    assert "async_statement" in str(exc_upd.value)

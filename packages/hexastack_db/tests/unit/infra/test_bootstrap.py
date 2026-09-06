@@ -75,7 +75,12 @@ def test_database_bootstrapper_sync():
     assert isinstance(db_res.uow, SqlAlchemyUnitOfWork)
     assert db_res.vector_store is None
 
-    assert result.get("db_session_factory") is not None
+    assert result.get("db_result") is db_res
+    assert result.get("engine") is db_res.engine
+    assert result.get("db_engine") is db_res.engine
+    assert result.get("session_factory") is db_res.session_factory
+    assert result.get("db_session_factory") is db_res.session_factory
+    assert result.get("uow") is db_res.uow
     assert result.get("db_uow") is db_res.uow
 
 

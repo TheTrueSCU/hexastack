@@ -84,6 +84,10 @@ def test_mixin_column_definitions():
     assert updated_col.type.timezone is True
     assert updated_col.nullable is False
 
+    # Verify column ordering matches sort_order declarations (-10 for id, 100/101 for timestamps)
+    col_names = [c.name for c in tbl.columns]
+    assert col_names == ["id", "title", "body", "created_at", "updated_at"]
+
 
 def test_timestamp_mixin_sets_created_at_and_updated_at():
     engine = _sync_engine()

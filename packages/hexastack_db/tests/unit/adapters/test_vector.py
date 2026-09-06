@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import MetaData, create_engine
+from sqlalchemy import MetaData, String, create_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -55,6 +55,22 @@ async def test_async_pg_vector_store_adapter():
     assert results[0]["_id"] == "v1"
     assert results[0]["_score"] > results[1]["_score"]
 
+    # Test default limit = 5 in search_async
+    for i in range(10):
+        await adapter.upsert_async(f"bulk_{i}", [1.0, float(i)], {"index": i})
+    default_limit_results = await adapter.search_async([1.0, 0.0])
+    assert len(default_limit_results) == 5
+
+    # Constructor overrides with table_name and dimension
+    custom_async_adapter = AsyncPgVectorStoreAdapter(
+        session_factory=async_factory,
+        table_name="override_async_vectors",
+        dimension=256,
+    )
+    assert custom_async_adapter._table_name == "override_async_vectors"
+    assert custom_async_adapter._dimension == 256
+    assert custom_async_adapter._table.name == "override_async_vectors"
+
     # Delete
     assert await adapter.delete_async("v1") is True
     assert await adapter.delete_async("non_existent") is False
@@ -89,6 +105,11 @@ def test_create_vector_table_caching():
     assert "id" in t1.c
     assert "embedding" in t1.c
     assert "metadata" in t1.c
+    assert t1.c.id.primary_key is True
+    assert isinstance(t1.c.id.type, String)
+    assert t1.c.id.type.length == 64
+    assert t1.c.embedding.nullable is False
+    assert t1.c.metadata.nullable is False
 
     # Re-call returns cached table from metadata
     t2 = create_vector_table("my_vectors", dimension=128, metadata=meta)
@@ -116,6 +137,16 @@ def test_pg_vector_store_adapter_sync():
     assert default_adapter._config.table_name == "hexastack_vectors"
     assert default_adapter._config.dimension == 1536
 
+    # Constructor overrides with table_name and dimension
+    custom_sync_adapter = PgVectorStoreAdapter(
+        session_factory=factory,
+        table_name="override_sync_vectors",
+        dimension=512,
+    )
+    assert custom_sync_adapter._table_name == "override_sync_vectors"
+    assert custom_sync_adapter._dimension == 512
+    assert custom_sync_adapter._table.name == "override_sync_vectors"
+
     # Upsert
     adapter.upsert("v1", [1.0, 0.0], {"doc": "x_axis"})
     adapter.upsert("v2", [0.0, 1.0], {"doc": "y_axis"})
@@ -139,6 +170,12 @@ def test_pg_vector_store_adapter_sync():
     assert results[0]["_id"] == "v1"
     assert results[1]["_id"] == "v2"
     assert results[0]["_score"] > results[1]["_score"]
+
+    # Test default limit = 5 in search()
+    for i in range(10):
+        adapter.upsert(f"sync_bulk_{i}", [1.0, float(i)], {"index": i})
+    default_sync_results = adapter.search([1.0, 0.0])
+    assert len(default_sync_results) == 5
 
     # Delete
     deleted_v1 = adapter.delete("v1")

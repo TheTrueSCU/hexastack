@@ -121,6 +121,38 @@ async def test_async_sqlalchemy_unit_of_work():
         async with failing_async_uow:
             pass
 
+    # 6. Session reset to None on exit and inactive commit/rollback no-op
+    assert async_uow._session is None
+    await async_uow.commit()
+    await async_uow.commit_async()
+    await async_uow.rollback()
+    await async_uow.rollback_async()
+    with pytest.raises(
+        DatabaseError,
+        match="AsyncUnitOfWork session is not active. Use within 'async with uow:' context.",
+    ):
+        _ = async_uow.session
+
+    # 7. Explicit commit failure raises UnitOfWorkError and suppresses rollback errors
+    error_mock_session = MagicMock()
+    error_mock_session.commit = mock_fail_commit
+
+    async def mock_fail_rollback():
+        raise OperationalError("stmt", {}, Exception("rollback error"))
+
+    error_mock_session.rollback = mock_fail_rollback
+    error_mock_session.close = mock_noop_close
+
+    explicit_fail_uow = AsyncSqlAlchemyUnitOfWork(
+        session_factory=lambda: error_mock_session
+    )
+    await explicit_fail_uow.__aenter__()
+    with pytest.raises(UnitOfWorkError):
+        await explicit_fail_uow.commit()
+    # Suppress rollback error
+    await explicit_fail_uow.rollback()
+    await explicit_fail_uow.__aexit__(ValueError, ValueError("test error"), None)
+
 
 def test_sqlalchemy_unit_of_work_commit_and_rollback():
     engine = create_engine(
@@ -132,8 +164,11 @@ def test_sqlalchemy_unit_of_work_commit_and_rollback():
     session_factory = sessionmaker(bind=engine)
     uow = SqlAlchemyUnitOfWork(session_factory=session_factory)
 
-    # Session property outside context raises DatabaseError
-    with pytest.raises(DatabaseError, match="not active"):
+    # Session property outside context raises DatabaseError with exact message
+    with pytest.raises(
+        DatabaseError,
+        match="UnitOfWork session is not active. Use within 'with uow:' context.",
+    ):
         _ = uow.session
 
     # 1. Successful commit via context manager
@@ -184,3 +219,31 @@ def test_sqlalchemy_unit_of_work_commit_and_rollback():
     failing_uow = SqlAlchemyUnitOfWork(session_factory=lambda: failing_mock_session)
     with pytest.raises(UnitOfWorkError), failing_uow:
         pass
+
+    # 6. Session reset to None on exit and inactive commit/rollback no-op
+    assert uow._session is None
+    uow.commit()
+    uow.rollback()
+    with pytest.raises(
+        DatabaseError,
+        match="UnitOfWork session is not active. Use within 'with uow:' context.",
+    ):
+        _ = uow.session
+
+    # 7. Explicit commit failure raises UnitOfWorkError and suppresses rollback errors
+    error_mock_session = MagicMock()
+    error_mock_session.commit.side_effect = OperationalError(
+        "stmt", {}, Exception("mock error")
+    )
+    error_mock_session.rollback.side_effect = OperationalError(
+        "stmt", {}, Exception("rollback error")
+    )
+    explicit_fail_sync_uow = SqlAlchemyUnitOfWork(
+        session_factory=lambda: error_mock_session
+    )
+    explicit_fail_sync_uow.__enter__()
+    with pytest.raises(UnitOfWorkError):
+        explicit_fail_sync_uow.commit()
+    # Suppress rollback error
+    explicit_fail_sync_uow.rollback()
+    explicit_fail_sync_uow.__exit__(ValueError, ValueError("test error"), None)

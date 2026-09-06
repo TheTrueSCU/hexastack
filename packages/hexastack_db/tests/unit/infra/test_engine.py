@@ -25,6 +25,8 @@ def test_create_async_engine_and_factory():
     assert async_engine.pool.__class__ is StaticPool
 
     factory = create_async_session_factory(async_engine)
+    assert factory.kw.get("autoflush") is False
+    assert factory.kw.get("expire_on_commit") is False
     session = factory()
     assert session is not None
 
@@ -88,6 +90,8 @@ def test_create_sync_engine_and_factory_memory():
         assert sync == 0  # OFF is 0
 
     factory = create_session_factory(engine)
+    assert factory.kw.get("autoflush") is False
+    assert factory.kw.get("expire_on_commit") is False
     session = factory()
     assert session is not None
     session.close()
