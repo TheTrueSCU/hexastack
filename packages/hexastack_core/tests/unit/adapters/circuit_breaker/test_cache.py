@@ -21,11 +21,26 @@ from hexastack_core.ports.circuit_breaker import CircuitState
 def test_cache_circuit_breaker_sync_lifecycle() -> None:
     """Verify cache-backed circuit breaker state transitions."""
     cache = InMemoryCache()
+    default_breaker = CacheCircuitBreaker(cache=cache)
+    assert default_breaker._failure_threshold == 5
+    assert default_breaker._recovery_timeout == 10.0
+    assert default_breaker._prefix == "hexastack:circuit_breaker:"
+    assert default_breaker._key("svc") == "hexastack:circuit_breaker:svc"
+
+    # Threshold min boundary check
+    bounded_breaker = CacheCircuitBreaker(
+        cache=cache, failure_threshold=-10, recovery_timeout_seconds=-5.0
+    )
+    assert bounded_breaker._failure_threshold == 1
+    assert bounded_breaker._recovery_timeout == 0.001
+
     breaker = CacheCircuitBreaker(
         cache=cache,
         failure_threshold=2,
         recovery_timeout_seconds=0.05,
+        key_prefix="custom:cb:",
     )
+    assert breaker._key("http_client") == "custom:cb:http_client"
 
     assert breaker.state("http_client") == CircuitState.CLOSED
     assert breaker.allow_execution("http_client") is True
@@ -76,11 +91,25 @@ def test_cache_circuit_breaker_sync_lifecycle() -> None:
 async def test_async_cache_circuit_breaker_lifecycle() -> None:
     """Verify async cache-backed circuit breaker state transitions."""
     cache = AsyncInMemoryCache()
+    default_async_cb = AsyncCacheCircuitBreaker(cache=cache)
+    assert default_async_cb._failure_threshold == 5
+    assert default_async_cb._recovery_timeout == 10.0
+    assert default_async_cb._prefix == "hexastack:circuit_breaker:"
+    assert default_async_cb._key("async_svc") == "hexastack:circuit_breaker:async_svc"
+
+    bounded_async_cb = AsyncCacheCircuitBreaker(
+        cache=cache, failure_threshold=-1, recovery_timeout_seconds=-10.0
+    )
+    assert bounded_async_cb._failure_threshold == 1
+    assert bounded_async_cb._recovery_timeout == 0.001
+
     breaker = AsyncCacheCircuitBreaker(
         cache=cache,
         failure_threshold=2,
         recovery_timeout_seconds=0.05,
+        key_prefix="async_custom:cb:",
     )
+    assert breaker._key("async_http") == "async_custom:cb:async_http"
 
     assert await breaker.state_async("async_http") == CircuitState.CLOSED
     assert await breaker.allow_execution_async("async_http") is True

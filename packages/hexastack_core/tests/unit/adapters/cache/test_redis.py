@@ -13,15 +13,25 @@ from hexastack_core.adapters.cache.redis import (
 def test_value_serialization_and_deserialization():
     # String
     s_raw = _serialize_value("hello")
+    assert '"_hs_type": "str"' in s_raw
+    assert '"v": "hello"' in s_raw
     assert _deserialize_value(s_raw) == "hello"
 
     # Bytes
     b_raw = _serialize_value(b"binary data")
+    assert '"_hs_type": "bytes"' in b_raw
+    assert '"v": "62696e6172792064617461"' in b_raw
     assert _deserialize_value(b_raw) == b"binary data"
+    assert _deserialize_value(b_raw.encode("utf-8")) == b"binary data"
 
     # Dict / JSON
     d_raw = _serialize_value({"key": "val", "num": 123})
+    assert '"_hs_type": "json"' in d_raw
     assert _deserialize_value(d_raw) == {"key": "val", "num": 123}
+
+    # Non-envelope dictionary JSON
+    raw_dict = '{"plain": "data", "count": 1}'
+    assert _deserialize_value(raw_dict) == {"plain": "data", "count": 1}
 
     # None and fallback defaults
     assert _deserialize_value(None, default="fallback") == "fallback"
@@ -69,16 +79,20 @@ def test_sync_redis_cache_adapter_crud():
 
 def test_sync_redis_cache_adapter_ttl():
     fake_client = fakeredis.FakeRedis()
-    cache = RedisCacheAdapter(client=fake_client)
+    cache = RedisCacheAdapter(client=fake_client, key_prefix="cache:")
 
-    cache.set("temp_key", "temp_value", ttl_seconds=0.1)
+    cache.set("temp_key", "temp_value", ttl_seconds=5.0)
     assert cache.has("temp_key") is True
     assert cache.get("temp_key") == "temp_value"
+
+    # Verify key prefix and millisecond precision on raw Redis key
+    pttl = fake_client.pttl("cache:temp_key")
+    assert 4000 < pttl <= 5000
 
     # Fast forward time on fakeredis
     fake_client.time()
     # Expire via ttl
-    fake_client.expire("temp_key", 0)
+    fake_client.expire("cache:temp_key", 0)
     assert cache.has("temp_key") is False
     assert cache.get("temp_key") is None
 
@@ -126,12 +140,16 @@ async def test_async_redis_cache_adapter_crud():
 @pytest.mark.asyncio
 async def test_async_redis_cache_adapter_ttl():
     fake_async_client = fakeredis.aioredis.FakeRedis()
-    cache = AsyncRedisCacheAdapter(client=fake_async_client)
+    cache = AsyncRedisCacheAdapter(client=fake_async_client, key_prefix="async_cache:")
 
-    await cache.set_async("async_temp", "val", ttl_seconds=0.1)
+    await cache.set_async("async_temp", "val", ttl_seconds=5.0)
     assert await cache.has_async("async_temp") is True
     assert await cache.get_async("async_temp") == "val"
 
-    await fake_async_client.expire("async_temp", 0)
+    # Verify key prefix and millisecond precision on raw Redis key
+    pttl = await fake_async_client.pttl("async_cache:async_temp")
+    assert 4000 < pttl <= 5000
+
+    await fake_async_client.expire("async_cache:async_temp", 0)
     assert await cache.has_async("async_temp") is False
     assert await cache.get_async("async_temp") is None

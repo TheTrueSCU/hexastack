@@ -75,6 +75,16 @@ def test_in_memory_vector_store_upsert_and_similarity_search():
     assert len(results_y) == 1
     assert results_y[0]["_id"] == "doc3"
 
+    # Test zero vector cosine similarity handling (norm == 0)
+    store.upsert("zero_doc", [0.0, 0.0], {"title": "Zero norm"})
+    res_zero = store.search([0.0, 0.0])
+    assert any(d["_id"] == "zero_doc" for d in res_zero)
+    assert any(d["_score"] == 0.0 for d in res_zero)
+
+    # Test default search limit (default limit=5)
+    default_res = store.search([1.0, 0.0])
+    assert len(default_res) <= 5
+
     # Test get, delete, clear
     assert store.get("doc1") is not None
     deleted = store.delete("doc1")

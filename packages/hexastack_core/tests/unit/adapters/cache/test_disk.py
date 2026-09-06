@@ -60,6 +60,14 @@ def test_disk_cache_adapter_persistence_across_instances():
         cache2.close()
 
 
+def test_disk_cache_adapter_default_initialization():
+    cache = DiskCacheAdapter()
+    assert cache._cache.directory.startswith(tempfile.gettempdir())
+    cache.set("default:init", "test")
+    assert cache.get("default:init") == "test"
+    cache.close()
+
+
 @pytest.mark.anyio
 async def test_async_disk_cache_adapter_lifecycle():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -81,6 +89,15 @@ async def test_async_disk_cache_adapter_lifecycle():
         assert await cache.has_async("k1") is False
 
         await cache.close_async()
+
+
+@pytest.mark.anyio
+async def test_async_disk_cache_adapter_default_initialization():
+    cache = AsyncDiskCacheAdapter()
+    assert cache._sync_adapter._cache.directory.startswith(tempfile.gettempdir())
+    await cache.set_async("default:async_init", "test_val")
+    assert await cache.get_async("default:async_init") == "test_val"
+    await cache.close_async()
 
 
 def test_disk_cache_adapter_missing_dependency(monkeypatch):

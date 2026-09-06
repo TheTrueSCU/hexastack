@@ -16,6 +16,20 @@ from hexastack_core.ports.circuit_breaker import CircuitState
 
 def test_in_memory_circuit_breaker_sync_state_machine() -> None:
     """Verify state transitions: CLOSED -> OPEN -> HALF_OPEN -> CLOSED."""
+    default_breaker = InMemoryCircuitBreaker()
+    assert default_breaker._failure_threshold == 5
+    assert default_breaker._recovery_timeout == 10.0
+    assert default_breaker._half_open_max_trials == 1
+
+    bounded_breaker = InMemoryCircuitBreaker(
+        failure_threshold=-1,
+        recovery_timeout_seconds=-1.0,
+        half_open_max_trials=-5,
+    )
+    assert bounded_breaker._failure_threshold == 1
+    assert bounded_breaker._recovery_timeout == 0.001
+    assert bounded_breaker._half_open_max_trials == 1
+
     breaker = InMemoryCircuitBreaker(
         failure_threshold=3,
         recovery_timeout_seconds=0.05,
@@ -99,6 +113,24 @@ def test_in_memory_circuit_breaker_sync_state_machine() -> None:
 @pytest.mark.anyio
 async def test_async_in_memory_circuit_breaker_state_machine() -> None:
     """Verify async in-memory circuit breaker operations."""
+    default_async_cb = AsyncInMemoryCircuitBreaker()
+    assert default_async_cb._sync._failure_threshold == 5
+    assert default_async_cb._sync._recovery_timeout == 10.0
+    assert default_async_cb._sync._half_open_max_trials == 1
+
+    bounded_async_cb = AsyncInMemoryCircuitBreaker(
+        failure_threshold=-2,
+        recovery_timeout_seconds=-0.5,
+        half_open_max_trials=-1,
+    )
+    assert bounded_async_cb._sync._failure_threshold == 1
+    assert bounded_async_cb._sync._recovery_timeout == 0.001
+    assert bounded_async_cb._sync._half_open_max_trials == 1
+
+    custom_sync = InMemoryCircuitBreaker(failure_threshold=4)
+    injected_async_cb = AsyncInMemoryCircuitBreaker(sync_breaker=custom_sync)
+    assert injected_async_cb._sync is custom_sync
+
     breaker = AsyncInMemoryCircuitBreaker(
         failure_threshold=2,
         recovery_timeout_seconds=0.05,

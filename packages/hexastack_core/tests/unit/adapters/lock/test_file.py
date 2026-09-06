@@ -13,6 +13,9 @@ from hexastack_core.domain.exceptions import LockError
 def test_file_lock_adapter_sync_lifecycle():
     with tempfile.TemporaryDirectory() as tmpdir:
         lock_file = Path(tmpdir) / "test.lock"
+        default_lock = FileLockAdapter(lock_file)
+        assert default_lock._default_timeout == 10.0
+
         lock1 = FileLockAdapter(lock_file, timeout=1.0)
         lock2 = FileLockAdapter(lock_file, timeout=0.1)
 
