@@ -1,6 +1,10 @@
 # CHANGELOG
 
-## v0.3.3 (2026-09-05)
+## v0.3.4 (2026-09-06)
+
+### Tooling & Mutation Testing
+* **Mutation Runner Cache Refresh**: Added `-r` / `--refresh` option to `mutmut-run` CLI to selectively purge cached mutants for a specific package or workspace before executing mutation testing runs.
+* **Safe Mutation Rollback**: Hardened `_revert_bak_and_disk_mutations` in `hexastack-tools` to target only active mutated source files during test interruptions, safeguarding unstaged working tree changes.
 
 ### Bug Fixes & Tooling
 * **CI & Parallel Test Execution**: Resolved `pytest-cov` / `pytest-xdist` conflict by decoupling dynamic coverage context from global configuration. Parallel test execution (`-n auto`) now runs across all workers cleanly without `DistCovError`.
