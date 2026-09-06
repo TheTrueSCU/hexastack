@@ -45,14 +45,31 @@ def test_redis_lock_adapter_acquire_failure_and_non_blocking():
     mock_redis.set.return_value = False
 
     lock = RedisLockAdapter(
-        mock_redis, key="lock:order:2", ttl_seconds=5.0, retry_interval_seconds=0.01
+        mock_redis, key="lock:order:2", ttl_seconds=5.0, retry_interval_seconds=0.005
     )
 
-    # Non-blocking acquire returns False when unavailable
-    assert lock.acquire(blocking=False) is False
+    # Non-blocking acquire returns False when unavailable and verifies arguments passed to set
+    res_non_blocking = lock.acquire(blocking=False)
+    assert res_non_blocking is False
+    assert lock._token is None
+    mock_redis.set.assert_called_with(
+        "lock:order:2", mock_redis.set.call_args[0][1], nx=True, px=5000
+    )
 
-    # Blocking with timeout returns False on deadline
-    assert lock.acquire(blocking=True, timeout=0.03) is False
+    # Blocking with timeout 0 returns False immediately on deadline
+    res_timeout_0 = lock.acquire(blocking=True, timeout=0.0)
+    assert res_timeout_0 is False
+
+    # Blocking with timeout > 0 returns False on deadline
+    res_timeout = lock.acquire(blocking=True, timeout=0.01)
+    assert res_timeout is False
+
+    # Acquire succeeds after initial failure
+    mock_redis.set.side_effect = [False, True]
+    res_eventual = lock.acquire(blocking=True, timeout=0.05)
+    assert res_eventual is True
+    assert lock._token is not None
+    mock_redis.set.side_effect = None
 
 
 def test_redis_lock_adapter_release_lost_lock():
@@ -118,10 +135,26 @@ async def test_async_redis_lock_adapter_acquire_failure():
     mock_redis.set = AsyncMock(return_value=False)
 
     lock = AsyncRedisLockAdapter(
-        mock_redis, key="lock:async:2", ttl_seconds=5.0, retry_interval_seconds=0.01
+        mock_redis, key="lock:async:2", ttl_seconds=5.0, retry_interval_seconds=0.005
     )
-    assert await lock.acquire(blocking=False) is False
-    assert await lock.acquire(blocking=True, timeout=0.03) is False
+    res_non_blocking = await lock.acquire(blocking=False)
+    assert res_non_blocking is False
+    assert lock._token is None
+    mock_redis.set.assert_called_with(
+        "lock:async:2", mock_redis.set.call_args[0][1], nx=True, px=5000
+    )
+
+    res_timeout_0 = await lock.acquire(blocking=True, timeout=0.0)
+    assert res_timeout_0 is False
+
+    res_timeout = await lock.acquire(blocking=True, timeout=0.01)
+    assert res_timeout is False
+
+    # Eventual acquire succeeds
+    mock_redis.set = AsyncMock(side_effect=[False, True])
+    res_eventual = await lock.acquire(blocking=True, timeout=0.05)
+    assert res_eventual is True
+    assert lock._token is not None
 
 
 @pytest.mark.anyio

@@ -54,7 +54,26 @@ def test_in_memory_logger_capture_and_filter():
     # Filter by level
     errors = logger.entries_by_level("error")
     assert len(errors) == 1
+    assert errors[0].level == "error"
     assert errors[0].message == "DB connection dropped"
+    assert errors[0].extra is None
+    assert isinstance(errors[0].exc, RuntimeError)
+
+    warnings = logger.entries_by_level("warning")
+    assert len(warnings) == 1
+    assert warnings[0].level == "warning"
+    assert warnings[0].message == "Low memory warning"
+
+    # Warning and Error with explicit extra
+    logger.warning("High CPU", extra={"usage": "99%"})
+    logger.error("Out of memory", extra={"heap": "100%"}, exc=MemoryError("OOM"))
+    latest_warn = logger.entries_by_level("warning")[-1]
+    assert latest_warn.level == "warning"
+    assert latest_warn.extra == {"usage": "99%"}
+    latest_err = logger.entries_by_level("error")[-1]
+    assert latest_err.level == "error"
+    assert latest_err.extra == {"heap": "100%"}
+    assert isinstance(latest_err.exc, MemoryError)
 
     # Clear
     logger.clear()

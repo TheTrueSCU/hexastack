@@ -36,17 +36,27 @@ def test_parse_rate_limit():
     assert _parse_rate_limit("2/d").window_seconds == 86400
     assert _parse_rate_limit("2/days").window_seconds == 86400
 
-    with pytest.raises(ValueError, match="Invalid rate limit format"):
+    with pytest.raises(
+        ValueError,
+        match="Invalid rate limit format '10-minute'. Expected format '<count>/<unit>' \\(e.g. '10/minute'\\).",
+    ):
         _parse_rate_limit("10-minute")
 
-    with pytest.raises(ValueError, match="Invalid rate limit count"):
+    with pytest.raises(
+        ValueError, match="Invalid rate limit count 'abc' in 'abc/minute'."
+    ):
         _parse_rate_limit("abc/minute")
 
-    with pytest.raises(ValueError, match="Invalid rate limit time unit"):
+    with pytest.raises(
+        ValueError,
+        match="Invalid rate limit time unit 'decade' in '10/decade'. Supported units: second, minute, hour, day.",
+    ):
         _parse_rate_limit("10/decade")
 
 
-def test_in_memory_rate_limiter_hits_and_resets():
+def test_in_memory_rate_limiter_hits_and_resets(monkeypatch: pytest.MonkeyPatch):
+    import time
+
     limiter = InMemoryRateLimiter()
 
     key = "user:123"
@@ -54,22 +64,40 @@ def test_in_memory_rate_limiter_hits_and_resets():
 
     assert limiter.get_reset_window(key, limit) == 0
 
-    assert limiter.hit(key, limit) is True
-    assert limiter.hit(key, limit) is True
-    assert limiter.hit(key, limit) is True
+    current_time = 1000.0
+    monkeypatch.setattr(time, "time", lambda: current_time)
+
+    res1 = limiter.hit(key, limit)
+    assert res1 is True
+    res2 = limiter.hit(key, limit)
+    assert res2 is True
+    res3 = limiter.hit(key, limit)
+    assert res3 is True
     # 4th hit exceeds 3/second
-    assert limiter.hit(key, limit) is False
+    res4 = limiter.hit(key, limit)
+    assert res4 is False
 
     reset_window = limiter.get_reset_window(key, limit)
-    assert reset_window >= 1
+    assert reset_window == 1
+
+    # Advance time past sliding window (1.1s later)
+    current_time = 1001.1
+    # Old hits are evicted, hit allowed
+    res5 = limiter.hit(key, limit)
+    assert res5 is True
+    assert len(limiter._hits[key]) == 1
 
     # Reset for different key is allowed
-    assert limiter.hit("user:456", limit) is True
+    res_other = limiter.hit("user:456", limit)
+    assert res_other is True
 
     # Clear specific key
     limiter.clear(key)
-    assert limiter.hit(key, limit) is True
+    assert key not in limiter._hits
+    res_cleared = limiter.hit(key, limit)
+    assert res_cleared is True
 
     # Clear all
     limiter.clear()
+    assert len(limiter._hits) == 0
     assert limiter.get_reset_window(key, limit) == 0
