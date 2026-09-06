@@ -79,3 +79,24 @@ def test_resolve_query_and_command_helpers():
     )
     assert m_res.errors is None
     assert m_res.data == {"updateStock": "Updated SKU-999 with 50"}
+
+    # Test error when buses are missing
+    from unittest.mock import MagicMock
+
+    import pytest
+
+    from hexastack_graphql.domain.exceptions import GraphQLError
+
+    empty_ctx = GraphQLContext(container=runtime.container)
+    mock_info_no_bus = MagicMock(spec=Info)
+    mock_info_no_bus.context = empty_ctx
+
+    with pytest.raises(
+        GraphQLError, match="CommandBusPort is not available in GraphQLContext"
+    ):
+        dispatch_command(mock_info_no_bus, UpdateStockCommand(sku="SKU-1", quantity=1))
+
+    with pytest.raises(
+        GraphQLError, match="QueryBusPort is not available in GraphQLContext"
+    ):
+        dispatch_query(mock_info_no_bus, FindItemQuery(sku="SKU-1"))

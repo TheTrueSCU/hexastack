@@ -13,6 +13,13 @@ def test_graphql_context_creation():
     assert ctx.request is None
     assert ctx.properties == {"key": "value"}
 
+    # Default properties
+    ctx_default = GraphQLContext(container=container)
+    assert ctx_default.properties == {}
+    ctx_default.properties["new"] = 123
+    ctx_default_2 = GraphQLContext(container=container)
+    assert ctx_default_2.properties == {}
+
 
 def test_graphql_context_full_fields():
     container = Container()

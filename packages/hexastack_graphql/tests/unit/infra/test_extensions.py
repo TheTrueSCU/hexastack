@@ -27,3 +27,8 @@ def test_correlation_extension_injects_correlation_id():
         assert result.extensions.get("correlation_id") == "req-trace-abc1234"
     finally:
         correlation_id_ctx.reset(token)
+
+
+def test_correlation_extension_empty_when_no_correlation_id():
+    ext = CorrelationExtension()
+    assert ext.get_results() == {}
