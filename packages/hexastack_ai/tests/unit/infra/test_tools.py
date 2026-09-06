@@ -93,6 +93,26 @@ async def test_create_tool_for_message_with_docstring(pipeline: ExecutionPipelin
     tool_fn = create_tool_for_message(DocumentedCommand, pipeline)
     assert tool_fn.__name__ == "DocumentedCommand"
     assert tool_fn.__doc__ == "Custom docstring for testing tool introspection."
+    assert "value" in tool_fn.__annotations__
+    assert tool_fn.__annotations__["value"] is int
+
+
+@pytest.mark.anyio
+async def test_create_tool_for_message_unannotated_fallback(
+    pipeline: ExecutionPipeline,
+):
+    from typing import Any
+
+    from pydantic import Field
+
+    class UntypedCommand(Command):
+        raw_field: Any = Field(default="default_val")
+
+    tool_fn = create_tool_for_message(UntypedCommand, pipeline)
+    sig = tool_fn.__signature__
+    assert "raw_field" in sig.parameters
+    assert sig.parameters["raw_field"].annotation is Any
+    assert sig.parameters["raw_field"].default == "default_val"
 
 
 @pytest.mark.anyio

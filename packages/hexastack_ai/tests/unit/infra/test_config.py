@@ -50,7 +50,14 @@ def test_ai_config_defaults():
 
 
 def test_register_ai_config():
+    from hexastack_core.infra.decorators import _HANDLER_META_ATTR
+
     registry = ConfigRegistry()
     register_ai_config(registry)
     assert "ai" in registry
     assert registry.get("ai") is HexastackAiConfig
+
+    # Verify metadata decorator tag
+    meta = getattr(HexastackAiConfig, _HANDLER_META_ATTR, None)
+    assert meta is not None
+    assert meta.section_name == "ai"
