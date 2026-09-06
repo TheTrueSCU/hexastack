@@ -170,6 +170,58 @@ def show_summary(con: sqlite3.Connection) -> None:
     console.print(table)
 
 
+def _render_mutant_detail(
+    row: tuple[int, str, int, str],
+    cat: MutantCategory,
+    reason: str,
+    correlate_coverage: bool,
+) -> None:
+    """Render details for a single surviving mutant.
+
+    Args:
+        row: Mutant record tuple (id, filename, line_number, line_code).
+        cat: Classified category of mutant.
+        reason: Diagnostic rationale for classification.
+        correlate_coverage: Whether to cross-reference coverage data.
+
+    Notes/Architectural Intent:
+        Helper to encapsulate console formatting and coverage lookup per mutant.
+    """
+    from hexastack_tools.commands.coverage import get_tests_covering_line
+
+    rel_path = row[1].replace(str(ROOT_DIR) + "/", "")
+    line_str = row[3].strip()
+    icon = (
+        "🔴"
+        if cat == MutantCategory.CRITICAL
+        else ("🟡" if cat == MutantCategory.EQUIVALENT else "🟢")
+    )
+    console.print(
+        f"  {icon} [bold]Mutant {row[0]:<4}[/bold] [{cat.value:<10}] | [dim]{rel_path}:{row[2]}[/dim]"
+    )
+    console.print(f"     [bold white]Code:[/bold white]   {line_str}")
+    console.print(f"     [italic dim]Reason:[/italic dim] {reason}")
+
+    if correlate_coverage:
+        covering_tests = get_tests_covering_line(row[1], row[2])
+        if covering_tests:
+            console.print(
+                f"     [bold cyan]Covered by tests ({len(covering_tests)}):[/bold cyan]"
+            )
+            for t in covering_tests[:5]:
+                console.print(f"       [magenta]•[/magenta] {t}")
+            if len(covering_tests) > 5:
+                console.print(
+                    f"       [dim]... (+{len(covering_tests) - 5} more tests)[/dim]"
+                )
+        else:
+            console.print(
+                "     [dim yellow]No tests executed this line (uncovered in .coverage)[/dim yellow]"
+            )
+
+    console.print()
+
+
 def show_file_mutants(
     con: sqlite3.Connection,
     pattern: str,
@@ -190,8 +242,6 @@ def show_file_mutants(
         Lists individual mutant line details, snippets, diagnostic classification rationale,
         and optionally identifies test functions covering each mutant line.
     """
-    from hexastack_tools.commands.coverage import get_tests_covering_line
-
     cur = con.cursor()
     query = """
     SELECT m.id, sf.filename, l.line_number, l.line
@@ -220,37 +270,7 @@ def show_file_mutants(
     )
 
     for row, cat, reason in filtered_rows[:limit]:
-        rel_path = row[1].replace(str(ROOT_DIR) + "/", "")
-        line_str = row[3].strip()
-        icon = (
-            "🔴"
-            if cat == MutantCategory.CRITICAL
-            else ("🟡" if cat == MutantCategory.EQUIVALENT else "🟢")
-        )
-        console.print(
-            f"  {icon} [bold]Mutant {row[0]:<4}[/bold] [{cat.value:<10}] | [dim]{rel_path}:{row[2]}[/dim]"
-        )
-        console.print(f"     [bold white]Code:[/bold white]   {line_str}")
-        console.print(f"     [italic dim]Reason:[/italic dim] {reason}")
-
-        if correlate_coverage:
-            covering_tests = get_tests_covering_line(row[1], row[2])
-            if covering_tests:
-                console.print(
-                    f"     [bold cyan]Covered by tests ({len(covering_tests)}):[/bold cyan]"
-                )
-                for t in covering_tests[:5]:
-                    console.print(f"       [magenta]•[/magenta] {t}")
-                if len(covering_tests) > 5:
-                    console.print(
-                        f"       [dim]... (+{len(covering_tests) - 5} more tests)[/dim]"
-                    )
-            else:
-                console.print(
-                    "     [dim yellow]No tests executed this line (uncovered in .coverage)[/dim yellow]"
-                )
-
-        console.print()
+        _render_mutant_detail(row, cat, reason, correlate_coverage)
 
     if len(filtered_rows) > limit:
         console.print(

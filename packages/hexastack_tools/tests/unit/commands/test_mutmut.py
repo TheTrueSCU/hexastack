@@ -122,7 +122,11 @@ def test_mutmut_inspect_package_actionable(
     mock_get_conn.return_value = mock_conn
     inspect_main()
     mock_show_file.assert_called_once_with(
-        mock_conn, "hexastack_core", limit=25, actionable_only=True, correlate_coverage=True
+        mock_conn,
+        "hexastack_core",
+        limit=25,
+        actionable_only=True,
+        correlate_coverage=True,
     )
     mock_conn.close.assert_called_once()
 
@@ -137,9 +141,24 @@ def test_show_file_mutants_execution() -> None:
         (2, "/repo/packages/hexastack_core/src/model.py", 20, "logger.info('ok')"),
     ]
 
-    with patch("hexastack_tools.commands.coverage.get_tests_covering_line", return_value=["test_fn"]):
-        show_file_mutants(mock_conn, "hexastack_core", limit=10, actionable_only=True, correlate_coverage=True)
-        show_file_mutants(mock_conn, "hexastack_core", limit=10, actionable_only=False, correlate_coverage=False)
+    with patch(
+        "hexastack_tools.commands.coverage.get_tests_covering_line",
+        return_value=["test_fn"],
+    ):
+        show_file_mutants(
+            mock_conn,
+            "hexastack_core",
+            limit=10,
+            actionable_only=True,
+            correlate_coverage=True,
+        )
+        show_file_mutants(
+            mock_conn,
+            "hexastack_core",
+            limit=10,
+            actionable_only=False,
+            correlate_coverage=False,
+        )
 
 
 def test_show_summary_execution() -> None:
