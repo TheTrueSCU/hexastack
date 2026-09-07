@@ -39,6 +39,13 @@ def run_complexipy(
     ]
 
     proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if proc.returncode != 0 and not proc.stdout.strip():
+        if proc.stderr:
+            console.print(
+                f"[bold red]complexipy error:[/bold red] {proc.stderr.strip()}"
+            )
+        return proc.returncode
+
     raw_output = proc.stdout.strip()
 
     violations: list[tuple[str, str, int]] = []

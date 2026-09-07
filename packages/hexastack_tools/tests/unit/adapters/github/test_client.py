@@ -19,3 +19,40 @@ def test_github_http_adapter_init() -> None:
         assert client.owner == "TestOwner"
         assert client.repo == "TestRepo"
         assert client.token == "dummy"
+
+
+def test_parse_github_url_variants() -> None:
+    """Verify _parse_github_url handles SSH SCP, HTTPS, and userinfo formats."""
+    from hexastack_tools.adapters.github.client import _parse_github_url
+
+    # SSH SCP format
+    assert _parse_github_url("git@github.com:TheTrueSCU/hexastack.git") == (
+        "TheTrueSCU",
+        "hexastack",
+    )
+    assert _parse_github_url("git@github.com:Owner/Repo") == ("Owner", "Repo")
+
+    # HTTPS format
+    assert _parse_github_url("https://github.com/TheTrueSCU/hexastack.git") == (
+        "TheTrueSCU",
+        "hexastack",
+    )
+    assert _parse_github_url("https://github.com/TheTrueSCU/hexastack") == (
+        "TheTrueSCU",
+        "hexastack",
+    )
+
+    # HTTPS with userinfo
+    assert (
+        _parse_github_url(
+            "https://user:token@github.com/TheTrueSCU/hexastack.git"  # pragma: allowlist secret
+        )
+        == (
+            "TheTrueSCU",
+            "hexastack",
+        )
+    )
+
+    # Non-GitHub host returns None
+    assert _parse_github_url("git@gitlab.com:TheTrueSCU/hexastack.git") is None
+    assert _parse_github_url("https://gitlab.com/TheTrueSCU/hexastack.git") is None
