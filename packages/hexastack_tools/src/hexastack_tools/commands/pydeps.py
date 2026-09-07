@@ -39,10 +39,10 @@ def generate_package_diagram(pkg_path: Path, root: Path) -> str | None:
     try:
         pydeps(
             fname=str(entry_point),
-            T="svg",
-            o=str(svg_path),
+            format="svg",
+            output=str(svg_path),
             show=False,
-            noshow=True,
+            no_show=True,
             cluster=True,
             max_bacon=2,
             rankdir="TB",
@@ -61,10 +61,10 @@ def generate_overview_diagram(root: Path) -> str | None:
     try:
         pydeps(
             fname=str(packages_dir),
-            T="svg",
-            o=str(svg_path),
+            format="svg",
+            output=str(svg_path),
             show=False,
-            noshow=True,
+            no_show=True,
             cluster=True,
             max_bacon=1,
             rankdir="TB",

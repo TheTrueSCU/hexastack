@@ -156,7 +156,9 @@ class AsyncFileLockAdapter(AsyncLockPort):
         Returns:
             True if held, False otherwise.
         """
-        return self._is_locked
+        import asyncio
+
+        return await asyncio.to_thread(self._sync_adapter.locked)
 
 
 __all__ = [

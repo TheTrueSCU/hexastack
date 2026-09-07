@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-workspace"
-version = "0.3.4"
+version = "0.3.5"
 requires-python = ">=3.13"
 dependencies = [
     "hexastack[all]",
@@ -23,6 +23,7 @@ generate-usage-docs = "hexastack_tools.commands.usage_docs:main"
 gh-checks = "hexastack_tools.commands.checks:main"
 gh-code-scanning = "hexastack_tools.commands.code_scanning:main"
 gh-pr-examine = "hexastack_tools.commands.pr_examine:main"
+gh-repo = "hexastack_tools.commands.repo:main"
 gh-security = "hexastack_tools.commands.security:main"
 import-linter-generate = "hexastack_tools.commands.import_linter:generate_main"
 import-linter-run = "hexastack_tools.commands.import_linter:run_main"
@@ -76,7 +77,6 @@ dev = [
     "deptry>=0.23.0",
     "detect-secrets>=1.5.0",
     "dirty-equals>=0.11",
-    "diskcache>=5.6.3",
     "faker>=33.0.0",
     "fakeredis>=2.26.0",
     "filelock>=3.16.0",

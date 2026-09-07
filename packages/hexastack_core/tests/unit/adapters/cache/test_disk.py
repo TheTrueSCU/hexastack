@@ -62,10 +62,31 @@ def test_disk_cache_adapter_persistence_across_instances():
 
 def test_disk_cache_adapter_default_initialization():
     cache = DiskCacheAdapter()
-    assert cache._cache.directory.startswith(tempfile.gettempdir())
+    assert cache._directory.exists()
     cache.set("default:init", "test")
     assert cache.get("default:init") == "test"
     cache.close()
+
+
+def test_disk_cache_adapter_explicit_file_path():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_file = f"{tmpdir}/custom_cache.db"
+        cache = DiskCacheAdapter(directory=db_file)
+        cache.set("custom:key", {"value": 42})
+        assert cache.get("custom:key") == {"value": 42}
+        cache.close()
+
+
+def test_disk_cache_adapter_corrupt_json_fallback():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cache = DiskCacheAdapter(directory=tmpdir)
+        with cache._conn:
+            cache._conn.execute(
+                "INSERT INTO cache_entries (key, value, expires_at) VALUES (?, ?, ?)",
+                ("corrupt:key", "invalid-json{", None),
+            )
+        assert cache.get("corrupt:key", default="fallback") == "fallback"
+        cache.close()
 
 
 @pytest.mark.anyio
@@ -94,17 +115,7 @@ async def test_async_disk_cache_adapter_lifecycle():
 @pytest.mark.anyio
 async def test_async_disk_cache_adapter_default_initialization():
     cache = AsyncDiskCacheAdapter()
-    assert cache._sync_adapter._cache.directory.startswith(tempfile.gettempdir())
+    assert cache._sync_adapter._directory.exists()
     await cache.set_async("default:async_init", "test_val")
     assert await cache.get_async("default:async_init") == "test_val"
     await cache.close_async()
-
-
-def test_disk_cache_adapter_missing_dependency(monkeypatch):
-    import sys
-
-    from hexastack_core.domain.exceptions import MissingDependencyError
-
-    monkeypatch.setitem(sys.modules, "diskcache", None)
-    with pytest.raises(MissingDependencyError):
-        DiskCacheAdapter()

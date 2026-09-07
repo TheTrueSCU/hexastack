@@ -7,7 +7,6 @@ graph LR
         U_auth["[auth]"]
         U_cli["[cli]"]
         U_db["[db]"]
-        U_diskcache["[diskcache]"]
         U_docs["[docs]"]
         U_events["[events]"]
         U_fastapi["[fastapi]"]
@@ -79,7 +78,6 @@ graph LR
     U_auth --> P_hexastack_auth
     U_cli --> P_hexastack_cli
     U_db --> P_hexastack_db
-    U_diskcache --> P_hexastack_core
     U_docs --> P_hexastack_fastapi
     U_events --> P_hexastack_events
     U_fastapi --> P_hexastack_fastapi

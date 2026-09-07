@@ -1,6 +1,6 @@
 [project]
 name = "hexastack"
-version = "0.3.4"
+version = "0.3.5"
 description = "Hexastack - Modern Hexagonal Architecture & CQRS Framework for Python"
 readme = "README.md"
 license = "Apache-2.0"
@@ -29,9 +29,6 @@ cli = [
 ]
 db = [
     "hexastack-db",
-]
-diskcache = [
-    "hexastack-core[diskcache]",
 ]
 docs = [
     "hexastack-fastapi[docs]",
