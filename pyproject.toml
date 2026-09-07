@@ -92,7 +92,7 @@ dev = [
     "inline-snapshot>=0.35.4",
     "janus>=2.0.0",
     "libcst>=1.9.0",
-    "limits>=3.14.0",
+    "limits>=5.8.0",
     "locust>=2.46.4",
     "memray>=1.20.0",
     "mutmut<3",
@@ -110,16 +110,16 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=7.1.0",
     "pytest-playwright>=0.6.0",
-    "pytest-randomly>=4.1.0",
+    "pytest-randomly>=5.0.0",
     "pytest-xdist>=3.8.0",
     "rope>=1.14.0",
-    "ruff>=0.16.4",
+    "ruff>=0.16.6",
     "schemathesis>=3.39.0",
-    "slowapi>=0.1.9",
+    "slowapi>=0.1.10",
     "ty>=0.0.75",
 
     "vulture>=2.16",
-    "zensical>=0.0.57",
+    "zensical>=0.0.59",
 ]
 
 [tool.ty.environment]

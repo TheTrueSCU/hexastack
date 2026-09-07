@@ -2,12 +2,16 @@
 
 from hexastack.application.scaffolding.generator import (
     ProjectScaffolder,
-    ScaffoldConfig,
     scaffold_project,
+)
+from hexastack.application.scaffolding.models import (
+    ScaffoldConfig,
+    TemplateType,
 )
 
 __all__ = [
     "ProjectScaffolder",
     "scaffold_project",
     "ScaffoldConfig",
+    "TemplateType",
 ]
