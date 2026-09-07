@@ -22,8 +22,8 @@ docs = [
     "zensical>=0.0.56",
 ]
 ratelimit = [
-    "limits>=3.14.0",
-    "slowapi>=0.1.9",
+    "limits>=5.8.0",
+    "slowapi>=0.1.10",
 ]
 testing = [
     "playwright>=1.49.0",
