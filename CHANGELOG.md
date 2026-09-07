@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v0.3.5 (2026-09-06)
+
+### Security & Hardening
+* **Zero-Dependency Native SQLite Cache (`hexastack-core`)**: Replaced `diskcache` with a native standard-library `sqlite3` and `json` serializer in `DiskCacheAdapter` and `AsyncDiskCacheAdapter`. Eliminates unsafe Python pickle deserialization vulnerability (CVE-2025-69872) and drops all external C/binary dependencies for disk-based caching.
+* **Async File Lock Verification**: Hardened `AsyncFileLockAdapter.locked()` to query underlying filesystem lock state across concurrent worker threads.
+
+### Developer Tooling & Diagrams (`hexastack-tools`)
+* **GitHub Repository Diagnostics (`gh-repo`)**: Added `gh-repo` CLI tool to inspect GitHub repository visibility, actions permissions, branch protection environments, and configuration.
+* **Pydeps Generation Fix**: Corrected keyword argument mapping in `pydeps-generate` (`output` / `format`) to write architecture SVGs directly into `docs/assets/pydeps/` without creating temporary or untracked `.svg` files in the repository root.
+
 ## v0.3.4 (2026-09-06)
 
 ### Tooling & Mutation Testing

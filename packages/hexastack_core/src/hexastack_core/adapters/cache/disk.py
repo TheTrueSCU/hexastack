@@ -1,17 +1,20 @@
+import json
+import sqlite3
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
-from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_core.ports.cache import AsyncCachePort, CachePort
 
 
 class DiskCacheAdapter(CachePort):
-    """Persistent L2 query and key-value cache adapter backed by diskcache (SQLite + mmap).
+    """Persistent L2 query and key-value cache adapter backed by SQLite.
 
     Notes/Architectural Intent:
-        Implements CachePort using diskcache.Cache on local filesystem storage.
-        Enables multi-process cache sharing, persistent caching across service restarts,
+        Implements CachePort using Python standard library `sqlite3` on local filesystem storage.
+        Eliminates external dependencies and unsafe deserialization vulnerabilities (such as CVE-2025-69872).
+        Enables multi-process safe cache sharing, persistent caching across service restarts,
         and offline CLI response caching without Redis or network dependencies.
     """
 
@@ -23,30 +26,52 @@ class DiskCacheAdapter(CachePort):
         """Initialize DiskCacheAdapter.
 
         Args:
-            directory: Filesystem path to cache database directory. If None, creates a tempdir.
-            size_limit: Maximum cache size in bytes before eviction.
-
-        Raises:
-            MissingDependencyError: If `diskcache` is not installed.
+            directory: Filesystem path to cache database directory or db file. If None, creates a tempdir.
+            size_limit: Maximum cache size in bytes (retained for API compatibility).
         """
-        try:
-            import diskcache
-        except ImportError as e:
-            raise MissingDependencyError(
-                "The 'diskcache' package is required to use DiskCacheAdapter. "
-                "Install it with: pip install hexastack-core[diskcache]"
-            ) from e
+        self._size_limit = size_limit
+        if directory is None:
+            self._directory = Path(tempfile.mkdtemp(prefix="hexastack_cache_"))
+            self._db_path = self._directory / "cache.db"
+        else:
+            path = Path(directory)
+            if path.is_dir() or not path.suffix:
+                self._directory = path
+                self._directory.mkdir(parents=True, exist_ok=True)
+                self._db_path = self._directory / "cache.db"
+            else:
+                self._directory = path.parent
+                self._directory.mkdir(parents=True, exist_ok=True)
+                self._db_path = path
 
-        self._directory = (
-            Path(directory)
-            if directory
-            else Path(tempfile.mkdtemp(prefix="hexastack_cache_"))
+        self._conn = sqlite3.connect(
+            str(self._db_path),
+            timeout=30.0,
+            check_same_thread=False,
+            isolation_level=None,  # autocommit mode
         )
-        self._cache: Any = diskcache.Cache(str(self._directory), size_limit=size_limit)
+        self._init_db()
+
+    def _init_db(self) -> None:
+        """Initialize SQLite cache table schema and index."""
+        with self._conn:
+            self._conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS cache_entries (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    expires_at REAL
+                )
+                """
+            )
+            self._conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_expires_at ON cache_entries(expires_at)"
+            )
 
     def clear(self) -> None:
         """Clear all entries from the disk cache."""
-        self._cache.clear()
+        with self._conn:
+            self._conn.execute("DELETE FROM cache_entries")
 
     def delete(self, key: str) -> bool:
         """Delete a key from disk cache.
@@ -57,7 +82,11 @@ class DiskCacheAdapter(CachePort):
         Returns:
             True if key was deleted, False if not present.
         """
-        return bool(self._cache.delete(key))
+        with self._conn:
+            cursor = self._conn.execute(
+                "DELETE FROM cache_entries WHERE key = ?", (key,)
+            )
+            return cursor.rowcount > 0
 
     def get(self, key: str, default: Any = None) -> Any:
         """Retrieve a cached value by key.
@@ -69,7 +98,23 @@ class DiskCacheAdapter(CachePort):
         Returns:
             Cached value or default.
         """
-        return self._cache.get(key, default=default)
+        now = time.time()
+        cursor = self._conn.execute(
+            "SELECT value, expires_at FROM cache_entries WHERE key = ?", (key,)
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return default
+
+        raw_val, expires_at = row
+        if expires_at is not None and expires_at <= now:
+            self.delete(key)
+            return default
+
+        try:
+            return json.loads(raw_val)
+        except (json.JSONDecodeError, TypeError):
+            return default
 
     def has(self, key: str) -> bool:
         """Check if a key is present and unexpired.
@@ -80,25 +125,38 @@ class DiskCacheAdapter(CachePort):
         Returns:
             True if present, False otherwise.
         """
-        return key in self._cache
+        return self.get(key, default=None) is not None
 
     def set(self, key: str, value: Any, ttl_seconds: float | None = None) -> None:
         """Store a key-value pair with optional TTL expiration in seconds.
 
         Args:
             key: Cache key identifier.
-            value: Value object to persist.
+            value: Value object to persist (JSON serializable).
             ttl_seconds: Time to live in seconds.
         """
-        self._cache.set(key, value, expire=ttl_seconds)
+        now = time.time()
+        expires_at = (now + ttl_seconds) if ttl_seconds is not None else None
+        serialized = json.dumps(value)
+        with self._conn:
+            self._conn.execute(
+                """
+                INSERT INTO cache_entries (key, value, expires_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value = excluded.value,
+                    expires_at = excluded.expires_at
+                """,
+                (key, serialized, expires_at),
+            )
 
     def close(self) -> None:
         """Close underlying SQLite database handles."""
-        self._cache.close()
+        self._conn.close()
 
 
 class AsyncDiskCacheAdapter(AsyncCachePort):
-    """Asynchronous persistent L2 query and key-value cache adapter backed by diskcache.
+    """Asynchronous persistent L2 query and key-value cache adapter backed by SQLite.
 
     Notes/Architectural Intent:
         Async counterpart to DiskCacheAdapter, offloading blocking disk I/O to the threadpool

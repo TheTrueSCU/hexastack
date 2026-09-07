@@ -4,6 +4,9 @@ from hexastack_tools.ports.github import GitHubApiPort
 
 
 class DummyGitHubAdapter:
+    def get_repo_status(self, owner=None, repo=None):
+        pass
+
     def get_pr_summary(self, pr_number: int):
         pass
 

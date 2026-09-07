@@ -1039,15 +1039,6 @@ wheels = [
 ]
 
 [[package]]
-name = "diskcache"
-version = "5.6.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3f/21/1c1ffc1a039ddcc459db43cc108658f32c57d271d7289a2794e401d0fdb6/diskcache-5.6.3.tar.gz", hash = "sha256:2c3a3fa2743d8535d832ec61c2054a1641f41775aa7c556758a109941e33e4fc", size = 67916, upload-time = "2023-08-31T06:12:00.316Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/27/4570e78fc0bf5ea0ca45eb1de3818a23787af9b390c0b0a0033a1b8236f9/diskcache-5.6.3-py3-none-any.whl", hash = "sha256:5e31b2d5fbad117cc363ebaf6b689474db18a1f6438bc82358b024abd4c2ca19", size = 45550, upload-time = "2023-08-31T06:11:58.822Z" },
-]
-
-[[package]]
 name = "distlib"
 version = "0.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1758,7 +1749,7 @@ wheels = [
 
 [[package]]
 name = "hexastack"
-version = "0.3.4"
+version = "0.3.5"
 source = { editable = "packages/hexastack" }
 dependencies = [
     { name = "hexastack-core" },
@@ -1801,9 +1792,6 @@ db = [
 ]
 devtools = [
     { name = "hexastack-ui", extra = ["devtools"] },
-]
-diskcache = [
-    { name = "hexastack-core", extra = ["diskcache"] },
 ]
 docs = [
     { name = "hexastack-fastapi", extra = ["docs"] },
@@ -1942,7 +1930,6 @@ requires-dist = [
     { name = "hexastack-cli", marker = "extra == 'all'", editable = "packages/hexastack_cli" },
     { name = "hexastack-cli", marker = "extra == 'cli'", editable = "packages/hexastack_cli" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
-    { name = "hexastack-core", extras = ["diskcache"], marker = "extra == 'diskcache'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["fsspec"], marker = "extra == 'fsspec'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["redis"], marker = "extra == 'redis'", editable = "packages/hexastack_core" },
@@ -2004,7 +1991,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "diskcache", "docs", "events", "fastapi", "filelock", "flagd", "flags", "fsspec", "graphql", "grpc", "huey", "janus", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "sql", "sqlite", "structlog", "testing", "textual", "tools", "ui", "valkey", "web", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "docs", "events", "fastapi", "filelock", "flagd", "flags", "fsspec", "graphql", "grpc", "huey", "janus", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "sql", "sqlite", "structlog", "testing", "textual", "tools", "ui", "valkey", "web", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2103,7 +2090,7 @@ provides-extras = ["testing"]
 
 [[package]]
 name = "hexastack-core"
-version = "0.3.0"
+version = "0.3.5"
 source = { editable = "packages/hexastack_core" }
 dependencies = [
     { name = "pydantic" },
@@ -2111,9 +2098,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-diskcache = [
-    { name = "diskcache" },
-]
 filelock = [
     { name = "filelock" },
 ]
@@ -2135,7 +2119,6 @@ valkey = [
 
 [package.metadata]
 requires-dist = [
-    { name = "diskcache", marker = "extra == 'diskcache'", specifier = ">=5.6.3" },
     { name = "faker", marker = "extra == 'testing'", specifier = ">=33.0.0" },
     { name = "filelock", marker = "extra == 'filelock'", specifier = ">=3.16.0" },
     { name = "fsspec", marker = "extra == 'fsspec'", specifier = ">=2024.1.0" },
@@ -2147,7 +2130,7 @@ requires-dist = [
     { name = "rodi", specifier = ">=2.1.0" },
     { name = "valkey", extras = ["libvalkey"], marker = "extra == 'valkey'", specifier = ">=6.0.0" },
 ]
-provides-extras = ["diskcache", "filelock", "fsspec", "redis", "testing", "valkey"]
+provides-extras = ["filelock", "fsspec", "redis", "testing", "valkey"]
 
 [[package]]
 name = "hexastack-cqrs"
@@ -2497,7 +2480,7 @@ provides-extras = ["otlp"]
 
 [[package]]
 name = "hexastack-tools"
-version = "0.3.4"
+version = "0.3.5"
 source = { editable = "packages/hexastack_tools" }
 dependencies = [
     { name = "coverage" },
@@ -2598,7 +2581,7 @@ provides-extras = ["fastapi", "nicegui", "devtools", "textual", "all"]
 
 [[package]]
 name = "hexastack-workspace"
-version = "0.3.4"
+version = "0.3.5"
 source = { editable = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },
@@ -2613,7 +2596,6 @@ dev = [
     { name = "deptry" },
     { name = "detect-secrets" },
     { name = "dirty-equals" },
-    { name = "diskcache" },
     { name = "faker" },
     { name = "fakeredis" },
     { name = "filelock" },
@@ -2669,7 +2651,6 @@ dev = [
     { name = "deptry", specifier = ">=0.23.0" },
     { name = "detect-secrets", specifier = ">=1.5.0" },
     { name = "dirty-equals", specifier = ">=0.11" },
-    { name = "diskcache", specifier = ">=5.6.3" },
     { name = "faker", specifier = ">=33.0.0" },
     { name = "fakeredis", specifier = ">=2.26.0" },
     { name = "filelock", specifier = ">=3.16.0" },

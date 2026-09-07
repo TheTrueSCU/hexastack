@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-workspace"
-version = "0.3.4"
+version = "0.3.5"
 requires-python = ">=3.13"
 dependencies = [
     "hexastack[all]",
@@ -77,7 +77,6 @@ dev = [
     "deptry>=0.23.0",
     "detect-secrets>=1.5.0",
     "dirty-equals>=0.11",
-    "diskcache>=5.6.3",
     "faker>=33.0.0",
     "fakeredis>=2.26.0",
     "filelock>=3.16.0",
