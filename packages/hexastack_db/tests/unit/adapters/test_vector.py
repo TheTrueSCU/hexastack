@@ -72,13 +72,17 @@ async def test_async_pg_vector_store_adapter():
     assert custom_async_adapter._table.name == "override_async_vectors"
 
     # Delete
-    assert await adapter.delete_async("v1") is True
-    assert await adapter.delete_async("non_existent") is False
-    assert await adapter.get_async("v1") is None
+    del_v1 = await adapter.delete_async("v1")
+    assert del_v1 is True
+    del_non_existent = await adapter.delete_async("non_existent")
+    assert del_non_existent is False
+    v1_after_del = await adapter.get_async("v1")
+    assert v1_after_del is None
 
     # Clear
     await adapter.clear_async()
-    assert len(await adapter.search_async([1.0, 0.0])) == 0
+    search_after_clear = await adapter.search_async([1.0, 0.0])
+    assert len(search_after_clear) == 0
 
 
 def test_cosine_similarity_math():
