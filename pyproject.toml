@@ -91,7 +91,7 @@ dev = [
     "inline-snapshot>=0.35.4",
     "janus>=2.0.0",
     "libcst>=1.9.0",
-    "limits>=3.14.0",
+    "limits>=5.8.0",
     "locust>=2.46.4",
     "memray>=1.20.0",
     "mutmut<3",
