@@ -365,3 +365,49 @@ def test_render_table_structures_and_schemas(monkeypatch):
         }
         assert container_table["row_key"] == "service"
         assert any(r["service"] == "CommandRegistry" for r in container_table["rows"])
+
+        # 4. Empty container / CQRS messages fallback labels
+        captured_labels: list[str] = []
+        orig_label = ui.label
+
+        def mock_label(text, *args, **kwargs):
+            captured_labels.append(text)
+            return orig_label(text, *args, **kwargs)
+
+        monkeypatch.setattr(ui, "label", mock_label)
+
+        empty_container = Container()
+        _render_cqrs_messages(empty_container)
+        assert "No CQRS messages registered in container." in captured_labels
+
+        _render_container_tab(empty_container)
+        assert "No direct services found in container introspection." in captured_labels
+
+
+@pytest.mark.anyio
+async def test_dispatch_ping_validation_error():
+    """Verify _dispatch_ping catches validation error and logs error message."""
+    from hexastack_cqrs.infra.registries.command import CommandRegistry
+    from hexastack_ui.adapters.nicegui.devtools import _dispatch_ping
+
+    log_output = MagicMock()
+    container = Container()
+    creg = CommandRegistry()
+
+    @dataclass(frozen=True)
+    class PingStrictCommand(Command):
+        number: int
+
+    creg.register(PingStrictCommand)
+    container.add_instance(creg, declared_class=CommandRegistry)
+
+    pipeline = MagicMock(spec=ExecutionPipeline)
+    container.add_instance(pipeline, declared_class=ExecutionPipeline)
+
+    # Passing string "not_a_number" causes model_validate to fail for int field
+    await _dispatch_ping("not_a_number", container, None, [], log_output)
+    pipeline.execute.assert_not_called()
+    assert any(
+        "❌ [ERROR] Execution failed:" in call[0][0]
+        for call in log_output.push.call_args_list
+    )
