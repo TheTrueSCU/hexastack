@@ -65,24 +65,29 @@ async def test_async_file_lock_adapter_lifecycle():
         lock1 = AsyncFileLockAdapter(lock_file, timeout=1.0)
         lock2 = AsyncFileLockAdapter(lock_file, timeout=0.1)
 
-        assert await lock1.locked() is False
+        is_locked_init = await lock1.locked()
+        assert is_locked_init is False
 
         acq1 = await lock1.acquire()
         assert acq1 is True
-        assert await lock1.locked() is True
+        is_locked_acq = await lock1.locked()
+        assert is_locked_acq is True
 
         # Lock2 non-blocking acquire fails
         acq2_non_blocking = await lock2.acquire(blocking=False)
         assert acq2_non_blocking is False
 
         await lock1.release()
-        assert await lock1.locked() is False
+        is_locked_rel = await lock1.locked()
+        assert is_locked_rel is False
 
         # Async context manager
         async with lock2:
-            assert await lock2.locked() is True
+            is_locked_cm = await lock2.locked()
+            assert is_locked_cm is True
 
-        assert await lock2.locked() is False
+        is_locked_cm_exit = await lock2.locked()
+        assert is_locked_cm_exit is False
 
 
 def test_file_lock_adapter_errors(monkeypatch):
