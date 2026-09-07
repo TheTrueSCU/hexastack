@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from hexastack.application.scaffolding.generator import ScaffoldConfig
+    from hexastack.application.scaffolding.models import ScaffoldConfig
 
 
 def render_driven_database(package_name: str) -> str:
