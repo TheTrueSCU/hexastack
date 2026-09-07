@@ -56,6 +56,33 @@ Do not add exclusions without a maintainer discussion.
 
 ---
 
+## Codebase Architecture Navigation & Knowledge Graph (Graphify)
+
+Hexastack maintains an AST-based knowledge graph to help contributors and autonomous pair-programmers navigate cross-package dependencies without guesswork:
+
+### 1. Installation
+Install the standalone CLI tool via `uv`:
+```bash
+uv tool install graphifyy
+```
+
+### 2. Common Navigation Commands
+```bash
+# Query architectural questions or concept relationships
+graphify query "How does CQRS dispatch commands to handlers?"
+
+# Find the shortest dependency / invocation path between two components
+graphify path "CommandHandler" "NatsJetStreamEventBusAdapter"
+
+# Explain a specific symbol or interface
+graphify explain "AsyncLockPort"
+
+# Update local knowledge graph after code modifications (AST-only, 0 token cost)
+graphify update .
+```
+
+---
+
 ## Code Standards
 
 | Tool | Standard |
