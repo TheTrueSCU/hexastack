@@ -62,6 +62,7 @@ class BootstrapContext:
                 if val is not None:
                     return val
             except Exception:
+                # Fallback to default if section parsing or deserialization fails
                 pass
         return default if default is not None else schema_cls()
 

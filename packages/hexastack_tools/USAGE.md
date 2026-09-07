@@ -510,6 +510,24 @@ options:
   --diagram   Generate and print Mermaid dependency diagram of package extras.
 ```
 
+#### `complexipy-run`
+
+```text
+usage: complexipy-run [-h] [--max-complexity-allowed MAX_COMPLEXITY_ALLOWED]
+                      [paths ...]
+
+Run complexipy filtering output to failing methods only.
+
+positional arguments:
+  paths                 Target directories or files (default: packages)
+
+options:
+  -h, --help            show this help message and exit
+  --max-complexity-allowed MAX_COMPLEXITY_ALLOWED
+                        Maximum allowed cognitive complexity score (default:
+                        25)
+```
+
 #### `deps-audit`
 
 ```text

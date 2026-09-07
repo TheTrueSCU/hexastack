@@ -75,7 +75,7 @@ repos:
         pass_filenames: false
       - id: complexipy
         name: complexipy
-        entry: uv run complexipy packages --max-complexity-allowed 25
+        entry: uv run complexipy-run packages --max-complexity-allowed 25
         language: system
         types: [python]
         pass_filenames: false

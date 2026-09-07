@@ -19,8 +19,10 @@ def test_async_in_memory_cache():
         assert await cache.get_async("item") is None
 
         await cache.set_async("item", 200)
-        assert await cache.delete_async("item") is True
-        assert await cache.has_async("item") is False
+        del_res = await cache.delete_async("item")
+        assert del_res is True
+        has_after_del = await cache.has_async("item")
+        assert has_after_del is False
 
         await cache.set_async("item1", 1)
         await cache.set_async("item2", 2)

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 from collections.abc import AsyncIterable, AsyncIterator
 from dataclasses import dataclass
 from typing import Any
@@ -150,8 +149,7 @@ class EventSourceResponse(Response):
         finally:
             if not producer_task.done():
                 producer_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError, Exception):
-                    _res = await producer_task
+                _ = await asyncio.gather(producer_task, return_exceptions=True)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """ASGI response streaming callable."""
