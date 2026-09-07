@@ -39,14 +39,13 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Tutorial Series Refresh**: Update To-Do microservice tutorial series with `/metrics`, streaming, and unified chapter navigation (Issue #101, PR #105).
 - [x] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active worker leasing, and lease renewal (Issue #74, PR #108).
 
+
 ---
-
-
 
 ## 🔮 Upcoming Milestones
 
 ### v0.4.0 (Interactive Frontends, AI Memory & Enterprise Mesh)
-- [ ] **Hexastack UI Presentation Package**: Spin out NiceGUI reactive UI and interactive DevTools dashboard into `hexastack-ui` (Issue #100).
+- [ ] **Hexastack UI Presentation Package**: Spin out NiceGUI reactive UI and interactive DevTools dashboard into `hexastack-ui` (Issue #100, PR #111).
 - [ ] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]` - Issue #75).
 - [ ] **AI Agent Long-Term Memory**: Vector database driven adapters (Qdrant, pgvector) with CQRS query caching (`hexastack-ai` - Issue #78).
 

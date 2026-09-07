@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [Unreleased] (v0.4.0)
+
+### Highlights & Features
+* **Hexastack UI Presentation Package (`hexastack-ui`)**: Extracted NiceGUI reactive UI presentation primitives and the interactive DevTools dashboard from `hexastack-fastapi` into a dedicated presentation package (Issue #100, PR #111).
+* **Static Asset Decoupling**: Extracted DevTools dashboard styling into standalone `devtools.css`, eliminating Python AST mutation noise.
+* **Biome Code Quality Integration**: Added `biome-check` pre-commit hook targeting static CSS and web assets.
+
 ## v0.3.5 (2026-09-06)
 
 ### Security & Hardening
