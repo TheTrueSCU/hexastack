@@ -72,4 +72,38 @@ def test_grpc_helper_executors():
         mock_p_reg.return_value.entries = []
         _exec_grpc_compile("src/generated", proto_file=["test.proto"])
 
-    _exec_grpc_list()
+    # 1. Compile metadata branch
+    mock_entry = MagicMock()
+    mock_entry.message_name = "ItemRequest"
+    mock_entry.schema = "syntax = 'proto3';"
+    mock_entry.service_name = "ItemService"
+    mock_entry.rpc_name = "GetItem"
+    with (
+        patch(
+            "hexastack_grpc.infra.compiler.ProtoCompiler.compile_metadata",
+            return_value=[Path("item_pb2.py")],
+        ),
+        patch("hexastack_grpc.infra.registries.proto.get_proto_registry") as mock_p_reg,
+    ):
+        mock_p_reg.return_value.entries = [mock_entry]
+        _exec_grpc_compile("src/generated", proto_file=None)
+
+    # 2. Compile empty directory fallback branch
+    with (
+        patch("hexastack_grpc.infra.registries.proto.get_proto_registry") as mock_p_reg,
+        patch("pathlib.Path.exists", return_value=False),
+    ):
+        mock_p_reg.return_value.entries = []
+        _exec_grpc_compile("src/generated", proto_file=None)
+
+    # 3. List with registered schemas and services
+    mock_svc = MagicMock()
+    mock_svc.servicer = MagicMock(__name__="TestServicer")
+    mock_svc.service_names = ["TestService"]
+    with (
+        patch("hexastack_grpc.infra.registries.proto.get_proto_registry") as mock_p_reg,
+        patch("hexastack_grpc.infra.decorators.get_grpc_registry") as mock_g_reg,
+    ):
+        mock_p_reg.return_value.entries = [mock_entry]
+        mock_g_reg.return_value._services = [mock_svc]
+        _exec_grpc_list()
