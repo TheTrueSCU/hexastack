@@ -68,6 +68,9 @@ huey = [
 janus = [
     "hexastack-events[janus]",
 ]
+kafka = [
+    "hexastack-events[kafka]",
+]
 loguru = [
     "hexastack-logging[loguru]",
 ]
