@@ -82,6 +82,7 @@ def get_current_repo() -> tuple[str, str]:
             if parsed:
                 return parsed
     except (subprocess.SubprocessError, OSError):
+        # Fall back to default repo if git command execution fails
         pass
 
     return "TheTrueSCU", "hexastack"
