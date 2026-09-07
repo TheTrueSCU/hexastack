@@ -288,14 +288,14 @@ options:
 
 ```text
 usage: pytest-run [-h]
-                  [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}]
+                  [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}]
                   [-A] [-U] [-P] [--with-context]
 
 Run pytest test suite.
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}
+  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}
   -A, --affected
   -U, --unit
   -P, --properties
@@ -352,14 +352,14 @@ options:
 
 ```text
 usage: mutmut-run [-h]
-                  [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}]
+                  [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}]
                   [-a] [-r]
 
 Run mutation tests.
 
 options:
   -h, --help            show this help message and exit
-  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,logging,mcp,otel,tools}
+  -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}
   -a, --all
   -r, --refresh         Clear cached mutants before running mutation tests.
 ```

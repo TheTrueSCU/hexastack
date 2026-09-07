@@ -25,13 +25,6 @@ from hexastack_fastapi.adapters.sse import (
     EventSourceResponse,
     ServerSentEvent,
 )
-from hexastack_fastapi.adapters.ui import (
-    dispatch_command,
-    dispatch_query,
-    mount_devtools_dashboard,
-    mount_ui_app,
-    ui_page,
-)
 from hexastack_fastapi.adapters.websockets import (
     WebSocketConnectionManager,
     WebSocketCqrsBridge,
@@ -43,8 +36,6 @@ __all__ = [
     "create_health_router",
     "create_metrics_router",
     "create_test_client",
-    "dispatch_command",
-    "dispatch_query",
     "DocumentationNotFoundError",
     "EventSourceResponse",
     "get_container",
@@ -53,15 +44,12 @@ __all__ = [
     "get_rate_limiter",
     "get_remote_address",
     "get_user_or_ip_key",
-    "mount_devtools_dashboard",
-    "mount_ui_app",
     "mount_zensical_docs",
     "rate_limit",
     "require_feature",
     "require_rate_limit",
     "ServerSentEvent",
     "SlowapiRateLimiterAdapter",
-    "ui_page",
     "WebSocketConnectionManager",
     "WebSocketCqrsBridge",
 ]

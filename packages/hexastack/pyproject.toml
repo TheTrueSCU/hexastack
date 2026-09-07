@@ -30,6 +30,9 @@ cli = [
 db = [
     "hexastack-db",
 ]
+devtools = [
+    "hexastack-ui[devtools]",
+]
 diskcache = [
     "hexastack-core[diskcache]",
 ]
@@ -82,6 +85,9 @@ msgspec = [
 ]
 nats = [
     "hexastack-events[nats]",
+]
+nicegui = [
+    "hexastack-ui[nicegui]",
 ]
 opa = [
     "hexastack-auth[opa]",
@@ -137,11 +143,14 @@ testing = [
     "pytest-archon>=0.0.7",
     "schemathesis>=3.39.0",
 ]
+textual = [
+    "hexastack-ui[textual]",
+]
 tools = [
     "hexastack-tools",
 ]
 ui = [
-    "hexastack-fastapi[ui]",
+    "hexastack-ui[all]",
 ]
 valkey = [
     "hexastack-core[valkey]",
@@ -165,6 +174,7 @@ all = [
     "hexastack-mcp",
     "hexastack-otel[otlp]",
     "hexastack-tools",
+    "hexastack-ui[all]",
     "uvicorn[standard]>=0.30.0",
 ]
 
@@ -193,6 +203,7 @@ hexastack-grpc = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
 hexastack-tools = { workspace = true }
+hexastack-ui = { workspace = true }
 
 [tool.importlinter]
 root_packages = ["hexastack"]

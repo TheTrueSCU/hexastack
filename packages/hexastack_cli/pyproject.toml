@@ -41,6 +41,17 @@ containers = ["hexastack_cli"]
 layers = [
     "infra",
     "adapters",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_cli.domain"]
+forbidden_modules = [
+    "hexastack_cli.adapters",
+    "hexastack_cli.infra",
+    "hexastack_cli.testing",
 ]
 
 [[tool.importlinter.contracts]]

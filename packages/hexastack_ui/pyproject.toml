@@ -1,7 +1,7 @@
 [project]
-name = "hexastack-logging"
+name = "hexastack-ui"
 version = "0.3.0"
-description = "Add your description here"
+description = "Reactive UI and DevTools presentation adapters for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"
 authors = [
@@ -10,23 +10,27 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "hexastack-core",
+    "hexastack-cqrs",
+    "pydantic>=2.10.0",
 ]
 
 [project.optional-dependencies]
-loguru = ["loguru>=0.7.0"]
-rich = ["rich>=13.0.0"]
-structlog = ["structlog>=24.0.0"]
+fastapi = [
+    "fastapi>=0.141.1",
+]
+nicegui = [
+    "fastapi>=0.141.1",
+    "nicegui>=2.0.0",
+]
+devtools = [
+    "hexastack-ui[nicegui]",
+]
+textual = [
+    "textual>=0.70.0",
+]
 all = [
-    "loguru>=0.7.0",
-    "rich>=13.0.0",
-    "structlog>=24.0.0",
+    "hexastack-ui[nicegui,textual]",
 ]
-sentry = [
-    "sentry-sdk>=2.0.0",
-]
-
-[project.entry-points."hexastack.bootstrappers"]
-logging = "hexastack_logging.infra.bootstrap:LoggingBootstrapper"
 
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
@@ -34,16 +38,18 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }
 
 [tool.importlinter]
-root_packages = ["hexastack_logging"]
+root_packages = ["hexastack_ui"]
 
 [[tool.importlinter.contracts]]
 name = "Hexagonal architecture layer hierarchy"
 type = "layers"
-containers = ["hexastack_logging"]
+containers = ["hexastack_ui"]
 layers = [
     "infra",
     "adapters",
+    "ports",
     "domain",
 ]

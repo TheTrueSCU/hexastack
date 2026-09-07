@@ -29,10 +29,6 @@ testing = [
     "playwright>=1.49.0",
     "schemathesis>=3.39.0",
 ]
-ui = [
-    "nicegui>=2.0.0",
-]
-
 
 [project.entry-points."hexastack.bootstrappers"]
 fastapi = "hexastack_fastapi.infra.bootstrap:FastApiBootstrapper"
@@ -56,6 +52,17 @@ containers = ["hexastack_fastapi"]
 layers = [
     "infra",
     "adapters",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_fastapi.domain"]
+forbidden_modules = [
+    "hexastack_fastapi.adapters",
+    "hexastack_fastapi.infra",
+    "hexastack_fastapi.testing",
 ]
 
 [[tool.importlinter.contracts]]
