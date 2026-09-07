@@ -19,6 +19,7 @@ graph LR
         U_grpc["[grpc]"]
         U_huey["[huey]"]
         U_janus["[janus]"]
+        U_kafka["[kafka]"]
         U_loguru["[loguru]"]
         U_mcp["[mcp]"]
         U_migrations["[migrations]"]
@@ -97,6 +98,7 @@ graph LR
     U_huey --> P_hexastack_cqrs
     U_huey --> P_hexastack_events
     U_janus --> P_hexastack_events
+    U_kafka --> P_hexastack_events
     U_loguru --> P_hexastack_logging
     U_mcp --> P_hexastack_mcp
     U_migrations --> P_hexastack_db
