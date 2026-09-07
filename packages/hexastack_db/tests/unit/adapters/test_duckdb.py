@@ -437,3 +437,110 @@ async def test_async_duckdb_repository_lifecycle_and_crud(tmp_path: Path):
         await repo.remove_async("async-1")
         cnt_after = await repo.count_async()
         assert cnt_after == 1
+
+
+def test_duckdb_repository_closed_access_error():
+    """Verify accessing methods on a closed repository raises DatabaseError."""
+    repo = DuckDbRepository[dict, str](database=":memory:")
+    repo.close()
+    with pytest.raises(DatabaseError, match="is closed"):
+        repo.get_by_id("1")
+
+
+def test_duckdb_repository_entity_serialization_variants():
+    """Verify _entity_to_dict and _dict_to_entity handle diverse object types."""
+
+    class PlainObj:
+        def __init__(self, id: str, value: int):
+            self.id = id
+            self.value = value
+
+    class PydanticLike:
+        def __init__(self, id: str, value: int):
+            self.id = id
+            self.value = value
+
+        def model_dump(self):
+            return {"id": self.id, "value": self.value}
+
+        @classmethod
+        def model_validate(cls, data):
+            return cls(id=data["id"], value=data["value"])
+
+    repo_plain = DuckDbRepository[PlainObj, str](
+        database=":memory:",
+        model_cls=PlainObj,
+        auto_create_table=False,
+    )
+    repo_plain.execute("CREATE TABLE plainobj (id VARCHAR PRIMARY KEY, value BIGINT)")
+    repo_plain.add(PlainObj("p-1", 42))
+    fetched_p = repo_plain.get_by_id("p-1")
+    assert fetched_p is not None
+    assert fetched_p.value == 42
+    repo_plain.close()
+
+    repo_pydantic = DuckDbRepository[PydanticLike, str](
+        database=":memory:",
+        model_cls=PydanticLike,
+        auto_create_table=False,
+    )
+    repo_pydantic.execute(
+        "CREATE TABLE pydanticlike (id VARCHAR PRIMARY KEY, value BIGINT)"
+    )
+    repo_pydantic.add(PydanticLike("py-1", 99))
+    fetched_py = repo_pydantic.get_by_id("py-1")
+    assert fetched_py is not None
+    assert fetched_py.value == 99
+    repo_pydantic.close()
+
+    # Unsupported entity type raises ValueError
+    repo_dict = DuckDbRepository[dict, str](
+        database=":memory:", auto_create_table=False
+    )
+    with pytest.raises(ValueError, match="Unsupported entity type"):
+        repo_dict._entity_to_dict(12345)
+    repo_dict.close()
+
+
+def test_duckdb_repository_error_branches():
+    """Verify error wrapping across repository methods when internal queries fail."""
+    from unittest.mock import MagicMock
+
+    repo = DuckDbRepository[dict, str](database=":memory:", auto_create_table=False)
+    mock_conn = MagicMock()
+    repo._conn = mock_conn
+
+    # Ensure table creation error
+    mock_conn.execute.side_effect = RuntimeError("DDL failed")
+    with pytest.raises(DatabaseError, match="Failed to ensure table"):
+        repo._ensure_table()
+
+    # get_by_id error
+    mock_conn.execute.side_effect = RuntimeError("Read failed")
+    with pytest.raises(DatabaseError, match="Failed to query entity"):
+        repo.get_by_id("1")
+
+    # remove error
+    mock_conn.execute.side_effect = RuntimeError("Delete failed")
+    with pytest.raises(DatabaseError, match="Failed to delete entity"):
+        repo.remove("1")
+
+    # list_all error
+    mock_conn.execute.side_effect = RuntimeError("List failed")
+    with pytest.raises(DatabaseError, match="Failed to list all"):
+        repo.list_all()
+
+    # scalar query error
+    mock_conn.execute.side_effect = RuntimeError("Scalar failed")
+    with pytest.raises(DatabaseError, match="Scalar query execution failed"):
+        repo.query_scalar("SELECT 1")
+
+    # arrow query error
+    mock_conn.sql.side_effect = RuntimeError("Arrow failed")
+    with pytest.raises(DatabaseError, match="Arrow query execution failed"):
+        repo.query_arrow("SELECT 1")
+
+    # register_view error
+    mock_conn.execute.side_effect = RuntimeError("View failed")
+    with pytest.raises(DatabaseError, match="Failed to register view"):
+        repo.register_view("v_fail", "SELECT 1")

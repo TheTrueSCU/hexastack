@@ -26,9 +26,6 @@ from hexastack_db.domain.exceptions import (
     UniqueConstraintViolationError,
 )
 
-# Explicit reference to satisfy static security/CodeQL AST scanners while using PEP 695 generics
-_PORTS = (AsyncRepositoryPort, RepositoryPort)
-
 
 def _require_duckdb() -> Any:
     """Import and return the duckdb module or raise an informative ImportError.
