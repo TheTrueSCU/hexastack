@@ -52,6 +52,13 @@ repos:
       - id: buf-lint
         files: ^.*\.proto$
 
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v2.5.12
+    hooks:
+      - id: biome-check
+        additional_dependencies: ["@biomejs/biome@1.9.4"]
+        files: ^packages/.*\.css$
+
   - repo: local
     hooks:
       - id: all-statements
@@ -67,7 +74,6 @@ repos:
         files: ^(packages/.*/pyproject\.toml|pyproject\.toml)$
         pass_filenames: false
       - id: complexipy
-
         name: complexipy
         entry: uv run complexipy packages --max-complexity-allowed 25
         language: system
@@ -95,7 +101,6 @@ repos:
         language: system
         files: ^packages/(hexastack|hexastack_tools)/.*$
         pass_filenames: false
-
       - id: import-linter-root
         name: import-linter (package boundaries)
         entry: uv run lint-imports
@@ -113,7 +118,6 @@ repos:
         entry: uv run pip-audit --local --vulnerability-service pypi --ignore-vuln PYSEC-2026-2447 --timeout 30
         language: system
         pass_filenames: false
-
       - id: test-parity
         name: test parity (src <-> unit test & __init__.py)
         entry: uv run check-test-parity

@@ -53,10 +53,10 @@ def create_demo_app() -> Any:
     )
     app = result.get("app")
 
-    # Automatically mount NiceGUI DevTools dashboard if UI dependencies installed
-    if app is not None and importlib.util.find_spec("nicegui") is not None:
+    # Automatically mount NiceGUI DevTools dashboard if hexastack-ui installed
+    if app is not None and importlib.util.find_spec("hexastack_ui") is not None:
         try:
-            from hexastack_fastapi.adapters.ui import mount_devtools_dashboard
+            from hexastack_ui.adapters.nicegui import mount_devtools_dashboard
 
             mount_devtools_dashboard(
                 app,

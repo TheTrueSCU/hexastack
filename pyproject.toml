@@ -68,6 +68,7 @@ hexastack-logging = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
 hexastack-tools = { workspace = true }
+hexastack-ui = { workspace = true }
 
 
 [dependency-groups]
@@ -245,6 +246,7 @@ known-first-party = [
     "hexastack_mcp",
     "hexastack_otel",
     "hexastack_tools",
+    "hexastack_ui",
 ]
 
 [tool.ruff.lint.pydocstyle]

@@ -7,6 +7,7 @@ graph LR
         U_auth["[auth]"]
         U_cli["[cli]"]
         U_db["[db]"]
+        U_devtools["[devtools]"]
         U_docs["[docs]"]
         U_events["[events]"]
         U_fastapi["[fastapi]"]
@@ -23,6 +24,7 @@ graph LR
         U_migrations["[migrations]"]
         U_msgspec["[msgspec]"]
         U_nats["[nats]"]
+        U_nicegui["[nicegui]"]
         U_opa["[opa]"]
         U_openfga["[openfga]"]
         U_otel["[otel]"]
@@ -38,6 +40,7 @@ graph LR
         U_sql["[sql]"]
         U_sqlite["[sqlite]"]
         U_structlog["[structlog]"]
+        U_textual["[textual]"]
         U_tools["[tools]"]
         U_ui["[ui]"]
         U_valkey["[valkey]"]
@@ -58,6 +61,7 @@ graph LR
         P_hexastack_logging["hexastack-logging"]
         P_hexastack_mcp["hexastack-mcp"]
         P_hexastack_otel["hexastack-otel"]
+        P_hexastack_ui["hexastack-ui"]
     end
 
     U_ai --> P_hexastack_ai
@@ -74,10 +78,12 @@ graph LR
     U_all --> P_hexastack_mcp
     U_all --> P_hexastack_otel
     U_all --> P_hexastack_tools
+    U_all --> P_hexastack_ui
     U_apprise --> P_hexastack_events
     U_auth --> P_hexastack_auth
     U_cli --> P_hexastack_cli
     U_db --> P_hexastack_db
+    U_devtools --> P_hexastack_ui
     U_docs --> P_hexastack_fastapi
     U_events --> P_hexastack_events
     U_fastapi --> P_hexastack_fastapi
@@ -96,6 +102,7 @@ graph LR
     U_migrations --> P_hexastack_db
     U_msgspec --> P_hexastack_events
     U_nats --> P_hexastack_events
+    U_nicegui --> P_hexastack_ui
     U_opa --> P_hexastack_auth
     U_openfga --> P_hexastack_auth
     U_otel --> P_hexastack_otel
@@ -112,8 +119,9 @@ graph LR
     U_sql --> P_hexastack_events
     U_sqlite --> P_hexastack_db
     U_structlog --> P_hexastack_logging
+    U_textual --> P_hexastack_ui
     U_tools --> P_hexastack_tools
-    U_ui --> P_hexastack_fastapi
+    U_ui --> P_hexastack_ui
     U_valkey --> P_hexastack_core
     U_web --> P_hexastack_fastapi
 ```

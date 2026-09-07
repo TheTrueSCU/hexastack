@@ -24,6 +24,7 @@ members = [
     "hexastack-mcp",
     "hexastack-otel",
     "hexastack-tools",
+    "hexastack-ui",
     "hexastack-workspace",
 ]
 
@@ -1774,6 +1775,7 @@ all = [
     { name = "hexastack-mcp" },
     { name = "hexastack-otel", extra = ["otlp"] },
     { name = "hexastack-tools" },
+    { name = "hexastack-ui", extra = ["all"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
 apprise = [
@@ -1787,6 +1789,9 @@ cli = [
 ]
 db = [
     { name = "hexastack-db" },
+]
+devtools = [
+    { name = "hexastack-ui", extra = ["devtools"] },
 ]
 docs = [
     { name = "hexastack-fastapi", extra = ["docs"] },
@@ -1837,6 +1842,9 @@ msgspec = [
 ]
 nats = [
     { name = "hexastack-events", extra = ["nats"] },
+]
+nicegui = [
+    { name = "hexastack-ui", extra = ["nicegui"] },
 ]
 opa = [
     { name = "hexastack-auth", extra = ["opa"] },
@@ -1892,11 +1900,14 @@ testing = [
     { name = "pytest-archon" },
     { name = "schemathesis" },
 ]
+textual = [
+    { name = "hexastack-ui", extra = ["textual"] },
+]
 tools = [
     { name = "hexastack-tools" },
 ]
 ui = [
-    { name = "hexastack-fastapi", extra = ["ui"] },
+    { name = "hexastack-ui", extra = ["all"] },
 ]
 valkey = [
     { name = "hexastack-core", extra = ["valkey"] },
@@ -1946,7 +1957,6 @@ requires-dist = [
     { name = "hexastack-fastapi", marker = "extra == 'web'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["docs"], marker = "extra == 'docs'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["ratelimit"], marker = "extra == 'ratelimit'", editable = "packages/hexastack_fastapi" },
-    { name = "hexastack-fastapi", extras = ["ui"], marker = "extra == 'ui'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-flags", marker = "extra == 'all'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", marker = "extra == 'flags'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", extras = ["flagd"], marker = "extra == 'flagd'", editable = "packages/hexastack_flags" },
@@ -1968,6 +1978,11 @@ requires-dist = [
     { name = "hexastack-otel", extras = ["otlp"], marker = "extra == 'otlp'", editable = "packages/hexastack_otel" },
     { name = "hexastack-tools", marker = "extra == 'all'", editable = "packages/hexastack_tools" },
     { name = "hexastack-tools", marker = "extra == 'tools'", editable = "packages/hexastack_tools" },
+    { name = "hexastack-ui", extras = ["all"], marker = "extra == 'all'", editable = "packages/hexastack_ui" },
+    { name = "hexastack-ui", extras = ["all"], marker = "extra == 'ui'", editable = "packages/hexastack_ui" },
+    { name = "hexastack-ui", extras = ["devtools"], marker = "extra == 'devtools'", editable = "packages/hexastack_ui" },
+    { name = "hexastack-ui", extras = ["nicegui"], marker = "extra == 'nicegui'", editable = "packages/hexastack_ui" },
+    { name = "hexastack-ui", extras = ["textual"], marker = "extra == 'textual'", editable = "packages/hexastack_ui" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=6.100.0" },
     { name = "inline-snapshot", marker = "extra == 'testing'", specifier = ">=0.35.4" },
     { name = "playwright", marker = "extra == 'testing'", specifier = ">=1.49.0" },
@@ -1976,7 +1991,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "apprise", "auth", "cli", "db", "docs", "events", "fastapi", "filelock", "flagd", "flags", "fsspec", "graphql", "grpc", "huey", "janus", "loguru", "mcp", "migrations", "msgspec", "nats", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "sql", "sqlite", "structlog", "testing", "tools", "ui", "valkey", "web", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "docs", "events", "fastapi", "filelock", "flagd", "flags", "fsspec", "graphql", "grpc", "huey", "janus", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "sql", "sqlite", "structlog", "testing", "textual", "tools", "ui", "valkey", "web", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2272,9 +2287,6 @@ testing = [
     { name = "playwright" },
     { name = "schemathesis" },
 ]
-ui = [
-    { name = "nicegui" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -2283,13 +2295,12 @@ requires-dist = [
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "limits", marker = "extra == 'ratelimit'", specifier = ">=5.8.0" },
-    { name = "nicegui", marker = "extra == 'ui'", specifier = ">=2.0.0" },
     { name = "playwright", marker = "extra == 'testing'", specifier = ">=1.49.0" },
     { name = "schemathesis", marker = "extra == 'testing'", specifier = ">=3.39.0" },
     { name = "slowapi", marker = "extra == 'ratelimit'", specifier = ">=0.1.10" },
     { name = "zensical", marker = "extra == 'docs'", specifier = ">=0.0.56" },
 ]
-provides-extras = ["auth", "docs", "ratelimit", "testing", "ui"]
+provides-extras = ["auth", "docs", "ratelimit", "testing"]
 
 [[package]]
 name = "hexastack-flags"
@@ -2522,6 +2533,51 @@ requires-dist = [
     { name = "typer", specifier = ">=0.27.1" },
 ]
 provides-extras = ["diagrams", "mutmut", "rope", "all"]
+
+[[package]]
+name = "hexastack-ui"
+version = "0.3.0"
+source = { editable = "packages/hexastack_ui" }
+dependencies = [
+    { name = "hexastack-core" },
+    { name = "hexastack-cqrs" },
+    { name = "pydantic" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "fastapi" },
+    { name = "nicegui" },
+    { name = "textual" },
+]
+devtools = [
+    { name = "fastapi" },
+    { name = "nicegui" },
+]
+fastapi = [
+    { name = "fastapi" },
+]
+nicegui = [
+    { name = "fastapi" },
+    { name = "nicegui" },
+]
+textual = [
+    { name = "textual" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.141.1" },
+    { name = "fastapi", marker = "extra == 'nicegui'", specifier = ">=0.141.1" },
+    { name = "hexastack-core", editable = "packages/hexastack_core" },
+    { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "hexastack-ui", extras = ["nicegui"], marker = "extra == 'devtools'", editable = "packages/hexastack_ui" },
+    { name = "hexastack-ui", extras = ["nicegui", "textual"], marker = "extra == 'all'", editable = "packages/hexastack_ui" },
+    { name = "nicegui", marker = "extra == 'nicegui'", specifier = ">=2.0.0" },
+    { name = "pydantic", specifier = ">=2.10.0" },
+    { name = "textual", marker = "extra == 'textual'", specifier = ">=0.70.0" },
+]
+provides-extras = ["fastapi", "nicegui", "devtools", "textual", "all"]
 
 [[package]]
 name = "hexastack-workspace"
