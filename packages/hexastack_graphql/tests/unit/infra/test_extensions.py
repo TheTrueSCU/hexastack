@@ -30,5 +30,9 @@ def test_correlation_extension_injects_correlation_id():
 
 
 def test_correlation_extension_empty_when_no_correlation_id():
-    ext = CorrelationExtension()
-    assert ext.get_results() == {}
+    token = correlation_id_ctx.set("")
+    try:
+        ext = CorrelationExtension()
+        assert ext.get_results() == {}
+    finally:
+        correlation_id_ctx.reset(token)
