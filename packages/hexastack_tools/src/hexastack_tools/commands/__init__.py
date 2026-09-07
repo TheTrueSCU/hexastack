@@ -15,6 +15,9 @@ from hexastack_tools.commands.code_scanning import (
 from hexastack_tools.commands.codeql_scan import (
     main as codeql_scan_main,
 )
+from hexastack_tools.commands.complexipy import (
+    main as complexipy_main,
+)
 from hexastack_tools.commands.coverage import (
     boundary_audit_main as pytest_boundary_audit_main,
 )
@@ -88,6 +91,7 @@ __all__ = [
     "checks_main",
     "code_scanning_main",
     "codeql_scan_main",
+    "complexipy_main",
     "deps_audit_main",
     "deptry_main",
     "extras_parity_main",

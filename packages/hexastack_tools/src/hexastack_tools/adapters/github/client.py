@@ -42,41 +42,43 @@ def get_github_token() -> str | None:
     return None
 
 
+def _parse_github_url(url: str) -> tuple[str, str] | None:
+    """Parse owner and repo name from a git remote URL string."""
+    cleaned = url[:-4] if url.endswith(".git") else url
+    if ":" in cleaned and "@" in cleaned:
+        path_part = cleaned.split(":", 1)[1]
+        parts = path_part.strip("/").split("/")
+        return (parts[0], parts[1]) if len(parts) == 2 else None
+
+    from urllib.parse import urlparse
+
+    parsed = urlparse(cleaned)
+    if parsed.hostname in ("github.com", "www.github.com", "api.github.com"):
+        parts = parsed.path.strip("/").split("/")
+        if len(parts) >= 2:
+            return parts[0], parts[1]
+    return None
+
+
 def get_current_repo() -> tuple[str, str]:
     """Derive owner and repository name from git remote or defaults."""
-    if shutil.which("git"):
-        try:
-            res = subprocess.run(
-                ["git", "remote", "get-url", "origin"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if res.returncode == 0 and res.stdout.strip():
-                url = res.stdout.strip()
-                # Handle git@github.com:Owner/Repo.git or https://github.com/Owner/Repo.git
-                if url.endswith(".git"):
-                    url = url[:-4]
-                if ":" in url and "@" in url:
-                    # git@github.com:Owner/Repo
-                    path_part = url.split(":", 1)[1]
-                    parts = path_part.strip("/").split("/")
-                    if len(parts) == 2:
-                        return parts[0], parts[1]
-                else:
-                    from urllib.parse import urlparse
+    if not shutil.which("git"):
+        return "TheTrueSCU", "hexastack"
 
-                    parsed = urlparse(url)
-                    if parsed.hostname in (
-                        "github.com",
-                        "www.github.com",
-                        "api.github.com",
-                    ):
-                        parts = parsed.path.strip("/").split("/")
-                        if len(parts) >= 2:
-                            return parts[0], parts[1]
-        except (subprocess.SubprocessError, OSError):
-            pass
+    try:
+        res = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            parsed = _parse_github_url(res.stdout.strip())
+            if parsed:
+                return parsed
+    except (subprocess.SubprocessError, OSError):
+        pass
+
     return "TheTrueSCU", "hexastack"
 
 

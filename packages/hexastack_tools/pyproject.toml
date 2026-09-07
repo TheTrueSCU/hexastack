@@ -44,6 +44,7 @@ check-extras-parity = "hexastack_tools.commands.extras_parity:main"
 check-test-parity = "hexastack_tools.commands.test_parity:main"
 
 codeql-scan = "hexastack_tools.commands.codeql_scan:main"
+complexipy-run = "hexastack_tools.commands.complexipy:main"
 deps-audit = "hexastack_tools.commands.deps_audit:main"
 deptry-run = "hexastack_tools.commands.deptry:main"
 
