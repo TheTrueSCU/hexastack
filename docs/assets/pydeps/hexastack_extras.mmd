@@ -9,6 +9,7 @@ graph LR
         U_db["[db]"]
         U_devtools["[devtools]"]
         U_docs["[docs]"]
+        U_duckdb["[duckdb]"]
         U_events["[events]"]
         U_fastapi["[fastapi]"]
         U_filelock["[filelock]"]
@@ -86,6 +87,7 @@ graph LR
     U_db --> P_hexastack_db
     U_devtools --> P_hexastack_ui
     U_docs --> P_hexastack_fastapi
+    U_duckdb --> P_hexastack_db
     U_events --> P_hexastack_events
     U_fastapi --> P_hexastack_fastapi
     U_filelock --> P_hexastack_core
