@@ -63,11 +63,18 @@ def get_current_repo() -> tuple[str, str]:
                     parts = path_part.strip("/").split("/")
                     if len(parts) == 2:
                         return parts[0], parts[1]
-                elif "github.com/" in url:
-                    path_part = url.split("github.com/", 1)[1]
-                    parts = path_part.strip("/").split("/")
-                    if len(parts) >= 2:
-                        return parts[0], parts[1]
+                else:
+                    from urllib.parse import urlparse
+
+                    parsed = urlparse(url)
+                    if parsed.hostname in (
+                        "github.com",
+                        "www.github.com",
+                        "api.github.com",
+                    ):
+                        parts = parsed.path.strip("/").split("/")
+                        if len(parts) >= 2:
+                            return parts[0], parts[1]
         except (subprocess.SubprocessError, OSError):
             pass
     return "TheTrueSCU", "hexastack"
