@@ -90,6 +90,13 @@ def run_complexipy(
         )
         return 1
 
+    if proc.returncode != 0:
+        if proc.stderr:
+            console.print(
+                f"[bold red]complexipy failed with exit code {proc.returncode}:[/bold red] {proc.stderr.strip()}"
+            )
+        return proc.returncode
+
     console.print(
         Panel(
             f"[bold green]✨ All functions across {len(paths)} target(s) are within allowed cognitive complexity (≤ {max_complexity}).[/bold green]",

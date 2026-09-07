@@ -41,6 +41,14 @@ def test_parse_github_url_variants() -> None:
         "TheTrueSCU",
         "hexastack",
     )
+    assert _parse_github_url("https://github.com/TheTrueSCU/hexastack.git/") == (
+        "TheTrueSCU",
+        "hexastack",
+    )
+    assert _parse_github_url("git@github.com:TheTrueSCU/hexastack.git/") == (
+        "TheTrueSCU",
+        "hexastack",
+    )
 
     # HTTPS with userinfo
     assert (

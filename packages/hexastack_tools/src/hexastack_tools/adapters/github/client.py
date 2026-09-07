@@ -44,7 +44,9 @@ def get_github_token() -> str | None:
 
 def _parse_github_url(url: str) -> tuple[str, str] | None:
     """Parse owner and repo name from a git remote URL string."""
-    cleaned = url[:-4] if url.endswith(".git") else url
+    cleaned = url.strip().rstrip("/")
+    if cleaned.endswith(".git"):
+        cleaned = cleaned[:-4].rstrip("/")
 
     # Handle SSH SCP-style: git@github.com:Owner/Repo
     if cleaned.startswith(("git@github.com:", "git@api.github.com:")):
