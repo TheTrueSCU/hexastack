@@ -5,12 +5,11 @@ Notes/Architectural Intent:
     FastAPI is an optional dependency of hexastack-auth[fastapi].
 """
 
-import importlib.util
 from typing import Any
 
 from hexastack_auth.domain.models import Identity
 from hexastack_auth.ports.policy import AuthorizationPolicyPort
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils import require_dependency
 from hexastack_core.utils.context import get_user_context
 
 __all__ = [
@@ -19,12 +18,13 @@ __all__ = [
 ]
 
 
-def _require_fastapi() -> None:
-    if importlib.util.find_spec("fastapi") is None:
-        raise MissingDependencyError(
-            "fastapi is required for FastAPI auth dependencies. "
-            "Install with 'pip install hexastack-auth[fastapi]'."
-        )
+def _require_fastapi() -> Any:
+    return require_dependency(
+        "fastapi",
+        extra="fastapi",
+        package="hexastack-auth",
+        feature_name="FastAPI auth dependencies",
+    )
 
 
 def require_policy(

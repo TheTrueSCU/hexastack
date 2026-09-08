@@ -18,7 +18,7 @@
 <!-- hexastack_auth_adapters_fastapi -->
 <g id="node5" class="node">
 <title>hexastack_auth_adapters_fastapi</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#4c6b2e" stroke="black" cx="1404.59" cy="-585.97" rx="68.68" ry="28.98"/>
+<ellipse fill="#577934" stroke="black" cx="1404.59" cy="-585.97" rx="68.68" ry="28.98"/>
 <text text-anchor="middle" x="1404.59" y="-594.47" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">hexastack_auth.</text>
 <text text-anchor="middle" x="1404.59" y="-583.47" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">adapters.</text>
 <text text-anchor="middle" x="1404.59" y="-572.47" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">fastapi</text>

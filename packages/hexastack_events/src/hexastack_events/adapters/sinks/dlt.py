@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from hexastack_core.domain import Event
+from hexastack_core.utils import require_dependency
 from hexastack_events.domain.exceptions import EventDeliveryError
 from hexastack_events.domain.models import CloudEventEnvelope, OutboxRecord
 
@@ -29,15 +30,12 @@ def _require_dlt() -> Any:
     Raises:
         ImportError: If dlt is not installed in the active environment.
     """
-    try:
-        import dlt
-
-        return dlt
-    except ImportError as exc:
-        raise ImportError(
-            "dlt is required for DltEventSink. "
-            "Install with: pip install hexastack-events[dlt]"
-        ) from exc
+    return require_dependency(
+        "dlt",
+        extra="dlt",
+        package="hexastack-events",
+        feature_name="DltEventSink",
+    )
 
 
 def _normalize_event(
