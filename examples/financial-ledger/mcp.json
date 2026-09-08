@@ -1,0 +1,17 @@
+{
+    "mcpServers": {
+        "financial-ledger": {
+            "command": "uv",
+            "args": [
+                "run",
+                "financial-ledger",
+                "mcp",
+                "run"
+            ],
+            "env": {
+                "HEXASTACK_AI__PROVIDER": "gemini",
+                "PYTHONUNBUFFERED": "1"
+            }
+        }
+    }
+}
