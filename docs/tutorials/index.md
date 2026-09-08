@@ -1,6 +1,8 @@
 # 🎓 Hexastack Tutorials & Guides
 
-Explore hands-on, step-by-step tutorials demonstrating how to build robust, modular, and strictly partitioned microservices using **Hexastack**.
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack)
+
+Explore hands-on, step-by-step tutorials demonstrating how to build robust, modular, and strictly partitioned microservices using **Hexastack**. All tutorials and runnable microservice examples are pre-configured to run directly in your browser with zero setup.
 
 ---
 
