@@ -441,12 +441,25 @@ options:
 #### `pypi-publish`
 
 ```text
-usage: pypi-publish [-h]
+usage: pypi-publish [-h] [--dist-dir DIST_DIR] [--build] [--no-build]
+                    [--token TOKEN] [--delay DELAY] [--force]
 
-Build distribution packages and prepare for PyPI release publishing.
+Build and publish workspace packages to PyPI, skipping already published
+releases.
 
 options:
-  -h, --help  show this help message and exit
+  -h, --help           show this help message and exit
+  --dist-dir DIST_DIR  Directory containing pre-built distribution packages
+                       (default: dist/)
+  --build              Automatically build distribution packages before
+                       publishing (default: True)
+  --no-build           Skip building and publish existing artifacts in dist/
+  --token TOKEN        PyPI upload token (defaults to UV_PUBLISH_TOKEN or
+                       PYPI_TOKEN env vars)
+  --delay DELAY        Delay in seconds between package uploads (default:
+                       2.0s)
+  --force              Attempt upload even if version is already marked as
+                       published on PyPI
 ```
 
 #### `alphabetizer`
