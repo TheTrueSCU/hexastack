@@ -6,13 +6,12 @@ Notes/Architectural Intent:
     the ambient UserContext for the duration of the RPC.
 """
 
-import importlib.util
 from collections.abc import Callable
 from typing import Any
 
 from hexastack_auth.ports.security import SecurityPort
 from hexastack_auth.ports.workload import WorkloadIdentityPort
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils import require_dependency
 from hexastack_core.utils.context import UserContext, set_user_context
 
 __all__ = [
@@ -92,9 +91,10 @@ class AuthServerInterceptor:
         return continuation(handler_call_details)
 
 
-def _require_grpc() -> None:
-    if importlib.util.find_spec("grpc") is None:
-        raise MissingDependencyError(
-            "grpc is required for gRPC auth interceptor. "
-            "Install with 'pip install hexastack-auth[grpc]'."
-        )
+def _require_grpc() -> Any:
+    return require_dependency(
+        "grpc",
+        extra="grpc",
+        package="hexastack-auth",
+        feature_name="gRPC auth interceptor",
+    )

@@ -24,24 +24,28 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from hexastack_core.utils import require_dependency
 
-def _require_janus() -> None:
+
+def _require_janus() -> Any:
     """Raise a helpful ImportError when janus is not installed.
 
+    Returns:
+        The imported janus module.
+
     Raises:
-        ImportError: Always, when the janus package is unavailable.
+        ImportError: When the janus package is unavailable.
 
     Notes/Architectural Intent:
         Guards all runtime janus usage so that importing this module without the
         optional dependency installed gives a clear, actionable error message.
     """
-    try:
-        import janus  # noqa: F401
-    except ImportError as exc:
-        raise ImportError(
-            "janus is required for JanusEventChannel and JanusCommandQueue. "
-            "Install it with: pip install hexastack-events[janus]"
-        ) from exc
+    return require_dependency(
+        "janus",
+        extra="janus",
+        package="hexastack-events",
+        feature_name="JanusEventChannel and JanusCommandQueue",
+    )
 
 
 class JanusEventChannel:

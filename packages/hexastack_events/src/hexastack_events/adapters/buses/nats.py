@@ -26,6 +26,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from hexastack_core.domain import Event
+from hexastack_core.utils import require_dependency
 from hexastack_events.domain.exceptions import (
     EventDeliveryError,
     EventSerializationError,
@@ -43,23 +44,25 @@ if TYPE_CHECKING:
     import nats.js
 
 
-def _require_nats() -> None:
+def _require_nats() -> Any:
     """Raise a helpful ImportError when nats-py is not installed.
 
+    Returns:
+        The imported nats module.
+
     Raises:
-        ImportError: Always, when the nats package is unavailable.
+        ImportError: When the nats package is unavailable.
 
     Notes/Architectural Intent:
         Guards all runtime NATS usage so the package remains importable without
         the optional dependency. Error message directs users to the correct extra.
     """
-    try:
-        import nats  # noqa: F401
-    except ImportError as exc:
-        raise ImportError(
-            "nats-py is required for NatsJetStreamEventBusAdapter. "
-            "Install it with: pip install hexastack-events[nats]"
-        ) from exc
+    return require_dependency(
+        "nats",
+        extra="nats",
+        package="hexastack-events",
+        feature_name="NatsJetStreamEventBusAdapter",
+    )
 
 
 class NatsJetStreamEventBusAdapter(DistributedEventBusPort):

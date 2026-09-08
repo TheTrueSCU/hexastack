@@ -43,26 +43,30 @@ from hexastack_events.ports.buses import DistributedEventBusPort
 if TYPE_CHECKING:
     import aiokafka
 
+from hexastack_core.utils import require_dependency
+
 logger = logging.getLogger("hexastack.events.kafka")
 
 
-def _require_kafka() -> None:
+def _require_kafka() -> Any:
     """Raise a helpful ImportError when aiokafka is not installed.
 
+    Returns:
+        The imported aiokafka module.
+
     Raises:
-        ImportError: Always, when the aiokafka package is unavailable.
+        ImportError: When the aiokafka package is unavailable.
 
     Notes/Architectural Intent:
         Guards all runtime Kafka usage so the package remains importable without
         the optional dependency. Error message directs users to the correct extra.
     """
-    try:
-        import aiokafka  # noqa: F401
-    except ImportError as exc:
-        raise ImportError(
-            "aiokafka is required for KafkaDistributedEventBus. "
-            "Install it with: pip install hexastack-events[kafka]"
-        ) from exc
+    return require_dependency(
+        "aiokafka",
+        extra="kafka",
+        package="hexastack-events",
+        feature_name="KafkaDistributedEventBus",
+    )
 
 
 class KafkaDistributedEventBus(DistributedEventBusPort):

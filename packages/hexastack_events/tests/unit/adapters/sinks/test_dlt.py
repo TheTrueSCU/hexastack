@@ -72,7 +72,9 @@ def test_require_dlt_success() -> None:
 def test_require_dlt_missing_import() -> None:
     """Test _require_dlt raises an informative ImportError when dlt is absent."""
     with (
-        patch("builtins.__import__", side_effect=ImportError("No module named 'dlt'")),
+        patch(
+            "importlib.import_module", side_effect=ImportError("No module named 'dlt'")
+        ),
         pytest.raises(ImportError, match=r"pip install hexastack-events\[dlt\]"),
     ):
         _require_dlt()

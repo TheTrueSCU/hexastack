@@ -71,7 +71,8 @@ def test_require_kafka_missing_dependency():
     with (
         patch.dict("sys.modules", {"aiokafka": None}),
         pytest.raises(
-            ImportError, match="aiokafka is required for KafkaDistributedEventBus"
+            ImportError,
+            match=r"Optional dependency 'aiokafka' is required for KafkaDistributedEventBus",
         ),
     ):
         from hexastack_events.adapters.buses.kafka import _require_kafka
