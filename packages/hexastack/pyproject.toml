@@ -36,6 +36,9 @@ devtools = [
 docs = [
     "hexastack-fastapi[docs]",
 ]
+duckdb = [
+    "hexastack-db[duckdb]",
+]
 events = [
     "hexastack-events",
 ]
