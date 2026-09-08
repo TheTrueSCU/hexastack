@@ -28,7 +28,6 @@ from financial_ledger.domain.exceptions import (
 )
 from financial_ledger.domain.models import (
     Account,
-    AccountStatus,
     EntryDirection,
     JournalTransaction,
     TransactionEntry,
