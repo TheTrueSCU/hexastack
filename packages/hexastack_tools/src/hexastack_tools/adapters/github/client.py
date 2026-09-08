@@ -9,6 +9,8 @@ from typing import Any
 
 import httpx
 
+from hexastack_core.adapters.logging.standard import StandardLogger
+from hexastack_core.ports.logging import LoggingPort
 from hexastack_tools.domain.github import (
     CheckRunFinding,
     PrSummary,
@@ -18,6 +20,8 @@ from hexastack_tools.domain.github import (
     SecurityAlert,
 )
 from hexastack_tools.ports.github import GitHubApiPort
+
+default_logger: LoggingPort = StandardLogger("hexastack.tools.github")
 
 
 def get_github_token() -> str | None:
@@ -81,9 +85,8 @@ def get_current_repo() -> tuple[str, str]:
             parsed = _parse_github_url(res.stdout.strip())
             if parsed:
                 return parsed
-    except (subprocess.SubprocessError, OSError):
-        # Fall back to default repo if git command execution fails
-        pass
+    except (subprocess.SubprocessError, OSError) as e:
+        default_logger.debug(f"Failed to retrieve git remote 'origin': {e}")
 
     return "TheTrueSCU", "hexastack"
 

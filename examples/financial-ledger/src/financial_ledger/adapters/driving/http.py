@@ -27,7 +27,6 @@ from financial_ledger.domain.exceptions import (
     AccountAlreadyExistsError,
     AccountFrozenError,
     AccountNotFoundError,
-    FinancialLedgerDomainError,
     InsufficientFundsError,
     InvalidAmountError,
     UnbalancedTransactionError,

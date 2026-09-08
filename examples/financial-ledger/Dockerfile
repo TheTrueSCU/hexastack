@@ -1,5 +1,5 @@
 # Multi-stage ultra-fast uv Dockerfile
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:d8c5ddbfd2966113b28b52e3e5730a9163e9f4560b2984951167dc8a4e32049d AS builder
 
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
@@ -12,7 +12,7 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv     uv sync --frozen --no-dev
 
 # Final rootless production runtime stage
-FROM python:3.13-slim-bookworm AS runtime
+FROM python:3.13-slim-bookworm@sha256:cf3b03f0b2f56708b76c8c1e847c21f92e59df0e21a711ef8ae55cb56041c2d9 AS runtime
 
 WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1

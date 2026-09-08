@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -10,8 +11,10 @@ from pathlib import Path
 import pytest
 
 from hexastack_tools.utils.workspace import (
+    VALID_EXAMPLES,
     VALID_PACKAGES,
     HexastackScriptArgumentParser,
+    get_example_directory,
     get_package_directories,
     get_package_directory,
     get_present_layers,
@@ -49,21 +52,36 @@ def _get_git_changed_files(base_ref: str = "origin/main") -> list[str]:
         return []
 
 
-def _resolve_test_targets(
+def _setup_example_target(example_name: str, sub_dir: str, root: Path) -> str:
+    """Configure sys.path and PYTHONPATH for an example and return its test directory path."""
+    ex_dir = get_example_directory(example_name, root)
+    src_dir = ex_dir / "src"
+    if src_dir.is_dir():
+        src_path_str = str(src_dir.resolve())
+        if src_path_str not in sys.path:
+            sys.path.insert(0, src_path_str)
+        current_pypath = os.environ.get("PYTHONPATH", "")
+        if src_path_str not in current_pypath.split(os.pathsep):
+            os.environ["PYTHONPATH"] = (
+                f"{src_path_str}{os.pathsep}{current_pypath}"
+                if current_pypath
+                else src_path_str
+            )
+    target = ex_dir / sub_dir
+    if target.is_dir():
+        return str(target)
+    if (ex_dir / "tests").is_dir():
+        return str(ex_dir / "tests")
+    return str(ex_dir)
+
+
+def _resolve_package_targets(
     packages: list[str] | None,
     affected: bool,
-    unit_only: bool,
-    properties_only: bool,
+    sub_dir: str,
     root: Path,
 ) -> tuple[list[str], set[str] | None]:
-    """Resolve target test directory paths and active package set based on CLI flags."""
-    if properties_only:
-        sub_dir = "tests/properties"
-    elif unit_only:
-        sub_dir = "tests/unit"
-    else:
-        sub_dir = "tests"
-
+    """Resolve target test directory paths for workspace packages."""
     if packages:
         paths = [str(get_package_directory(p, root) / sub_dir) for p in packages]
         return paths, set(packages)
@@ -78,7 +96,6 @@ def _resolve_test_targets(
                 if (target := get_package_directory(p, root) / sub_dir).is_dir()
             ]
             return paths, affected_pkgs
-        # None indicates workspace-wide impact -> fall through to all packages
 
     paths = [
         str(target)
@@ -88,11 +105,37 @@ def _resolve_test_targets(
     return paths, None
 
 
+def _resolve_test_targets(
+    packages: list[str] | None,
+    examples: list[str] | None,
+    affected: bool,
+    unit_only: bool,
+    properties_only: bool,
+    root: Path,
+) -> tuple[list[str], set[str] | None]:
+    """Resolve target test directory paths and active package set based on CLI flags."""
+    if properties_only:
+        sub_dir = "tests/properties"
+    elif unit_only:
+        sub_dir = "tests/unit"
+    else:
+        sub_dir = "tests"
+
+    if examples:
+        paths = [_setup_example_target(e, sub_dir, root) for e in examples]
+        return paths, None
+
+    return _resolve_package_targets(packages, affected, sub_dir, root)
+
+
 def run_main() -> None:
     """CLI entrypoint for pytest-run."""
     parser = argparse.ArgumentParser(description="Run pytest test suite.")
     parser.add_argument(
         "-p", "--package", dest="packages", action="append", choices=VALID_PACKAGES
+    )
+    parser.add_argument(
+        "-e", "--example", dest="examples", action="append", choices=VALID_EXAMPLES
     )
     parser.add_argument("-A", "--affected", action="store_true")
     parser.add_argument("-U", "--unit", action="store_true")
@@ -107,6 +150,7 @@ def run_main() -> None:
     root = get_repo_root()
     test_paths, active_pkgs = _resolve_test_targets(
         packages=args.packages,
+        examples=args.examples,
         affected=args.affected,
         unit_only=args.unit,
         properties_only=args.properties,
@@ -117,7 +161,10 @@ def run_main() -> None:
     if args.with_context:
         cov_args.extend(["-n", "0", "--cov-context=test"])
 
-    if active_pkgs is not None:
+    if args.examples:
+        # For example runs, disable global fail-under coverage or scope directly
+        cov_args.append("--no-cov")
+    elif active_pkgs is not None:
         # Dynamically scope coverage only to tested packages
         cov_pkgs = [
             p
