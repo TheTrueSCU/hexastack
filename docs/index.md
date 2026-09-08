@@ -96,5 +96,6 @@ uv run hexastack dev
 
 - [**Feature Demos & Interactive Walkthroughs**](demos.md): Watch recorded demonstrations of the Scaffolding CLI and DevTools Console.
 - [**Tutorial: Building a Complete Todo Service**](tutorials/01-building-a-todo-service.md): Step-by-step guide from zero to production.
+- [**Tutorial: Double-Entry Financial Ledger & Invariants**](tutorials/08-financial-ledger-and-double-entry-invariants.md): Strict mathematical consistency, double-entry bookkeeping, and property-based fuzzing.
 - [**Architecture & Invariants**](architecture.md): Deep dive into strict package boundaries, tiered CI, and hexagonal rules.
 - [**Monorepo Packages Catalog**](packages.md): Complete index of all 13 specialized packages in the monorepo.
