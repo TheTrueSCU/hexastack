@@ -7,21 +7,24 @@ nav = [
     { "Overview" = "index.md" },
     { "Quickstart & Demos" = "demos.md" },
     { "Tutorials" = [
-        "tutorials/01-building-a-todo-service.md",
-        "tutorials/02-sqlite-persistence-and-migrations.md",
-        "tutorials/03-jwt-authentication-and-rbac.md",
-        "tutorials/04-events-outbox-and-notifications.md",
-        "tutorials/05-experimental-ai-and-mcp.md",
-        "tutorials/06-production-observability-and-tracing.md",
-        "tutorials/07-high-performance-grpc-and-microservices.md"
+        { "Overview" = "tutorials/index.md" },
+        { "To-Do App (7-Part Series)" = [
+            { "Overview" = "tutorials/todo-app/index.md" },
+            { "Chapter 1: Building a To-Do Service" = "tutorials/todo-app/01-building-a-todo-service.md" },
+            { "Chapter 2: SQLite & Migrations" = "tutorials/todo-app/02-sqlite-persistence-and-migrations.md" },
+            { "Chapter 3: Authentication & RBAC" = "tutorials/todo-app/03-jwt-authentication-and-rbac.md" },
+            { "Chapter 4: Events & Outbox" = "tutorials/todo-app/04-events-outbox-and-notifications.md" },
+            { "Chapter 5: AI Assistant & MCP" = "tutorials/todo-app/05-experimental-ai-and-mcp.md" },
+            { "Chapter 6: Observability & Tracing" = "tutorials/todo-app/06-production-observability-and-tracing.md" },
+            { "Chapter 7: High-Performance gRPC" = "tutorials/todo-app/07-high-performance-grpc-and-microservices.md" }
+        ]},
+        { "Financial Ledger & Invariants" = "tutorials/financial-ledger.md" }
     ]},
     { "Architecture" = "architecture.md" },
     { "Developer Tools" = "tools.md" },
     { "Packages" = "packages.md" },
     { "Compliance & Regulatory" = "compliance.md" }
 ]
-
-
 
 [project.markdown_extensions]
 admonition = {}
