@@ -20,10 +20,8 @@ async def test_uow_middleware_async_failure():
         await asyncio.sleep(0.01)
         raise RuntimeError("async fail")
 
-    coro = middleware(_SampleCommand(name="async-fail-cmd"), async_failing_handler)
-
     with pytest.raises(RuntimeError, match="async fail"):
-        await coro
+        await middleware(_SampleCommand(name="async-fail-cmd"), async_failing_handler)
 
     assert uow.rolled_back is True
     assert uow.rollback_count == 1

@@ -13,7 +13,6 @@ class CachePort(ABC):
     @abstractmethod
     def clear(self) -> None:
         """Clear all entries from the cache."""
-        ...
 
     @abstractmethod
     def delete(self, key: str) -> bool:
@@ -25,7 +24,6 @@ class CachePort(ABC):
         Returns:
             True if the key existed and was deleted, False otherwise.
         """
-        ...
 
     @abstractmethod
     def get(self, key: str, default: Any = None) -> Any:
@@ -38,7 +36,6 @@ class CachePort(ABC):
         Returns:
             The cached value if present and unexpired, otherwise default.
         """
-        ...
 
     @abstractmethod
     def has(self, key: str) -> bool:
@@ -50,7 +47,6 @@ class CachePort(ABC):
         Returns:
             True if present and valid, False otherwise.
         """
-        ...
 
     @abstractmethod
     def set(self, key: str, value: Any, ttl_seconds: float | None = None) -> None:
@@ -61,7 +57,6 @@ class CachePort(ABC):
             value: Value to be stored.
             ttl_seconds: Optional time-to-live duration in seconds.
         """
-        ...
 
 
 class AsyncCachePort(ABC):
@@ -70,29 +65,24 @@ class AsyncCachePort(ABC):
     @abstractmethod
     async def clear_async(self) -> None:
         """Asynchronously clear all entries from the cache."""
-        ...
 
     @abstractmethod
     async def delete_async(self, key: str) -> bool:
         """Asynchronously delete a cached key."""
-        ...
 
     @abstractmethod
     async def get_async(self, key: str, default: Any = None) -> Any:
         """Asynchronously retrieve a cached value by key."""
-        ...
 
     @abstractmethod
     async def has_async(self, key: str) -> bool:
         """Asynchronously check if a key exists in cache."""
-        ...
 
     @abstractmethod
     async def set_async(
         self, key: str, value: Any, ttl_seconds: float | None = None
     ) -> None:
         """Asynchronously store a key-value pair in cache."""
-        ...
 
 
 __all__ = [

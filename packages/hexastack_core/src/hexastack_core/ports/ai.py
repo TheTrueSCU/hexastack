@@ -30,7 +30,6 @@ class LlmProviderPort(ABC):
         Raises:
             ValueError: If generation or schema parsing fails.
         """
-        ...
 
     @abstractmethod
     def generate_text(self, prompt: str, system_prompt: str | None = None) -> str:
@@ -46,7 +45,6 @@ class LlmProviderPort(ABC):
         Raises:
             ValueError: If generation fails.
         """
-        ...
 
 
 class VectorStorePort(ABC):
@@ -71,7 +69,6 @@ class VectorStorePort(ABC):
         Raises:
             ValueError: If vector search operation fails.
         """
-        ...
 
     @abstractmethod
     def upsert(
@@ -90,4 +87,3 @@ class VectorStorePort(ABC):
         Raises:
             ValueError: If vector upsert operation fails.
         """
-        ...

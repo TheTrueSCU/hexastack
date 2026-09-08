@@ -189,9 +189,9 @@ async def test_async_in_memory_lock_multitask_contention():
     t1 = asyncio.create_task(task1_coro())
     t2 = asyncio.create_task(task2_coro())
 
-    await t2
+    _ = await t2
     release_task1.set()
-    await t1
+    _ = await t1
 
     assert task2_results["non_blocking"] is False
     assert task2_results["timed"] is False

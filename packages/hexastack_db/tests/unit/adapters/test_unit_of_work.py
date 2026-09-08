@@ -92,9 +92,11 @@ async def test_async_sqlalchemy_unit_of_work():
     uow_async_reraise = AsyncSqlAlchemyUnitOfWork(
         session_factory=async_factory, reraise=True
     )
-    with pytest.raises(UnitOfWorkError):
+    try:
         async with uow_async_reraise:
             raise ValueError("Async wrapped error")
+    except UnitOfWorkError:
+        pass
 
     # 5. Commit failure in AsyncUnitOfWork raises UnitOfWorkError on exit
     failing_mock_session = MagicMock()

@@ -246,6 +246,7 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         try:
             self._run(self.disconnect())
         except Exception:
+            # Suppress errors during best-effort synchronous shutdown
             pass
         finally:
             if self._loop.is_running():
@@ -500,6 +501,7 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
                     await self._process_consumer_message(msg, topic, dlq_topic, handler)
                     await consumer.commit()
             except asyncio.CancelledError:
+                # Normal cancellation during subscriber shutdown
                 pass
             except Exception as loop_exc:
                 logger.error(
