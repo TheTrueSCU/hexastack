@@ -32,6 +32,7 @@ def test_fuzz_balanced_transfer_conservation_of_money(amount: Decimal):
     credit_entry = TransactionEntry(account_id="dst", direction=EntryDirection.CREDIT, amount=amount)
 
     tx = JournalTransaction(reference="FUZZ-TX", description="Fuzz transfer", entries=[debit_entry, credit_entry])
+    assert tx.reference == "FUZZ-TX"
 
     src_acc.apply_entry(debit_entry)
     dst_acc.apply_entry(credit_entry)

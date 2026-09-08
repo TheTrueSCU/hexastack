@@ -13,6 +13,7 @@ from hexastack_tools.utils.workspace import (
     get_present_layers,
     get_repo_root,
     get_valid_package_names,
+    resolve_affected_packages,
 )
 
 
@@ -141,3 +142,35 @@ members = [
 
         server_dir = get_package_directory("hq_server", repo_root=root)
         assert server_dir.name == "hq_server"
+
+
+def test_resolve_affected_packages(tmp_path: Path) -> None:
+    """Verify affected packages resolution for various changed file paths."""
+    # 1. Empty change list returns empty set
+    assert resolve_affected_packages([], repo_root=tmp_path) == set()
+
+    # 2. Root files (pyproject.toml, uv.lock) impact all (None)
+    assert resolve_affected_packages(["pyproject.toml"], repo_root=tmp_path) is None
+    assert resolve_affected_packages(["uv.lock"], repo_root=tmp_path) is None
+
+    # 3. .github impacts all (None)
+    assert (
+        resolve_affected_packages([".github/workflows/ci.yml"], repo_root=tmp_path)
+        is None
+    )
+
+    # 4. examples directory changes do NOT impact packages
+    assert (
+        resolve_affected_packages(
+            ["examples/financial-ledger/Dockerfile"], repo_root=tmp_path
+        )
+        == set()
+    )
+
+    # 5. docs changes do NOT impact packages
+    assert (
+        resolve_affected_packages(
+            ["docs/assets/pydeps/hexastack_tools.svg"], repo_root=tmp_path
+        )
+        == set()
+    )

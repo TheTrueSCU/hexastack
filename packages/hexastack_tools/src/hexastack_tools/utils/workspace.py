@@ -143,6 +143,44 @@ def get_valid_package_names(repo_root: Path | None = None) -> list[str]:
 VALID_PACKAGES: list[str] = get_valid_package_names()
 
 
+def get_example_directories(repo_root: Path | None = None) -> list[Path]:
+    """Return all example project directory paths in the workspace."""
+    root = repo_root or get_repo_root()
+    examples_dir = root / "examples"
+    if not examples_dir.is_dir():
+        return []
+    return sorted(
+        [
+            p.resolve()
+            for p in examples_dir.iterdir()
+            if p.is_dir() and not p.name.startswith(".") and (p / "src").is_dir()
+        ]
+    )
+
+
+def get_valid_example_names(repo_root: Path | None = None) -> list[str]:
+    """Return sorted list of example project names discovered in the workspace."""
+    root = repo_root or get_repo_root()
+    names: set[str] = set()
+    for p in get_example_directories(root):
+        names.add(p.name)
+        names.add(p.name.replace("-", "_"))
+    return sorted(names)
+
+
+VALID_EXAMPLES: list[str] = get_valid_example_names()
+
+
+def get_example_directory(example: str, repo_root: Path | None = None) -> Path:
+    """Return full directory path for a specific example project name."""
+    root = repo_root or get_repo_root()
+    clean_target = example.replace("-", "_")
+    for p in get_example_directories(root):
+        if p.name == example or p.name.replace("-", "_") == clean_target:
+            return p
+    return (root / "examples" / example).resolve()
+
+
 def _is_single_package_root_match(root_dir: Path, target: str) -> bool:
     """Check if single-package root directory matches the target name."""
     clean_target = target.replace("-", "_")
@@ -373,7 +411,7 @@ def _resolve_file_impact(
             return True, set()
         return False, set()
 
-    if parts[0] in (".github", "examples"):
+    if parts[0] in (".github",):
         return True, set()
 
     if parts[0] == "packages" and len(parts) > 1:
@@ -482,6 +520,8 @@ __all__ = [
     "check_tool_availability",
     "ensure_tool_installed",
     "get_downstream_dependents",
+    "get_example_directories",
+    "get_example_directory",
     "get_package_dependencies",
     "get_package_directories",
     "get_package_directory",
@@ -489,6 +529,7 @@ __all__ = [
     "get_packages_directory",
     "get_present_layers",
     "get_repo_root",
+    "get_valid_example_names",
     "get_valid_package_names",
     "get_workspace_dependency_graph",
     "HEX_LAYERS",
@@ -497,5 +538,6 @@ __all__ = [
     "PACKAGES_DIR",
     "resolve_affected_packages",
     "resolve_target_python_files",
+    "VALID_EXAMPLES",
     "VALID_PACKAGES",
 ]
