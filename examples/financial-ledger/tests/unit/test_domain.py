@@ -27,7 +27,6 @@ from financial_ledger.domain.exceptions import (
     UnbalancedTransactionError,
 )
 from financial_ledger.domain.models import (
-    Account,
     EntryDirection,
     JournalTransaction,
     TransactionEntry,
