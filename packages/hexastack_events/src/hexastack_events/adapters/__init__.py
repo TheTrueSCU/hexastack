@@ -14,6 +14,12 @@ from hexastack_events.adapters.outbox import (
     OutboxEventMixin,
     SqlAlchemyOutboxStorage,
 )
+from hexastack_events.adapters.sinks import (
+    DltEventSink,
+    DltProjectionConsumer,
+    dlt_event_source,
+    dlt_outbox_source,
+)
 from hexastack_events.adapters.streams import InMemoryStreamAdapter
 from hexastack_events.adapters.tasks import InMemoryTaskQueueAdapter
 
@@ -21,6 +27,10 @@ __all__ = [
     "AsyncioOutboxRelay",
     "cloudevent_to_dict",
     "cloudevent_to_json",
+    "dlt_event_source",
+    "dlt_outbox_source",
+    "DltEventSink",
+    "DltProjectionConsumer",
     "from_cloudevent",
     "HueyOutboxRelay",
     "InMemoryDistributedEventBus",

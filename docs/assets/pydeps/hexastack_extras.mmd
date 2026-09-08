@@ -8,6 +8,7 @@ graph LR
         U_cli["[cli]"]
         U_db["[db]"]
         U_devtools["[devtools]"]
+        U_dlt["[dlt]"]
         U_docs["[docs]"]
         U_duckdb["[duckdb]"]
         U_events["[events]"]
@@ -86,6 +87,7 @@ graph LR
     U_cli --> P_hexastack_cli
     U_db --> P_hexastack_db
     U_devtools --> P_hexastack_ui
+    U_dlt --> P_hexastack_events
     U_docs --> P_hexastack_fastapi
     U_duckdb --> P_hexastack_db
     U_events --> P_hexastack_events

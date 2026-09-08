@@ -33,6 +33,9 @@ db = [
 devtools = [
     "hexastack-ui[devtools]",
 ]
+dlt = [
+    "hexastack-events[dlt]",
+]
 docs = [
     "hexastack-fastapi[docs]",
 ]

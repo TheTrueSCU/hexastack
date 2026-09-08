@@ -79,6 +79,7 @@ dev = [
     "deptry>=0.23.0",
     "detect-secrets>=1.5.0",
     "dirty-equals>=0.11",
+    "dlt>=1.0.0",
     "duckdb>=1.0.0",
     "faker>=33.0.0",
     "fakeredis>=2.26.0",

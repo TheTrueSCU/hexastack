@@ -26,13 +26,14 @@ def run_local_codeql_scan(
     threads: int = 0,
 ) -> int:
     """Execute local CodeQL database creation and analysis."""
-    codeql_bin = shutil.which("codeql")
+    bundle_bin = Path.home() / ".local/share/codeql/codeql"
+    codeql_bin = str(bundle_bin) if bundle_bin.is_file() else shutil.which("codeql")
     if not codeql_bin:
         console.print(
             Panel(
-                "[yellow]⚠️  CodeQL CLI ('codeql') not found in system PATH.\n"
-                "To enable local CodeQL analysis, install CodeQL via mise or your package manager:\n\n"
-                "  mise use -g github:github/codeql-cli-binaries\n\n"
+                "[yellow]⚠️  CodeQL CLI ('codeql') not found in system PATH or ~/.local/share/codeql.\n"
+                "To enable local CodeQL analysis, install the CodeQL bundle:\n\n"
+                "  https://github.com/github/codeql-action/releases/latest\n\n"
                 "Skipping local CodeQL scan.[/yellow]",
                 title="[bold yellow]CodeQL Scanner Notice[/bold yellow]",
                 border_style="yellow",
