@@ -48,9 +48,8 @@ async def test_tracing_middleware_async_handler_exception():
         raise RuntimeError("Async boom")
 
     cmd = CreateInvoiceCommand(invoice_id="inv-5", amount=30.0)
-    coro = middleware(cmd, _async_failing_call)
     with pytest.raises(RuntimeError, match="Async boom"):
-        await coro
+        await middleware(cmd, _async_failing_call)
 
     assert len(tracer.finished_spans) == 1
     span = tracer.finished_spans[0]

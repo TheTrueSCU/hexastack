@@ -18,7 +18,6 @@ class ClockPort(ABC):
         Returns:
             Current datetime in UTC timezone.
         """
-        ...
 
     @abstractmethod
     def timestamp(self) -> float:
@@ -27,7 +26,6 @@ class ClockPort(ABC):
         Returns:
             Current POSIX timestamp as float.
         """
-        ...
 
 
 __all__ = [

@@ -39,7 +39,6 @@ class HandlerDispatcherPort(ABC):
         Raises:
             Exception: If no handler is registered (and reraise=True) or if the handler fails.
         """
-        ...
 
 
 @runtime_checkable
@@ -70,7 +69,6 @@ class MiddlewarePort(Protocol):
         Raises:
             Exception: Re-raises unhandled exceptions or domain errors.
         """
-        ...
 
 
 class CommandBusPort(ABC):
@@ -94,7 +92,6 @@ class CommandBusPort(ABC):
         Raises:
             CommandRegistryError: If no handler is registered for command.
         """
-        ...
 
 
 class EventBusPort(ABC):
@@ -118,7 +115,6 @@ class EventBusPort(ABC):
         Raises:
             None.
         """
-        ...
 
 
 class QueryBusPort(ABC):
@@ -141,4 +137,3 @@ class QueryBusPort(ABC):
         Raises:
             QueryRegistryError: If no handler is registered for query.
         """
-        ...

@@ -26,7 +26,6 @@ class BootstrapperPort(Protocol):
         Raises:
             None.
         """
-        ...
 
     def register_config(self, registry: Any) -> None:
         """Phase 1: Register configuration section schemas with ConfigRegistry.
@@ -40,7 +39,6 @@ class BootstrapperPort(Protocol):
         Raises:
             None.
         """
-        ...
 
 
 __all__ = [

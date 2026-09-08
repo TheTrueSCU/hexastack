@@ -56,9 +56,10 @@ def test_query_caching_sync_flow() -> None:
     assert calls == 1
 
     # 2. Second execution -> Hit, handler not called (call_count in result stays 1)
+    before_calls = calls
     res2 = query_mw(query, query_handler)
     assert res2 == {"id": "42", "name": "User 42", "call_count": 1}
-    assert calls == 1
+    assert calls == before_calls
 
     # 3. Execute invalidation command
     cmd = UpdateUserCommand(user_id="42", name="Updated")
@@ -107,9 +108,10 @@ async def test_query_caching_async_flow() -> None:
     assert calls == 1
 
     # 2. Async hit (call_count in result stays 1)
+    before_async_calls = calls
     res2 = await query_mw(query, async_handler)
     assert res2 == {"id": "100", "name": "Async 100", "call_count": 1}
-    assert calls == 1
+    assert calls == before_async_calls
 
     # 3. Async Invalidate
     cmd = UpdateUserCommand(user_id="100", name="Async Updated")

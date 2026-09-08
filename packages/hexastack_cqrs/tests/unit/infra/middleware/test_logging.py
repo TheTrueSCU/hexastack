@@ -20,10 +20,8 @@ async def test_logging_middleware_async_coroutine_error():
         raise RuntimeError("async failure")
 
     cmd = _DummyCommand(name="async-error-cmd")
-    coro = middleware(cmd, async_failing_handler)
-
     with pytest.raises(RuntimeError, match="async failure"):
-        await coro
+        await middleware(cmd, async_failing_handler)
 
     assert len(logger.entries) == 2
     assert logger.entries[0].level == "info"

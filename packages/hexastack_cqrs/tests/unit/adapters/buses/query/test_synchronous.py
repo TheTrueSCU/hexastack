@@ -30,7 +30,8 @@ def test_synchronous_query_bus_dispatch():
     registry.register(GetUserProfile, lambda q: {"id": q.user_id, "name": "Alice"})
 
     bus = SynchronousQueryBus(handler_registry=registry)
-    result = bus.dispatch(GetUserProfile(user_id="u-1"))
+    query: Query[dict[str, str]] = GetUserProfile(user_id="u-1")
+    result = bus.dispatch(query)
 
     assert result == {"id": "u-1", "name": "Alice"}
 
