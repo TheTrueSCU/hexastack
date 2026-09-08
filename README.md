@@ -4,6 +4,7 @@
 
 > High-performance, modular Hexagonal Architecture & CQRS Framework for Python 3.13+.
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack)
 [![CI](https://github.com/TheTrueSCU/hexastack/actions/workflows/ci.yml/badge.svg)](https://github.com/TheTrueSCU/hexastack/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
