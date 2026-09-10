@@ -2,6 +2,9 @@ from hexastack_ai.infra.bootstrap import (
     AiBootstrapper,
     AiBootstrapResult,
 )
+from hexastack_ai.infra.cache import (
+    SemanticQueryCacheMiddleware,
+)
 from hexastack_ai.infra.config import (
     HexastackAiConfig,
     LiteLlmDialectConfig,
@@ -24,4 +27,5 @@ __all__ = [
     "OllamaDialectConfig",
     "PydanticAiDialectConfig",
     "register_ai_config",
+    "SemanticQueryCacheMiddleware",
 ]

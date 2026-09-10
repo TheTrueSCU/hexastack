@@ -1,8 +1,5 @@
-from hexastack_ai.adapters.cache.semantic import (
-    AsyncSemanticVectorCache,
-    SemanticVectorCache,
-)
-from hexastack_ai.adapters.litellm import LiteLlmAdapter
+"""Vector memory adapters for hexastack-ai."""
+
 from hexastack_ai.adapters.memory.in_memory import (
     AsyncInMemoryVectorMemoryAdapter,
     InMemoryVectorMemoryAdapter,
@@ -12,16 +9,11 @@ from hexastack_ai.adapters.memory.qdrant import (
     AsyncQdrantVectorMemoryAdapter,
     QdrantVectorMemoryAdapter,
 )
-from hexastack_ai.adapters.pydantic_ai import PydanticAiAgentAdapter
 
 __all__ = [
     "AsyncInMemoryVectorMemoryAdapter",
     "AsyncQdrantVectorMemoryAdapter",
-    "AsyncSemanticVectorCache",
     "InMemoryVectorMemoryAdapter",
-    "LiteLlmAdapter",
     "PgVectorMemoryAdapter",
-    "PydanticAiAgentAdapter",
     "QdrantVectorMemoryAdapter",
-    "SemanticVectorCache",
 ]

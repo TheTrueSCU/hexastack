@@ -17,6 +17,14 @@ dependencies = [
     "pydantic-ai>=0.0.24",
 ]
 
+[project.optional-dependencies]
+qdrant = [
+    "qdrant-client>=1.12.0",
+]
+all = [
+    "qdrant-client>=1.12.0",
+]
+
 [project.entry-points."hexastack.bootstrappers"]
 ai = "hexastack_ai.infra.bootstrap:AiBootstrapper"
 
@@ -38,5 +46,6 @@ containers = ["hexastack_ai"]
 layers = [
     "infra",
     "adapters",
+    "ports",
     "domain",
 ]

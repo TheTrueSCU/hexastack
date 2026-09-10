@@ -113,6 +113,9 @@ pgvector = [
 postgresql = [
     "hexastack-db[postgresql]",
 ]
+qdrant = [
+    "hexastack-ai[qdrant]",
+]
 ratelimit = [
     "hexastack-fastapi[ratelimit]",
 ]
@@ -167,7 +170,7 @@ web = [
 ]
 
 all = [
-    "hexastack-ai",
+    "hexastack-ai[all]",
     "hexastack-auth",
     "hexastack-cli",
     "hexastack-db[all]",
