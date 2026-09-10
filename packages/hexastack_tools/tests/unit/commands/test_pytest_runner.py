@@ -35,11 +35,11 @@ def test_archon_generate_main(tmp_path: Path) -> None:
         assert "test_hexastack_core_clean_architecture" in content
 
 
-@patch("pytest.main", return_value=0)
+@patch("subprocess.run", return_value=MagicMock(returncode=0))
 @patch("sys.exit")
 @patch("sys.argv", ["pytest-run", "--with-context", "-p", "core"])
 def test_run_main_with_context(
-    mock_exit: MagicMock, mock_pytest: MagicMock, tmp_path: Path
+    mock_exit: MagicMock, mock_subproc: MagicMock, tmp_path: Path
 ) -> None:
     """Verify run_main forwards -n 0 and --cov-context=test when --with-context is enabled."""
     with patch(
@@ -49,18 +49,18 @@ def test_run_main_with_context(
         (pkg_dir / "src").mkdir(parents=True)
         (pkg_dir / "tests").mkdir(parents=True)
         run_main()
-        mock_pytest.assert_called_once()
-        call_args = mock_pytest.call_args[0][0]
-        assert "-n" in call_args
-        assert "0" in call_args
-        assert "--cov-context=test" in call_args
+        mock_subproc.assert_called_once()
+        cmd_args = mock_subproc.call_args[0][0]
+        assert "-n" in cmd_args
+        assert "0" in cmd_args
+        assert "--cov-context=test" in cmd_args
 
 
-@patch("pytest.main", return_value=0)
+@patch("subprocess.run", return_value=MagicMock(returncode=0))
 @patch("sys.exit")
 @patch("sys.argv", ["pytest-run", "-e", "financial-ledger"])
 def test_run_main_with_example(
-    mock_exit: MagicMock, mock_pytest: MagicMock, tmp_path: Path
+    mock_exit: MagicMock, mock_subproc: MagicMock, tmp_path: Path
 ) -> None:
     """Verify run_main resolves example test path and adds src to sys.path."""
     with patch(
@@ -70,13 +70,13 @@ def test_run_main_with_example(
         (ex_dir / "src" / "financial_ledger").mkdir(parents=True)
         (ex_dir / "tests").mkdir(parents=True)
         run_main()
-        mock_pytest.assert_called_once()
-        call_args = mock_pytest.call_args[0][0]
-        assert str(ex_dir / "tests") in call_args
-        assert "--no-cov" in call_args
+        mock_subproc.assert_called_once()
+        cmd_args = mock_subproc.call_args[0][0]
+        assert str(ex_dir / "tests") in cmd_args
+        assert "--no-cov" in cmd_args
 
 
-@patch("pytest.main", return_value=0)
+@patch("subprocess.run", return_value=MagicMock(returncode=0))
 @patch("sys.exit")
 @patch(
     "hexastack_tools.commands.pytest_runner._get_git_changed_files",
@@ -84,7 +84,7 @@ def test_run_main_with_example(
 )
 @patch("sys.argv", ["pytest-run", "-A", "-U"])
 def test_run_main_with_affected(
-    mock_git: MagicMock, mock_exit: MagicMock, mock_pytest: MagicMock, tmp_path: Path
+    mock_git: MagicMock, mock_exit: MagicMock, mock_subproc: MagicMock, tmp_path: Path
 ) -> None:
     """Verify run_main resolves affected package test path when -A is passed."""
     with patch(
@@ -95,7 +95,7 @@ def test_run_main_with_affected(
         (pkg_dir / "tests" / "unit").mkdir(parents=True)
         (pkg_dir / "pyproject.toml").write_text("[project]\nname = 'hexastack-core'\n")
         run_main()
-        mock_pytest.assert_called_once()
-        call_args = mock_pytest.call_args[0][0]
-        assert str(pkg_dir / "tests" / "unit") in call_args
-        assert "--cov-reset" in call_args
+        mock_subproc.assert_called_once()
+        cmd_args = mock_subproc.call_args[0][0]
+        assert str(pkg_dir / "tests" / "unit") in cmd_args
+        assert "--cov-reset" in cmd_args

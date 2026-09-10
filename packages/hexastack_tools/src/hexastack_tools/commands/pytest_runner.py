@@ -8,8 +8,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from hexastack_tools.utils.workspace import (
     VALID_EXAMPLES,
     VALID_PACKAGES,
@@ -137,6 +135,13 @@ def run_main() -> None:
     parser.add_argument(
         "-e", "--example", dest="examples", action="append", choices=VALID_EXAMPLES
     )
+    parser.add_argument(
+        "-a",
+        "--all",
+        dest="all_packages",
+        action="store_true",
+        help="Run across all workspace packages.",
+    )
     parser.add_argument("-A", "--affected", action="store_true")
     parser.add_argument("-U", "--unit", action="store_true")
     parser.add_argument("-P", "--properties", action="store_true")
@@ -181,7 +186,8 @@ def run_main() -> None:
             cov_args.append("--no-cov")
 
     call_args = test_paths + cov_args + (unknown or [])
-    sys.exit(pytest.main(call_args))
+    res = subprocess.run([sys.executable, "-m", "pytest", *call_args])
+    sys.exit(res.returncode)
 
 
 def archon_generate_main() -> None:

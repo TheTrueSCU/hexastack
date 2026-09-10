@@ -45,6 +45,18 @@ def pytest_configure(config: pytest.Config) -> None:
         "slow: mark a test as slow-running (excluded from fast local runs).",
     )
 
+    try:
+        from hypothesis import HealthCheck, settings
+
+        settings.register_profile(
+            "monorepo",
+            deadline=None,
+            suppress_health_check=[HealthCheck.too_slow],
+        )
+        settings.load_profile("monorepo")
+    except ImportError:
+        pass
+
 
 @pytest.fixture
 def fake():
