@@ -21,6 +21,7 @@ nav = [
         { "Financial Ledger & Invariants" = "tutorials/financial-ledger.md" }
     ]},
     { "Architecture" = "architecture.md" },
+    { "AI Guardrails & Agent Context" = "ai-guardrails.md" },
     { "Developer Tools" = "tools.md" },
     { "Packages" = "packages.md" },
     { "Blog" = "blog/index.md" },

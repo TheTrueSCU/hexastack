@@ -454,9 +454,12 @@ def _upload_draft(
         "body_markdown": body,
         "published": False,
         "tags": _devto_tags(fm.tags),
+        "ai_disclosure": "ai_assisted",
     }
     if fm.subtitle:
         article["description"] = fm.subtitle
+    if series := fm.extra.get("series"):
+        article["series"] = str(series)
 
     return _devto_request("POST", "/articles", api_key, json={"article": article})
 
@@ -495,7 +498,10 @@ def _publish_draft(
     article: dict[str, Any] = {
         "published": True,
         "body_markdown": body,
+        "ai_disclosure": "ai_assisted",
     }
+    if series := fm.extra.get("series"):
+        article["series"] = str(series)
     if fm.canonical_url or fm.devto_url:
         article["canonical_url"] = fm.canonical_url or fm.devto_url
 

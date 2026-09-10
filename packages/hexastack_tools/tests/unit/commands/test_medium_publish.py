@@ -283,6 +283,30 @@ def test_run_main_no_api_key_exits(article_file: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Payload fields: series and ai_disclosure
+# ---------------------------------------------------------------------------
+
+
+def test_upload_draft_payload_includes_series_and_ai_disclosure(
+    article_file: Path,
+) -> None:
+    """Verify that _upload_draft includes ai_disclosure and series in DEV.to payload."""
+    from hexastack_tools.commands.medium_publish import _upload_draft
+
+    payload = _parse_article(article_file.read_text(), article_file)
+    payload.front_matter.extra["series"] = "Hexastack Deep Dives"
+
+    with patch("hexastack_tools.commands.medium_publish._devto_request") as mock_devto:
+        mock_devto.return_value = {"id": 12345}
+        res = _upload_draft(payload, "fake-api-key", {})
+        assert res["id"] == 12345
+        call_args = mock_devto.call_args
+        sent_body = call_args.kwargs["json"]["article"]
+        assert sent_body["ai_disclosure"] == "ai_assisted"
+        assert sent_body["series"] == "Hexastack Deep Dives"
+
+
+# ---------------------------------------------------------------------------
 # Exports
 # ---------------------------------------------------------------------------
 

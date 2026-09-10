@@ -32,8 +32,12 @@ The `hexastack new` command provides dedicated subcommands for each microservice
 Run the following command in your terminal to scaffold our To-Do service:
 
 ```bash
-# Using uv / uvx
+# Option A: Run ephemerally with uvx
 uvx hexastack new web-api todo-app --description "Hexagonal To-Do Microservice" --db in-memory
+
+# Option B: Install globally via uv tool, then scaffold
+uv tool install "hexastack[all]"
+hexastack new web-api todo-app --description "Hexagonal To-Do Microservice" --db in-memory
 ```
 
 <video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">

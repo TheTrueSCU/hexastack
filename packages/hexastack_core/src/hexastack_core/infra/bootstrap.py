@@ -132,13 +132,17 @@ def _discover_bootstrappers() -> list[BootstrapperPort]:
     discovered: list[BootstrapperPort] = []
     try:
         eps = importlib.metadata.entry_points(group="hexastack.bootstrappers")
-        for ep in eps:
+    except Exception:  # noqa: BLE001, S110
+        return discovered
+
+    for ep in eps:
+        try:
             loaded = ep.load()
             instance = loaded() if isinstance(loaded, type) else loaded
             if isinstance(instance, BootstrapperPort):
                 discovered.append(instance)
-    except Exception:  # noqa: BLE001, S110
-        pass
+        except Exception:  # noqa: BLE001, S110
+            pass
     return discovered
 
 

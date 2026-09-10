@@ -55,11 +55,23 @@ graph TD
 
 ## 🚀 Instant Scaffolding & Developer Tools
 
-Generate a standardized, production-ready hexagonal microservice with zero local dependencies using `uvx`, or run the interactive terminal wizard:
+Generate a standardized, production-ready hexagonal microservice with zero local dependencies using `uvx`, or install the CLI globally via `uv tool`:
+
+```bash
+# Option A: Run ephemerally via uvx
+uvx hexastack init
+uvx hexastack new web-api billing-service --db sqlite
+
+# Option B: Install globally as an isolated CLI
+uv tool install "hexastack[all]"
+```
+
+### Direct Archetype Scaffolding
 
 ```bash
 # Launch interactive terminal setup wizard (with optional Release CI & OpenSSF packs)
-uvx hexastack init
+hexastack init
+# (or: uvx hexastack init)
 
 # Enterprise full-featured microservice (includes release automation & OpenSSF starter pack)
 uvx hexastack new enterprise core-platform

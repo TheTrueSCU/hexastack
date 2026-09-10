@@ -144,6 +144,22 @@ pip install "hexastack[all]"
 
 Hexastack includes a production-grade scaffolding engine that creates fully functioning, decoupled microservices adhering strictly to Hexagonal Architecture, complete with pre-configured `.importlinter` boundaries, GitHub Actions CI workflows, multi-stage rootless Dockerfiles, passing test suites, and secret scanning.
 
+### Installation & Execution
+
+You can run the scaffolding engine ephemerally with `uvx`, or install the CLI globally as an isolated tool:
+
+```bash
+# Option A: Run ephemerally without installing
+uvx hexastack init
+uvx hexastack new web-api my-service
+
+# Option B: Install globally via uv tool
+uv tool install "hexastack[all]"
+
+# For local framework development (editable checkout):
+uv tool install --editable "packages/hexastack[all]"
+```
+
 ### Interactive Scaffolding Wizard (`hexastack init`)
 
 Launch an interactive terminal wizard that guides you through template selection, database drivers, auth, transports, and telemetry:

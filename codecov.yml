@@ -110,6 +110,16 @@ component_management:
       paths:
         - packages/hexastack_otel/src/**
 
+    - component_id: hexastack_tools
+      name: hexastack-tools
+      paths:
+        - packages/hexastack_tools/src/**
+
+    - component_id: hexastack_ui
+      name: hexastack-ui
+      paths:
+        - packages/hexastack_ui/src/**
+
 ignore:
   - "packages/*/tests/**"
   - "packages/*/testing/**"

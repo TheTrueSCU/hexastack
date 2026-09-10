@@ -9,11 +9,13 @@ root_packages =
     hexastack_db
     hexastack_events
     hexastack_fastapi
+    hexastack_flags
     hexastack_graphql
     hexastack_grpc
     hexastack_logging
     hexastack_mcp
     hexastack_otel
+    hexastack_ui
 
 # ----------------------------------------------------------------------
 # 1. Core Isolation (hexastack_core must be completely independent)
@@ -32,11 +34,13 @@ forbidden_modules =
     hexastack_db
     hexastack_events
     hexastack_fastapi
+    hexastack_flags
     hexastack_graphql
     hexastack_grpc
     hexastack_logging
     hexastack_mcp
     hexastack_otel
+    hexastack_ui
 
 # ----------------------------------------------------------------------
 # 2. CQRS Isolation (hexastack_cqrs only depends on core)
@@ -54,11 +58,13 @@ forbidden_modules =
     hexastack_db
     hexastack_events
     hexastack_fastapi
+    hexastack_flags
     hexastack_graphql
     hexastack_grpc
     hexastack_logging
     hexastack_mcp
     hexastack_otel
+    hexastack_ui
 
 # ----------------------------------------------------------------------
 # 3. Sibling Independence (Feature packages cannot import each other)
@@ -74,11 +80,13 @@ modules =
     hexastack_db
     hexastack_events
     hexastack_fastapi
+    hexastack_flags
     hexastack_graphql
     hexastack_grpc
     hexastack_logging
     hexastack_mcp
     hexastack_otel
+    hexastack_ui
 # Whitelist packages that have explicit/optional cross-dependencies
 ignore_imports =
     hexastack_auth -> hexastack_fastapi
@@ -99,10 +107,12 @@ source_modules =
     hexastack_db
     hexastack_events
     hexastack_fastapi
+    hexastack_flags
     hexastack_graphql
     hexastack_grpc
     hexastack_logging
     hexastack_mcp
     hexastack_otel
+    hexastack_ui
 forbidden_modules =
     hexastack
