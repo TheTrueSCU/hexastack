@@ -19,6 +19,7 @@ dependencies = [
     "inline-snapshot>=0.35.4",
     "libcst>=1.9.0",
     "pytest-archon>=0.0.7",
+    "pyyaml>=6.0.0",
     "rich>=13.8.0",
     "typer>=0.27.1",
 ]
@@ -59,6 +60,7 @@ gh-security = "hexastack_tools.commands.security:main"
 import-linter-generate = "hexastack_tools.commands.import_linter:generate_main"
 import-linter-run = "hexastack_tools.commands.import_linter:run_main"
 inline-snapshot-update = "hexastack_tools.commands.inline_snapshot:main"
+medium-publish = "hexastack_tools.commands.medium_publish:run_main"
 mutmut-inspect = "hexastack_tools.commands.mutmut:inspect_main"
 mutmut-run = "hexastack_tools.commands.mutmut:run_main"
 pydeps-generate = "hexastack_tools.commands.pydeps:generate_main"

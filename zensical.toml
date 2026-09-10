@@ -23,6 +23,7 @@ nav = [
     { "Architecture" = "architecture.md" },
     { "Developer Tools" = "tools.md" },
     { "Packages" = "packages.md" },
+    { "Blog" = "blog/index.md" },
     { "Compliance & Regulatory" = "compliance.md" }
 ]
 

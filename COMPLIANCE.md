@@ -113,3 +113,17 @@ Hexastack maintains a strict **Cryptographic Agility Policy**:
 For security vulnerability reports or formal compliance mapping inquiries:
 * **Security Policy**: Consult [SECURITY.md](https://github.com/TheTrueSCU/hexastack/blob/main/SECURITY.md) for our coordinated vulnerability disclosure process.
 * **Reporting Email**: Contact `security@dopplereffect.us` (PGP key available upon request).
+
+---
+
+## In-Depth Articles
+
+!!! tip "On DEV.to"
+    [Building for HIPAA and FedRAMP: Architecture as Compliance](devto://hipaa-fedramp-compliance) —
+    how Hexastack's CQRS audit trail, PII sanitizer, `@authorize` pipeline integration, OpenSSF Gold
+    supply chain controls, and CNCF-standardized observability map to specific regulatory requirements.
+
+!!! tip "On DEV.to"
+    [90%+ Coverage Isn't Enough: Mutation Testing + OpenSSF Gold](devto://mutation-testing-openssf) —
+    on the difference between coverage theater and actual test rigor, and how the OpenSSF Scorecard
+    supply chain controls support FedRAMP SA-11 and SA-22.

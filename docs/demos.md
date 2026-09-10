@@ -23,3 +23,12 @@ Explore the built-in developer console providing live CQRS message dispatching, 
   <source src="assets/demos/devtools-interactive-ping-dispatcher.webm" type="video/webm">
   <track label="English" kind="subtitles" srclang="en" src="assets/demos/devtools-interactive-ping-dispatcher.vtt" default>
 </video>
+
+---
+
+## In-Depth Articles
+
+!!! tip "On DEV.to"
+    [Reactive DevTools in Python with NiceGUI](devto://nicegui-reactive-devtools) —
+    how the `hexastack-ui` DevTools console works, what you get out of the box, and how to
+    extend or override panels for your own service.

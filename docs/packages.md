@@ -21,3 +21,25 @@
 | [`hexastack-graphql`](https://pypi.org/project/hexastack-graphql/) | Strawberry GraphQL presentation adapter over CQRS. | `hexastack[graphql]` |
 | [`hexastack-tools`](https://pypi.org/project/hexastack-tools/) | Developer tooling, governance, multi-format presenters, and CI inspection suite (`gh-pr-examine`). | `hexastack[tools]` |
 | [`hexastack`](https://pypi.org/project/hexastack/) | Umbrella distribution, diagnostic CLI, and project scaffolding engine (`hexastack new`). | `hexastack[all]` |
+
+---
+
+## In-Depth Articles
+
+!!! tip "On DEV.to"
+    [What Is Hexastack?](devto://what-is-hexastack) — a full package tour with the CNCF integration
+    story and the compliance motivations behind each architectural choice.
+
+!!! tip "On DEV.to"
+    [Your FastAPI Service, Now AI-Native: LLM Agents + MCP](devto://ai-native-backend-mcp) —
+    `hexastack-ai` and `hexastack-mcp` in practice: CQRS agent reflection, `@mcp_tool` decorators,
+    and PydanticAI offline testing.
+
+!!! tip "On DEV.to"
+    [Beyond `if os.getenv`: Feature Flags with OpenFeature](devto://feature-flags-openfeature) —
+    `hexastack-flags`, the `FeatureFlagPort`, and the CNCF OpenFeature provider factory.
+
+!!! tip "On DEV.to"
+    [Logging and Tracing That Don't Fight Your Architecture](devto://observability-ports) —
+    `hexastack-logging` and `hexastack-otel`: swappable backends behind `LoggingPort` and `TracingPort`,
+    automatic CQRS pipeline tracing, and PII sanitization.

@@ -100,3 +100,20 @@ uv run hexastack dev
 - [**Tutorial: Double-Entry Financial Ledger & Invariants**](tutorials/financial-ledger.md): Strict mathematical consistency, double-entry bookkeeping, and property-based fuzzing.
 - [**Architecture & Invariants**](architecture.md): Deep dive into strict package boundaries, tiered CI, and hexagonal rules.
 - [**Monorepo Packages Catalog**](packages.md): Complete index of all 13 specialized packages in the monorepo.
+
+---
+
+## Engineering Blog
+
+The following articles go deeper on the design decisions behind Hexastack.
+Published on DEV.to with cross-posts to Medium — links populate as articles publish.
+
+!!! tip "Start here"
+    [What Is Hexastack?](devto://what-is-hexastack) — the series introduction covering
+    architecture, CNCF integrations, and the motivation from 20 years of Python across
+    processor design, telecom, healthcare, and autonomy.
+
+!!! note "The Manifesto"
+    [What 20 Years of Python Taught Me About Building in the AI Era](devto://ai-guardrails-manifesto) —
+    on why architectural guardrails matter more than ever when AI coding assistants
+    are generating code at volume.

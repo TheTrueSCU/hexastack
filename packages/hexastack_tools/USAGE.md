@@ -558,6 +558,32 @@ options:
   --extras-only  Only run optional extras parity checks.
 ```
 
+#### `medium-publish`
+
+```text
+usage: medium-publish [-h] [--publish] [--all-drafts] [--status]
+                      [--medium-url URL] [--api-key API_KEY] [--dry-run]
+                      [slug]
+
+Manage docs/medium drafts on DEV.to. Two-pass workflow: upload drafts →
+publish in order → import to Medium.
+
+positional arguments:
+  slug               Article filename stem (e.g. 'ai-guardrails-manifesto').
+                     Required unless --all-drafts or --status is set.
+
+options:
+  -h, --help         show this help message and exit
+  --publish          Publish the draft on DEV.to (PATCH draft→published,
+                     capture URL).
+  --all-drafts       Upload ALL local articles without a devto_id as drafts.
+  --status           Show a status table of all articles and their publish
+                     state.
+  --medium-url URL   Record the Medium URL for a slug after manual import.
+  --api-key API_KEY  DEV.to API key (overrides DEVTO_API_KEY env var).
+  --dry-run          Parse and display payload without making any API calls.
+```
+
 #### `pytest-boundary-audit`
 
 ```text

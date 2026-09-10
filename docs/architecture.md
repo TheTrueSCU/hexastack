@@ -91,3 +91,16 @@ flowchart LR
 | `hexastack_logging` | ![hexastack_logging](assets/pydeps/hexastack_logging.svg) |
 | `hexastack_mcp` | ![hexastack_mcp](assets/pydeps/hexastack_mcp.svg) |
 | `hexastack_otel` | ![hexastack_otel](assets/pydeps/hexastack_otel.svg) |
+
+---
+
+## In-Depth Articles
+
+!!! tip "On DEV.to"
+    [Stop Writing Spaghetti FastAPI: Hexagonal Architecture + CQRS](devto://hexagonal-fastapi-cqrs) —
+    a practical walkthrough of the port-and-adapter pattern and CQRS bus with full before/after code examples.
+
+!!! tip "On DEV.to"
+    [Serving gRPC and REST from the Same Service, Without Spaghetti](devto://grpc-fastapi-dual-protocol) —
+    one command handler, two transport adapters: how the hexagonal architecture eliminates duplicate business logic
+    across HTTP and gRPC.
