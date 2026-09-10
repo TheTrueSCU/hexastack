@@ -1,9 +1,13 @@
 # CHANGELOG
 
-## [Unreleased] (v0.4.0)
+## v0.4.0 (2026-09-10)
 
 ### Highlights & Features
-* **Hexastack UI Presentation Package (`hexastack-ui`)**: Extracted NiceGUI reactive UI presentation primitives and the interactive DevTools dashboard from `hexastack-fastapi` into a dedicated presentation package (Issue #100, PR #111).
+* **Interactive DevTools & UI Presentation (`hexastack-ui`)**: Extracted NiceGUI reactive UI presentation primitives and the interactive DevTools dashboard from `hexastack-fastapi` into a dedicated presentation package (`hexastack-ui`) with standalone CSS styling and Biome code quality integration (Issue #100, PR #111).
+* **Apache Kafka & Redpanda Event Bus (`hexastack-events`)**: Introduced high-throughput distributed event bus adapter supporting consumer group partition rebalancing, CloudEvents 1.0 framing, dead-letter routing, and graceful connection lifecycle management (Issue #75, PR #119).
+* **AI Agent Long-Term Memory & Semantic CQRS Caching (`hexastack-ai`)**: Added vector database memory adapters (`VectorMemoryPort`, `AsyncVectorMemoryPort`, `InMemoryVectorMemoryAdapter`, `QdrantVectorMemoryAdapter`, and `PgVectorMemoryAdapter` bridge) alongside semantic CQRS query caching (`SemanticVectorCache`, `SemanticQueryCacheMiddleware`) with similarity thresholds, TTL expiration, and `hexastack[qdrant]` extra forwarding (Issue #78).
+* **Command Aliases (`hs` / `HQ`)**: Added fast command-line aliases `hs` (equivalent to `hexastack`) and `HQ` (equivalent to `hexaqueue`) to streamline developer ergonomics.
+* **Hypothesis Monorepo Profile**: Standardized monorepo test profile and headless subprocess isolation to ensure deterministic 92%+ coverage execution.
 * **Static Asset Decoupling**: Extracted DevTools dashboard styling into standalone `devtools.css`, eliminating Python AST mutation noise.
 * **Biome Code Quality Integration**: Added `biome-check` pre-commit hook targeting static CSS and web assets.
 

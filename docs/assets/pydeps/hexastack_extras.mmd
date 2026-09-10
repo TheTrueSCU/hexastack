@@ -34,6 +34,7 @@ graph LR
         U_otlp["[otlp]"]
         U_pgvector["[pgvector]"]
         U_postgresql["[postgresql]"]
+        U_qdrant["[qdrant]"]
         U_ratelimit["[ratelimit]"]
         U_redis["[redis]"]
         U_reflection["[reflection]"]
@@ -115,6 +116,7 @@ graph LR
     U_otlp --> P_hexastack_otel
     U_pgvector --> P_hexastack_db
     U_postgresql --> P_hexastack_db
+    U_qdrant --> P_hexastack_ai
     U_ratelimit --> P_hexastack_fastapi
     U_redis --> P_hexastack_core
     U_reflection --> P_hexastack_grpc

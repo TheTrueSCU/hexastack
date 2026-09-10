@@ -24,9 +24,7 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **High-Availability Primitives & Multi-Process Locks**: `LockPort` / `AsyncLockPort` (In-Memory `threading.RLock`, `FileLockAdapter`, `RedisLockAdapter`) and `LeaderElectionPort` (In-Memory, Redis lease renewals) (Issues #32, #59, PRs #65, #66).
 - [x] **Multi-Process Transactional Outbox Coordination**: Synchronized background polling across daemon processes via `filelock` / `LockPort` in `AsyncioOutboxRelay` and `HueyOutboxRelay` (Issue #32, PR #66).
 
----
-
-## 🚀 Active Milestone: v0.3.0 (HexaQueue Flagship, Real-Time Streams & Quality Gate)
+### v0.3.0 (HexaQueue Flagship, Real-Time Streams & Quality Gate) ✅
 - [x] **Unified Object & Cloud Storage**: `StoragePort` / `AsyncStoragePort` with `InMemoryStorage`, `LocalStorageAdapter`, and `FsspecStorageAdapter` (`hexastack-core[fsspec]` - Issue #85, PR #88).
 - [x] **Native Async Circuit Breaker Resilience Engine**: `CircuitBreakerPort` / `AsyncCircuitBreakerPort` with `InMemoryCircuitBreaker`, `CacheCircuitBreaker` (Redis/Valkey), `CircuitBreakerMiddleware`, and `@circuit_breaker` (Issue #83, PR #89).
 - [x] **Server-Sent Events (SSE) Real-Time Streaming Adapter**: `ServerSentEvent`, `EventSourceResponse`, and CQRS streaming queries (`hexastack-fastapi` - Issue #90, PR #93).
@@ -39,17 +37,14 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Tutorial Series Refresh**: Update To-Do microservice tutorial series with `/metrics`, streaming, and unified chapter navigation (Issue #101, PR #105).
 - [x] **HexaQueue Distributed Task & Stream Engine**: Partitioned stream ingestion, active worker leasing, and lease renewal (Issue #74, PR #108).
 
+### v0.4.0 (Interactive Frontends, AI Memory & Enterprise Mesh) ✅
+- [x] **Hexastack UI Presentation Package**: Spin out NiceGUI reactive UI and interactive DevTools dashboard into `hexastack-ui` (Issue #100, PR #111).
+- [x] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]` - Issue #75, PR #119).
+- [x] **AI Agent Long-Term Memory**: Vector database driven adapters (Qdrant, pgvector) with CQRS query caching (`hexastack-ai` - Issue #78).
 
 ---
 
-## 🔮 Upcoming Milestones
-
-### v0.4.0 (Interactive Frontends, AI Memory & Enterprise Mesh)
-- [ ] **Hexastack UI Presentation Package**: Spin out NiceGUI reactive UI and interactive DevTools dashboard into `hexastack-ui` (Issue #100, PR #111).
-- [ ] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]` - Issue #75).
-- [ ] **AI Agent Long-Term Memory**: Vector database driven adapters (Qdrant, pgvector) with CQRS query caching (`hexastack-ai` - Issue #78).
-
-### v0.5.0 (Edge, WASM & Multimodal Consoles)
+## 🚀 Active Milestone: v0.5.0 (Edge, WASM & Multimodal Consoles)
 - [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
 - [ ] **Textual Interactive Terminal UI**: Fullscreen terminal monitoring and operations console (`hexastack-ui[textual]`).
 - [ ] **Voice & WebRTC Audio Pipeline**: Real-time conversational audio bridge (`hexastack-ui[voice]`).
