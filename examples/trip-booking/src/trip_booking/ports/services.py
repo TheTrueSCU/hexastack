@@ -38,7 +38,6 @@ class FlightServicePort(ABC):
         Raises:
             Exception: If flight reservation fails or inventory is depleted.
         """
-        ...
 
     @abstractmethod
     def cancel_flight(self, reservation: FlightReservation) -> None:
@@ -47,7 +46,6 @@ class FlightServicePort(ABC):
         Args:
             reservation: The reservation to cancel.
         """
-        ...
 
 
 class HotelServicePort(ABC):
@@ -70,7 +68,6 @@ class HotelServicePort(ABC):
         Raises:
             Exception: If hotel booking fails.
         """
-        ...
 
     @abstractmethod
     def cancel_hotel(self, reservation: HotelReservation) -> None:
@@ -79,7 +76,6 @@ class HotelServicePort(ABC):
         Args:
             reservation: The reservation to cancel.
         """
-        ...
 
 
 class CarRentalPort(ABC):
@@ -102,7 +98,6 @@ class CarRentalPort(ABC):
         Raises:
             Exception: If vehicle class unavailable or rental fails.
         """
-        ...
 
     @abstractmethod
     def cancel_car(self, reservation: CarReservation) -> None:
@@ -111,7 +106,6 @@ class CarRentalPort(ABC):
         Args:
             reservation: The reservation to cancel.
         """
-        ...
 
 
 class PaymentServicePort(ABC):
@@ -137,7 +131,6 @@ class PaymentServicePort(ABC):
         Raises:
             Exception: If credit card charge fails or funds are insufficient.
         """
-        ...
 
     @abstractmethod
     def refund_payment(self, receipt: PaymentReceipt) -> None:
@@ -146,7 +139,6 @@ class PaymentServicePort(ABC):
         Args:
             receipt: The transaction receipt to refund.
         """
-        ...
 
 
 __all__ = [
