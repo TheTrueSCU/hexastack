@@ -58,6 +58,10 @@ from hexastack_cqrs.infra.registries import (
     QueryRegistry,
     QueryRegistryError,
 )
+from hexastack_cqrs.infra.sagas import (
+    SagaBuilder,
+    create_saga,
+)
 
 __all__ = [
     "AmbiguousMessageError",
@@ -79,6 +83,7 @@ __all__ = [
     "CqrsBootstrapResult",
     "CqrsMiddlewareConfig",
     "create_cqrs_visitor",
+    "create_saga",
     "event_listener",
     "exception_handler",
     "ExceptionMetadata",
@@ -100,6 +105,7 @@ __all__ = [
     "QueryRegistryError",
     "register_cqrs_config",
     "RetryMiddlewareConfig",
+    "SagaBuilder",
     "TenacityRetryMiddleware",
     "TimingMiddleware",
     "TimingMiddlewareConfig",

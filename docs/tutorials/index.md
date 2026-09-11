@@ -28,3 +28,6 @@ Focused architectural deep dives addressing mission-critical enterprise engineer
 
 - [**Double-Entry Financial Ledger & Invariants**](financial-ledger.md)
   Learn how to build a high-integrity financial ledger enforcing strict mathematical invariants ($\sum \text{Debits} = \sum \text{Credits}$), exact `Decimal` arithmetic, and property-based fuzzing with Hypothesis.
+
+- [**Distributed Saga Orchestration & Compensations**](trip-booking.md)
+  Learn how to coordinate distributed multi-step transactions (Flight $\rightarrow$ Hotel $\rightarrow$ Car $\rightarrow$ Payment) with automated reverse (LIFO) compensating transactions, pure domain state machines, and failure injection.
