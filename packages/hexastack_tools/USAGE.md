@@ -124,7 +124,8 @@ Usage: gh-security [OPTIONS] {pr_number}
 ```text
 usage: gh-code-scanning [-h] [--rule RULE] [--package PACKAGE]
                         [--severity SEVERITY]
-                        [--state {open,closed,dismissed,all}] [--details]
+                        [--state {open,closed,dismissed,all}]
+                        [--format {rich,json,markdown}] [--details]
                         [alert]
 
 Bucket and inspect GitHub CodeQL security & quality code-scanning alerts.
@@ -144,6 +145,9 @@ options:
                         'note').
   --state {open,closed,dismissed,all}
                         Alert state ('open', 'closed', 'dismissed', 'all').
+  --format, -f {rich,json,markdown}
+                        Output format: rich (interactive tables), json
+                        (structured), markdown.
   --details, -d         Print detailed contextual panels for all matching
                         alerts.
 ```
@@ -439,18 +443,24 @@ options:
 #### `pypi-check`
 
 ```text
-usage: pypi-check [-h]
+usage: pypi-check [-h] [-p PACKAGE] [--format {rich,json,markdown}]
 
 Verify package release version availability against PyPI index.
 
 options:
-  -h, --help  show this help message and exit
+  -h, --help            show this help message and exit
+  -p, --package PACKAGE
+                        Specific package name to check (default: all workspace
+                        packages)
+  --format, -f {rich,json,markdown}
+                        Output format: rich (tables), json, markdown.
 ```
 
 #### `pypi-build`
 
 ```text
 usage: pypi-build [-h] [--out-dir OUT_DIR] [--reproducible-check]
+                  [--format {rich,json,markdown}]
 
 Build distribution packages (wheels and sdists) for all workspace packages.
 
@@ -460,6 +470,8 @@ options:
                         (default: dist/)
   --reproducible-check  Audit build determinism and verify byte-for-byte
                         reproducibility before building
+  --format, -f {rich,json,markdown}
+                        Output format: rich (tables), json, markdown.
 ```
 
 #### `pypi-publish`
@@ -467,23 +479,26 @@ options:
 ```text
 usage: pypi-publish [-h] [--dist-dir DIST_DIR] [--build] [--no-build]
                     [--token TOKEN] [--delay DELAY] [--force]
+                    [--format {rich,json,markdown}]
 
 Build and publish workspace packages to PyPI, skipping already published
 releases.
 
 options:
-  -h, --help           show this help message and exit
-  --dist-dir DIST_DIR  Directory containing pre-built distribution packages
-                       (default: dist/)
-  --build              Automatically build distribution packages before
-                       publishing (default: True)
-  --no-build           Skip building and publish existing artifacts in dist/
-  --token TOKEN        PyPI upload token (defaults to UV_PUBLISH_TOKEN or
-                       PYPI_TOKEN env vars)
-  --delay DELAY        Delay in seconds between package uploads (default:
-                       2.0s)
-  --force              Attempt upload even if version is already marked as
-                       published on PyPI
+  -h, --help            show this help message and exit
+  --dist-dir DIST_DIR   Directory containing pre-built distribution packages
+                        (default: dist/)
+  --build               Automatically build distribution packages before
+                        publishing (default: True)
+  --no-build            Skip building and publish existing artifacts in dist/
+  --token TOKEN         PyPI upload token (defaults to UV_PUBLISH_TOKEN or
+                        PYPI_TOKEN env vars)
+  --delay DELAY         Delay in seconds between package uploads (default:
+                        2.0s)
+  --force               Attempt upload even if version is already marked as
+                        published on PyPI
+  --format, -f {rich,json,markdown}
+                        Output format: rich (tables), json, markdown.
 ```
 
 #### `alphabetizer`
@@ -634,6 +649,7 @@ options:
 
 ```text
 usage: pypi-reproducible-check [-h] [-p PACKAGE] [--epoch EPOCH]
+                               [--format {rich,json,markdown}]
 
 Verify byte-for-byte reproducible builds across workspace packages.
 
@@ -644,6 +660,8 @@ options:
                         packages)
   --epoch EPOCH         Custom SOURCE_DATE_EPOCH timestamp (default: git
                         commit timestamp)
+  --format, -f {rich,json,markdown}
+                        Output format: rich (tables), json, markdown.
 ```
 
 #### `pytest-boundary-audit`

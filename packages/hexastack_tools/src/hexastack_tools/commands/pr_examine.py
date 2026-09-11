@@ -12,8 +12,9 @@ import typer
 from rich.console import Console
 
 from hexastack_tools.adapters.github import GitHubHttpAdapter
-from hexastack_tools.adapters.presenters.pr import present_pr_summary
-from hexastack_tools.domain.github import OutputFormat
+from hexastack_tools.adapters.presenters.github import create_github_presenter
+from hexastack_tools.domain.github import ExaminePrCommand, OutputFormat
+from hexastack_tools.infra.bootstrap import create_governance_bus
 
 console = Console()
 
@@ -75,26 +76,22 @@ def examine_pr(
     poll_interval: int = 15,
 ) -> int:
     """Fetch and render PR status."""
-    target_pr = pr_number if pr_number is not None else discover_current_pr()
+    bus = create_governance_bus()
+    presenter = create_github_presenter(output_format=output_format.value)
 
-    with GitHubHttpAdapter() as client:
-        while True:
-            summary = client.get_pr_summary(target_pr)
-            if output_format == OutputFormat.RICH and watch:
-                console.clear()
+    while True:
+        report = bus.dispatch(
+            ExaminePrCommand(pr_number=pr_number, show_details=show_details)
+        )
+        if output_format == OutputFormat.RICH and watch:
+            console.clear()
 
-            failed_logs = _fetch_failed_ci_logs(client, summary.check_runs)
-            present_pr_summary(
-                summary,
-                output_format=output_format,
-                show_details=show_details,
-                failed_logs=failed_logs if failed_logs else None,
-            )
+        exit_code = presenter.present_pr_summary(report)
 
-            if not watch:
-                return 0 if summary.is_clean else 1
+        if not watch:
+            return exit_code
 
-            time.sleep(poll_interval)
+        time.sleep(poll_interval)
 
 
 @app.callback(invoke_without_command=True)

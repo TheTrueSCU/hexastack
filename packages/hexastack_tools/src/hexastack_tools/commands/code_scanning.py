@@ -4,42 +4,23 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections import defaultdict
 
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 
-from hexastack_tools.adapters.github import GitHubHttpAdapter
-from hexastack_tools.domain.github import SecurityAlert
+from hexastack_tools.adapters.presenters.github import create_github_presenter
+from hexastack_tools.domain.github import InspectCodeScanningCommand, SecurityAlert
+from hexastack_tools.infra.bootstrap import create_governance_bus
 
 console = Console()
 
 
-def inspect_single_alert(alert_number: int) -> int:
+def inspect_single_alert(alert_number: int, format_name: str = "rich") -> int:
     """Fetch and print detailed remediation panel for a specific alert."""
-    with GitHubHttpAdapter() as client:
-        alert = client.get_single_alert(alert_number)
-
-    panel_content = (
-        f"[bold white]Rule ID:[/bold white] [bold cyan]{alert.rule_id}[/bold cyan]\n"
-        f"[bold white]Severity:[/bold white] {alert.severity} ({alert.security_severity_level or 'quality'})\n"
-        f"[bold white]Location:[/bold white] [bold blue]{alert.path}:{alert.start_line}-{alert.end_line}[/bold blue]\n"
-        f"[bold white]State:[/bold white] {alert.state}\n\n"
-        f"[bold white]Message:[/bold white]\n{alert.message}\n\n"
-        f"[bold white]Description:[/bold white]\n{alert.rule_description}\n"
-    )
-    if alert.help_markdown:
-        panel_content += f"\n[bold white]Remediation Guidance:[/bold white]\n{alert.help_markdown[:400]}..."
-
-    console.print(
-        Panel(
-            panel_content,
-            title=f"[bold magenta]CodeQL Alert #{alert_number}[/bold magenta]",
-            border_style="cyan",
-        )
-    )
-    return 0
+    bus = create_governance_bus()
+    report = bus.dispatch(InspectCodeScanningCommand(alert_number=alert_number))
+    presenter = create_github_presenter(format_name=format_name)
+    return presenter.present_code_scanning(report)
 
 
 def _filter_alerts(
@@ -118,40 +99,26 @@ def inspect_and_bucket_alerts(
     severity_filter: str | None = None,
     state: str = "open",
     show_details: bool = False,
+    format_name: str = "rich",
 ) -> int:
     """Bucket open alerts by rule, severity, and package, displaying actionable tables."""
-    with GitHubHttpAdapter() as client:
-        raw_alerts = client.get_code_scanning_alerts(state=state)
-
-    if not raw_alerts:
-        console.print(
-            Panel(
-                f"[bold green]🎉 Zero CodeQL code scanning alerts in state '{state}'![/bold green]",
-                title="[bold green]Clean Security State[/bold green]",
-                border_style="green",
-            )
+    bus = create_governance_bus()
+    report = bus.dispatch(
+        InspectCodeScanningCommand(
+            rule_filter=rule_filter,
+            package_filter=package_filter,
+            severity_filter=severity_filter,
+            state=state,
         )
-        return 0
+    )
+    presenter = create_github_presenter(format_name=format_name)
+    exit_code = presenter.present_code_scanning(report)
 
-    alerts = _filter_alerts(raw_alerts, rule_filter, package_filter, severity_filter)
-    if not alerts:
-        console.print(
-            f"[yellow]No alerts matched the provided filters (rule: '{rule_filter}', pkg: '{package_filter}', sev: '{severity_filter}').[/yellow]"
-        )
-        return 0
+    if show_details and report.alerts:
+        for a in sorted(report.alerts, key=lambda x: x.number, reverse=True):
+            inspect_single_alert(a.number, format_name=format_name)
 
-    by_rule: dict[str, list[SecurityAlert]] = defaultdict(list)
-    for a in alerts:
-        by_rule[a.rule_id].append(a)
-
-    console.print(_build_rule_summary_table(by_rule, state, len(alerts)))
-    console.print(_build_alert_locations_table(alerts))
-
-    if show_details:
-        for a in sorted(alerts, key=lambda x: x.number, reverse=True):
-            inspect_single_alert(a.number)
-
-    return 0
+    return exit_code
 
 
 def main() -> int:
@@ -195,6 +162,14 @@ def main() -> int:
         help="Alert state ('open', 'closed', 'dismissed', 'all').",
     )
     parser.add_argument(
+        "--format",
+        "-f",
+        type=str,
+        default="rich",
+        choices=["rich", "json", "markdown"],
+        help="Output format: rich (interactive tables), json (structured), markdown.",
+    )
+    parser.add_argument(
         "--details",
         "-d",
         action="store_true",
@@ -205,7 +180,7 @@ def main() -> int:
 
     try:
         if args.alert is not None:
-            return inspect_single_alert(args.alert)
+            return inspect_single_alert(args.alert, format_name=args.format)
 
         return inspect_and_bucket_alerts(
             rule_filter=args.rule,
@@ -213,6 +188,7 @@ def main() -> int:
             severity_filter=args.severity,
             state=args.state,
             show_details=args.details,
+            format_name=args.format,
         )
     except Exception as exc:
         console.print(

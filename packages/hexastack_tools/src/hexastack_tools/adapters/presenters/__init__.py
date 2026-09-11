@@ -13,6 +13,12 @@ from hexastack_tools.adapters.presenters.dependency import (
     RichDependencyPresenterAdapter,
     create_dependency_presenter,
 )
+from hexastack_tools.adapters.presenters.github import (
+    JsonGitHubPresenterAdapter,
+    MarkdownGitHubPresenterAdapter,
+    RichGitHubPresenterAdapter,
+    create_github_presenter,
+)
 from hexastack_tools.adapters.presenters.governance import (
     JsonGovernancePresenterAdapter,
     MarkdownGovernancePresenterAdapter,
@@ -24,6 +30,12 @@ from hexastack_tools.adapters.presenters.pr import (
     render_pr_summary_json,
     render_pr_summary_plain,
     render_pr_summary_rich,
+)
+from hexastack_tools.adapters.presenters.pypi import (
+    JsonPyPiPresenterAdapter,
+    MarkdownPyPiPresenterAdapter,
+    RichPyPiPresenterAdapter,
+    create_pypi_presenter,
 )
 from hexastack_tools.adapters.presenters.repo import (
     build_repo_status_table,
@@ -49,13 +61,19 @@ __all__ = [
     "build_repo_status_table",
     "build_security_comments_table",
     "create_dependency_presenter",
+    "create_github_presenter",
     "create_governance_presenter",
+    "create_pypi_presenter",
     "create_testing_presenter",
     "JsonDependencyPresenterAdapter",
+    "JsonGitHubPresenterAdapter",
     "JsonGovernancePresenterAdapter",
+    "JsonPyPiPresenterAdapter",
     "JsonTestingPresenterAdapter",
     "MarkdownDependencyPresenterAdapter",
+    "MarkdownGitHubPresenterAdapter",
     "MarkdownGovernancePresenterAdapter",
+    "MarkdownPyPiPresenterAdapter",
     "MarkdownTestingPresenterAdapter",
     "present_checks",
     "present_pr_summary",
@@ -72,6 +90,8 @@ __all__ = [
     "render_security_comments_plain",
     "resolve_output_format",
     "RichDependencyPresenterAdapter",
+    "RichGitHubPresenterAdapter",
     "RichGovernancePresenterAdapter",
+    "RichPyPiPresenterAdapter",
     "RichTestingPresenterAdapter",
 ]

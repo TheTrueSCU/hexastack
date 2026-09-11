@@ -12,6 +12,19 @@ from hexastack_tools.domain.dependencies import (
     AuditExtrasParityCommand,
     ExtrasAuditResult,
 )
+from hexastack_tools.domain.github import (
+    ChecksReport,
+    CodeScanningReport,
+    ExaminePrCommand,
+    ExaminePrReport,
+    InspectChecksCommand,
+    InspectCodeScanningCommand,
+    InspectRepoCommand,
+    InspectSecurityCommentsCommand,
+    PrSummary,
+    RepoStatus,
+    SecurityCommentsReport,
+)
 from hexastack_tools.domain.governance import (
     CheckResult,
     CheckStatus,
@@ -19,6 +32,16 @@ from hexastack_tools.domain.governance import (
     RunSanityCheckCommand,
     SanityCheckReport,
     SanityTarget,
+)
+from hexastack_tools.domain.pypi import (
+    BuildPackagesCommand,
+    CheckPyPiReleasesCommand,
+    PublishPackagesCommand,
+    PyPiBuildReport,
+    PyPiCheckReport,
+    PyPiPublishReport,
+    ReproducibleBuildReport,
+    VerifyReproducibleBuildCommand,
 )
 from hexastack_tools.domain.testing import (
     AuditTestBoundariesCommand,
@@ -33,7 +56,9 @@ from hexastack_tools.domain.testing import (
 )
 from hexastack_tools.infra.bootstrap import create_governance_bus
 from hexastack_tools.ports.dependencies import DependencyAuditorPort
+from hexastack_tools.ports.github import GitHubApiPort
 from hexastack_tools.ports.governance import ToolRunnerPort
+from hexastack_tools.ports.pypi import PyPiClientPort
 from hexastack_tools.ports.testing import TestingRunnerPort
 
 
@@ -75,10 +100,36 @@ def test_create_governance_bus_wires_and_dispatches():
     mock_testing_runner.audit_redundant_tests.return_value = []
     mock_testing_runner.execute_pytest.return_value = 0
 
+    mock_github_client = MagicMock(spec=GitHubApiPort)
+    mock_summary = PrSummary(
+        number=1,
+        title="Test PR",
+        author="user",
+        state="open",
+        mergeable="mergeable",
+        is_draft=False,
+        head_ref="head",
+        base_ref="base",
+        html_url="url",
+    )
+    mock_github_client.get_pr_summary.return_value = mock_summary
+    mock_github_client.get_check_runs.return_value = []
+    mock_github_client.get_single_alert.return_value = MagicMock()
+    mock_github_client.get_code_scanning_alerts.return_value = []
+    mock_github_client.get_repo_status.return_value = MagicMock(spec=RepoStatus)
+
+    mock_pypi_client = MagicMock(spec=PyPiClientPort)
+    mock_pypi_client.check_version_exists.return_value = False
+    mock_pypi_client.build_package.return_value = (True, "built")
+    mock_pypi_client.publish_package.return_value = (True, "published")
+    mock_pypi_client.get_git_commit_epoch.return_value = "1700000000"
+
     bus = create_governance_bus(
         runner=mock_runner,
         dependency_auditor=mock_dep_auditor,
         testing_runner=mock_testing_runner,
+        github_client=mock_github_client,
+        pypi_client=mock_pypi_client,
     )
 
     # 1. Test dispatching a single governance command
@@ -125,3 +176,32 @@ def test_create_governance_bus_wires_and_dispatches():
 
     impact_res = bus.dispatch(RunImpactedTestsCommand())
     assert isinstance(impact_res, ImpactedTestsReport)
+
+    # 5. Test dispatching GitHub commands
+    examine_res = bus.dispatch(ExaminePrCommand(pr_number=1))
+    assert isinstance(examine_res, ExaminePrReport)
+
+    checks_res = bus.dispatch(InspectChecksCommand(ref_or_pr="1"))
+    assert isinstance(checks_res, ChecksReport)
+
+    code_scan_res = bus.dispatch(InspectCodeScanningCommand(alert_number=1))
+    assert isinstance(code_scan_res, CodeScanningReport)
+
+    repo_res = bus.dispatch(InspectRepoCommand())
+    assert isinstance(repo_res, RepoStatus)
+
+    sec_res = bus.dispatch(InspectSecurityCommentsCommand(pr_number=1))
+    assert isinstance(sec_res, SecurityCommentsReport)
+
+    # 6. Test dispatching PyPI commands
+    pypi_check_res = bus.dispatch(CheckPyPiReleasesCommand())
+    assert isinstance(pypi_check_res, PyPiCheckReport)
+
+    pypi_build_res = bus.dispatch(BuildPackagesCommand())
+    assert isinstance(pypi_build_res, PyPiBuildReport)
+
+    pypi_pub_res = bus.dispatch(PublishPackagesCommand())
+    assert isinstance(pypi_pub_res, PyPiPublishReport)
+
+    repro_res = bus.dispatch(VerifyReproducibleBuildCommand())
+    assert isinstance(repro_res, ReproducibleBuildReport)

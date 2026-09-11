@@ -7,10 +7,16 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+from typing import Any
+
 from hexastack_cqrs.adapters.buses.command.synchronous import SynchronousCommandBus
 from hexastack_cqrs.infra.registries import HandlerRegistry
+from hexastack_tools.adapters.github import GitHubHttpAdapter
 from hexastack_tools.adapters.runners.dependency_runner import (
     SubprocessDependencyAuditorAdapter,
+)
+from hexastack_tools.adapters.runners.pypi_runner import (
+    SubprocessPyPiRunnerAdapter,
 )
 from hexastack_tools.adapters.runners.subprocess_runner import (
     SubprocessToolRunnerAdapter,
@@ -25,6 +31,18 @@ from hexastack_tools.domain.dependencies import (
     RunImportLinterCommand,
     RunUnifiedDepsAuditCommand,
 )
+from hexastack_tools.domain.github import (
+    CheckRunFinding,
+    ExaminePrCommand,
+    InspectChecksCommand,
+    InspectCodeScanningCommand,
+    InspectRepoCommand,
+    InspectSecurityCommentsCommand,
+    PrSummary,
+    RepoStatus,
+    ReviewThread,
+    SecurityAlert,
+)
 from hexastack_tools.domain.governance import (
     AuditComplexityCommand,
     CheckAllStatementsCommand,
@@ -33,6 +51,12 @@ from hexastack_tools.domain.governance import (
     RunPytestCommand,
     RunSanityCheckCommand,
     RunTypecheckCommand,
+)
+from hexastack_tools.domain.pypi import (
+    BuildPackagesCommand,
+    CheckPyPiReleasesCommand,
+    PublishPackagesCommand,
+    VerifyReproducibleBuildCommand,
 )
 from hexastack_tools.domain.testing import (
     AuditTestBoundariesCommand,
@@ -48,6 +72,13 @@ from hexastack_tools.infra.handlers.dependencies import (
     RunImportLinterHandler,
     RunUnifiedDepsAuditHandler,
 )
+from hexastack_tools.infra.handlers.github import (
+    ExaminePrHandler,
+    InspectChecksHandler,
+    InspectCodeScanningHandler,
+    InspectRepoHandler,
+    InspectSecurityCommentsHandler,
+)
 from hexastack_tools.infra.handlers.governance import (
     AuditComplexityHandler,
     CheckAllStatementsHandler,
@@ -57,6 +88,12 @@ from hexastack_tools.infra.handlers.governance import (
     RunSanityCheckHandler,
     RunTypecheckHandler,
 )
+from hexastack_tools.infra.handlers.pypi import (
+    BuildPackagesHandler,
+    CheckPyPiReleasesHandler,
+    PublishPackagesHandler,
+    VerifyReproducibleBuildHandler,
+)
 from hexastack_tools.infra.handlers.testing import (
     AuditTestBoundariesHandler,
     AuditTestRedundancyHandler,
@@ -65,7 +102,9 @@ from hexastack_tools.infra.handlers.testing import (
     RunMutationTestsHandler,
 )
 from hexastack_tools.ports.dependencies import DependencyAuditorPort
+from hexastack_tools.ports.github import GitHubApiPort
 from hexastack_tools.ports.governance import ToolRunnerPort
+from hexastack_tools.ports.pypi import PyPiClientPort
 from hexastack_tools.ports.testing import TestingRunnerPort
 
 __all__ = [
@@ -73,10 +112,54 @@ __all__ = [
 ]
 
 
+class _LazyGitHubClient(GitHubApiPort):
+    """Lazy proxy initializing GitHubHttpAdapter only upon first method invocation."""
+
+    def __init__(self) -> None:
+        self._client: GitHubApiPort | None = None
+
+    def _get_client(self) -> GitHubApiPort:
+        if self._client is None:
+            self._client = GitHubHttpAdapter()
+        return self._client
+
+    def get_repo_status(
+        self, owner: str | None = None, repo: str | None = None
+    ) -> RepoStatus:
+        return self._get_client().get_repo_status(owner=owner, repo=repo)
+
+    def get_pr_summary(self, pr_number: int) -> PrSummary:
+        return self._get_client().get_pr_summary(pr_number)
+
+    def get_check_runs(self, ref: str) -> list[CheckRunFinding]:
+        return self._get_client().get_check_runs(ref)
+
+    def get_review_threads(self, pr_number: int) -> list[ReviewThread]:
+        return self._get_client().get_review_threads(pr_number)
+
+    def get_code_scanning_alerts(
+        self, ref: str | None = None, state: str = "open"
+    ) -> list[SecurityAlert]:
+        return self._get_client().get_code_scanning_alerts(ref=ref, state=state)
+
+    def get_single_alert(self, alert_number: int) -> SecurityAlert:
+        return self._get_client().get_single_alert(alert_number)
+
+    def get_failed_run_logs(self, run_id: int | str) -> str | None:
+        return self._get_client().get_failed_run_logs(run_id)
+
+    def get_workflow_runs(
+        self, branch: str | None = None, limit: int = 5
+    ) -> list[dict[str, Any]]:
+        return self._get_client().get_workflow_runs(branch=branch, limit=limit)
+
+
 def create_governance_bus(
     runner: ToolRunnerPort | None = None,
     dependency_auditor: DependencyAuditorPort | None = None,
     testing_runner: TestingRunnerPort | None = None,
+    github_client: GitHubApiPort | None = None,
+    pypi_client: PyPiClientPort | None = None,
 ) -> SynchronousCommandBus:
     """Construct and configure CommandBus with all governance handlers registered.
 
@@ -86,6 +169,8 @@ def create_governance_bus(
             SubprocessDependencyAuditorAdapter.
         testing_runner: Optional TestingRunnerPort adapter. Defaults to
             SubprocessTestingRunnerAdapter.
+        github_client: Optional GitHubApiPort adapter. Defaults to GitHubHttpAdapter.
+        pypi_client: Optional PyPiClientPort adapter. Defaults to SubprocessPyPiRunnerAdapter.
 
     Returns:
         Configured SynchronousCommandBus instance.
@@ -93,11 +178,13 @@ def create_governance_bus(
     Notes/Architectural Intent:
         Creates a circular binding where the composite RunSanityCheckHandler receives
         the bus itself to dispatch individual check commands, and registers
-        governance, dependency audit, and testing/mutation handlers.
+        governance, dependency audit, testing/mutation, GitHub, and PyPI handlers.
     """
     actual_runner = runner or SubprocessToolRunnerAdapter()
     actual_dep_auditor = dependency_auditor or SubprocessDependencyAuditorAdapter()
     actual_testing_runner = testing_runner or SubprocessTestingRunnerAdapter()
+    actual_github_client = github_client or _LazyGitHubClient()
+    actual_pypi_client = pypi_client or SubprocessPyPiRunnerAdapter()
     registry = HandlerRegistry()
     bus = SynchronousCommandBus(handler_registry=registry)
 
@@ -155,5 +242,38 @@ def create_governance_bus(
 
     impact_handler = RunImpactedTestsHandler(actual_testing_runner)
     registry.register(RunImpactedTestsCommand, impact_handler.handle)
+
+    # 5. Register GitHub inspection handlers
+    examine_pr_handler = ExaminePrHandler(actual_github_client)
+    registry.register(ExaminePrCommand, examine_pr_handler.handle)
+
+    inspect_checks_handler = InspectChecksHandler(actual_github_client)
+    registry.register(InspectChecksCommand, inspect_checks_handler.handle)
+
+    inspect_code_scanning_handler = InspectCodeScanningHandler(actual_github_client)
+    registry.register(InspectCodeScanningCommand, inspect_code_scanning_handler.handle)
+
+    inspect_repo_handler = InspectRepoHandler(actual_github_client)
+    registry.register(InspectRepoCommand, inspect_repo_handler.handle)
+
+    inspect_security_comments_handler = InspectSecurityCommentsHandler(
+        actual_github_client
+    )
+    registry.register(
+        InspectSecurityCommentsCommand, inspect_security_comments_handler.handle
+    )
+
+    # 6. Register PyPI release handlers
+    check_pypi_handler = CheckPyPiReleasesHandler(actual_pypi_client)
+    registry.register(CheckPyPiReleasesCommand, check_pypi_handler.handle)
+
+    build_pypi_handler = BuildPackagesHandler(actual_pypi_client)
+    registry.register(BuildPackagesCommand, build_pypi_handler.handle)
+
+    publish_pypi_handler = PublishPackagesHandler(actual_pypi_client)
+    registry.register(PublishPackagesCommand, publish_pypi_handler.handle)
+
+    verify_repro_handler = VerifyReproducibleBuildHandler(actual_pypi_client)
+    registry.register(VerifyReproducibleBuildCommand, verify_repro_handler.handle)
 
     return bus
