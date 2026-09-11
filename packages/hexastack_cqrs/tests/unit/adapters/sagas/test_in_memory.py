@@ -5,6 +5,8 @@ Notes/Architectural Intent:
     and automatically unwinds compensating actions in strict reverse (LIFO) order upon failure.
 """
 
+from typing import Any
+
 import pytest
 
 from hexastack_core.domain.command import Command
@@ -21,6 +23,7 @@ from hexastack_cqrs.domain.sagas import (
     SagaStep,
 )
 from hexastack_cqrs.infra.registries import HandlerRegistry
+from hexastack_cqrs.ports.buses import CommandBusPort
 
 
 class CreateOrderCmd(Command):
@@ -379,3 +382,119 @@ async def test_in_memory_saga_orchestrator_async_command_without_bus():
     assert result.status == SagaStatus.COMPENSATED
     assert result.compensated is True
     assert "no CommandBusPort provided" in (result.error or "")
+
+
+def test_in_memory_saga_orchestrator_storage_property():
+    """Verify orchestrator exposes underlying storage property."""
+    storage = InMemorySagaStorage()
+    orchestrator = InMemorySagaOrchestrator(storage=storage)
+    res = orchestrator.storage
+    assert res is storage
+
+
+def test_in_memory_saga_orchestrator_action_step_parameter_and_constant():
+    """Verify forward actions supporting (context, step) signature and direct constant values."""
+
+    def step1_two_args(ctx, step):
+        return f"{step.name}_{len(ctx)}"
+
+    definition = SagaDefinition(
+        name="CustomSigSaga",
+        steps=(
+            SagaStep(name="Step1", action=step1_two_args),
+            SagaStep(name="Step2", action="constant_result"),
+        ),
+    )
+    orchestrator = InMemorySagaOrchestrator()
+    result = orchestrator.execute(definition)
+    assert result.status == SagaStatus.COMPLETED
+    assert result.step_results["Step1"] == "Step1_0"
+    assert result.step_results["Step2"] == "constant_result"
+
+
+def test_in_memory_saga_orchestrator_compensation_two_args_and_none_handling():
+    """Verify compensation accepting (forward_result, step_results) and steps with None compensation."""
+    trace: list[tuple[Any, Any]] = []
+
+    def comp_two_args(forward_res, step_results):
+        trace.append((forward_res, step_results))
+
+    def failing():
+        raise RuntimeError("boom")
+
+    definition = SagaDefinition(
+        name="CompTwoArgsSaga",
+        steps=(
+            SagaStep(name="Step1", action=lambda: "res1", compensation=comp_two_args),
+            SagaStep(name="Step2", action=lambda: "res2", compensation=None),
+            SagaStep(name="Step3", action=failing, compensation=None),
+        ),
+    )
+    orchestrator = InMemorySagaOrchestrator()
+    result = orchestrator.execute(definition)
+    assert result.status == SagaStatus.COMPENSATED
+    assert len(trace) == 1
+    assert trace[0][0] == "res1"
+    assert "Step1" in trace[0][1]
+
+
+@pytest.mark.anyio
+async def test_in_memory_saga_orchestrator_async_two_args_and_async_compensations():
+    """Verify async execution with 2-arg actions, constant values, async dispatch, and 0/1/2 arg async compensations."""
+    trace: list[str] = []
+
+    async def async_two_args(ctx, step):
+        return f"{step.name}_async"
+
+    async def async_comp_zero():
+        trace.append("comp_zero")
+
+    async def async_comp_one(forward_res):
+        trace.append(f"comp_one_{forward_res}")
+
+    async def async_comp_two(forward_res, step_results):
+        trace.append(f"comp_two_{forward_res}_{len(step_results)}")
+
+    class MockAsyncCommandBus(CommandBusPort):
+        def dispatch(self, command: Command) -> Any:
+            trace.append(f"bus_{command.__class__.__name__}")
+
+            async def _res() -> str:
+                return "bus_done"
+
+            return _res()
+
+    async def failing_async():
+        raise ValueError("async failure")
+
+    definition = SagaDefinition(
+        name="AsyncRichCoverageSaga",
+        steps=(
+            SagaStep(name="Step1", action=async_two_args, compensation=async_comp_zero),
+            SagaStep(name="Step2", action="async_const", compensation=async_comp_one),
+            SagaStep(
+                name="Step3",
+                action=CreateOrderCmd(order_id="async-cov"),
+                compensation=CancelOrderCmd(order_id="async-cov"),
+            ),
+            SagaStep(name="Step3b", action=lambda: "res3b", compensation=None),
+            SagaStep(name="Step4", action=lambda: "res4", compensation=async_comp_two),
+            SagaStep(
+                name="Step4b",
+                action=lambda: "res4b",
+                compensation=lambda: trace.append("sync_comp_in_async"),
+            ),
+            SagaStep(name="Step5", action=failing_async, compensation=None),
+        ),
+    )
+    orchestrator = InMemorySagaOrchestrator(command_bus=MockAsyncCommandBus())
+    result = await orchestrator.execute_async(definition)
+    assert result.status == SagaStatus.COMPENSATED
+    assert trace == [
+        "bus_CreateOrderCmd",
+        "sync_comp_in_async",
+        "comp_two_res4_6",
+        "bus_CancelOrderCmd",
+        "comp_one_async_const",
+        "comp_zero",
+    ]
