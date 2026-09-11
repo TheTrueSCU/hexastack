@@ -25,7 +25,7 @@ _DEFAULT_PATTERNS = [
 ]
 
 
-class Sanitizer:
+class LogSanitizer:
     """Log and data sanitizer for masking PII, credentials, and sensitive tokens.
 
     Notes/Architectural Intent:
@@ -39,7 +39,7 @@ class Sanitizer:
         mask_replacement: str = "***REDACTED***",
         regex_patterns: list[str] | None = None,
     ) -> None:
-        """Initialize Sanitizer with key names, replacement placeholder, and regex patterns.
+        """Initialize LogSanitizer with key names, replacement placeholder, and regex patterns.
 
         Args:
             masked_keys: Optional list/set of sensitive key names to mask (case-insensitive).
@@ -152,3 +152,8 @@ class Sanitizer:
             None.
         """
         return self.sanitize_string(tb_text)
+
+
+__all__ = [
+    "LogSanitizer",
+]

@@ -27,9 +27,11 @@ from decimal import Decimal
 from enum import StrEnum
 from dataclasses import dataclass, field
 
+
 class EntryDirection(StrEnum):
     DEBIT = "DEBIT"
     CREDIT = "CREDIT"
+
 
 @dataclass
 class TransactionEntry:
@@ -40,7 +42,10 @@ class TransactionEntry:
 
     def __post_init__(self) -> None:
         if self.amount <= Decimal("0.00"):
-            raise InvalidAmountError(f"Entry amount must be strictly positive, got {self.amount}")
+            raise InvalidAmountError(
+                f"Entry amount must be strictly positive, got {self.amount}"
+            )
+
 
 @dataclass
 class JournalTransaction:
@@ -50,10 +55,16 @@ class JournalTransaction:
 
     def __post_init__(self) -> None:
         if len(self.entries) < 2:
-            raise UnbalancedTransactionError("A double-entry transaction requires at least two posting lines.")
+            raise UnbalancedTransactionError(
+                "A double-entry transaction requires at least two posting lines."
+            )
 
-        total_debits = sum(e.amount for e in self.entries if e.direction == EntryDirection.DEBIT)
-        total_credits = sum(e.amount for e in self.entries if e.direction == EntryDirection.CREDIT)
+        total_debits = sum(
+            e.amount for e in self.entries if e.direction == EntryDirection.DEBIT
+        )
+        total_credits = sum(
+            e.amount for e in self.entries if e.direction == EntryDirection.CREDIT
+        )
 
         if total_debits != total_credits:
             raise UnbalancedTransactionError(
@@ -122,7 +133,12 @@ How do we prove our financial ledger never loses a cent? We write property-based
 from hypothesis import given, strategies as st
 from decimal import Decimal
 
-@given(amount=st.decimals(min_value=Decimal("0.01"), max_value=Decimal("1000000.00"), places=2))
+
+@given(
+    amount=st.decimals(
+        min_value=Decimal("0.01"), max_value=Decimal("1000000.00"), places=2
+    )
+)
 def test_fuzz_balanced_transfer_conservation_of_money(amount: Decimal):
     """Conservation of Money: Total ledger money before == Total ledger money after."""
     src_acc = Account(account_id="src", balance=Decimal("2000000.00"))
@@ -130,8 +146,12 @@ def test_fuzz_balanced_transfer_conservation_of_money(amount: Decimal):
 
     total_before = src_acc.balance + dst_acc.balance
 
-    debit_entry = TransactionEntry(account_id="src", direction=EntryDirection.DEBIT, amount=amount)
-    credit_entry = TransactionEntry(account_id="dst", direction=EntryDirection.CREDIT, amount=amount)
+    debit_entry = TransactionEntry(
+        account_id="src", direction=EntryDirection.DEBIT, amount=amount
+    )
+    credit_entry = TransactionEntry(
+        account_id="dst", direction=EntryDirection.CREDIT, amount=amount
+    )
 
     src_acc.apply_entry(debit_entry)
     dst_acc.apply_entry(credit_entry)

@@ -47,7 +47,9 @@ def create_account(
     try:
         return pipeline.execute(cmd)
     except AccountAlreadyExistsError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
 
 
 @router.post("/accounts/freeze", summary="Freeze an active account")
@@ -58,7 +60,9 @@ def freeze_account(
     try:
         return pipeline.execute(cmd)
     except AccountNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
 
 
 @router.post("/transfers", summary="Transfer money between accounts")
@@ -69,9 +73,13 @@ def transfer_money(
     try:
         return pipeline.execute(cmd)
     except AccountNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
     except (InsufficientFundsError, InvalidAmountError, AccountFrozenError) as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
 
 
 @router.post("/transactions", summary="Record double-entry transaction")
@@ -82,9 +90,18 @@ def record_transaction(
     try:
         return pipeline.execute(cmd)
     except AccountNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except (UnbalancedTransactionError, InvalidAmountError, AccountFrozenError, InsufficientFundsError) as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except (
+        UnbalancedTransactionError,
+        InvalidAmountError,
+        AccountFrozenError,
+        InsufficientFundsError,
+    ) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
 
 
 @router.get("/accounts/{account_id}/balance", summary="Get account balance")
@@ -95,7 +112,9 @@ def get_balance(
     try:
         return pipeline.execute(GetAccountBalanceQuery(account_id=account_id))
     except AccountNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
 
 
 @router.get("/accounts/{account_id}/entries", summary="List account entries")

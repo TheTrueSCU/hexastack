@@ -169,6 +169,9 @@ jobs:
       - name: Run Affected Property-Based Fuzzing
         run: uv run pytest-run -A -P --no-cov
 
+      - name: Run Coverage-Guided & Security Fuzzing
+        run: uv run fuzz-run --target all --runs 250 --engine auto
+
   # =========================================================================
   # Stage 4: E2E Browser, Narrator Demos & Visual Accessibility (axe-core)
   # Runs Playwright Chromium tests and UI accessibility scans

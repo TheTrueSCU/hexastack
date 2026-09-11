@@ -9,7 +9,7 @@ from hexastack_core.utils.context import (
 )
 from hexastack_logging.infra.filters import (
     CorrelationIdFilter,
-    SanitizerFilter,
+    LogSanitizerFilter,
 )
 
 
@@ -63,8 +63,8 @@ def test_correlation_id_filter_no_user():
         correlation_id_ctx.reset(corr_token)
 
 
-def test_sanitizer_filter_masks_record_dict_and_tuple_args():
-    filt = SanitizerFilter()
+def test_log_sanitizer_filter_masks_record_dict_and_tuple_args():
+    filt = LogSanitizerFilter()
     # 1. Dict args
     record_dict = logging.LogRecord(
         name="test_logger",

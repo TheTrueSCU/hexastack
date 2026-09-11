@@ -71,9 +71,15 @@ def test_bootstrap_create_app():
 
     # Test get_transaction on ledger_repo
     assert ledger_repo.get_transaction("non-existent") is None
-    entry = TransactionEntry(account_id="test-1", direction=EntryDirection.DEBIT, amount=Decimal("10.00"))
-    entry2 = TransactionEntry(account_id="test-2", direction=EntryDirection.CREDIT, amount=Decimal("10.00"))
-    tx = JournalTransaction(reference="TX-T1", description="test", entries=[entry, entry2])
+    entry = TransactionEntry(
+        account_id="test-1", direction=EntryDirection.DEBIT, amount=Decimal("10.00")
+    )
+    entry2 = TransactionEntry(
+        account_id="test-2", direction=EntryDirection.CREDIT, amount=Decimal("10.00")
+    )
+    tx = JournalTransaction(
+        reference="TX-T1", description="test", entries=[entry, entry2]
+    )
     ledger_repo.save_transaction(tx)
     assert ledger_repo.get_transaction(tx.transaction_id) is not None
 
@@ -85,9 +91,13 @@ def test_error_branches_in_handlers(
     """Verify validation and not-found error handling in CQRS handlers."""
     freeze_handler = FreezeAccountHandler(account_repo=account_repo)
     bal_handler = GetAccountBalanceHandler(account_repo=account_repo)
-    transfer_handler = TransferMoneyHandler(account_repo=account_repo, ledger_repo=ledger_repo)
+    transfer_handler = TransferMoneyHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
     create_handler = CreateAccountHandler(account_repo=account_repo)
-    record_handler = RecordTransactionHandler(account_repo=account_repo, ledger_repo=ledger_repo)
+    record_handler = RecordTransactionHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
 
     # Freeze non-existent account
     with pytest.raises(AccountNotFoundError):
@@ -131,7 +141,9 @@ def test_error_branches_in_handlers(
         )
 
     # Transfer with missing dest
-    create_handler(CreateAccountCommand(account_id="src-only", initial_balance=Decimal("50.00")))
+    create_handler(
+        CreateAccountCommand(account_id="src-only", initial_balance=Decimal("50.00"))
+    )
     with pytest.raises(AccountNotFoundError, match="Destination account"):
         transfer_handler(
             TransferMoneyCommand(
@@ -149,8 +161,16 @@ def test_error_branches_in_handlers(
                 reference="SPLIT-ERR",
                 description="Error test",
                 entries=[
-                    PostingLineDto(account_id="missing-1", direction="DEBIT", amount=Decimal("10.00")),
-                    PostingLineDto(account_id="missing-2", direction="CREDIT", amount=Decimal("10.00")),
+                    PostingLineDto(
+                        account_id="missing-1",
+                        direction="DEBIT",
+                        amount=Decimal("10.00"),
+                    ),
+                    PostingLineDto(
+                        account_id="missing-2",
+                        direction="CREDIT",
+                        amount=Decimal("10.00"),
+                    ),
                 ],
             )
         )
@@ -165,26 +185,45 @@ def test_fastapi_rest_endpoints():
     client = TestClient(fastapi_app)
 
     # 1. Create source account
-    res1 = client.post("/accounts", json={"account_id": "acc-rest-src", "initial_balance": 500.0, "currency": "USD"})
+    res1 = client.post(
+        "/accounts",
+        json={
+            "account_id": "acc-rest-src",
+            "initial_balance": 500.0,
+            "currency": "USD",
+        },
+    )
     assert res1.status_code == 201
     assert res1.json()["account_id"] == "acc-rest-src"
 
     # 2. Create destination account
-    res2 = client.post("/accounts", json={"account_id": "acc-rest-dst", "initial_balance": 100.0, "currency": "USD"})
+    res2 = client.post(
+        "/accounts",
+        json={
+            "account_id": "acc-rest-dst",
+            "initial_balance": 100.0,
+            "currency": "USD",
+        },
+    )
     assert res2.status_code == 201
 
     # Duplicate account returns 409
-    res_dup = client.post("/accounts", json={"account_id": "acc-rest-src", "initial_balance": 500.0})
+    res_dup = client.post(
+        "/accounts", json={"account_id": "acc-rest-src", "initial_balance": 500.0}
+    )
     assert res_dup.status_code == 409
 
     # 3. Transfer money
-    res3 = client.post("/transfers", json={
-        "source_account_id": "acc-rest-src",
-        "destination_account_id": "acc-rest-dst",
-        "amount": 150.0,
-        "reference": "REST-TX-01",
-        "description": "API transfer test"
-    })
+    res3 = client.post(
+        "/transfers",
+        json={
+            "source_account_id": "acc-rest-src",
+            "destination_account_id": "acc-rest-dst",
+            "amount": 150.0,
+            "reference": "REST-TX-01",
+            "description": "API transfer test",
+        },
+    )
     assert res3.status_code == 200
     data = res3.json()
     assert float(data["source_balance"]) == 350.0
@@ -214,22 +253,28 @@ def test_fastapi_rest_endpoints():
     assert res6_404.status_code == 404
 
     # Transfer with frozen account returns 400
-    res_frozen = client.post("/transfers", json={
-        "source_account_id": "acc-rest-src",
-        "destination_account_id": "acc-rest-dst",
-        "amount": 10.0,
-        "reference": "REST-FROZEN-01"
-    })
+    res_frozen = client.post(
+        "/transfers",
+        json={
+            "source_account_id": "acc-rest-src",
+            "destination_account_id": "acc-rest-dst",
+            "amount": 10.0,
+            "reference": "REST-FROZEN-01",
+        },
+    )
     assert res_frozen.status_code == 400
 
     # 7. Record transaction via REST
-    res7 = client.post("/transactions", json={
-        "reference": "REST-SPLIT-01",
-        "description": "Split REST test",
-        "entries": [
-            {"account_id": "acc-rest-dst", "direction": "DEBIT", "amount": 50.0},
-            {"account_id": "acc-rest-src", "direction": "CREDIT", "amount": 50.0}
-        ]
-    })
+    res7 = client.post(
+        "/transactions",
+        json={
+            "reference": "REST-SPLIT-01",
+            "description": "Split REST test",
+            "entries": [
+                {"account_id": "acc-rest-dst", "direction": "DEBIT", "amount": 50.0},
+                {"account_id": "acc-rest-src", "direction": "CREDIT", "amount": 50.0},
+            ],
+        },
+    )
     # Will fail with 400 because acc-rest-src is frozen
     assert res7.status_code == 400

@@ -561,6 +561,24 @@ options:
   --extras-only  Only run optional extras parity checks.
 ```
 
+#### `fuzz-run`
+
+```text
+usage: fuzz-run [-h] [-t {all,sanitizer,proto,owasp}] [-n RUNS]
+                [-e {auto,atheris,standalone}]
+
+Run Atheris coverage-guided and OWASP security fuzz harnesses across Hexastack
+packages.
+
+options:
+  -h, --help            show this help message and exit
+  -t, --target {all,sanitizer,proto,owasp}
+                        Target fuzz harness to execute (default: all)
+  -n, --runs RUNS       Number of fuzzed runs per harness (default: 1000)
+  -e, --engine {auto,atheris,standalone}
+                        Fuzzing engine (default: auto)
+```
+
 #### `medium-publish`
 
 ```text

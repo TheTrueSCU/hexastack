@@ -108,7 +108,9 @@ class TransactionEntry:
     def __post_init__(self) -> None:
         """Validate entry amount is positive."""
         if self.amount <= Decimal("0.00"):
-            raise InvalidAmountError(f"Entry amount must be strictly positive, got {self.amount}")
+            raise InvalidAmountError(
+                f"Entry amount must be strictly positive, got {self.amount}"
+            )
 
 
 @dataclass
@@ -133,7 +135,9 @@ class JournalTransaction:
             UnbalancedTransactionError: If sum of debits != sum of credits.
         """
         if len(self.entries) < 2:
-            raise UnbalancedTransactionError("A double-entry transaction requires at least two posting lines.")
+            raise UnbalancedTransactionError(
+                "A double-entry transaction requires at least two posting lines."
+            )
 
         total_debits = sum(
             (e.amount for e in self.entries if e.direction == EntryDirection.DEBIT),

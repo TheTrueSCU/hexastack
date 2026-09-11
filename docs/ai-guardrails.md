@@ -58,6 +58,7 @@
 | `uv run pytest-redundancy-audit` | Analyzes test execution overlap and flags duplicate test paths. |
 | `uv run pytest-impact` | Selectively runs tests impacted by current git diff changes. |
 | `uv run inline-snapshot-update` | Updates inline snapshots across workspace test suites. |
+| `uv run fuzz-run` | Executes Atheris coverage-guided and OWASP security fuzz harnesses across packages. |
 
 ### Governance, Architecture & Packaging Tools
 | Tool Command | Purpose |

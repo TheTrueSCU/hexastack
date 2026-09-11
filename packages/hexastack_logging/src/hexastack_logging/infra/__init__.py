@@ -2,19 +2,19 @@ from hexastack_logging.infra.config import (
     AsyncQueueConfig,
     FileLoggingConfig,
     HexastackLoggingConfig,
-    SanitizerConfig,
+    LogSanitizerConfig,
     configure_logging,
     register_logging_config,
 )
 from hexastack_logging.infra.filters import (
     CorrelationIdFilter,
-    SanitizerFilter,
+    LogSanitizerFilter,
 )
 from hexastack_logging.infra.formatters import (
     ConsoleFormatter,
     JsonFormatter,
 )
-from hexastack_logging.infra.sanitizer import Sanitizer
+from hexastack_logging.infra.sanitizer import LogSanitizer
 
 __all__ = [
     "AsyncQueueConfig",
@@ -24,8 +24,8 @@ __all__ = [
     "FileLoggingConfig",
     "HexastackLoggingConfig",
     "JsonFormatter",
+    "LogSanitizer",
+    "LogSanitizerConfig",
+    "LogSanitizerFilter",
     "register_logging_config",
-    "Sanitizer",
-    "SanitizerConfig",
-    "SanitizerFilter",
 ]

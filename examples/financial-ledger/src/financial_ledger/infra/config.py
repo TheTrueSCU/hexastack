@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class AppConfig(BaseSettings):
     """Service environment settings."""
 
-    model_config = SettingsConfigDict(env_prefix='APP_', extra='ignore')
+    model_config = SettingsConfigDict(env_prefix="APP_", extra="ignore")
 
-    service_name: str = 'financial-ledger'
-    environment: str = 'development'
+    service_name: str = "financial-ledger"
+    environment: str = "development"

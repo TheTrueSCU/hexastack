@@ -10,7 +10,7 @@ class StructuredLogger(LoggingPort):
 
     Notes/Architectural Intent:
         Delegates to standard library logging.Logger configured with CorrelationIdFilter,
-        SanitizerFilter, rotating file handlers, and optional background QueueListener.
+        LogSanitizerFilter, rotating file handlers, and optional background QueueListener.
     """
 
     def __init__(

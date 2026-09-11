@@ -2,7 +2,7 @@ import pytest
 from inline_snapshot import snapshot
 from pydantic import BaseModel
 
-from hexastack_logging.infra.sanitizer import Sanitizer
+from hexastack_logging.infra.sanitizer import LogSanitizer
 
 
 class UserModel(BaseModel):
@@ -11,8 +11,8 @@ class UserModel(BaseModel):
     token: str
 
 
-def test_sanitizer_data_structures():
-    sanitizer = Sanitizer()
+def test_log_sanitizer_data_structures():
+    sanitizer = LogSanitizer()
 
     # 1. Tuples
     tup = ("Alice", "Bearer eyJhbGci.secret", 123)
@@ -63,8 +63,8 @@ def test_sanitizer_data_structures():
 
 
 @pytest.mark.snapshot
-def test_sanitizer_nested_dict():
-    sanitizer = Sanitizer(
+def test_log_sanitizer_nested_dict():
+    sanitizer = LogSanitizer(
         masked_keys=["password", "secret", "cvv"],
         mask_replacement="[REDACTED]",
     )
@@ -95,8 +95,8 @@ def test_sanitizer_nested_dict():
 
 
 @pytest.mark.snapshot
-def test_sanitizer_pydantic_model():
-    sanitizer = Sanitizer()
+def test_log_sanitizer_pydantic_model():
+    sanitizer = LogSanitizer()
     user = UserModel(username="bob", password="supersecretpassword", token="tok123")
 
     assert sanitizer.sanitize(user) == snapshot(
@@ -104,8 +104,8 @@ def test_sanitizer_pydantic_model():
     )
 
 
-def test_sanitizer_string_patterns():
-    sanitizer = Sanitizer()
+def test_log_sanitizer_string_patterns():
+    sanitizer = LogSanitizer()
 
     # Bearer token regex test
     msg = "Authorization header received: Bearer eyJhbGciOiJIUzI1NiJ9.abc.def successfully"
@@ -120,8 +120,8 @@ def test_sanitizer_string_patterns():
     assert "***REDACTED***" in scrubbed_cc
 
 
-def test_sanitizer_traceback():
-    sanitizer = Sanitizer()
+def test_log_sanitizer_traceback():
+    sanitizer = LogSanitizer()
     tb = """
     Traceback (most recent call last):
       File "auth.py", line 12, in login

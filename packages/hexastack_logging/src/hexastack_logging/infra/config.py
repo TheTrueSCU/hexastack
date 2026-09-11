@@ -14,16 +14,16 @@ from hexastack_logging.domain.config import (
     AsyncQueueConfig,
     FileLoggingConfig,
     HexastackLoggingConfig,
-    SanitizerConfig,
+    LogSanitizerConfig,
 )
 from hexastack_logging.infra.filters import (
     CorrelationIdFilter,
-    SanitizerFilter,
+    LogSanitizerFilter,
 )
 from hexastack_logging.infra.formatters.console import ConsoleFormatter
 from hexastack_logging.infra.formatters.json import JsonFormatter
 from hexastack_logging.infra.sanitizer import (
-    Sanitizer,
+    LogSanitizer,
 )
 
 config_section("logging")(HexastackLoggingConfig)
@@ -33,8 +33,8 @@ __all__ = [
     "configure_logging",
     "FileLoggingConfig",
     "HexastackLoggingConfig",
+    "LogSanitizerConfig",
     "register_logging_config",
-    "SanitizerConfig",
 ]
 
 
@@ -58,7 +58,7 @@ def _prepare_file_handler(
     cfg: HexastackLoggingConfig,
     level_num: int,
     correlation_filter: CorrelationIdFilter,
-    sanitizer_filter: SanitizerFilter | None,
+    sanitizer_filter: LogSanitizerFilter | None,
 ) -> logging.Handler:
     """Create and configure rotating file handler."""
     log_file_path = Path(cfg.file.path)
@@ -125,14 +125,14 @@ def configure_logging(
 
     # 3. Prepare filters
     correlation_filter = CorrelationIdFilter()
-    sanitizer_filter: SanitizerFilter | None = None
+    sanitizer_filter: LogSanitizerFilter | None = None
     if cfg.sanitizer.enable:
-        san = Sanitizer(
+        san = LogSanitizer(
             masked_keys=cfg.sanitizer.masked_keys,
             mask_replacement=cfg.sanitizer.mask_replacement,
             regex_patterns=cfg.sanitizer.regex_patterns,
         )
-        sanitizer_filter = SanitizerFilter(san)
+        sanitizer_filter = LogSanitizerFilter(san)
 
     # 4. Prepare Stream (Console) Handler
     stream_formatter = _get_formatter(

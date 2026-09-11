@@ -231,6 +231,7 @@ ignore = [
 
 "examples/**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
 "examples/**/*.py" = ["ARG", "D", "E501", "F401", "S101", "S105", "T201", "UP042"]
+"fuzz/**/*.py" = ["ARG", "D", "E501", "S101", "S105", "T201"]
 
 [tool.ruff.lint.isort]
 known-first-party = [

@@ -34,7 +34,10 @@ from financial_ledger.domain.models import (
     JournalTransaction,
     TransactionEntry,
 )
-from financial_ledger.ports.repositories import AccountRepositoryPort, LedgerRepositoryPort
+from financial_ledger.ports.repositories import (
+    AccountRepositoryPort,
+    LedgerRepositoryPort,
+)
 
 __all__ = [
     "CreateAccountHandler",
@@ -57,7 +60,9 @@ class CreateAccountHandler:
         acc_id = cmd.account_id or str(uuid.uuid4())
         existing = self.account_repo.get_by_id(acc_id)
         if existing is not None:
-            raise AccountAlreadyExistsError(f"Account with ID '{acc_id}' already exists.")
+            raise AccountAlreadyExistsError(
+                f"Account with ID '{acc_id}' already exists."
+            )
 
         account = Account(
             account_id=acc_id,
@@ -111,18 +116,26 @@ class TransferMoneyHandler:
 
     def __call__(self, cmd: TransferMoneyCommand) -> TransferMoneyResponse:
         if cmd.amount <= Decimal("0.00"):
-            raise InvalidAmountError(f"Transfer amount must be positive, got {cmd.amount}")
+            raise InvalidAmountError(
+                f"Transfer amount must be positive, got {cmd.amount}"
+            )
 
         if cmd.source_account_id == cmd.destination_account_id:
-            raise InvalidAmountError("Source and destination accounts must be distinct.")
+            raise InvalidAmountError(
+                "Source and destination accounts must be distinct."
+            )
 
         source = self.account_repo.get_by_id(cmd.source_account_id)
         if source is None:
-            raise AccountNotFoundError(f"Source account '{cmd.source_account_id}' not found.")
+            raise AccountNotFoundError(
+                f"Source account '{cmd.source_account_id}' not found."
+            )
 
         dest = self.account_repo.get_by_id(cmd.destination_account_id)
         if dest is None:
-            raise AccountNotFoundError(f"Destination account '{cmd.destination_account_id}' not found.")
+            raise AccountNotFoundError(
+                f"Destination account '{cmd.destination_account_id}' not found."
+            )
 
         debit_entry = TransactionEntry(
             account_id=source.account_id,
@@ -196,7 +209,9 @@ class RecordTransactionHandler:
             if entry.account_id not in accounts:
                 acc = self.account_repo.get_by_id(entry.account_id)
                 if acc is None:
-                    raise AccountNotFoundError(f"Account '{entry.account_id}' not found.")
+                    raise AccountNotFoundError(
+                        f"Account '{entry.account_id}' not found."
+                    )
                 accounts[entry.account_id] = acc
 
         # Apply entries

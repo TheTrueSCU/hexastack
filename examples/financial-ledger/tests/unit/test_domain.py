@@ -45,36 +45,56 @@ def test_double_entry_balance_invariant():
     """Verify that unbalanced transactions are strictly rejected."""
     # Balanced transaction
     entries = [
-        TransactionEntry(account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("50.00")),
-        TransactionEntry(account_id="acc-2", direction=EntryDirection.CREDIT, amount=Decimal("50.00")),
+        TransactionEntry(
+            account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("50.00")
+        ),
+        TransactionEntry(
+            account_id="acc-2", direction=EntryDirection.CREDIT, amount=Decimal("50.00")
+        ),
     ]
-    tx = JournalTransaction(reference="TX-001", description="Valid transfer", entries=entries)
+    tx = JournalTransaction(
+        reference="TX-001", description="Valid transfer", entries=entries
+    )
     assert tx.reference == "TX-001"
     assert len(tx.entries) == 2
 
     # Unbalanced transaction (debit 50 != credit 40)
     bad_entries = [
-        TransactionEntry(account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("50.00")),
-        TransactionEntry(account_id="acc-2", direction=EntryDirection.CREDIT, amount=Decimal("40.00")),
+        TransactionEntry(
+            account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("50.00")
+        ),
+        TransactionEntry(
+            account_id="acc-2", direction=EntryDirection.CREDIT, amount=Decimal("40.00")
+        ),
     ]
     with pytest.raises(UnbalancedTransactionError, match="total debits"):
-        JournalTransaction(reference="TX-BAD", description="Unbalanced", entries=bad_entries)
+        JournalTransaction(
+            reference="TX-BAD", description="Unbalanced", entries=bad_entries
+        )
 
     # Less than 2 entries
     single_entry = [
-        TransactionEntry(account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("50.00")),
+        TransactionEntry(
+            account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("50.00")
+        ),
     ]
     with pytest.raises(UnbalancedTransactionError, match="at least two"):
-        JournalTransaction(reference="TX-SINGLE", description="Single leg", entries=single_entry)
+        JournalTransaction(
+            reference="TX-SINGLE", description="Single leg", entries=single_entry
+        )
 
 
 def test_invalid_entry_amount():
     """Verify non-positive amounts are rejected."""
     with pytest.raises(InvalidAmountError):
-        TransactionEntry(account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("0.00"))
+        TransactionEntry(
+            account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("0.00")
+        )
 
     with pytest.raises(InvalidAmountError):
-        TransactionEntry(account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("-10.00"))
+        TransactionEntry(
+            account_id="acc-1", direction=EntryDirection.DEBIT, amount=Decimal("-10.00")
+        )
 
 
 def test_account_creation_and_balance_query(account_repo: InMemoryAccountRepository):
@@ -112,10 +132,16 @@ def test_account_freeze_prevents_transactions(
     """Verify frozen account cannot send or receive transfers."""
     create_handler = CreateAccountHandler(account_repo=account_repo)
     freeze_handler = FreezeAccountHandler(account_repo=account_repo)
-    transfer_handler = TransferMoneyHandler(account_repo=account_repo, ledger_repo=ledger_repo)
+    transfer_handler = TransferMoneyHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
 
-    create_handler(CreateAccountCommand(account_id="acc-1", initial_balance=Decimal("100.00")))
-    create_handler(CreateAccountCommand(account_id="acc-2", initial_balance=Decimal("50.00")))
+    create_handler(
+        CreateAccountCommand(account_id="acc-1", initial_balance=Decimal("100.00"))
+    )
+    create_handler(
+        CreateAccountCommand(account_id="acc-2", initial_balance=Decimal("50.00"))
+    )
 
     freeze_res = freeze_handler(FreezeAccountCommand(account_id="acc-1"))
     assert freeze_res.status == "FROZEN"
@@ -136,11 +162,17 @@ def test_transfer_money_success_and_ledger_history(
 ):
     """Verify successful double-entry transfer and ledger posting line retrieval."""
     create_handler = CreateAccountHandler(account_repo=account_repo)
-    transfer_handler = TransferMoneyHandler(account_repo=account_repo, ledger_repo=ledger_repo)
+    transfer_handler = TransferMoneyHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
     list_handler = ListLedgerEntriesHandler(ledger_repo=ledger_repo)
 
-    create_handler(CreateAccountCommand(account_id="acc-src", initial_balance=Decimal("200.00")))
-    create_handler(CreateAccountCommand(account_id="acc-dst", initial_balance=Decimal("50.00")))
+    create_handler(
+        CreateAccountCommand(account_id="acc-src", initial_balance=Decimal("200.00"))
+    )
+    create_handler(
+        CreateAccountCommand(account_id="acc-dst", initial_balance=Decimal("50.00"))
+    )
 
     tx_res = transfer_handler(
         TransferMoneyCommand(
@@ -173,10 +205,16 @@ def test_transfer_insufficient_funds(
 ):
     """Verify transfer fails when source balance is below required amount without credit limit."""
     create_handler = CreateAccountHandler(account_repo=account_repo)
-    transfer_handler = TransferMoneyHandler(account_repo=account_repo, ledger_repo=ledger_repo)
+    transfer_handler = TransferMoneyHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
 
-    create_handler(CreateAccountCommand(account_id="acc-poor", initial_balance=Decimal("10.00")))
-    create_handler(CreateAccountCommand(account_id="acc-rich", initial_balance=Decimal("1000.00")))
+    create_handler(
+        CreateAccountCommand(account_id="acc-poor", initial_balance=Decimal("10.00"))
+    )
+    create_handler(
+        CreateAccountCommand(account_id="acc-rich", initial_balance=Decimal("1000.00"))
+    )
 
     cmd = TransferMoneyCommand(
         source_account_id="acc-poor",
@@ -194,19 +232,33 @@ def test_multi_legged_record_transaction(
 ):
     """Verify recording an arbitrary multi-legged split transaction (e.g. fee split)."""
     create_handler = CreateAccountHandler(account_repo=account_repo)
-    record_handler = RecordTransactionHandler(account_repo=account_repo, ledger_repo=ledger_repo)
+    record_handler = RecordTransactionHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
 
-    create_handler(CreateAccountCommand(account_id="acc-payer", initial_balance=Decimal("100.00")))
-    create_handler(CreateAccountCommand(account_id="acc-merchant", initial_balance=Decimal("0.00")))
-    create_handler(CreateAccountCommand(account_id="acc-fee", initial_balance=Decimal("0.00")))
+    create_handler(
+        CreateAccountCommand(account_id="acc-payer", initial_balance=Decimal("100.00"))
+    )
+    create_handler(
+        CreateAccountCommand(account_id="acc-merchant", initial_balance=Decimal("0.00"))
+    )
+    create_handler(
+        CreateAccountCommand(account_id="acc-fee", initial_balance=Decimal("0.00"))
+    )
 
     cmd = RecordTransactionCommand(
         reference="TX-SPLIT-01",
         description="Purchase with 3% fee",
         entries=[
-            PostingLineDto(account_id="acc-payer", direction="DEBIT", amount=Decimal("100.00")),
-            PostingLineDto(account_id="acc-merchant", direction="CREDIT", amount=Decimal("97.00")),
-            PostingLineDto(account_id="acc-fee", direction="CREDIT", amount=Decimal("3.00")),
+            PostingLineDto(
+                account_id="acc-payer", direction="DEBIT", amount=Decimal("100.00")
+            ),
+            PostingLineDto(
+                account_id="acc-merchant", direction="CREDIT", amount=Decimal("97.00")
+            ),
+            PostingLineDto(
+                account_id="acc-fee", direction="CREDIT", amount=Decimal("3.00")
+            ),
         ],
     )
     res = record_handler(cmd)

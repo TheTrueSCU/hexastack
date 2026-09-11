@@ -7,7 +7,10 @@ import threading
 from typing import Optional
 
 from financial_ledger.domain.models import Account, JournalTransaction, TransactionEntry
-from financial_ledger.ports.repositories import AccountRepositoryPort, LedgerRepositoryPort
+from financial_ledger.ports.repositories import (
+    AccountRepositoryPort,
+    LedgerRepositoryPort,
+)
 
 __all__ = [
     "InMemoryAccountRepository",

@@ -14,4 +14,6 @@ __all__ = []
 
 cli_command("create-account", help="Create a new ledger account.")(CreateAccountCommand)
 cli_command("freeze-account", help="Freeze a ledger account.")(FreezeAccountCommand)
-cli_command("transfer", help="Transfer funds between two accounts.")(TransferMoneyCommand)
+cli_command("transfer", help="Transfer funds between two accounts.")(
+    TransferMoneyCommand
+)

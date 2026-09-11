@@ -4,7 +4,7 @@ from hexastack_core.utils.context import (
     get_correlation_id,
     get_user_context,
 )
-from hexastack_logging.infra.sanitizer import Sanitizer
+from hexastack_logging.infra.sanitizer import LogSanitizer
 
 
 class CorrelationIdFilter(logging.Filter):
@@ -67,7 +67,7 @@ _STANDARD_LOG_RECORD_KEYS = frozenset(
 )
 
 
-class SanitizerFilter(logging.Filter):
+class LogSanitizerFilter(logging.Filter):
     """Logging filter sanitizing sensitive keys, PII, and tokens from LogRecords.
 
     Notes/Architectural Intent:
@@ -75,14 +75,14 @@ class SanitizerFilter(logging.Filter):
         positional/keyword arguments, extra attributes, and formatted traceback text.
     """
 
-    def __init__(self, sanitizer: Sanitizer | None = None) -> None:
-        """Initialize SanitizerFilter with a Sanitizer instance.
+    def __init__(self, sanitizer: LogSanitizer | None = None) -> None:
+        """Initialize LogSanitizerFilter with a LogSanitizer instance.
 
         Args:
-            sanitizer: Optional Sanitizer instance (defaults to standard Sanitizer).
+            sanitizer: Optional LogSanitizer instance (defaults to standard LogSanitizer).
         """
         super().__init__()
-        self._sanitizer = sanitizer or Sanitizer()
+        self._sanitizer = sanitizer or LogSanitizer()
 
     def _sanitize_extra_attributes(self, record: logging.LogRecord) -> None:
         """Scrub non-standard LogRecord dictionary attributes."""
@@ -127,5 +127,5 @@ class SanitizerFilter(logging.Filter):
 
 __all__ = [
     "CorrelationIdFilter",
-    "SanitizerFilter",
+    "LogSanitizerFilter",
 ]

@@ -50,6 +50,7 @@ deps-audit = "hexastack_tools.commands.deps_audit:main"
 deptry-run = "hexastack_tools.commands.deptry:main"
 
 fix-all-statements = "hexastack_tools.commands.all_statements:fix_main"
+fuzz-run = "hexastack_tools.commands.fuzz:main"
 generate-usage-docs = "hexastack_tools.commands.usage_docs:main"
 gh-checks = "hexastack_tools.commands.checks:main"
 

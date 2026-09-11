@@ -50,7 +50,7 @@ class AsyncQueueConfig(BaseModel):
     max_size: int = Field(default=10_000)
 
 
-class SanitizerConfig(BaseModel):
+class LogSanitizerConfig(BaseModel):
     """Configuration schema for log sanitization and credential masking.
 
     Notes/Architectural Intent:
@@ -76,7 +76,7 @@ class HexastackLoggingConfig(BaseModel):
     colorize: bool = Field(default=True)
     include_context: bool = Field(default=True)
     datefmt: str = Field(default="%Y-%m-%d %H:%M:%S")
-    sanitizer: SanitizerConfig = Field(default_factory=SanitizerConfig)
+    sanitizer: LogSanitizerConfig = Field(default_factory=LogSanitizerConfig)
     file: FileLoggingConfig = Field(default_factory=FileLoggingConfig)
     queue: AsyncQueueConfig = Field(default_factory=AsyncQueueConfig)
     loggers: dict[str, str] = Field(default_factory=dict)
@@ -86,5 +86,5 @@ __all__ = [
     "AsyncQueueConfig",
     "FileLoggingConfig",
     "HexastackLoggingConfig",
-    "SanitizerConfig",
+    "LogSanitizerConfig",
 ]

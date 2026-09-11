@@ -3,7 +3,7 @@ from typing import Any
 from hypothesis import given
 from hypothesis import strategies as st
 
-from hexastack_logging.infra.sanitizer import Sanitizer
+from hexastack_logging.infra.sanitizer import LogSanitizer
 
 # Strategy producing arbitrary JSON-like recursive trees
 json_primitives = st.one_of(
@@ -29,8 +29,8 @@ json_tree = st.recursive(
     prefix=st.text(max_size=20),
     suffix=st.text(max_size=20),
 )
-def test_sanitizer_bearer_pattern_invariant(token: str, prefix: str, suffix: str):
-    sanitizer = Sanitizer(mask_replacement="***")
+def test_log_sanitizer_bearer_pattern_invariant(token: str, prefix: str, suffix: str):
+    sanitizer = LogSanitizer(mask_replacement="***")
     input_str = f"{prefix} Bearer {token} {suffix}"
     scrubbed = sanitizer.sanitize(input_str)
 
@@ -46,10 +46,10 @@ def test_sanitizer_bearer_pattern_invariant(token: str, prefix: str, suffix: str
     secret_val=st.text(min_size=1, max_size=40),
     other_data=json_tree,
 )
-def test_sanitizer_key_redaction_invariant(
+def test_log_sanitizer_key_redaction_invariant(
     secret_key: str, secret_val: str, other_data: Any
 ):
-    sanitizer = Sanitizer(mask_replacement="[PROTECTED]")
+    sanitizer = LogSanitizer(mask_replacement="[PROTECTED]")
     payload = {
         secret_key: secret_val,
         secret_key.upper(): secret_val,
