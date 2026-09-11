@@ -535,10 +535,12 @@ def inspect_main() -> None:
         else:
             code = presenter.present_mutation_summary(report)
         sys.exit(code)
+        return
 
     con = get_db_connection()
     if not con:
         sys.exit(1)
+        return
 
     try:
         if args.summary or (not args.package and not args.file):
@@ -562,7 +564,8 @@ def inspect_main() -> None:
                 correlate_coverage=args.correlate_coverage,
             )
     finally:
-        con.close()
+        if con is not None:
+            con.close()
 
 
 __all__ = [
