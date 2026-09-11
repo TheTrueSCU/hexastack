@@ -1,7 +1,7 @@
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra.decorators import (
@@ -613,10 +613,13 @@ def _build_class_saga(
     return builder.build()
 
 
-def saga[T: Any](
+SagaTarget = TypeVar("SagaTarget")
+
+
+def saga(
     name: str | None = None,
     trigger: type[Command] | None = None,
-) -> Callable[[T], T]:
+) -> Callable[[SagaTarget], SagaTarget]:
     """Declare a distributed saga from a class (Pattern B) or a function (Pattern A).
 
     Args:
@@ -632,7 +635,7 @@ def saga[T: Any](
         `build_saga(self, context=None) -> SagaDefinition` method by sorting @step methods.
     """
 
-    def decorator(target: T) -> T:
+    def decorator(target: SagaTarget) -> SagaTarget:
         from hexastack_cqrs.domain.sagas import SagaDefinition
 
         saga_name = name or getattr(target, "__name__", "UnnamedSaga")
@@ -643,7 +646,7 @@ def saga[T: Any](
             def build_saga(self: Any, context: Any = None) -> SagaDefinition:
                 return _build_class_saga(self, steps_meta, saga_name, context)
 
-            target.build_saga = build_saga  # type: ignore[attr-defined]
+            setattr(target, "build_saga", build_saga)  # noqa: B010
             setattr(
                 target,
                 _SAGA_META_ATTR,
@@ -659,7 +662,7 @@ def saga[T: Any](
                 name=saga_name,
                 trigger=trigger,
                 is_class=False,
-                builder_fn=target,
+                builder_fn=cast("Callable[..., Any]", target),
             ),
         )
         return target
