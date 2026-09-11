@@ -75,6 +75,7 @@ hexastack-ui = { workspace = true }
 dev = [
     "aiokafka>=0.12.0",
     "alembic>=1.19.1",
+    "atheris>=3.1.0; sys_platform == 'linux' or sys_platform == 'darwin'",
     "complexipy>=7.0.1",
     "deptry>=0.23.0",
     "detect-secrets>=1.5.0",

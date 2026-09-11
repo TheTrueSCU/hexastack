@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import importlib.util
 import subprocess
 import sys
 import time
@@ -51,10 +52,8 @@ def run_target_fuzz(
     use_atheris = False
     if engine in ("auto", "atheris"):
         try:
-            import atheris  # noqa: F401
-
-            use_atheris = True
-        except ImportError:
+            use_atheris = importlib.util.find_spec("atheris") is not None
+        except Exception:
             use_atheris = False
 
     if target in ("all", "sanitizer"):
