@@ -684,3 +684,32 @@ options:
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
 ```
+
+#### `sanity-check`
+
+```text
+usage: sanity-check [-h]
+                    [-p {all,ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}]
+                    [-e {financial-ledger,financial_ledger,todo-app,todo_app,trip-booking,trip_booking}]
+                    [-a] [--fix] [--skip-tests] [-mx MAX_COMPLEXITY]
+                    [files ...]
+
+Fast scoped sanity check runner for Hexastack packages, examples, and files.
+
+positional arguments:
+  files                 Specific files or directories to verify.
+
+options:
+  -h, --help            show this help message and exit
+  -p, --package {all,ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}
+                        Target package(s) (e.g. -p cqrs -p events).
+  -e, --example {financial-ledger,financial_ledger,todo-app,todo_app,trip-booking,trip_booking}
+                        Target example project(s) (e.g. -e trip-booking).
+  -a, --all             Run across all packages unconditionally.
+  --fix                 Automatically apply autofixes (ruff --fix, ruff
+                        format, fix-all-statements).
+  --skip-tests          Skip running pytest suites (run static analysis and
+                        parity only).
+  -mx, --max-complexity MAX_COMPLEXITY
+                        Cognitive complexity threshold (default: 25).
+```

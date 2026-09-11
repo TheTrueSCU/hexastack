@@ -41,6 +41,7 @@ pytest-redundancy-audit = "hexastack_tools.commands.coverage:redundancy_audit_ma
 pytest-run = "hexastack_tools.commands.pytest_runner:run_main"
 rope-alphabetizer = "hexastack_tools.commands.rope:alphabetize_main"
 rope-run = "hexastack_tools.commands.rope:run_main"
+sanity-check = "hexastack_tools.commands.sanity_check:main"
 
 [build-system]
 requires = ["hatchling"]
