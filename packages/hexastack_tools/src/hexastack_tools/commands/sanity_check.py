@@ -17,7 +17,7 @@ from rich.console import Console
 
 from hexastack_cqrs.ports.buses import CommandBusPort
 from hexastack_tools.adapters.presenters.governance import (
-    RichGovernancePresenterAdapter,
+    create_governance_presenter,
 )
 from hexastack_tools.domain.governance import (
     CheckResult,
@@ -214,6 +214,7 @@ def run_sanity_check(
     fix: bool = False,
     skip_tests: bool = False,
     max_complexity: int = 25,
+    format_type: str = "table",
     console: Console | None = None,
     bus: CommandBusPort | None = None,
     presenter: GovernancePresenterPort | None = None,
@@ -227,6 +228,7 @@ def run_sanity_check(
         fix: Whether to auto-format and fix violations.
         skip_tests: Whether to skip pytest suites.
         max_complexity: Cognitive complexity ceiling per function.
+        format_type: Output representation format ('table', 'json', 'markdown').
         console: Optional Rich Console instance.
         bus: Optional CommandBusPort instance for CQRS dispatch.
         presenter: Optional GovernancePresenterPort for report output.
@@ -240,7 +242,10 @@ def run_sanity_check(
         through the CommandBusPort, delegating presentation to GovernancePresenterPort.
     """
     actual_bus = bus or create_governance_bus(runner=runner)
-    actual_presenter = presenter or RichGovernancePresenterAdapter(console=console)
+    actual_presenter = presenter or create_governance_presenter(
+        format_type=format_type,
+        console=console,
+    )
 
     cmd = RunSanityCheckCommand(
         targets=tuple(targets),
@@ -328,6 +333,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Run across all packages unconditionally.",
     )
     parser.add_argument(
+        "-f",
+        "--format",
+        dest="format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output representation format (default: table).",
+    )
+    parser.add_argument(
         "--fix",
         dest="fix",
         action="store_true",
@@ -368,6 +381,7 @@ def main() -> None:
         fix=args.fix,
         skip_tests=args.skip_tests,
         max_complexity=args.max_complexity,
+        format_type=args.format,
     )
     sys.exit(exit_code)
 

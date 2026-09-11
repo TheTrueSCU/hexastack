@@ -143,3 +143,35 @@ class GovernancePresenterPort(ABC):
         Returns:
             Process exit code (0 for pass, 1 for failure).
         """
+
+    @abstractmethod
+    def present_all_statements(
+        self,
+        errors: list[str],
+        modified_count: int | None = None,
+    ) -> int:
+        """Render __all__ statement validation or formatting outcomes.
+
+        Args:
+            errors: List of detected __all__ integrity error messages.
+            modified_count: Optional count of modified files when in fix mode.
+
+        Returns:
+            Process exit code (0 for pass/success, 1 for failure).
+        """
+
+    @abstractmethod
+    def present_test_parity(
+        self,
+        init_errors: list[str],
+        symmetry_errors: list[str],
+    ) -> int:
+        """Render test parity and directory integrity outcomes.
+
+        Args:
+            init_errors: Errors regarding missing __init__.py files in test directories.
+            symmetry_errors: Errors regarding missing unit tests or orphaned tests.
+
+        Returns:
+            Process exit code (0 for pass/success, 1 for failure).
+        """

@@ -169,16 +169,21 @@ options:
 #### `check-test-parity`
 
 ```text
-╭──────────────────────────────────────────────────────────────────────────────╮
-│ ✅ All source modules mirror unit tests 1:1 and all test directories contain │
-│ __init__.py.                                                                 │
-╰──────────────────────────────────────────────────────────────────────────────╯
+usage: check-test-parity [-h] [-f {table,json,markdown}]
+
+Verify 1:1 symmetry between src modules and unit tests.
+
+options:
+  -h, --help            show this help message and exit
+  -f, --format {table,json,markdown}
+                        Output format (table, json, markdown). Default: table.
 ```
 
 #### `check-all-statements`
 
 ```text
 usage: check-all-statements [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                            [-f {table,json,markdown}]
                             [files ...]
 
 Verify __all__ is deduplicated and sorted.
@@ -193,12 +198,15 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output format (table, json, markdown). Default: table.
 ```
 
 #### `fix-all-statements`
 
 ```text
 usage: fix-all-statements [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                          [-f {table,json,markdown}]
                           [files ...]
 
 Format, alphabetize, and deduplicate __all__ statements.
@@ -213,6 +221,8 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output format (table, json, markdown). Default: table.
 ```
 
 #### `import-linter-run`
@@ -691,7 +701,8 @@ options:
 usage: sanity-check [-h]
                     [-p {all,ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}]
                     [-e {financial-ledger,financial_ledger,todo-app,todo_app,trip-booking,trip_booking}]
-                    [-a] [--fix] [--skip-tests] [-mx MAX_COMPLEXITY]
+                    [-a] [-f {table,json,markdown}] [--fix] [--skip-tests]
+                    [-mx MAX_COMPLEXITY]
                     [files ...]
 
 Fast scoped sanity check runner for Hexastack packages, examples, and files.
@@ -706,6 +717,8 @@ options:
   -e, --example {financial-ledger,financial_ledger,todo-app,todo_app,trip-booking,trip_booking}
                         Target example project(s) (e.g. -e trip-booking).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output representation format (default: table).
   --fix                 Automatically apply autofixes (ruff --fix, ruff
                         format, fix-all-statements).
   --skip-tests          Skip running pytest suites (run static analysis and

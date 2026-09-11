@@ -78,6 +78,22 @@ def test_concrete_presenter_implementation():
         def present_sanity_dashboard(self, report: SanityCheckReport) -> int:
             return report.exit_code
 
+        def present_all_statements(
+            self,
+            errors: list[str],
+            modified_count: int | None = None,
+        ) -> int:
+            return 1 if errors else 0
+
+        def present_test_parity(
+            self,
+            init_errors: list[str],
+            symmetry_errors: list[str],
+        ) -> int:
+            return 1 if (init_errors or symmetry_errors) else 0
+
     presenter = DummyPresenter()
     report = SanityCheckReport(results=(), total_duration=0.0, exit_code=0)
     assert presenter.present_sanity_dashboard(report) == 0
+    assert presenter.present_all_statements([]) == 0
+    assert presenter.present_test_parity([], []) == 0

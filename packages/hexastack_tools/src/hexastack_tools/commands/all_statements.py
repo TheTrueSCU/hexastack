@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import sys
 
+from hexastack_tools.adapters.presenters.governance import (
+    create_governance_presenter,
+)
+from hexastack_tools.ports.governance import GovernancePresenterPort
 from hexastack_tools.utils.all_statements import (
     check_file_all,
     fix_file_all,
@@ -18,14 +22,26 @@ from hexastack_tools.utils.workspace import (
 )
 
 
-def main_check() -> int:
-    """Validate ``__all__`` declarations across targeted files."""
-    from rich.console import Console
-    from rich.table import Table
+def main_check(
+    presenter: GovernancePresenterPort | None = None,
+) -> int:
+    """Validate ``__all__`` declarations across targeted files.
 
-    console = Console()
+    Args:
+        presenter: Optional GovernancePresenterPort instance.
+
+    Returns:
+        0 if valid, 1 if violations found.
+    """
     parser = HexastackScriptArgumentParser(
         description="Verify __all__ is deduplicated and sorted."
+    )
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output format (table, json, markdown). Default: table.",
     )
     args = parser.parse_args()
 
@@ -35,40 +51,34 @@ def main_check() -> int:
     for f in py_files:
         all_errors.extend(check_file_all(f))
 
-    if all_errors:
-        table = Table(
-            title="[bold red]API Surface & __all__ Integrity Violations[/bold red]",
-            show_header=True,
-            header_style="bold magenta",
-        )
-        table.add_column("Location & Violation")
-        for err in all_errors:
-            table.add_row(err)
-        console.print(table)
-        return 1
-
-    return 0
+    actual_presenter = presenter or create_governance_presenter(format_type=args.format)
+    return actual_presenter.present_all_statements(all_errors)
 
 
-def main_fix() -> None:
-    """Format ``__all__`` declarations in target Python files."""
-    from rich.console import Console
-    from rich.panel import Panel
+def main_fix(
+    presenter: GovernancePresenterPort | None = None,
+) -> None:
+    """Format ``__all__`` declarations in target Python files.
 
-    console = Console()
+    Args:
+        presenter: Optional GovernancePresenterPort instance.
+    """
     parser = HexastackScriptArgumentParser(
         description="Format, alphabetize, and deduplicate __all__ statements."
+    )
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output format (table, json, markdown). Default: table.",
     )
     args = parser.parse_args()
 
     py_files = resolve_target_python_files(args)
     formatted_count = sum(fix_file_all(f) for f in py_files)
-    console.print(
-        Panel.fit(
-            f"[bold green]✨ Formatted and alphabetized __all__ statements in {formatted_count} file(s).[/bold green]",
-            border_style="green",
-        )
-    )
+    actual_presenter = presenter or create_governance_presenter(format_type=args.format)
+    actual_presenter.present_all_statements([], modified_count=formatted_count)
 
 
 def check_main() -> None:

@@ -149,16 +149,19 @@ def test_run_sanity_check_with_bus_and_presenter(tmp_path: Path) -> None:
 def test_parser_and_main(tmp_path: Path) -> None:
     """Verify argument parser and main entrypoint flow."""
     parser = _build_parser()
-    parsed = parser.parse_args(["-p", "cqrs", "--fix", "--skip-tests", "-mx", "20"])
+    parsed = parser.parse_args(
+        ["-p", "cqrs", "--fix", "--skip-tests", "-mx", "20", "--format", "json"]
+    )
     assert parsed.packages == ["cqrs"]
     assert parsed.fix is True
     assert parsed.skip_tests is True
     assert parsed.max_complexity == 20
+    assert parsed.format == "json"
 
     with (
         patch(
             "sys.argv",
-            ["sanity-check", "-p", "cqrs", "--skip-tests"],
+            ["sanity-check", "-p", "cqrs", "--skip-tests", "--format", "markdown"],
         ),
         patch(
             "hexastack_tools.commands.sanity_check.get_repo_root",
@@ -176,4 +179,5 @@ def test_parser_and_main(tmp_path: Path) -> None:
     ):
         main()
         mock_run.assert_called_once()
+        assert mock_run.call_args[1]["format_type"] == "markdown"
         mock_exit.assert_called_once_with(0)
