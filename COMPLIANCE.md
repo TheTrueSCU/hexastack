@@ -99,9 +99,12 @@ Hexastack maintains a strict **Cryptographic Agility Policy**:
 
 ---
 
-## 4. Software Bill of Materials (SBOM) & Supply Chain Security
+## 4. Software Bill of Materials (SBOM), SLSA Level 3 & Supply Chain Security
 
-* **OpenSSF Best Practices**: Verified **100% Passing** and **100% Silver Badge** compliance with public scorecards.
+* **OpenSSF Best Practices**: Verified **100% Passing** and **100% Silver Badge** achieved; formalized criteria implemented for **Gold Badge** certification.
+* **SLSA Build Level 3 Provenance**: Automated cryptographic build provenance signing via Sigstore (`actions/attest-build-provenance`) anchored in immutable public transparency logs.
+* **Byte-for-Byte Reproducible Builds**: Deterministic packaging with fixed `SOURCE_DATE_EPOCH` and `uv.lock` hashes, verifiable via `uv run pypi-reproducible-check`.
+* **Dual-Format Cryptographic SBOMs**: Automated SPDX JSON (`actions/attest-sbom`) and CycloneDX JSON SBOMs generated and attached to every GitHub Release.
 * **Deterministic Dependency Locks**: Every production build and release is locked to exact SHA-256 hashes via `uv.lock`.
 * **Continuous Vulnerability Auditing**: Every pull request and push runs `pip-audit` to detect known CVEs in the PyPI dependency tree.
 * **Architecture Boundary Enforcement**: Strict `import-linter` contracts prevent architectural layer leakage (e.g., domain logic is mathematically forbidden from importing database adapters or web frameworks).

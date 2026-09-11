@@ -14,6 +14,8 @@ from hexastack_tools.commands.pypi import (
     check_pypi_version_exists,
     publish_main,
     publish_packages,
+    reproducible_main,
+    verify_reproducible_builds,
 )
 
 
@@ -168,3 +170,138 @@ def test_publish_main(monkeypatch: pytest.MonkeyPatch):
         with pytest.raises(SystemExit) as exc_info:
             publish_main()
         assert exc_info.value.code == 0
+
+
+def test_build_main_reproducible_check(monkeypatch: pytest.MonkeyPatch):
+    """Verify build_main triggers verify_reproducible_builds when requested."""
+    monkeypatch.setattr("sys.argv", ["pypi-build", "--reproducible-check"])
+    with (
+        patch(
+            "hexastack_tools.commands.pypi.verify_reproducible_builds", return_value=0
+        ) as mock_repro,
+        patch(
+            "hexastack_tools.commands.pypi.build_all_packages", return_value=0
+        ) as mock_build,
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            build_main()
+        assert exc_info.value.code == 0
+        mock_repro.assert_called_once()
+        mock_build.assert_called_once()
+
+
+def test_build_main_reproducible_check_failure(monkeypatch: pytest.MonkeyPatch):
+    """Verify build_main aborts when reproducible check fails."""
+    monkeypatch.setattr("sys.argv", ["pypi-build", "--reproducible-check"])
+    with patch(
+        "hexastack_tools.commands.pypi.verify_reproducible_builds", return_value=1
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            build_main()
+        assert exc_info.value.code == 1
+
+
+def test_verify_reproducible_builds_no_packages():
+    """Verify verify_reproducible_builds returns 1 if no packages are found."""
+    with patch(
+        "hexastack_tools.commands.pypi.get_workspace_packages_metadata", return_value=[]
+    ):
+        rc = verify_reproducible_builds()
+        assert rc == 1
+
+
+def test_verify_reproducible_builds_success_and_mismatch(tmp_path: Path):
+    """Verify verify_reproducible_builds detects matching and mismatching files."""
+    pkg = PackageMetadata(
+        name="hexastack-core",
+        version="0.4.0",
+        dir_path=tmp_path,
+        pyproject_path=tmp_path / "pyproject.toml",
+    )
+
+    # Success case: fake build outputs matching files
+    def fake_build_success(cmd, cwd, env, capture_output, text):
+        out_dir = Path(cmd[cmd.index("--out-dir") + 1])
+        (out_dir / "hexastack_core-0.4.0-py3-none-any.whl").write_bytes(
+            b"exact-content"
+        )
+        return MagicMock(returncode=0)
+
+    with patch("subprocess.run", side_effect=fake_build_success):
+        rc = verify_reproducible_builds([pkg], source_date_epoch="1700000000")
+        assert rc == 0
+
+    # Build error case
+    with patch("subprocess.run", return_value=MagicMock(returncode=1)):
+        rc = verify_reproducible_builds([pkg], source_date_epoch="1700000000")
+        assert rc == 1
+
+    # Mismatch case
+    call_count = 0
+
+    def fake_build_mismatch(cmd, cwd, env, capture_output, text):
+        nonlocal call_count
+        call_count += 1
+        out_dir = Path(cmd[cmd.index("--out-dir") + 1])
+        (out_dir / "hexastack_core-0.4.0-py3-none-any.whl").write_bytes(
+            f"content-{call_count}".encode()
+        )
+        return MagicMock(returncode=0)
+
+    with patch("subprocess.run", side_effect=fake_build_mismatch):
+        rc = verify_reproducible_builds([pkg], source_date_epoch="1700000000")
+        assert rc == 1
+
+
+def test_reproducible_main(monkeypatch: pytest.MonkeyPatch):
+    """Verify reproducible_main entrypoint with filtering and missing packages."""
+    pkg = PackageMetadata(
+        name="hexastack-core",
+        version="0.4.0",
+        dir_path=Path(),
+        pyproject_path=Path("./pyproject.toml"),
+    )
+
+    with (
+        patch(
+            "hexastack_tools.commands.pypi.get_workspace_packages_metadata",
+            return_value=[pkg],
+        ),
+        patch(
+            "hexastack_tools.commands.pypi.verify_reproducible_builds", return_value=0
+        ) as mock_verify,
+    ):
+        monkeypatch.setattr("sys.argv", ["pypi-reproducible-check"])
+        with pytest.raises(SystemExit) as exc_info:
+            reproducible_main()
+        assert exc_info.value.code == 0
+        mock_verify.assert_called_once()
+
+    # Filter by specific package
+    with (
+        patch(
+            "hexastack_tools.commands.pypi.get_workspace_packages_metadata",
+            return_value=[pkg],
+        ),
+        patch(
+            "hexastack_tools.commands.pypi.verify_reproducible_builds", return_value=0
+        ) as mock_verify,
+    ):
+        monkeypatch.setattr(
+            "sys.argv", ["pypi-reproducible-check", "-p", "hexastack-core"]
+        )
+        with pytest.raises(SystemExit) as exc_info:
+            reproducible_main()
+        assert exc_info.value.code == 0
+
+    # Unknown package
+    with patch(
+        "hexastack_tools.commands.pypi.get_workspace_packages_metadata",
+        return_value=[pkg],
+    ):
+        monkeypatch.setattr(
+            "sys.argv", ["pypi-reproducible-check", "-p", "unknown-pkg"]
+        )
+        with pytest.raises(SystemExit) as exc_info:
+            reproducible_main()
+        assert exc_info.value.code == 1

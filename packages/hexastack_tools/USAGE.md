@@ -431,14 +431,16 @@ options:
 #### `pypi-build`
 
 ```text
-usage: pypi-build [-h] [--out-dir OUT_DIR]
+usage: pypi-build [-h] [--out-dir OUT_DIR] [--reproducible-check]
 
 Build distribution packages (wheels and sdists) for all workspace packages.
 
 options:
-  -h, --help         show this help message and exit
-  --out-dir OUT_DIR  Target directory for generated distribution packages
-                     (default: dist/)
+  -h, --help            show this help message and exit
+  --out-dir OUT_DIR     Target directory for generated distribution packages
+                        (default: dist/)
+  --reproducible-check  Audit build determinism and verify byte-for-byte
+                        reproducibility before building
 ```
 
 #### `pypi-publish`
@@ -583,6 +585,22 @@ options:
   --medium-url URL   Record the Medium URL for a slug after manual import.
   --api-key API_KEY  DEV.to API key (overrides DEVTO_API_KEY env var).
   --dry-run          Parse and display payload without making any API calls.
+```
+
+#### `pypi-reproducible-check`
+
+```text
+usage: pypi-reproducible-check [-h] [-p PACKAGE] [--epoch EPOCH]
+
+Verify byte-for-byte reproducible builds across workspace packages.
+
+options:
+  -h, --help            show this help message and exit
+  -p, --package PACKAGE
+                        Specific package name to verify (default: all
+                        packages)
+  --epoch EPOCH         Custom SOURCE_DATE_EPOCH timestamp (default: git
+                        commit timestamp)
 ```
 
 #### `pytest-boundary-audit`

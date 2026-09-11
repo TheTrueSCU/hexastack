@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import subprocess
 import sys
+import tempfile
 import time
 import tomllib
 from dataclasses import dataclass
@@ -122,7 +124,16 @@ def build_main() -> None:
         default=None,
         help="Target directory for generated distribution packages (default: dist/)",
     )
+    parser.add_argument(
+        "--reproducible-check",
+        action="store_true",
+        help="Audit build determinism and verify byte-for-byte reproducibility before building",
+    )
     args = parser.parse_args()
+    if args.reproducible_check:
+        repro_rc = verify_reproducible_builds()
+        if repro_rc != 0:
+            sys.exit(repro_rc)
     sys.exit(build_all_packages(out_dir=args.out_dir))
 
 
@@ -360,6 +371,171 @@ def publish_main() -> None:
     )
 
 
+def verify_reproducible_builds(
+    packages_to_check: list[PackageMetadata] | None = None,
+    source_date_epoch: str | None = None,
+) -> int:
+    """Verify that packages produce byte-for-byte reproducible wheel and sdist distributions.
+
+    Notes/Architectural Intent:
+        Satisfies OpenSSF Best Practices Gold requirement [build_reproducible] and SLSA
+        Level 3 build determinism standards. Builds artifacts twice into isolated temporary
+        locations under identical SOURCE_DATE_EPOCH timestamps and compares SHA-256 digests.
+
+    Args:
+        packages_to_check: Optional list of packages to audit. Defaults to all workspace packages.
+        source_date_epoch: Optional Unix timestamp epoch string. Defaults to git commit timestamp or 1700000000.
+
+    Returns:
+        0 if all distribution artifacts match byte-for-byte, 1 if any mismatch or build failure occurs.
+    """
+    repo_root = get_repo_root()
+    packages = packages_to_check or get_workspace_packages_metadata()
+    if not packages:
+        return 1
+
+    epoch = source_date_epoch or os.environ.get("SOURCE_DATE_EPOCH")
+    if not epoch:
+        try:
+            res = subprocess.run(
+                ["git", "log", "-1", "--pretty=%ct"],
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            epoch = res.stdout.strip()
+        except Exception:
+            epoch = "1700000000"
+
+    env = os.environ.copy()
+    env["SOURCE_DATE_EPOCH"] = epoch
+
+    table = Table(
+        title=f"[bold cyan]PyPI Reproducible Build Auditor (SOURCE_DATE_EPOCH={epoch})[/bold cyan]",
+        show_header=True,
+        header_style="bold magenta",
+    )
+    table.add_column("Package Name", style="bold")
+    table.add_column("Artifact File", style="cyan")
+    table.add_column("SHA-256 (Run 1 / Run 2)", style="dim")
+    table.add_column("Reproducibility", width=18)
+
+    all_matched = True
+
+    with (
+        tempfile.TemporaryDirectory(prefix="repro_run1_") as t1,
+        tempfile.TemporaryDirectory(prefix="repro_run2_") as t2,
+    ):
+        p1 = Path(t1)
+        p2 = Path(t2)
+
+        for pkg in packages:
+            cmd1 = ["uv", "build", "--package", pkg.name, "--out-dir", str(p1)]
+            res1 = subprocess.run(
+                cmd1, cwd=repo_root, env=env, capture_output=True, text=True
+            )
+            cmd2 = ["uv", "build", "--package", pkg.name, "--out-dir", str(p2)]
+            res2 = subprocess.run(
+                cmd2, cwd=repo_root, env=env, capture_output=True, text=True
+            )
+
+            if res1.returncode != 0 or res2.returncode != 0:
+                all_matched = False
+                table.add_row(
+                    pkg.name, "*", "Build error", "[bold red]✗ Build Failed[/bold red]"
+                )
+                continue
+
+            pkg_files_1 = _find_package_dist_files(p1, pkg)
+            if not pkg_files_1:
+                all_matched = False
+                table.add_row(
+                    pkg.name,
+                    "*",
+                    "No files generated",
+                    "[bold red]✗ Missing[/bold red]",
+                )
+                continue
+
+            for f1 in pkg_files_1:
+                f2 = p2 / f1.name
+                if not f2.is_file():
+                    all_matched = False
+                    table.add_row(
+                        pkg.name,
+                        f1.name,
+                        "File missing in Run 2",
+                        "[bold red]✗ Missing[/bold red]",
+                    )
+                    continue
+
+                h1 = hashlib.sha256(f1.read_bytes()).hexdigest()
+                h2 = hashlib.sha256(f2.read_bytes()).hexdigest()
+                if h1 == h2:
+                    table.add_row(
+                        pkg.name,
+                        f1.name,
+                        f"{h1[:16]}...",
+                        "[bold green]✓ Reproducible[/bold green]",
+                    )
+                else:
+                    all_matched = False
+                    table.add_row(
+                        pkg.name,
+                        f1.name,
+                        f"{h1[:8]} != {h2[:8]}",
+                        "[bold red]✗ Mismatch[/bold red]",
+                    )
+
+    console.print(table)
+    if all_matched:
+        console.print(
+            "[bold green]All package distributions are 100% byte-for-byte reproducible![/bold green]"
+        )
+        return 0
+    console.print(
+        "[bold red]One or more package distributions produced non-deterministic outputs.[/bold red]"
+    )
+    return 1
+
+
+def reproducible_main() -> None:
+    """CLI entrypoint for pypi-reproducible-check."""
+    parser = argparse.ArgumentParser(
+        description="Verify byte-for-byte reproducible builds across workspace packages."
+    )
+    parser.add_argument(
+        "-p",
+        "--package",
+        type=str,
+        default=None,
+        help="Specific package name to verify (default: all packages)",
+    )
+    parser.add_argument(
+        "--epoch",
+        type=str,
+        default=None,
+        help="Custom SOURCE_DATE_EPOCH timestamp (default: git commit timestamp)",
+    )
+    args = parser.parse_args()
+
+    packages = get_workspace_packages_metadata()
+    if args.package:
+        packages = [p for p in packages if p.name == args.package]
+        if not packages:
+            console.print(
+                f"[bold red]Package '{args.package}' not found in workspace.[/bold red]"
+            )
+            sys.exit(1)
+
+    sys.exit(
+        verify_reproducible_builds(
+            packages_to_check=packages, source_date_epoch=args.epoch
+        )
+    )
+
+
 __all__ = [
     "build_all_packages",
     "build_main",
@@ -369,4 +545,6 @@ __all__ = [
     "PackageMetadata",
     "publish_main",
     "publish_packages",
+    "reproducible_main",
+    "verify_reproducible_builds",
 ]

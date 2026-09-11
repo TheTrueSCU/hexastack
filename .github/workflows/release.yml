@@ -55,6 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      attestations: write
       contents: read
     environment:
       name: pypi
@@ -81,6 +82,13 @@ jobs:
       - name: Build All Monorepo Distribution Packages
         run: uv run pypi-build --out-dir dist/
 
+      - name: Verify Reproducible Distribution Builds
+        run: uv run pypi-reproducible-check -p hexastack-core
+
+      - name: Attest SLSA Build Provenance (Sigstore)
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: 'dist/*'
 
       - name: Publish Distribution Packages to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
@@ -97,6 +105,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # required to upload assets to the GitHub release
+      id-token: write  # required for Sigstore attestation
+      attestations: write  # required to create GitHub attestations
 
     steps:
       - name: Checkout Tagged Release
@@ -130,6 +140,12 @@ jobs:
           path: .
           format: cyclonedx-json
           output-file: hexastack-${{ needs.release.outputs.version }}-sbom.cyclonedx.json
+
+      - name: Attest SBOM Provenance
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-path: 'hexastack-${{ needs.release.outputs.version }}-sbom.spdx.json'
+          sbom-path: 'hexastack-${{ needs.release.outputs.version }}-sbom.spdx.json'
 
       - name: Attach SBOMs to GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3

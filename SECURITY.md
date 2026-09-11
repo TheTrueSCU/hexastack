@@ -106,13 +106,32 @@ Hexastack maintains a formal security assurance case to demonstrate why its secu
 * **Strict Least Privilege**: Docker deployment containers execute under unprivileged user IDs (`appuser:10001`). Framework abstractions avoid elevated permissions or filesystem root access.
 * **Separation of Concerns & Isolation**: Strict architectural layering enforced statically on every commit via `import-linter` and `pytest-archon`.
 * **Fail-Secure Defaults**: Security exceptions reject requests with closed states; authentication middlewares require explicit role permits.
-* **Cryptographic & Credential Agility**: Key rotation and configurable algorithms (RS256, EdDSA) supported without code modification.
+* **Cryptographic & Credential Agility**:
+  * Key rotation and configurable algorithms (RS256, EdDSA, HS256) supported in `hexastack-auth` without code modification.
+  * Zero-downtime secret rotation: JWT keys, API tokens, and database credentials can be updated dynamically via environment variables, secret volume mounts (`/run/secrets/`), or secret management adapters.
+  * Mandatory TLS verification: All outbound HTTP (`httpx`), gRPC, and database adapters strictly enforce TLS 1.3 certificate validation and hostname verification before transmitting sensitive headers, bearer tokens, or user credentials.
 
 ### 4. Implementation Security Weakness Countermeasures
 * **Automated Static Analysis (SAST)**: Enforced via `Ruff` (security rules `S`), `ty check`, and GitHub `CodeQL`.
 * **Automated Dependency Auditing (SCA)**: Daily `Dependabot` vulnerability monitoring and pre-commit `pip-audit` scans.
 * **Property & Contract Fuzzing**: Algorithmic correctness validated via `Hypothesis` property-based testing and `Schemathesis` OpenAPI contract testing.
 * **Secret Detection**: `detect-secrets` hook in pre-commit prevents accidental credential check-ins.
+
+### 5. Reproducible Builds & SLSA Level 3 Provenance
+Hexastack satisfies OpenSSF Best Practices Gold requirement `[build_reproducible]` and SLSA Build Level 3 provenance standards:
+* **Deterministic Distribution Builds**: All workspace distribution artifacts (wheels and source tarballs) are built deterministically using PEP 517/621 standards, pinned `uv.lock` dependency graphs, and standardized timestamps via `SOURCE_DATE_EPOCH`.
+* **Independent Reproducibility Verification**: Anyone can independently audit and verify byte-for-byte build determinism across the repository using the built-in reproducible build auditor:
+  ```bash
+  uv run pypi-reproducible-check
+  # Or audit a specific package:
+  uv run pypi-reproducible-check -p hexastack-core
+  ```
+* **Sigstore Cryptographic Provenance Attestation**: Every release pipeline executes `actions/attest-build-provenance` to generate tamper-evident SLSA Provenance attestations anchored in Sigstore's public transparency log.
+* **Consumer Verification**: End users and compliance auditors can verify distribution provenance using the GitHub CLI:
+  ```bash
+  gh attestation verify hexastack_core-0.4.0-py3-none-any.whl --owner TheTrueSCU
+  ```
+* **Software Bill of Materials (SBOM)**: Every release generates and cryptographically attests both SPDX JSON (`actions/attest-sbom`) and CycloneDX JSON SBOMs detailing transitive dependencies and cryptographic hashes.
 
 ---
 
@@ -122,4 +141,4 @@ Please submit all reports in **English** to ensure the fastest possible triage a
 
 ---
 
-*This policy follows coordinated disclosure best practices. Last reviewed: 2026-08.*
+*This policy follows coordinated disclosure best practices and OpenSSF Gold standards. Last reviewed: 2026-09.*
