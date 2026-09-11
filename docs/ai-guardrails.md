@@ -63,6 +63,7 @@
 ### Governance, Architecture & Packaging Tools
 | Tool Command | Purpose |
 |---|---|
+| `uv run sanity-check [-p <pkg>] [-e <example>]` | Fast scoped pre-commit validator (Ruff, Ty, complexipy, `__all__`, test parity, pytest) with Rich dashboard. |
 | `uv run check-all-statements` | Validates that `__all__` is sorted and deduplicated across all packages. |
 | `uv run fix-all-statements -p <pkg>` | Auto-formats and alphabetizes `__all__` in a specific package. |
 | `uv run fix-all-statements -a` | Auto-formats and alphabetizes `__all__` across all packages. |

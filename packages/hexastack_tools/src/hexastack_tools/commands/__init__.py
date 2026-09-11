@@ -78,6 +78,9 @@ from hexastack_tools.commands.rope import (
 from hexastack_tools.commands.rope import (
     run_main as rope_run_main,
 )
+from hexastack_tools.commands.sanity_check import (
+    main as sanity_check_main,
+)
 from hexastack_tools.commands.security import (
     main as security_main,
 )
@@ -112,6 +115,7 @@ __all__ = [
     "pytest_run_main",
     "rope_alphabetize_main",
     "rope_run_main",
+    "sanity_check_main",
     "security_main",
     "test_parity_main",
 ]

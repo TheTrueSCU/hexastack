@@ -13,7 +13,11 @@ from hexastack_core.infra.autodiscovery import (
 from hexastack_core.infra.decorators import ConfigMetadata, ExceptionMetadata
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.presenter import PresenterPort
-from hexastack_cqrs.infra.decorators import HandlerMetadata, PresenterMetadata
+from hexastack_cqrs.infra.decorators import (
+    HandlerMetadata,
+    PresenterMetadata,
+    SagaMetadata,
+)
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
 __all__ = [
@@ -87,6 +91,61 @@ def _register_presenter(
     pipeline._presenter_registry.register(
         meta.target_cls, meta.output_format, presenter_inst
     )
+
+
+def _register_saga(
+    obj: Any,
+    meta: SagaMetadata,
+    pipeline: ExecutionPipeline,
+    container: Container | None,
+) -> None:
+    """Register discovered Saga workflow in Command and Handler registries.
+
+    Args:
+        obj: Discovered saga class or builder function.
+        meta: Attached SagaMetadata.
+        pipeline: Target ExecutionPipeline.
+        container: Optional rodi Container for dependency resolution.
+
+    Notes/Architectural Intent:
+        Binds sagas with trigger Commands directly into the CQRS pipeline,
+        enabling transparent orchestration dispatch via pipeline.execute(cmd).
+    """
+    if meta.trigger is None:
+        return
+
+    pipeline._command_registry.register(meta.trigger)
+
+    def _saga_handler(cmd: Any) -> Any:
+        from hexastack_cqrs.adapters.sagas import InMemorySagaOrchestrator
+        from hexastack_cqrs.domain.sagas import SagaDefinition
+        from hexastack_cqrs.infra.sagas import SagaBuilder
+
+        orchestrator = InMemorySagaOrchestrator()
+        if meta.is_class:
+            instance = (
+                container.resolve(obj)
+                if container is not None and obj in container
+                else obj()
+            )
+            saga_def: SagaDefinition = instance.build_saga(cmd)
+        else:
+            sig = inspect.signature(obj)
+            if len(sig.parameters) >= 2:
+                builder = SagaBuilder(name=meta.name)
+                res = obj(cmd, builder)
+                saga_def = res if isinstance(res, SagaDefinition) else builder.build()
+            else:
+                res = obj(cmd)
+                if isinstance(res, SagaDefinition):
+                    saga_def = res
+                else:
+                    builder = SagaBuilder(name=meta.name)
+                    saga_def = builder.build()
+
+        return orchestrator.execute(saga_def)
+
+    pipeline._handler_registry.register(meta.trigger, _saga_handler)
 
 
 def _resolve_callable(
@@ -169,5 +228,9 @@ def create_cqrs_visitor(
             _register_exception(obj, meta, pipeline, container)
         elif isinstance(meta, ConfigMetadata):
             _register_config(obj, meta, config_registry)
+
+        saga_meta = getattr(obj, "__hexastack_saga__", None)
+        if isinstance(saga_meta, SagaMetadata):
+            _register_saga(obj, saga_meta, pipeline, container)
 
     return visitor

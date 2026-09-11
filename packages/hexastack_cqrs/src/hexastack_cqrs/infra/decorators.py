@@ -1,6 +1,7 @@
+import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra.decorators import (
@@ -72,6 +73,10 @@ __all__ = [
     "PresenterMetadata",
     "query_handler",
     "QueryCacheMetadata",
+    "saga",
+    "SagaMetadata",
+    "step",
+    "StepMetadata",
 ]
 
 
@@ -373,5 +378,293 @@ def circuit_breaker(
             ),
         )
         return cls
+
+    return decorator
+
+
+_STEP_META_ATTR = "__hexastack_saga_step__"
+_SAGA_META_ATTR = "__hexastack_saga__"
+
+
+@dataclass(frozen=True)
+class StepMetadata:
+    """Metadata tag attached to class methods representing saga steps.
+
+    Notes/Architectural Intent:
+        Encapsulates step ordering, optional compensation binding, and prerequisites
+        for deterministic topological assembly into a SagaDefinition.
+    """
+
+    name: str
+    order: int = 0
+    compensate: str | Callable[..., Any] | None = None
+    depends_on: tuple[str, ...] = ()
+    timeout_seconds: float | None = None
+
+
+@dataclass(frozen=True)
+class SagaMetadata:
+    """Metadata tag attached to saga workflow classes or builder functions.
+
+    Notes/Architectural Intent:
+        Tags saga definitions for autodiscovery and optional Command trigger binding,
+        supporting both functional DSL (Pattern A) and class-based step methods (Pattern B).
+    """
+
+    name: str
+    trigger: type[Command] | None = None
+    is_class: bool = False
+    builder_fn: Callable[..., Any] | None = None
+
+
+def step(
+    name: str | None = None,
+    order: int = 0,
+    compensate: str | Callable[..., Any] | None = None,
+    depends_on: list[str] | tuple[str, ...] | None = None,
+    timeout_seconds: float | None = None,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Mark a class method as a forward step in a distributed saga.
+
+    Args:
+        name: Unique step name. If omitted, uses the decorated method name.
+        order: Execution sequence index (lower runs first).
+        compensate: Name of the compensating method on the same class, or a callable.
+        depends_on: Optional list of prerequisite step names.
+        timeout_seconds: Optional timeout bound in seconds for this step.
+
+    Returns:
+        Decorated method with StepMetadata attached.
+
+    Notes/Architectural Intent:
+        Enables Pattern B declarative class-based sagas with deterministic ordering.
+    """
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        step_name = name or getattr(fn, "__name__", "anonymous_step")
+        meta = StepMetadata(
+            name=step_name,
+            order=order,
+            compensate=compensate,
+            depends_on=tuple(depends_on) if depends_on else (),
+            timeout_seconds=timeout_seconds,
+        )
+        setattr(fn, _STEP_META_ATTR, meta)
+        return fn
+
+    return decorator
+
+
+def _collect_sorted_steps(
+    target: type[Any], saga_name: str
+) -> list[tuple[str, StepMetadata]]:
+    """Collect and deterministically sort @step methods on a saga class.
+
+    Args:
+        target: Target class to inspect.
+        saga_name: Name of the saga for error reporting.
+
+    Returns:
+        List of (attribute_name, StepMetadata) sorted by order.
+
+    Raises:
+        ValueError: If no @step methods are found.
+
+    Notes/Architectural Intent:
+        Guarantees deterministic forward step execution ordering regardless of
+        method declaration order in class bodies.
+    """
+    steps_meta: list[tuple[str, StepMetadata]] = []
+    for attr_name in dir(target):
+        member = getattr(target, attr_name, None)
+        if callable(member):
+            meta = getattr(member, _STEP_META_ATTR, None)
+            if isinstance(meta, StepMetadata):
+                steps_meta.append((attr_name, meta))
+
+    if not steps_meta:
+        raise ValueError(
+            f"Saga class '{saga_name}' must define at least one method decorated with @step."
+        )
+
+    steps_meta.sort(key=lambda item: item[1].order)
+    return steps_meta
+
+
+def _create_step_action(act: Callable[..., Any], context: Any) -> Callable[[Any], Any]:
+    """Create invocation wrapper for a forward saga step action.
+
+    Args:
+        act: Method or callable to invoke.
+        context: Top-level saga context/command.
+
+    Returns:
+        Callable accepting orchestrator ctx dict.
+
+    Notes/Architectural Intent:
+        Dynamically adapts between 0-arg, 1-arg (command/context), and 2-arg (command, ctx) signatures.
+    """
+    sig = inspect.signature(act)
+    params = len(sig.parameters)
+
+    def _invoker(ctx: Any) -> Any:
+        if params == 0:
+            return act()
+        if params == 1:
+            return act(context if context is not None else ctx)
+        return act(context if context is not None else ctx, ctx)
+
+    return _invoker
+
+
+def _resolve_step_compensation(
+    instance: Any, step_meta: StepMetadata, saga_name: str
+) -> Callable[..., Any] | None:
+    """Resolve compensation callable from method name or callable reference.
+
+    Args:
+        instance: Saga class instance.
+        step_meta: Metadata of the current step.
+        saga_name: Saga name for exception diagnostics.
+
+    Returns:
+        Resolved compensation callable or None.
+
+    Raises:
+        ValueError: If compensation method name does not exist on instance.
+
+    Notes/Architectural Intent:
+        Validates compensation seam presence at workflow assembly time.
+    """
+    if isinstance(step_meta.compensate, str):
+        if not hasattr(instance, step_meta.compensate):
+            raise ValueError(
+                f"Saga step '{step_meta.name}' references non-existent "
+                f"compensation method '{step_meta.compensate}' on '{saga_name}'."
+            )
+        return getattr(instance, step_meta.compensate)
+    if callable(step_meta.compensate):
+        return step_meta.compensate
+    return None
+
+
+def _create_step_compensation(
+    cmp_fn: Callable[..., Any] | None,
+) -> Callable[..., Any] | None:
+    """Create invocation wrapper for a saga step compensation.
+
+    Args:
+        cmp_fn: Compensation callable or None.
+
+    Returns:
+        Wrapped compensation callable or None.
+
+    Notes/Architectural Intent:
+        Adapts between 0-arg, 1-arg (forward_result), and 2-arg (result, ctx) signatures.
+    """
+    if cmp_fn is None:
+        return None
+    sig = inspect.signature(cmp_fn)
+    params = len(sig.parameters)
+
+    def _comp_invoker(forward_res: Any, ctx: Any = None) -> Any:
+        if params == 0:
+            return cmp_fn()
+        if params == 1:
+            return cmp_fn(forward_res)
+        return cmp_fn(forward_res, ctx)
+
+    return _comp_invoker
+
+
+def _build_class_saga(
+    self: Any,
+    steps_meta: list[tuple[str, StepMetadata]],
+    saga_name: str,
+    context: Any = None,
+) -> Any:
+    """Build SagaDefinition by configuring steps on SagaBuilder.
+
+    Args:
+        self: Saga class instance.
+        steps_meta: Sequence of sorted step metadata pairs.
+        saga_name: Workflow name.
+        context: Optional trigger command or context data.
+
+    Returns:
+        Constructed SagaDefinition.
+
+    Notes/Architectural Intent:
+        Translates decorated class methods into fluent SagaDefinition configuration.
+    """
+    from hexastack_cqrs.infra.sagas import SagaBuilder
+
+    builder = SagaBuilder(name=saga_name)
+    for attr, step_meta in steps_meta:
+        bound_action = getattr(self, attr)
+        bound_comp = _resolve_step_compensation(self, step_meta, saga_name)
+
+        builder.step(
+            name=step_meta.name,
+            action=_create_step_action(bound_action, context),
+            compensate=_create_step_compensation(bound_comp),
+            timeout_seconds=step_meta.timeout_seconds,
+        )
+    return builder.build()
+
+
+SagaTarget = TypeVar("SagaTarget")
+
+
+def saga(
+    name: str | None = None,
+    trigger: type[Command] | None = None,
+) -> Callable[[SagaTarget], SagaTarget]:
+    """Declare a distributed saga from a class (Pattern B) or a function (Pattern A).
+
+    Args:
+        name: Unique name for the saga workflow. Defaults to target class or function name.
+        trigger: Optional domain Command type that triggers this saga in CQRS pipelines.
+
+    Returns:
+        Decorated class or function with SagaMetadata and saga generation capabilities attached.
+
+    Notes/Architectural Intent:
+        Unifies Pattern A (functional DSL) and Pattern B (class-based steps) under
+        a single declarative decorator. For classes, automatically generates a
+        `build_saga(self, context=None) -> SagaDefinition` method by sorting @step methods.
+    """
+
+    def decorator(target: SagaTarget) -> SagaTarget:
+        from hexastack_cqrs.domain.sagas import SagaDefinition
+
+        saga_name = name or getattr(target, "__name__", "UnnamedSaga")
+
+        if inspect.isclass(target):
+            steps_meta = _collect_sorted_steps(target, saga_name)
+
+            def build_saga(self: Any, context: Any = None) -> SagaDefinition:
+                return _build_class_saga(self, steps_meta, saga_name, context)
+
+            setattr(target, "build_saga", build_saga)  # noqa: B010
+            setattr(
+                target,
+                _SAGA_META_ATTR,
+                SagaMetadata(name=saga_name, trigger=trigger, is_class=True),
+            )
+            return target
+
+        # Pattern A: Function-based saga
+        setattr(
+            target,
+            _SAGA_META_ATTR,
+            SagaMetadata(
+                name=saga_name,
+                trigger=trigger,
+                is_class=False,
+                builder_fn=cast("Callable[..., Any]", target),
+            ),
+        )
+        return target
 
     return decorator

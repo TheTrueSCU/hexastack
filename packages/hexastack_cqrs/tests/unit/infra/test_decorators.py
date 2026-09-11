@@ -8,12 +8,15 @@ from hexastack_cqrs.infra.decorators import (
     ExceptionMetadata,
     HandlerMetadata,
     PresenterMetadata,
+    SagaMetadata,
     command_handler,
     config_section,
     event_listener,
     exception_handler,
     presenter,
     query_handler,
+    saga,
+    step,
 )
 
 
@@ -101,4 +104,83 @@ def test_query_handler_decorator():
     assert isinstance(meta, HandlerMetadata)
     assert meta.kind == "query"
     assert meta.target_cls == SampleQuery
-    assert handle_qry(SampleQuery(id="q1")) == "q1"
+    res = handle_qry(SampleQuery(id="q1"))
+    assert res == "q1"
+
+
+def test_saga_decorator_pattern_a_function() -> None:
+    """Verify @saga on functional workflow definition (Pattern A)."""
+
+    @saga(name="FuncSaga", trigger=SampleCommand)
+    def my_saga(cmd: SampleCommand) -> None:
+        pass
+
+    meta = getattr(my_saga, "__hexastack_saga__", None)
+    assert isinstance(meta, SagaMetadata)
+    assert meta.name == "FuncSaga"
+    assert meta.trigger == SampleCommand
+    assert meta.is_class is False
+
+
+def test_saga_decorator_pattern_b_class() -> None:
+    """Verify @saga on class with @step methods (Pattern B)."""
+    trace: list[str] = []
+
+    @saga(name="ClassWorkflowSaga", trigger=SampleCommand)
+    class BookingSaga:
+        @step(name="Step1", order=1, compensate="rollback_step1")
+        def forward1(self, cmd: SampleCommand) -> str:
+            trace.append("f1")
+            return f"f1_{cmd.id}"
+
+        def rollback_step1(self, res: str) -> None:
+            trace.append(f"comp1_{res}")
+
+        @step(name="Step2", order=2)
+        def forward2(self, cmd: SampleCommand) -> str:
+            trace.append("f2")
+            return "f2_done"
+
+    meta = getattr(BookingSaga, "__hexastack_saga__", None)
+    assert isinstance(meta, SagaMetadata)
+    assert meta.name == "ClassWorkflowSaga"
+    assert meta.trigger == SampleCommand
+    assert meta.is_class is True
+
+    instance = BookingSaga()
+    instance_any: Any = instance
+    saga_def = instance_any.build_saga(SampleCommand(id="c99"))
+    assert saga_def.name == "ClassWorkflowSaga"
+    assert len(saga_def.steps) == 2
+    assert saga_def.steps[0].name == "Step1"
+    assert saga_def.steps[1].name == "Step2"
+
+
+def test_saga_decorator_class_without_steps_raises_error() -> None:
+    """Verify class with no @step methods raises ValueError."""
+    import pytest
+
+    with pytest.raises(
+        ValueError, match="must define at least one method decorated with @step"
+    ):
+
+        @saga(name="EmptySaga")
+        class EmptySaga:
+            def plain_method(self) -> None:
+                pass
+
+
+def test_saga_decorator_class_with_missing_compensate_raises_error() -> None:
+    """Verify step referencing non-existent compensation method raises ValueError."""
+    import pytest
+
+    @saga(name="BrokenSaga")
+    class BrokenSaga:
+        @step(name="Step1", order=1, compensate="nonexistent_method")
+        def forward(self) -> None:
+            pass
+
+    instance = BrokenSaga()
+    instance_any: Any = instance
+    with pytest.raises(ValueError, match="references non-existent compensation method"):
+        instance_any.build_saga()
