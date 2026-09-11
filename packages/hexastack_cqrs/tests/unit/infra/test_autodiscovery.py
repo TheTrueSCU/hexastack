@@ -291,3 +291,70 @@ def test_autodiscover_cqrs_top_level_function():
     handler_fn = pipeline._handler_registry.get(CreateOrder)
     assert handler_fn is not None
     assert handler_fn(CreateOrder(order_id="tl-1")) == "top-level-tl-1"
+
+
+def test_autodiscover_saga_pattern_b_class():
+    """Verify autodiscover_cqrs registers Pattern B class-based saga triggered by command."""
+    from hexastack_cqrs.domain.sagas import SagaStatus
+    from hexastack_cqrs.infra.decorators import saga, step
+
+    class BookTripCommand(Command):
+        trip_id: str
+
+    @saga(name="AutoDiscoveredTripSaga", trigger=BookTripCommand)
+    class AutoTripSaga:
+        @step(name="StepA", order=1, compensate="cancel_a")
+        def reserve_a(self, cmd: BookTripCommand) -> str:
+            return f"res_a_{cmd.trip_id}"
+
+        def cancel_a(self, res: str) -> None:
+            pass
+
+        @step(name="StepB", order=2)
+        def reserve_b(self, cmd: BookTripCommand) -> str:
+            return f"res_b_{cmd.trip_id}"
+
+    mod = types.ModuleType("dummy_saga_mod")
+    setattr(mod, "AutoTripSaga", AutoTripSaga)  # noqa: B010
+
+    pipeline = ExecutionPipeline(handler_registry=HandlerRegistry())
+    autodiscover_cqrs([mod], pipeline)
+
+    assert "BookTripCommand" in pipeline._command_registry
+    assert BookTripCommand in pipeline._handler_registry
+
+    result = pipeline.execute(BookTripCommand(trip_id="t-55"))
+    assert result.status == SagaStatus.COMPLETED
+    assert result.step_results["StepA"] == "res_a_t-55"
+    assert result.step_results["StepB"] == "res_b_t-55"
+
+
+def test_autodiscover_saga_pattern_a_function():
+    """Verify autodiscover_cqrs registers Pattern A function-based saga triggered by command."""
+    from hexastack_cqrs.domain.sagas import SagaStatus
+    from hexastack_cqrs.infra.decorators import saga
+    from hexastack_cqrs.infra.sagas import SagaBuilder
+
+    class PurchaseCommand(Command):
+        sku: str
+
+    @saga(name="AutoPurchaseSaga", trigger=PurchaseCommand)
+    def purchase_workflow(cmd: PurchaseCommand, builder: SagaBuilder) -> None:
+        builder.step(
+            name="ReserveItem",
+            action=lambda ctx: f"reserved_{cmd.sku}",
+            compensate=lambda res, ctx: None,
+        )
+
+    mod = types.ModuleType("dummy_func_saga_mod")
+    setattr(mod, "purchase_workflow", purchase_workflow)  # noqa: B010
+
+    pipeline = ExecutionPipeline(handler_registry=HandlerRegistry())
+    autodiscover_cqrs([mod], pipeline)
+
+    assert "PurchaseCommand" in pipeline._command_registry
+    assert PurchaseCommand in pipeline._handler_registry
+
+    result = pipeline.execute(PurchaseCommand(sku="item-99"))
+    assert result.status == SagaStatus.COMPLETED
+    assert result.step_results["ReserveItem"] == "reserved_item-99"

@@ -11,7 +11,9 @@ from trip_booking.adapters.driven.in_memory import (
 from trip_booking.domain.models import BookingStatus, TripBookingRequest
 
 
-def test_flight_adapter_booking_and_cancellation(sample_request: TripBookingRequest) -> None:
+def test_flight_adapter_booking_and_cancellation(
+    sample_request: TripBookingRequest,
+) -> None:
     """Verify flight service reservations and compensation cancellation."""
     service = InMemoryFlightService()
     flight = service.book_flight(sample_request)
@@ -35,7 +37,9 @@ def test_flight_adapter_failure_injection(sample_request: TripBookingRequest) ->
         service.book_flight(sample_request)
 
 
-def test_hotel_adapter_booking_and_cancellation(sample_request: TripBookingRequest) -> None:
+def test_hotel_adapter_booking_and_cancellation(
+    sample_request: TripBookingRequest,
+) -> None:
     """Verify hotel service reservations and compensation cancellation."""
     service = InMemoryHotelService()
     hotel = service.reserve_hotel(sample_request)
@@ -59,7 +63,9 @@ def test_hotel_adapter_failure_injection(sample_request: TripBookingRequest) -> 
         service.reserve_hotel(sample_request)
 
 
-def test_car_rental_adapter_booking_and_cancellation(sample_request: TripBookingRequest) -> None:
+def test_car_rental_adapter_booking_and_cancellation(
+    sample_request: TripBookingRequest,
+) -> None:
     """Verify car rental service reservations and compensation cancellation."""
     service = InMemoryCarRentalService()
     car = service.rent_car(sample_request)
@@ -76,7 +82,9 @@ def test_car_rental_adapter_booking_and_cancellation(sample_request: TripBooking
     assert updated_status == BookingStatus.CANCELLED
 
 
-def test_car_rental_adapter_failure_injection(sample_request: TripBookingRequest) -> None:
+def test_car_rental_adapter_failure_injection(
+    sample_request: TripBookingRequest,
+) -> None:
     """Verify car rental service raises on injected failure."""
     service = InMemoryCarRentalService(should_fail=True)
     with pytest.raises(RuntimeError, match="No Compact vehicles available"):

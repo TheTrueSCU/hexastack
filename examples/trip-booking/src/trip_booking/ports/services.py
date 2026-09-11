@@ -122,7 +122,9 @@ class PaymentServicePort(ABC):
     """
 
     @abstractmethod
-    def process_payment(self, request: TripBookingRequest, amount: float) -> PaymentReceipt:
+    def process_payment(
+        self, request: TripBookingRequest, amount: float
+    ) -> PaymentReceipt:
         """Process financial charge for the aggregated trip cost.
 
         Args:

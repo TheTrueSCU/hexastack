@@ -26,8 +26,12 @@ console = Console()
 @cli_app.command("book")
 def book_command(
     customer_id: str = typer.Option("cust-42", "--customer", "-c", help="Customer ID"),
-    destination: str = typer.Option("Tokyo", "--destination", "-d", help="Destination city"),
-    hotel_nights: int = typer.Option(4, "--nights", "-n", help="Number of hotel nights"),
+    destination: str = typer.Option(
+        "Tokyo", "--destination", "-d", help="Destination city"
+    ),
+    hotel_nights: int = typer.Option(
+        4, "--nights", "-n", help="Number of hotel nights"
+    ),
     fail_at: str = typer.Option(
         "none",
         "--fail-at",
@@ -73,16 +77,25 @@ def book_command(
     table.add_row("Destination", summary.destination)
 
     status_color = "green" if summary.status == BookingStatus.CONFIRMED else "red"
-    table.add_row("Final Status", f"[{status_color}]{summary.status.value}[/{status_color}]")
+    table.add_row(
+        "Final Status", f"[{status_color}]{summary.status.value}[/{status_color}]"
+    )
     table.add_row("Total Charged", f"${summary.total_cost:.2f}")
 
     if summary.status == BookingStatus.CONFIRMED:
         if summary.flight:
-            table.add_row("Flight", f"{summary.flight.flight_number} (${summary.flight.price:.2f})")
+            table.add_row(
+                "Flight",
+                f"{summary.flight.flight_number} (${summary.flight.price:.2f})",
+            )
         if summary.hotel:
-            table.add_row("Hotel", f"{summary.hotel.hotel_name} (${summary.hotel.price:.2f})")
+            table.add_row(
+                "Hotel", f"{summary.hotel.hotel_name} (${summary.hotel.price:.2f})"
+            )
         if summary.car:
-            table.add_row("Car Rental", f"{summary.car.vehicle_class} (${summary.car.price:.2f})")
+            table.add_row(
+                "Car Rental", f"{summary.car.vehicle_class} (${summary.car.price:.2f})"
+            )
         if summary.payment:
             table.add_row("Payment Ref", summary.payment.transaction_id)
     else:

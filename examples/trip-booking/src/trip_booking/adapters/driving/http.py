@@ -24,7 +24,9 @@ def get_default_container() -> TripBookingServiceContainer:
     return create_container()
 
 
-def create_api_router(container_override: TripBookingServiceContainer | None = None) -> APIRouter:
+def create_api_router(
+    container_override: TripBookingServiceContainer | None = None,
+) -> APIRouter:
     """Create configured FastAPI APIRouter for trip booking operations."""
     router = APIRouter(prefix="/trips", tags=["trips"])
 
@@ -42,9 +44,13 @@ def create_api_router(container_override: TripBookingServiceContainer | None = N
         response: Response,
         fail_at: Annotated[
             Literal["flight", "hotel", "car", "payment"] | None,
-            Query(description="Optionally inject failure into a specific step to trigger compensation"),
+            Query(
+                description="Optionally inject failure into a specific step to trigger compensation"
+            ),
         ] = None,
-        container: Annotated[TripBookingServiceContainer | None, Depends(get_default_container)] = None,
+        container: Annotated[
+            TripBookingServiceContainer | None, Depends(get_default_container)
+        ] = None,
     ) -> TripBookingSummary:
         active_container = container_override or container or get_default_container()
         if fail_at is not None:

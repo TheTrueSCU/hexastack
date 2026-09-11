@@ -104,3 +104,28 @@ def test_saga_failure_at_payment_step_compensates_car_hotel_flight(
     assert hotel_cancelled == 1
     flight_cancelled = len(container.flight_service.cancelled_reservations)
     assert flight_cancelled == 1
+
+
+def test_saga_decorator_metadata_and_ordering(
+    sample_request: TripBookingRequest,
+) -> None:
+    """Verify that TripBookingCoordinator is decorated with @saga and steps are deterministically ordered."""
+    from hexastack_cqrs.infra.decorators import SagaMetadata
+
+    container = create_container()
+    meta = getattr(container.coordinator, "__hexastack_saga__", None)
+    assert isinstance(meta, SagaMetadata)
+    assert meta.name == "TripBookingSaga"
+    assert meta.is_class is True
+
+    saga_def = container.coordinator.build_saga(sample_request)
+    assert saga_def.name == "TripBookingSaga"
+    assert len(saga_def.steps) == 4
+
+    step_names = [s.name for s in saga_def.steps]
+    assert step_names == ["BookFlight", "ReserveHotel", "RentCar", "ProcessPayment"]
+
+    # All 4 steps must have non-empty compensation hooks
+    for s in saga_def.steps:
+        comp_fn = s.compensation
+        assert comp_fn is not None

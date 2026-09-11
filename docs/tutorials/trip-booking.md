@@ -146,8 +146,19 @@ examples/trip-booking/
          def cancel_flight(self, reservation: FlightReservation) -> None: ...
      ```
 
-3. **`infra/` (The Declarative DSL)**:
-   - Uses `SagaBuilder` from `hexastack-cqrs` to declare steps and their compensating counterparts fluently:
+3. **`infra/` (The Declarative Saga Orchestrator)**:
+   - Uses `@saga` and `@step` decorators from `hexastack-cqrs` to declare steps and their compensating counterparts deterministically on classes:
+     ```python
+     @saga(name="TripBookingSaga")
+     class TripBookingCoordinator:
+         @step(name="BookFlight", order=1, compensate="cancel_flight")
+         def book_flight(self, request: TripBookingRequest) -> FlightReservation:
+             return self.flight_service.book_flight(request)
+
+         def cancel_flight(self, reservation: FlightReservation) -> None:
+             self.flight_service.cancel_flight(reservation)
+     ```
+   - Alternatively, uses the fluent functional `SagaBuilder` DSL (Pattern A) when dynamic step assembly is needed at runtime:
      ```python
      builder = SagaBuilder("TripBookingSaga")
      builder.step(

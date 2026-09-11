@@ -9,7 +9,9 @@ runner = CliRunner()
 
 def test_cli_book_success() -> None:
     """Verify CLI book command without failures."""
-    result = runner.invoke(cli_app, ["book", "--customer", "cust-cli", "--destination", "Kyoto"])
+    result = runner.invoke(
+        cli_app, ["book", "--customer", "cust-cli", "--destination", "Kyoto"]
+    )
     code = result.exit_code
     assert code == 0
     output = result.stdout

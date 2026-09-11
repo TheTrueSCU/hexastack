@@ -49,7 +49,7 @@ sequenceDiagram
   - `driven/`: In-memory implementations of all 4 booking services, equipped with failure injection flags.
   - `driving/`: FastAPI HTTP REST routes (`POST /trips/book`, `GET /trips/health`).
 - **`infra/`**:
-  - `saga.py`: Declarative `SagaBuilder` workflow definition and `TripBookingCoordinator`.
+  - `saga.py`: Declarative `@saga` and `@step` workflow coordinator (`TripBookingCoordinator`) with automated LIFO compensation mapping.
   - `cli.py`: Interactive Typer CLI tool for executing the saga and observing compensation unwinding in real time.
 
 ---

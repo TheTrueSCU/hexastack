@@ -2,8 +2,8 @@
 
 Notes/Architectural Intent:
     Assembles the 4-step distributed transaction (Flight -> Hotel -> Car -> Payment)
-    using hexastack-cqrs SagaBuilder DSL and executes via InMemorySagaOrchestrator.
-    Guarantees strict LIFO compensation unwinding on failure.
+    using hexastack-cqrs declarative @saga and @step decorators.
+    Executes via InMemorySagaOrchestrator and guarantees strict LIFO compensation unwinding on failure.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from hexastack_cqrs.adapters.sagas import InMemorySagaOrchestrator, InMemorySagaStorage
 from hexastack_cqrs.domain.sagas import SagaDefinition, SagaStatus
-from hexastack_cqrs.infra.sagas import SagaBuilder
+from hexastack_cqrs.infra.decorators import saga, step
 
 from trip_booking.domain.models import (
     BookingStatus,
@@ -32,11 +32,13 @@ from trip_booking.ports.services import (
 )
 
 
+@saga(name="TripBookingSaga")
 class TripBookingCoordinator:
     """Orchestrator coordinator that binds domain services into a compensable Saga workflow.
 
     Notes/Architectural Intent:
-        Encapsulates saga step sequencing, cross-step state passing, and compensation mapping.
+        Encapsulates saga step sequencing, cross-step state passing, and compensation mapping
+        using hexastack-cqrs declarative @saga and @step decorators.
     """
 
     def __init__(
@@ -51,61 +53,110 @@ class TripBookingCoordinator:
         self.hotel_service = hotel_service
         self.car_rental_service = car_rental_service
         self.payment_service = payment_service
-        self.orchestrator = orchestrator or InMemorySagaOrchestrator(storage=InMemorySagaStorage())
+        self.orchestrator = orchestrator or InMemorySagaOrchestrator(
+            storage=InMemorySagaStorage()
+        )
 
-    def build_saga(self, request: TripBookingRequest) -> SagaDefinition:
-        """Construct the 4-step compensable saga definition for the requested trip.
+    @step(name="BookFlight", order=1, compensate="cancel_flight")
+    def book_flight(self, request: TripBookingRequest) -> FlightReservation:
+        """Step 1: Reserve airline flight for requested destination.
 
         Args:
             request: Customer booking request parameters.
 
         Returns:
-            Configured SagaDefinition instance.
+            Confirmed FlightReservation.
         """
-        builder = SagaBuilder(
-            name=f"TripBookingSaga-{request.customer_id}",
-            description=f"Trip booking to {request.destination} for customer {request.customer_id}",
-        )
+        return self.flight_service.book_flight(request)
 
-        # Step 1: Book Flight
-        builder.step(
-            name="BookFlight",
-            action=lambda ctx: self.flight_service.book_flight(request),
-            compensate=lambda res, ctx: self.flight_service.cancel_flight(res),
-        )
+    def cancel_flight(self, reservation: FlightReservation) -> None:
+        """Compensate Step 1: Cancel confirmed airline flight.
 
-        # Step 2: Reserve Hotel
-        builder.step(
-            name="ReserveHotel",
-            action=lambda ctx: self.hotel_service.reserve_hotel(request),
-            compensate=lambda res, ctx: self.hotel_service.cancel_hotel(res),
-        )
+        Args:
+            reservation: Previously confirmed FlightReservation to cancel.
+        """
+        self.flight_service.cancel_flight(reservation)
 
-        # Step 3: Rent Car
-        builder.step(
-            name="RentCar",
-            action=lambda ctx: self.car_rental_service.rent_car(request),
-            compensate=lambda res, ctx: self.car_rental_service.cancel_car(res),
-        )
+    @step(name="ReserveHotel", order=2, compensate="cancel_hotel")
+    def reserve_hotel(self, request: TripBookingRequest) -> HotelReservation:
+        """Step 2: Reserve hotel accommodation.
 
-        # Step 4: Process Payment (calculates total cost from previous 3 confirmed reservations)
-        def _process_payment(ctx: dict[str, Any]) -> PaymentReceipt:
-            flight: FlightReservation = ctx["BookFlight"]
-            hotel: HotelReservation = ctx["ReserveHotel"]
-            car: CarReservation = ctx["RentCar"]
-            total_amount = flight.price + hotel.price + car.price
-            return self.payment_service.process_payment(request, total_amount)
+        Args:
+            request: Customer booking request parameters.
 
-        def _refund_payment(receipt: PaymentReceipt, ctx: Any = None) -> None:
-            self.payment_service.refund_payment(receipt)
+        Returns:
+            Confirmed HotelReservation.
+        """
+        return self.hotel_service.reserve_hotel(request)
 
-        builder.step(
-            name="ProcessPayment",
-            action=_process_payment,
-            compensate=_refund_payment,
-        )
+    def cancel_hotel(self, reservation: HotelReservation) -> None:
+        """Compensate Step 2: Cancel hotel accommodation.
 
-        return builder.build()
+        Args:
+            reservation: Previously confirmed HotelReservation to cancel.
+        """
+        self.hotel_service.cancel_hotel(reservation)
+
+    @step(name="RentCar", order=3, compensate="cancel_car")
+    def rent_car(self, request: TripBookingRequest) -> CarReservation:
+        """Step 3: Rent rental vehicle.
+
+        Args:
+            request: Customer booking request parameters.
+
+        Returns:
+            Confirmed CarReservation.
+        """
+        return self.car_rental_service.rent_car(request)
+
+    def cancel_car(self, reservation: CarReservation) -> None:
+        """Compensate Step 3: Cancel vehicle rental.
+
+        Args:
+            reservation: Previously confirmed CarReservation to cancel.
+        """
+        self.car_rental_service.cancel_car(reservation)
+
+    @step(name="ProcessPayment", order=4, compensate="refund_payment")
+    def process_payment(
+        self, request: TripBookingRequest, ctx: dict[str, Any]
+    ) -> PaymentReceipt:
+        """Step 4: Process customer payment based on aggregated reservation costs.
+
+        Args:
+            request: Customer booking request parameters.
+            ctx: Accumulated saga execution context containing prior step outputs.
+
+        Returns:
+            Confirmed PaymentReceipt.
+        """
+        flight: FlightReservation = ctx["BookFlight"]
+        hotel: HotelReservation = ctx["ReserveHotel"]
+        car: CarReservation = ctx["RentCar"]
+        total_amount = flight.price + hotel.price + car.price
+        return self.payment_service.process_payment(request, total_amount)
+
+    def refund_payment(self, receipt: PaymentReceipt) -> None:
+        """Compensate Step 4: Issue refund for payment transaction.
+
+        Args:
+            receipt: PaymentReceipt to refund.
+        """
+        self.payment_service.refund_payment(receipt)
+
+    def build_saga(self, context: Any = None) -> SagaDefinition:
+        """Construct the 4-step compensable saga definition for the requested trip.
+
+        Args:
+            context: Customer booking request parameters.
+
+        Returns:
+            Configured SagaDefinition instance.
+
+        Notes/Architectural Intent:
+            Dynamically synthesized by @saga decorator from @step declarations.
+        """
+        raise NotImplementedError("Synthesized by @saga decorator")
 
     def execute(self, request: TripBookingRequest) -> TripBookingSummary:
         """Execute the trip booking saga synchronously.

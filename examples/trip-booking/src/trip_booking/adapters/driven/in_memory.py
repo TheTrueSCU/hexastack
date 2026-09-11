@@ -35,7 +35,9 @@ class InMemoryFlightService(FlightServicePort):
     def book_flight(self, request: TripBookingRequest) -> FlightReservation:
         """Reserve flight with optional failure injection."""
         if self.should_fail:
-            raise RuntimeError(f"Airline GDS error: No available seats to {request.destination}.")
+            raise RuntimeError(
+                f"Airline GDS error: No available seats to {request.destination}."
+            )
 
         res = FlightReservation(
             customer_id=request.customer_id,
@@ -118,7 +120,9 @@ class InMemoryCarRentalService(CarRentalPort):
     def rent_car(self, request: TripBookingRequest) -> CarReservation:
         """Reserve rental car with optional failure injection."""
         if self.should_fail:
-            raise RuntimeError(f"No {request.car_class} vehicles available at rental desk.")
+            raise RuntimeError(
+                f"No {request.car_class} vehicles available at rental desk."
+            )
 
         total_price = self.daily_rate * request.car_rental_days
         res = CarReservation(
@@ -154,7 +158,9 @@ class InMemoryPaymentService(PaymentServicePort):
         self.payments: dict[str, PaymentReceipt] = {}
         self.refunded_payments: list[str] = []
 
-    def process_payment(self, request: TripBookingRequest, amount: float) -> PaymentReceipt:
+    def process_payment(
+        self, request: TripBookingRequest, amount: float
+    ) -> PaymentReceipt:
         """Process payment charge with optional failure injection."""
         if self.should_fail:
             raise RuntimeError("Payment declined: Insufficient credit line.")
