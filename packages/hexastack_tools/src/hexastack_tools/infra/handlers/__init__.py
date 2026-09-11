@@ -16,16 +16,28 @@ from hexastack_tools.infra.handlers.governance import (
     RunSanityCheckHandler,
     RunTypecheckHandler,
 )
+from hexastack_tools.infra.handlers.testing import (
+    AuditTestBoundariesHandler,
+    AuditTestRedundancyHandler,
+    InspectMutationCacheHandler,
+    RunImpactedTestsHandler,
+    RunMutationTestsHandler,
+)
 
 __all__ = [
     "AuditComplexityHandler",
     "AuditExtrasParityHandler",
+    "AuditTestBoundariesHandler",
+    "AuditTestRedundancyHandler",
     "CheckAllStatementsHandler",
     "CheckTestParityHandler",
     "GenerateImportLinterConfigHandler",
+    "InspectMutationCacheHandler",
     "RunDeptryAuditHandler",
+    "RunImpactedTestsHandler",
     "RunImportLinterHandler",
     "RunLinterHandler",
+    "RunMutationTestsHandler",
     "RunPytestHandler",
     "RunSanityCheckHandler",
     "RunTypecheckHandler",

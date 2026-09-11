@@ -201,3 +201,43 @@ def test_mutmut_keyboard_interrupt(
     run_main()
     assert mock_revert.called
     mock_exit.assert_called_once_with(130)
+
+
+@patch("hexastack_tools.commands.mutmut.create_governance_bus")
+@patch("hexastack_tools.commands.mutmut.create_testing_presenter")
+@patch("sys.exit")
+@patch("sys.argv", ["mutmut-inspect", "--format", "json", "-p", "core"])
+def test_mutmut_inspect_json_format(
+    mock_exit: MagicMock, mock_create_presenter: MagicMock, mock_bus: MagicMock
+) -> None:
+    """Verify mutmut inspect_main dispatches to bus and calls presenter for json format."""
+    mock_presenter = MagicMock()
+    mock_create_presenter.return_value = mock_presenter
+    mock_presenter.present_mutation_summary.return_value = 0
+
+    inspect_main()
+
+    mock_bus.return_value.dispatch.assert_called_once()
+    mock_create_presenter.assert_called_once_with("json")
+    mock_presenter.present_mutation_summary.assert_called_once()
+    mock_exit.assert_called_once_with(0)
+
+
+@patch("hexastack_tools.commands.mutmut.create_governance_bus")
+@patch("hexastack_tools.commands.mutmut.create_testing_presenter")
+@patch("sys.exit")
+@patch("sys.argv", ["mutmut-inspect", "--format", "markdown", "-a"])
+def test_mutmut_inspect_markdown_actionable(
+    mock_exit: MagicMock, mock_create_presenter: MagicMock, mock_bus: MagicMock
+) -> None:
+    """Verify mutmut inspect_main dispatches and presents actionable mutants in markdown."""
+    mock_presenter = MagicMock()
+    mock_create_presenter.return_value = mock_presenter
+    mock_presenter.present_actionable_mutants.return_value = 0
+
+    inspect_main()
+
+    mock_bus.return_value.dispatch.assert_called_once()
+    mock_create_presenter.assert_called_once_with("markdown")
+    mock_presenter.present_actionable_mutants.assert_called_once()
+    mock_exit.assert_called_once_with(0)

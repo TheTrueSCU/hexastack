@@ -15,6 +15,9 @@ from hexastack_tools.adapters.runners.dependency_runner import (
 from hexastack_tools.adapters.runners.subprocess_runner import (
     SubprocessToolRunnerAdapter,
 )
+from hexastack_tools.adapters.runners.testing_runner import (
+    SubprocessTestingRunnerAdapter,
+)
 from hexastack_tools.domain.dependencies import (
     AuditExtrasParityCommand,
     GenerateImportLinterConfigCommand,
@@ -30,6 +33,13 @@ from hexastack_tools.domain.governance import (
     RunPytestCommand,
     RunSanityCheckCommand,
     RunTypecheckCommand,
+)
+from hexastack_tools.domain.testing import (
+    AuditTestBoundariesCommand,
+    AuditTestRedundancyCommand,
+    InspectMutationCacheCommand,
+    RunImpactedTestsCommand,
+    RunMutationTestsCommand,
 )
 from hexastack_tools.infra.handlers.dependencies import (
     AuditExtrasParityHandler,
@@ -47,8 +57,16 @@ from hexastack_tools.infra.handlers.governance import (
     RunSanityCheckHandler,
     RunTypecheckHandler,
 )
+from hexastack_tools.infra.handlers.testing import (
+    AuditTestBoundariesHandler,
+    AuditTestRedundancyHandler,
+    InspectMutationCacheHandler,
+    RunImpactedTestsHandler,
+    RunMutationTestsHandler,
+)
 from hexastack_tools.ports.dependencies import DependencyAuditorPort
 from hexastack_tools.ports.governance import ToolRunnerPort
+from hexastack_tools.ports.testing import TestingRunnerPort
 
 __all__ = [
     "create_governance_bus",
@@ -58,6 +76,7 @@ __all__ = [
 def create_governance_bus(
     runner: ToolRunnerPort | None = None,
     dependency_auditor: DependencyAuditorPort | None = None,
+    testing_runner: TestingRunnerPort | None = None,
 ) -> SynchronousCommandBus:
     """Construct and configure CommandBus with all governance handlers registered.
 
@@ -65,17 +84,20 @@ def create_governance_bus(
         runner: Optional ToolRunnerPort adapter. Defaults to SubprocessToolRunnerAdapter.
         dependency_auditor: Optional DependencyAuditorPort adapter. Defaults to
             SubprocessDependencyAuditorAdapter.
+        testing_runner: Optional TestingRunnerPort adapter. Defaults to
+            SubprocessTestingRunnerAdapter.
 
     Returns:
         Configured SynchronousCommandBus instance.
 
     Notes/Architectural Intent:
         Creates a circular binding where the composite RunSanityCheckHandler receives
-        the bus itself to dispatch individual check commands, and registers both
-        governance and dependency audit handlers.
+        the bus itself to dispatch individual check commands, and registers
+        governance, dependency audit, and testing/mutation handlers.
     """
     actual_runner = runner or SubprocessToolRunnerAdapter()
     actual_dep_auditor = dependency_auditor or SubprocessDependencyAuditorAdapter()
+    actual_testing_runner = testing_runner or SubprocessTestingRunnerAdapter()
     registry = HandlerRegistry()
     bus = SynchronousCommandBus(handler_registry=registry)
 
@@ -117,5 +139,21 @@ def create_governance_bus(
 
     unified_deps_handler = RunUnifiedDepsAuditHandler(actual_dep_auditor)
     registry.register(RunUnifiedDepsAuditCommand, unified_deps_handler.handle)
+
+    # 4. Register testing and mutation handlers
+    run_mutation_handler = RunMutationTestsHandler(actual_testing_runner)
+    registry.register(RunMutationTestsCommand, run_mutation_handler.handle)
+
+    inspect_mutation_handler = InspectMutationCacheHandler(actual_testing_runner)
+    registry.register(InspectMutationCacheCommand, inspect_mutation_handler.handle)
+
+    boundary_handler = AuditTestBoundariesHandler(actual_testing_runner)
+    registry.register(AuditTestBoundariesCommand, boundary_handler.handle)
+
+    redundancy_handler = AuditTestRedundancyHandler(actual_testing_runner)
+    registry.register(AuditTestRedundancyCommand, redundancy_handler.handle)
+
+    impact_handler = RunImpactedTestsHandler(actual_testing_runner)
+    registry.register(RunImpactedTestsCommand, impact_handler.handle)
 
     return bus

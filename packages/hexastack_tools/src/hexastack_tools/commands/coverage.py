@@ -15,6 +15,13 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from hexastack_tools.adapters.presenters.testing import create_testing_presenter
+from hexastack_tools.domain.testing import (
+    AuditTestBoundariesCommand,
+    AuditTestRedundancyCommand,
+    RunImpactedTestsCommand,
+)
+from hexastack_tools.infra.bootstrap import create_governance_bus
 from hexastack_tools.utils.workspace import (
     ensure_tool_installed,
     get_repo_root,
@@ -263,6 +270,13 @@ def impact_main() -> None:
         help="Print selected test targets without executing pytest.",
     )
     parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
+    parser.add_argument(
         "pytest_args",
         nargs=argparse.REMAINDER,
         help="Extra flags passed directly to pytest (e.g. -- -v -s)",
@@ -280,10 +294,32 @@ def impact_main() -> None:
         )
         sys.exit(1)
 
+    extra_args = (
+        args.pytest_args[1:]
+        if args.pytest_args and args.pytest_args[0] == "--"
+        else args.pytest_args
+    )
+
+    if args.format in ("json", "markdown"):
+        bus = create_governance_bus()
+        report = bus.dispatch(
+            RunImpactedTestsCommand(
+                repo_root=ROOT_DIR,
+                base_ref=args.base,
+                coverage_file=cov_file,
+                dry_run=args.dry_run,
+                pytest_args=tuple(extra_args or []),
+            )
+        )
+        presenter = create_testing_presenter(args.format)
+        sys.exit(presenter.present_impact_analysis(report))
+        return
+
     changed_lines = get_changed_lines(args.base)
     if not changed_lines:
         console.print("[green]✨ No source line modifications detected.[/green]")
         sys.exit(0)
+        return
 
     impacted_tests = find_impacted_tests(changed_lines, cov_file)
     if not impacted_tests:
@@ -291,6 +327,7 @@ def impact_main() -> None:
             "[yellow]ℹ️ Modified lines have no corresponding tests in coverage data.[/yellow]"
         )
         sys.exit(0)
+        return
 
     console.print(
         Panel.fit(
@@ -303,12 +340,6 @@ def impact_main() -> None:
 
     if args.dry_run:
         return
-
-    extra_args = (
-        args.pytest_args[1:]
-        if args.pytest_args and args.pytest_args[0] == "--"
-        else args.pytest_args
-    )
 
     cmd = ["pytest"] + sorted(impacted_tests) + (extra_args or [])
     console.print(f"\n[dim]Executing: {' '.join(cmd)}[/dim]\n")
@@ -329,6 +360,13 @@ def boundary_audit_main() -> None:
         default=str(COV_DB),
         help="Path to .coverage database (default: .coverage)",
     )
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
     args = parser.parse_args()
 
     cov_file = Path(args.cov_file)
@@ -341,6 +379,14 @@ def boundary_audit_main() -> None:
             )
         )
         sys.exit(1)
+        return
+
+    if args.format in ("json", "markdown"):
+        bus = create_governance_bus()
+        report = bus.dispatch(AuditTestBoundariesCommand(coverage_file=cov_file))
+        presenter = create_testing_presenter(args.format)
+        sys.exit(presenter.present_boundary_audit(report))
+        return
 
     leaks = audit_layer_boundary_leaks(cov_file)
     if not leaks:
@@ -392,6 +438,13 @@ def redundancy_audit_main() -> None:
         default=25,
         help="Maximum redundant tests to display (default: 25)",
     )
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
     args = parser.parse_args()
 
     cov_file = Path(args.cov_file)
@@ -404,6 +457,14 @@ def redundancy_audit_main() -> None:
             )
         )
         sys.exit(1)
+        return
+
+    if args.format in ("json", "markdown"):
+        bus = create_governance_bus()
+        report = bus.dispatch(AuditTestRedundancyCommand(coverage_file=cov_file))
+        presenter = create_testing_presenter(args.format)
+        sys.exit(presenter.present_redundancy_audit(report))
+        return
 
     redundant = audit_redundant_tests(cov_file)
     if not redundant:

@@ -9,11 +9,17 @@ from hexastack_tools.ports.governance import (
     GovernancePresenterPort,
     ToolRunnerPort,
 )
+from hexastack_tools.ports.testing import (
+    TestingPresenterPort,
+    TestingRunnerPort,
+)
 
 __all__ = [
     "DependencyAuditorPort",
     "DependencyPresenterPort",
     "GitHubApiPort",
     "GovernancePresenterPort",
+    "TestingPresenterPort",
+    "TestingRunnerPort",
     "ToolRunnerPort",
 ]

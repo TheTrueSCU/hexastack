@@ -15,6 +15,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from hexastack_tools.adapters.presenters.testing import create_testing_presenter
+from hexastack_tools.domain.testing import InspectMutationCacheCommand
+from hexastack_tools.infra.bootstrap import create_governance_bus
 from hexastack_tools.utils.workspace import (
     VALID_PACKAGES,
     ensure_tool_installed,
@@ -413,6 +416,12 @@ def run_main() -> None:
         action="store_true",
         help="Clear cached mutants before running mutation tests.",
     )
+    parser.add_argument(
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
     args = parser.parse_args()
 
     try:
@@ -500,8 +509,32 @@ def inspect_main() -> None:
         default=25,
         help="Maximum number of mutant lines to display (default: 25).",
     )
+    parser.add_argument(
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format: table, json, or markdown (default: table).",
+    )
 
     args = parser.parse_args()
+
+    if args.format in ("json", "markdown"):
+        bus = create_governance_bus()
+        report = bus.dispatch(
+            InspectMutationCacheCommand(
+                cache_file=CACHE_FILE,
+                package=args.package,
+                actionable_only=args.actionable_only,
+                correlate_coverage=args.correlate_coverage,
+                coverage_file=ROOT_DIR / ".coverage",
+            )
+        )
+        presenter = create_testing_presenter(args.format)
+        if args.actionable_only:
+            code = presenter.present_actionable_mutants(report)
+        else:
+            code = presenter.present_mutation_summary(report)
+        sys.exit(code)
 
     con = get_db_connection()
     if not con:

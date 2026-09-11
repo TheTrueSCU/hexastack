@@ -20,9 +20,21 @@ from hexastack_tools.domain.governance import (
     SanityCheckReport,
     SanityTarget,
 )
+from hexastack_tools.domain.testing import (
+    AuditTestBoundariesCommand,
+    AuditTestRedundancyCommand,
+    BoundaryAuditReport,
+    ImpactedTestsReport,
+    InspectMutationCacheCommand,
+    MutationAuditReport,
+    RedundancyAuditReport,
+    RunImpactedTestsCommand,
+    RunMutationTestsCommand,
+)
 from hexastack_tools.infra.bootstrap import create_governance_bus
 from hexastack_tools.ports.dependencies import DependencyAuditorPort
 from hexastack_tools.ports.governance import ToolRunnerPort
+from hexastack_tools.ports.testing import TestingRunnerPort
 
 
 def test_create_governance_bus_wires_and_dispatches():
@@ -53,7 +65,21 @@ def test_create_governance_bus_wires_and_dispatches():
         total_packages_checked=1,
     )
 
-    bus = create_governance_bus(runner=mock_runner, dependency_auditor=mock_dep_auditor)
+    mock_testing_runner = MagicMock(spec=TestingRunnerPort)
+    mock_testing_runner.run_mutmut.return_value = 0
+    mock_testing_runner.read_mutmut_cache.return_value = []
+    mock_testing_runner.get_changed_lines.return_value = {}
+    mock_testing_runner.find_impacted_tests.return_value = set()
+    mock_testing_runner.get_tests_covering_line.return_value = []
+    mock_testing_runner.audit_layer_boundary_leaks.return_value = []
+    mock_testing_runner.audit_redundant_tests.return_value = []
+    mock_testing_runner.execute_pytest.return_value = 0
+
+    bus = create_governance_bus(
+        runner=mock_runner,
+        dependency_auditor=mock_dep_auditor,
+        testing_runner=mock_testing_runner,
+    )
 
     # 1. Test dispatching a single governance command
     linter_cmd = RunLinterCommand(paths=(Path(),), target_name="test-pkg")
@@ -83,3 +109,19 @@ def test_create_governance_bus_wires_and_dispatches():
     extras_res = bus.dispatch(extras_cmd)
     assert isinstance(extras_res, ExtrasAuditResult)
     assert extras_res.is_healthy is True
+
+    # 4. Test dispatching testing commands
+    mutmut_res = bus.dispatch(RunMutationTestsCommand())
+    assert mutmut_res == 0
+
+    inspect_res = bus.dispatch(InspectMutationCacheCommand(package="core"))
+    assert isinstance(inspect_res, MutationAuditReport)
+
+    boundary_res = bus.dispatch(AuditTestBoundariesCommand())
+    assert isinstance(boundary_res, BoundaryAuditReport)
+
+    redundancy_res = bus.dispatch(AuditTestRedundancyCommand())
+    assert isinstance(redundancy_res, RedundancyAuditReport)
+
+    impact_res = bus.dispatch(RunImpactedTestsCommand())
+    assert isinstance(impact_res, ImpactedTestsReport)

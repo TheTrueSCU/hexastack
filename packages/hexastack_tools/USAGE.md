@@ -370,7 +370,7 @@ options:
 ```text
 usage: mutmut-run [-h]
                   [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}]
-                  [-a] [-r]
+                  [-a] [-r] [--format {table,json,markdown}]
 
 Run mutation tests.
 
@@ -379,13 +379,15 @@ options:
   -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}
   -a, --all
   -r, --refresh         Clear cached mutants before running mutation tests.
+  --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `mutmut-inspect`
 
 ```text
 usage: mutmut-inspect [-h] [--summary] [-p PACKAGE] [-f FILE] [-a] [-c]
-                      [-n LIMIT]
+                      [-n LIMIT] [--format {table,json,markdown}]
 
 Inspect .mutmut-cache with automated mutant classification (Critical vs
 Ignorable)
@@ -407,6 +409,9 @@ options:
                         functions executing mutant lines.
   -n, --limit LIMIT     Maximum number of mutant lines to display (default:
                         25).
+  --format {table,json,markdown}
+                        Output presentation format: table, json, or markdown
+                        (default: table).
 ```
 
 ### 📦 Code Architecture & Distribution
@@ -645,44 +650,54 @@ options:
 
 ```text
 usage: pytest-boundary-audit [-h] [--cov-file COV_FILE]
+                             [-f {table,json,markdown}]
 
 Audit .coverage execution contexts for hexagonal architectural layer leaks.
 
 options:
-  -h, --help           show this help message and exit
-  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
+  -h, --help            show this help message and exit
+  --cov-file COV_FILE   Path to .coverage database (default: .coverage)
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `pytest-impact`
 
 ```text
-usage: pytest-impact [-h] [--base BASE] [--cov-file COV_FILE] [--dry-run] ...
+usage: pytest-impact [-h] [--base BASE] [--cov-file COV_FILE] [--dry-run]
+                     [-f {table,json,markdown}]
+                     ...
 
 Run only tests impacted by modified lines using git diff and .coverage data.
 
 positional arguments:
-  pytest_args          Extra flags passed directly to pytest (e.g. -- -v -s)
+  pytest_args           Extra flags passed directly to pytest (e.g. -- -v -s)
 
 options:
-  -h, --help           show this help message and exit
-  --base BASE          Git ref or branch to diff against (e.g. 'main',
-                       'origin/main', 'HEAD~1'). Defaults to unstaged/staged
-                       working tree.
-  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
-  --dry-run            Print selected test targets without executing pytest.
+  -h, --help            show this help message and exit
+  --base BASE           Git ref or branch to diff against (e.g. 'main',
+                        'origin/main', 'HEAD~1'). Defaults to unstaged/staged
+                        working tree.
+  --cov-file COV_FILE   Path to .coverage database (default: .coverage)
+  --dry-run             Print selected test targets without executing pytest.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `pytest-redundancy-audit`
 
 ```text
 usage: pytest-redundancy-audit [-h] [--cov-file COV_FILE] [-n LIMIT]
+                               [-f {table,json,markdown}]
 
 Identify redundant unit tests providing zero unique branch coverage.
 
 options:
-  -h, --help           show this help message and exit
-  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
-  -n, --limit LIMIT    Maximum redundant tests to display (default: 25)
+  -h, --help            show this help message and exit
+  --cov-file COV_FILE   Path to .coverage database (default: .coverage)
+  -n, --limit LIMIT     Maximum redundant tests to display (default: 25)
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `rope-alphabetizer`

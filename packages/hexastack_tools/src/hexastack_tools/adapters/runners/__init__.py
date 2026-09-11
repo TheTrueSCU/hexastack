@@ -7,9 +7,13 @@ from hexastack_tools.adapters.runners.subprocess_runner import (
     SubprocessToolRunnerAdapter,
     find_executable,
 )
+from hexastack_tools.adapters.runners.testing_runner import (
+    SubprocessTestingRunnerAdapter,
+)
 
 __all__ = [
     "find_executable",
     "SubprocessDependencyAuditorAdapter",
+    "SubprocessTestingRunnerAdapter",
     "SubprocessToolRunnerAdapter",
 ]

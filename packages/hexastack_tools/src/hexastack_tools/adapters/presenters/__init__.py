@@ -37,6 +37,12 @@ from hexastack_tools.adapters.presenters.security import (
     render_security_comments_json,
     render_security_comments_plain,
 )
+from hexastack_tools.adapters.presenters.testing import (
+    JsonTestingPresenterAdapter,
+    MarkdownTestingPresenterAdapter,
+    RichTestingPresenterAdapter,
+    create_testing_presenter,
+)
 
 __all__ = [
     "build_checks_table",
@@ -44,10 +50,13 @@ __all__ = [
     "build_security_comments_table",
     "create_dependency_presenter",
     "create_governance_presenter",
+    "create_testing_presenter",
     "JsonDependencyPresenterAdapter",
     "JsonGovernancePresenterAdapter",
+    "JsonTestingPresenterAdapter",
     "MarkdownDependencyPresenterAdapter",
     "MarkdownGovernancePresenterAdapter",
+    "MarkdownTestingPresenterAdapter",
     "present_checks",
     "present_pr_summary",
     "present_repo_status",
@@ -64,4 +73,5 @@ __all__ = [
     "resolve_output_format",
     "RichDependencyPresenterAdapter",
     "RichGovernancePresenterAdapter",
+    "RichTestingPresenterAdapter",
 ]
