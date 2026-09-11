@@ -3,76 +3,26 @@
 from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor
-from pathlib import Path
 
-from pydeps.pydeps import pydeps
-
+from hexastack_tools.utils.pydeps import (
+    generate_all_diagrams,
+    generate_overview_diagram,
+    generate_package_diagram,
+)
 from hexastack_tools.utils.workspace import (
     HexastackScriptArgumentParser,
     ensure_tool_installed,
     get_package_directories,
     get_package_directory,
-    get_packages_directory,
     get_repo_root,
 )
 
-_PYDEPS_ASSET_DIR = Path("docs") / "assets" / "pydeps"
-
-
-def _output_dir(root: Path) -> Path:
-    """Return the absolute path to the pydeps asset directory."""
-    out = root / _PYDEPS_ASSET_DIR
-    out.mkdir(parents=True, exist_ok=True)
-    return out
-
-
-def generate_package_diagram(pkg_path: Path, root: Path) -> str | None:
-    """Generate a dependency SVG for a single package."""
-    pkg_name = pkg_path.name
-    svg_filename = f"{pkg_name}.svg"
-    svg_path = _output_dir(root) / svg_filename
-    entry_point = pkg_path / "src" / pkg_name
-
-    if not entry_point.is_dir():
-        return None
-
-    try:
-        pydeps(
-            fname=str(entry_point),
-            format="svg",
-            output=str(svg_path),
-            show=False,
-            no_show=True,
-            cluster=True,
-            max_bacon=2,
-            rankdir="TB",
-            include_missing=False,
-        )
-        return str(svg_path.relative_to(root))
-    except Exception:
-        return None
-
-
-def generate_overview_diagram(root: Path) -> str | None:
-    """Generate the monorepo-wide overview diagram."""
-    svg_path = _output_dir(root) / "hexastack_packages.svg"
-    packages_dir = get_packages_directory(root)
-
-    try:
-        pydeps(
-            fname=str(packages_dir),
-            format="svg",
-            output=str(svg_path),
-            show=False,
-            no_show=True,
-            cluster=True,
-            max_bacon=1,
-            rankdir="TB",
-            include_missing=False,
-        )
-        return str(svg_path.relative_to(root))
-    except Exception:
-        return None
+__all__ = [
+    "generate_all_diagrams",
+    "generate_main",
+    "generate_overview_diagram",
+    "generate_package_diagram",
+]
 
 
 def generate_main() -> None:
@@ -129,35 +79,3 @@ def generate_main() -> None:
             border_style="green",
         )
     )
-
-
-def generate_all_diagrams(root: Path) -> list[tuple[str, str]]:
-    """Programmatically generate overview and all package SVGs."""
-    ensure_tool_installed("pydeps", cli_command="pydeps", extra_name="diagrams")
-    packages = get_package_directories(root)
-    results: list[tuple[str, str]] = []
-
-    overview_path = generate_overview_diagram(root)
-    if overview_path:
-        results.append(("Monorepo Overview", overview_path))
-
-    with ProcessPoolExecutor() as executor:
-        futures = {
-            executor.submit(generate_package_diagram, pkg, root): pkg.name
-            for pkg in packages
-        }
-        for future in futures:
-            pkg_name = futures[future]
-            path = future.result()
-            if path:
-                results.append((pkg_name, path))
-
-    return results
-
-
-__all__ = [
-    "generate_all_diagrams",
-    "generate_main",
-    "generate_overview_diagram",
-    "generate_package_diagram",
-]

@@ -8,6 +8,10 @@ Notes/Architectural Intent:
 from pathlib import Path
 from unittest.mock import MagicMock
 
+from hexastack_tools.domain.dependencies import (
+    AuditExtrasParityCommand,
+    ExtrasAuditResult,
+)
 from hexastack_tools.domain.governance import (
     CheckResult,
     CheckStatus,
@@ -17,6 +21,7 @@ from hexastack_tools.domain.governance import (
     SanityTarget,
 )
 from hexastack_tools.infra.bootstrap import create_governance_bus
+from hexastack_tools.ports.dependencies import DependencyAuditorPort
 from hexastack_tools.ports.governance import ToolRunnerPort
 
 
@@ -42,9 +47,15 @@ def test_create_governance_bus_wires_and_dispatches():
         "Pytest", "test-pkg", CheckStatus.PASS, 0.05
     )
 
-    bus = create_governance_bus(runner=mock_runner)
+    mock_dep_auditor = MagicMock(spec=DependencyAuditorPort)
+    mock_dep_auditor.audit_extras_parity.return_value = ExtrasAuditResult(
+        violations=(),
+        total_packages_checked=1,
+    )
 
-    # 1. Test dispatching a single command
+    bus = create_governance_bus(runner=mock_runner, dependency_auditor=mock_dep_auditor)
+
+    # 1. Test dispatching a single governance command
     linter_cmd = RunLinterCommand(paths=(Path(),), target_name="test-pkg")
     linter_res = bus.dispatch(linter_cmd)
     assert isinstance(linter_res, CheckResult)
@@ -66,3 +77,9 @@ def test_create_governance_bus_wires_and_dispatches():
     assert isinstance(report, SanityCheckReport)
     assert report.exit_code == 0
     assert len(report.results) == 6
+
+    # 3. Test dispatching dependency command
+    extras_cmd = AuditExtrasParityCommand(repo_root=Path("/tmp"))
+    extras_res = bus.dispatch(extras_cmd)
+    assert isinstance(extras_res, ExtrasAuditResult)
+    assert extras_res.is_healthy is True

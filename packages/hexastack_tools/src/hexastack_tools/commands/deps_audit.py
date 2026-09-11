@@ -5,32 +5,14 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
+from hexastack_tools.adapters.presenters.dependency import create_dependency_presenter
+from hexastack_tools.domain.dependencies import RunUnifiedDepsAuditCommand
+from hexastack_tools.infra.bootstrap import create_governance_bus
+from hexastack_tools.utils.workspace import get_repo_root
 
-from hexastack_tools.commands.deptry import run_deptry_on_package
-from hexastack_tools.commands.extras_parity import (
-    audit_extras_parity,
-    generate_extras_mermaid_diagram,
-)
-from hexastack_tools.commands.pydeps import generate_all_diagrams
-from hexastack_tools.utils.workspace import (
-    check_tool_availability,
-    get_package_directories,
-    get_repo_root,
-)
-
-console = Console()
-
-_EXPECTED_TOOLS: list[tuple[str, str, str | None]] = [
-    ("importlinter", "governance (import-linter-run)", "lint-imports"),
-    ("deptry", "governance (deptry-run)", "deptry"),
-    ("mutmut", "mutmut (mutmut-run)", "mutmut"),
-    ("pydeps", "diagrams (pydeps-generate)", "pydeps"),
-    ("libcst", "rope (alphabetizer)", None),
-    ("pytest_archon", "archon (pytest-archon-generate)", None),
-    ("inline_snapshot", "snapshots (inline-snapshot-update)", None),
+__all__ = [
+    "audit_workspace_dependencies",
+    "main",
 ]
 
 
@@ -58,45 +40,27 @@ def audit_workspace_dependencies(
         Unifies code-level import verification (deptry), tool dependency readiness,
         and pyproject.toml packaging forwarding contracts into a single high-performance pipeline.
     """
-    errors: list[str] = []
-
-    # 1. Tool Availability Check
-    if check_tools:
-        for import_name, desc, cli_cmd in _EXPECTED_TOOLS:
-            ok, err = check_tool_availability(import_name, cli_cmd)
-            if not ok:
-                errors.append(
-                    f"Tools Environment: Missing dependency for {desc} -> {err}"
-                )
-
-    # 2. Extras Parity Check
-    if check_extras:
-        extras_violations = audit_extras_parity(repo_root)
-        if extras_violations:
-            for v in extras_violations:
-                errors.append(
-                    f"Extras Parity: {v.subpackage}[{v.extra_name}] not properly forwarded in umbrella package."
-                )
-
-    # 3. Deptry Source Code Import Check
-    if check_deptry:
-        for pkg_dir in get_package_directories(repo_root):
-            ok, err = run_deptry_on_package(pkg_dir)
-            if not ok:
-                errors.append(f"Deptry [{pkg_dir.name}]: {err}")
-
-    # 4. Diagram Generation
-    if generate_diagrams:
-        try:
-            generate_all_diagrams(repo_root)
-        except Exception as e:
-            errors.append(f"Diagram Generation Error: {e}")
-
-    return len(errors) == 0, errors
+    bus = create_governance_bus()
+    cmd = RunUnifiedDepsAuditCommand(
+        repo_root=repo_root,
+        check_deptry=check_deptry,
+        check_extras=check_extras,
+        check_tools=check_tools,
+        generate_diagrams=generate_diagrams,
+    )
+    report = bus.dispatch(cmd)
+    return report.is_healthy, list(report.errors)
 
 
-def main() -> int:
-    """CLI entrypoint for unified deps-audit command."""
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for unified deps-audit command.
+
+    Args:
+        argv: Optional command-line arguments list.
+
+    Returns:
+        Exit code (0 for success, non-zero for failures).
+    """
     parser = argparse.ArgumentParser(
         description="Unified dependency, optional extras, and architecture auditor for Hexastack."
     )
@@ -115,81 +79,28 @@ def main() -> int:
         action="store_true",
         help="Only run optional extras parity checks.",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
+    args = parser.parse_args(argv)
 
     repo_root = get_repo_root()
+    bus = create_governance_bus()
+    presenter = create_dependency_presenter(args.format)
 
     check_deptry = not args.extras_only
     check_extras = not args.deptry_only
 
-    console.print(
-        Panel(
-            "[bold cyan]Hexastack Unified Dependency & Packaging Auditor[/bold cyan]",
-            subtitle="[dim]deptry + extras parity + architecture diagrams[/dim]",
-            expand=False,
-        )
-    )
-
-    if args.diagrams:
-        console.print(
-            "[yellow]Generating Pydeps SVGs and Mermaid Extras Diagram...[/yellow]"
-        )
-        generate_all_diagrams(repo_root)
-        mermaid_diag = generate_extras_mermaid_diagram(repo_root)
-        diagram_file = repo_root / "docs" / "assets" / "pydeps" / "hexastack_extras.mmd"
-        diagram_file.parent.mkdir(parents=True, exist_ok=True)
-        diagram_file.write_text(mermaid_diag, encoding="utf-8")
-        console.print(
-            f"[bold green]✓ Diagram written to {diagram_file.relative_to(repo_root)}[/bold green]"
-        )
-
-    is_healthy, errors = audit_workspace_dependencies(
-        repo_root,
+    cmd = RunUnifiedDepsAuditCommand(
+        repo_root=repo_root,
         check_deptry=check_deptry,
         check_extras=check_extras,
         check_tools=True,
-        generate_diagrams=False,
+        generate_diagrams=args.diagrams,
     )
-
-    table = Table(show_header=True, header_style="bold magenta")
-    table.add_column("Audit Check", style="bold", width=36)
-    table.add_column("Status", width=12)
-
-    tools_ok = not any(e.startswith("Tools Environment") for e in errors)
-    table.add_row(
-        "Tool Environment Readiness",
-        "[green]✅ Passed[/green]" if tools_ok else "[red]❌ Failed[/red]",
-    )
-
-    if check_extras:
-        extras_ok = not any(e.startswith("Extras Parity") for e in errors)
-        table.add_row(
-            "Packaging Extras Parity (15 packages)",
-            "[green]✅ Passed[/green]" if extras_ok else "[red]❌ Failed[/red]",
-        )
-
-    if check_deptry:
-        deptry_ok = not any(e.startswith("Deptry") for e in errors)
-        table.add_row(
-            "Deptry Source Import Audits",
-            "[green]✅ Passed[/green]" if deptry_ok else "[red]❌ Failed[/red]",
-        )
-
-    console.print(table)
-
-    if is_healthy:
-        console.print(
-            "\n[bold green]🎉 All dependencies, optional extras, and packaging contracts are 100% healthy![/bold green]"
-        )
-        return 0
-
-    console.print("\n[bold red]❌ Found dependency issues:[/bold red]")
-    for err in errors:
-        console.print(f"  • {err}")
-    return 1
-
-
-__all__ = [
-    "audit_workspace_dependencies",
-    "main",
-]
+    report = bus.dispatch(cmd)
+    return presenter.present_unified_deps_audit(report)

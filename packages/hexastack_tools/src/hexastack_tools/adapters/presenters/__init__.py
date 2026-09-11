@@ -7,6 +7,12 @@ from hexastack_tools.adapters.presenters.checks import (
     render_checks_plain,
 )
 from hexastack_tools.adapters.presenters.common import resolve_output_format
+from hexastack_tools.adapters.presenters.dependency import (
+    JsonDependencyPresenterAdapter,
+    MarkdownDependencyPresenterAdapter,
+    RichDependencyPresenterAdapter,
+    create_dependency_presenter,
+)
 from hexastack_tools.adapters.presenters.governance import (
     JsonGovernancePresenterAdapter,
     MarkdownGovernancePresenterAdapter,
@@ -36,8 +42,11 @@ __all__ = [
     "build_checks_table",
     "build_repo_status_table",
     "build_security_comments_table",
+    "create_dependency_presenter",
     "create_governance_presenter",
+    "JsonDependencyPresenterAdapter",
     "JsonGovernancePresenterAdapter",
+    "MarkdownDependencyPresenterAdapter",
     "MarkdownGovernancePresenterAdapter",
     "present_checks",
     "present_pr_summary",
@@ -53,5 +62,6 @@ __all__ = [
     "render_security_comments_json",
     "render_security_comments_plain",
     "resolve_output_format",
+    "RichDependencyPresenterAdapter",
     "RichGovernancePresenterAdapter",
 ]

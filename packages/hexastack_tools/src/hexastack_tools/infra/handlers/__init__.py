@@ -1,5 +1,12 @@
 """Handlers package export for hexastack_tools infra."""
 
+from hexastack_tools.infra.handlers.dependencies import (
+    AuditExtrasParityHandler,
+    GenerateImportLinterConfigHandler,
+    RunDeptryAuditHandler,
+    RunImportLinterHandler,
+    RunUnifiedDepsAuditHandler,
+)
 from hexastack_tools.infra.handlers.governance import (
     AuditComplexityHandler,
     CheckAllStatementsHandler,
@@ -12,10 +19,15 @@ from hexastack_tools.infra.handlers.governance import (
 
 __all__ = [
     "AuditComplexityHandler",
+    "AuditExtrasParityHandler",
     "CheckAllStatementsHandler",
     "CheckTestParityHandler",
+    "GenerateImportLinterConfigHandler",
+    "RunDeptryAuditHandler",
+    "RunImportLinterHandler",
     "RunLinterHandler",
     "RunPytestHandler",
     "RunSanityCheckHandler",
     "RunTypecheckHandler",
+    "RunUnifiedDepsAuditHandler",
 ]

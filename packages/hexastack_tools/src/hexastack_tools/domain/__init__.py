@@ -1,5 +1,22 @@
 """Domain models export for hexastack_tools."""
 
+from __future__ import annotations
+
+from hexastack_tools.domain.dependencies import (
+    AuditExtrasParityCommand,
+    DependencyAuditItem,
+    DeptryAuditReport,
+    DeptryPackageResult,
+    ExtraParityViolation,
+    ExtrasAuditResult,
+    GenerateImportLinterConfigCommand,
+    ImportLinterPackageResult,
+    ImportLinterReport,
+    RunDeptryAuditCommand,
+    RunImportLinterCommand,
+    RunUnifiedDepsAuditCommand,
+    UnifiedDependencyAuditReport,
+)
 from hexastack_tools.domain.github import (
     AlertSeverity,
     CheckRunFinding,
@@ -26,20 +43,33 @@ from hexastack_tools.domain.governance import (
 __all__ = [
     "AlertSeverity",
     "AuditComplexityCommand",
+    "AuditExtrasParityCommand",
     "CheckAllStatementsCommand",
     "CheckResult",
     "CheckRunFinding",
     "CheckStatus",
     "CheckTestParityCommand",
+    "DependencyAuditItem",
+    "DeptryAuditReport",
+    "DeptryPackageResult",
+    "ExtraParityViolation",
+    "ExtrasAuditResult",
+    "GenerateImportLinterConfigCommand",
+    "ImportLinterPackageResult",
+    "ImportLinterReport",
     "OutputFormat",
     "PrSummary",
     "ReviewComment",
     "ReviewThread",
+    "RunDeptryAuditCommand",
+    "RunImportLinterCommand",
     "RunLinterCommand",
     "RunPytestCommand",
     "RunSanityCheckCommand",
     "RunTypecheckCommand",
+    "RunUnifiedDepsAuditCommand",
     "SanityCheckReport",
     "SanityTarget",
     "SecurityAlert",
+    "UnifiedDependencyAuditReport",
 ]

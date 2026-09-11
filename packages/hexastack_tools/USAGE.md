@@ -228,16 +228,18 @@ options:
 #### `import-linter-run`
 
 ```text
-usage: import-linter-run [-h] [--all] [files ...]
+usage: import-linter-run [-h] [--all] [-f {table,json,markdown}] [files ...]
 
 Run import-linter per package.
 
 positional arguments:
-  files       Changed files passed by pre-commit
+  files                 Changed files passed by pre-commit
 
 options:
-  -h, --help  show this help message and exit
-  --all       Run across all packages unconditionally
+  -h, --help            show this help message and exit
+  --all                 Run across all packages unconditionally
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `import-linter-generate`
@@ -263,12 +265,14 @@ options:
 #### `deptry-run`
 
 ```text
-usage: deptry-run [-h]
+usage: deptry-run [-h] [-f {table,json,markdown}]
 
 Run deptry per package.
 
 options:
-  -h, --help  show this help message and exit
+  -h, --help            show this help message and exit
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `generate-usage-docs`
@@ -528,14 +532,17 @@ options:
 #### `check-extras-parity`
 
 ```text
-usage: check-extras-parity [-h] [--diagram]
+usage: check-extras-parity [-h] [--diagram] [-f {table,json,markdown}]
 
 Audit optional extras parity across workspace subpackages and umbrella
 package.
 
 options:
-  -h, --help  show this help message and exit
-  --diagram   Generate and print Mermaid dependency diagram of package extras.
+  -h, --help            show this help message and exit
+  --diagram             Generate and print Mermaid dependency diagram of
+                        package extras.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `complexipy-run`
@@ -560,15 +567,18 @@ options:
 
 ```text
 usage: deps-audit [-h] [--diagrams] [--deptry-only] [--extras-only]
+                  [-f {table,json,markdown}]
 
 Unified dependency, optional extras, and architecture auditor for Hexastack.
 
 options:
-  -h, --help     show this help message and exit
-  --diagrams     Regenerate all Pydeps SVG import graphs and Mermaid extras
-                 diagrams.
-  --deptry-only  Only run deptry source import audits.
-  --extras-only  Only run optional extras parity checks.
+  -h, --help            show this help message and exit
+  --diagrams            Regenerate all Pydeps SVG import graphs and Mermaid
+                        extras diagrams.
+  --deptry-only         Only run deptry source import audits.
+  --extras-only         Only run optional extras parity checks.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `fuzz-run`
