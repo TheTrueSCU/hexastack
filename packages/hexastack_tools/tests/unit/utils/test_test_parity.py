@@ -9,6 +9,7 @@ from pathlib import Path
 
 from hexastack_tools.utils.test_parity import (
     check_package_parity,
+    check_src_to_test_symmetry,
     check_test_directories_inits,
 )
 
@@ -58,3 +59,22 @@ def test_check_package_parity_missing_and_orphaned(tmp_path: Path) -> None:
     errors = check_package_parity(pkg_dir, tmp_path)
     assert any("Missing unit test" in e for e in errors)
     assert any("Orphaned unit test" in e for e in errors)
+
+
+def test_check_src_to_test_symmetry_workspace(tmp_path: Path) -> None:
+    """Verify check_src_to_test_symmetry iterates across workspace packages."""
+    # 1. No packages directory
+    assert check_src_to_test_symmetry(tmp_path) == []
+
+    # 2. Package with symmetry issue
+    pkg_dir = tmp_path / "packages" / "pkg1"
+    src_dir = pkg_dir / "src" / "pkg1"
+    unit_dir = pkg_dir / "tests" / "unit"
+    src_dir.mkdir(parents=True)
+    unit_dir.mkdir(parents=True)
+    (unit_dir / "__init__.py").touch()
+    (src_dir / "solo.py").touch()
+
+    errors = check_src_to_test_symmetry(tmp_path)
+    assert len(errors) == 1
+    assert "Missing unit test" in errors[0]

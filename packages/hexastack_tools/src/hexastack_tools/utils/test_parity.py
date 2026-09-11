@@ -12,6 +12,7 @@ from pathlib import Path
 
 __all__ = [
     "check_package_parity",
+    "check_src_to_test_symmetry",
     "check_test_directories_inits",
 ]
 
@@ -134,6 +135,43 @@ def check_package_parity(pkg_dir: Path, repo_root: Path) -> list[str]:
         )
         errors.extend(
             _check_package_test_symmetry(pkg_dir, repo_root, src_dir, unit_tests_dir)
+        )
+
+    return errors
+
+
+def check_src_to_test_symmetry(root_dir: Path) -> list[str]:
+    """Ensure every src module has a matching unit test and vice versa across all packages.
+
+    Args:
+        root_dir: Root path of repository containing packages/ directory.
+
+    Returns:
+        List of symmetry violation descriptions.
+
+    Notes/Architectural Intent:
+        Iterates over all workspace packages, inspecting 1:1 source and test module symmetry.
+    """
+    errors: list[str] = []
+    packages_dir = root_dir / "packages"
+    if not packages_dir.exists():
+        return errors
+
+    for pkg in sorted(packages_dir.iterdir()):
+        if not pkg.is_dir():
+            continue
+
+        src_dir = pkg / "src" / pkg.name
+        unit_tests_dir = pkg / "tests" / "unit"
+
+        if not src_dir.exists() or not unit_tests_dir.exists():
+            continue
+
+        errors.extend(
+            _check_package_src_symmetry(pkg, root_dir, src_dir, unit_tests_dir)
+        )
+        errors.extend(
+            _check_package_test_symmetry(pkg, root_dir, src_dir, unit_tests_dir)
         )
 
     return errors
