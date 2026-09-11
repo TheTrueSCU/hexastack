@@ -24,6 +24,14 @@ class UowItem(Base):
     val: Mapped[int] = mapped_column(default=0)
 
 
+class UowAudit(Base):
+    __tablename__ = "uow_audits"
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    item_id: Mapped[str] = mapped_column()
+    status: Mapped[str] = mapped_column()
+
+
 class SqlAlchemyUnitOfWorkStateMachine(RuleBasedStateMachine):
     """Hypothesis state machine verifying UnitOfWork transactional consistency.
 
@@ -109,6 +117,43 @@ class SqlAlchemyUnitOfWorkStateMachine(RuleBasedStateMachine):
                 raise RuntimeError("Simulated transaction crash")
         except RuntimeError:
             pass
+
+    @rule(
+        item_id=st.text(
+            min_size=1, max_size=20, alphabet=st.characters(categories=["L", "N"])
+        ),
+        val=st.integers(min_value=-1000, max_value=1000),
+    )
+    def multi_entity_partial_failure(self, item_id: str, val: int) -> None:
+        """Insert entity then trigger secondary integrity constraint failure to prove atomic rollback."""
+        fail_id = f"fail_{item_id}"
+        uow = SqlAlchemyUnitOfWork(self.session_factory)
+        try:
+            with uow:
+                session = uow.session
+                session.add(UowItem(id=fail_id, val=val))
+                session.flush()
+                # Intentionally trigger primary key conflict in audit table
+                session.add(
+                    UowAudit(id=f"audit_{fail_id}", item_id=fail_id, status="initial")
+                )
+                session.flush()
+                # Duplicate PK
+                session.add(
+                    UowAudit(id=f"audit_{fail_id}", item_id=fail_id, status="duplicate")
+                )
+                session.flush()
+                uow.commit()
+        except Exception:
+            pass  # Expected rollback on flush failure
+
+        # Invariant: fail_id must NEVER exist in DB
+        check_session = self.session_factory()
+        try:
+            assert check_session.get(UowItem, fail_id) is None
+            assert check_session.get(UowAudit, f"audit_{fail_id}") is None
+        finally:
+            check_session.close()
 
     @invariant()
     def database_state_matches_committed(self) -> None:

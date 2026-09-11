@@ -32,6 +32,13 @@ class TaskRecord(Base):
     title: Mapped[str]
 
 
+class ProjectRecord(Base):
+    __tablename__ = "test_projects"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(unique=True)
+
+
 @require_extra("aiosqlite")
 @pytest.mark.anyio
 async def test_async_sqlalchemy_unit_of_work():
@@ -249,3 +256,75 @@ def test_sqlalchemy_unit_of_work_commit_and_rollback():
     # Suppress rollback error
     explicit_fail_sync_uow.rollback()
     explicit_fail_sync_uow.__exit__(ValueError, ValueError("test error"), None)
+
+
+def test_uow_multi_repository_partial_failure_atomic_rollback():
+    """Verify that a failure in a secondary entity/repository rolls back all entities atomically."""
+    engine = create_engine("sqlite:///:memory:", poolclass=StaticPool)
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine)
+
+    # Pre-seed a project with unique name "alpha"
+    with session_factory() as s:
+        s.add(ProjectRecord(name="alpha"))
+        s.commit()
+
+    uow = SqlAlchemyUnitOfWork(session_factory=session_factory)
+    try:
+        with uow:
+            # 1. Modify TaskRecord (Entity 1 / Repository 1)
+            uow.session.add(TaskRecord(title="Task under transaction"))
+            uow.session.flush()
+
+            # 2. Modify ProjectRecord (Entity 2 / Repository 2) with duplicate name, triggering unique violation
+            uow.session.add(ProjectRecord(name="alpha"))
+            uow.session.flush()
+            uow.commit()
+    except Exception:
+        pass  # Expected partial failure
+
+    # Invariant: Neither TaskRecord nor second ProjectRecord was committed!
+    with session_factory() as s:
+        tasks = s.execute(select(TaskRecord)).scalars().all()
+        projects = s.execute(select(ProjectRecord)).scalars().all()
+        assert len(tasks) == 0
+        assert len(projects) == 1
+        assert projects[0].name == "alpha"
+
+
+@require_extra("aiosqlite")
+@pytest.mark.anyio
+async def test_async_uow_multi_repository_partial_failure_atomic_rollback():
+    """Verify that async UoW atomically rolls back all entities on secondary repository failure."""
+    async_engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:", poolclass=StaticPool
+    )
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async_factory = async_sessionmaker(bind=async_engine)
+
+    # Pre-seed a project
+    async with async_factory() as s:
+        s.add(ProjectRecord(name="beta"))
+        await s.commit()
+
+    async_uow = AsyncSqlAlchemyUnitOfWork(session_factory=async_factory)
+    try:
+        async with async_uow:
+            async_uow.session.add(TaskRecord(title="Async Task under transaction"))
+            await async_uow.session.flush()
+
+            # Trigger unique violation on project
+            async_uow.session.add(ProjectRecord(name="beta"))
+            await async_uow.session.flush()
+            await async_uow.commit_async()
+    except Exception:
+        pass
+
+    async with async_factory() as s:
+        tasks = (await s.execute(select(TaskRecord))).scalars().all()
+        projects = (await s.execute(select(ProjectRecord))).scalars().all()
+        assert len(tasks) == 0
+        assert len(projects) == 1
+        assert projects[0].name == "beta"

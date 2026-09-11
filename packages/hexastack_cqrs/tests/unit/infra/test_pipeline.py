@@ -5,7 +5,10 @@ import pytest
 from hexastack_core.domain import Command, Event, Generic, Query
 from hexastack_core.infra import ExceptionRegistry
 from hexastack_core.ports.presenter import PresenterPort
-from hexastack_cqrs.adapters.buses import SynchronousEventBus
+from hexastack_cqrs.adapters.buses import (
+    SynchronousCommandBus,
+    SynchronousEventBus,
+)
 from hexastack_cqrs.infra.pipeline import (
     AmbiguousMessageError,
     ExecutionPipeline,
@@ -236,3 +239,118 @@ def test_pipeline_execute_with_presenter():
         CreateUser(user_id="u1", name="Alice"), output_format="json"
     )
     assert primitive_res == "primitive_string_result"
+
+
+def test_pipeline_middleware_short_circuit():
+    """Verify that a middleware returning without calling next_call halts the pipeline."""
+    trace = []
+
+    def mw_first(instance, next_call):
+        trace.append("mw1_in")
+        res = next_call(instance)
+        trace.append("mw1_out")
+        return res
+
+    def mw_short_circuit(instance, next_call):
+        trace.append("mw2_short_circuit")
+        return "cached_response"
+
+    def mw_third(instance, next_call):
+        trace.append("mw3_in")
+        res = next_call(instance)
+        trace.append("mw3_out")
+        return res
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(
+        CreateUser, lambda cmd: (trace.append("handler"), "handler_done")[1]
+    )
+
+    bus = SynchronousCommandBus(
+        handler_registry=handler_reg,
+        middleware=[mw_first, mw_short_circuit, mw_third],
+    )
+    pipeline = ExecutionPipeline(handler_registry=handler_reg, command_bus=bus)
+
+    result = pipeline.execute(CreateUser(user_id="u10", name="ShortCircuit"))
+    assert result == "cached_response"
+    assert trace == ["mw1_in", "mw2_short_circuit", "mw1_out"]
+
+
+def test_pipeline_middleware_exception_rollback_lifo():
+    """Verify that exceptions trigger rollback handlers in reverse LIFO order."""
+    trace = []
+
+    class RollbackMw:
+        def __init__(self, name: str):
+            self.name = name
+
+        def __call__(self, instance, next_call):
+            trace.append(f"{self.name}_enter")
+            try:
+                return next_call(instance)
+            finally:
+                trace.append(f"{self.name}_rollback")
+
+    handler_reg = HandlerRegistry()
+
+    def _failing_handler(cmd):
+        trace.append("handler_fail")
+        raise RuntimeError("boom_in_handler")
+
+    handler_reg.register(CreateUser, _failing_handler)
+
+    bus = SynchronousCommandBus(
+        handler_registry=handler_reg,
+        middleware=[RollbackMw("outer"), RollbackMw("inner")],
+    )
+    pipeline = ExecutionPipeline(handler_registry=handler_reg, command_bus=bus)
+
+    with pytest.raises(RuntimeError, match="boom_in_handler"):
+        pipeline.execute(CreateUser(user_id="u11", name="FaultUser"))
+
+    assert trace == [
+        "outer_enter",
+        "inner_enter",
+        "handler_fail",
+        "inner_rollback",
+        "outer_rollback",
+    ]
+
+
+def test_pipeline_middleware_onion_ordering():
+    """Verify that middleware ingress is FIFO and egress is LIFO."""
+    trace = []
+
+    def mw_one(instance, next_call):
+        trace.append("mw1_start")
+        res = next_call(instance)
+        trace.append("mw1_end")
+        return res
+
+    def mw_two(instance, next_call):
+        trace.append("mw2_start")
+        res = next_call(instance)
+        trace.append("mw2_end")
+        return res
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(
+        CreateUser, lambda cmd: (trace.append("handler_exec"), "ok")[1]
+    )
+
+    bus = SynchronousCommandBus(
+        handler_registry=handler_reg,
+        middleware=[mw_one, mw_two],
+    )
+    pipeline = ExecutionPipeline(handler_registry=handler_reg, command_bus=bus)
+
+    result = pipeline.execute(CreateUser(user_id="u12", name="OrderTest"))
+    assert result == "ok"
+    assert trace == [
+        "mw1_start",
+        "mw2_start",
+        "handler_exec",
+        "mw2_end",
+        "mw1_end",
+    ]
