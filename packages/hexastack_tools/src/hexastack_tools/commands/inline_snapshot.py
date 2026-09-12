@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
+from hexastack_tools.infra.handlers.analysis import run_snapshot_update_for_dir
 from hexastack_tools.utils.workspace import (
     HexastackScriptArgumentParser,
     get_package_directories,
@@ -14,27 +14,6 @@ from hexastack_tools.utils.workspace import (
 
 ROOT_DIR = get_repo_root()
 VALID_MODES = ["create", "fix", "review"]
-
-
-def run_snapshot_update_for_dir(target_dir: Path, mode: str) -> int:
-    """Run pytest in single-process snapshot mode for the target directory."""
-    if not target_dir.is_dir():
-        return 1
-
-    cmd = [
-        "uv",
-        "run",
-        "pytest",
-        str(target_dir),
-        "-n",
-        "0",
-        f"--inline-snapshot={mode}",
-        "--no-cov",
-        "-o",
-        "addopts=",
-    ]
-    res = subprocess.run(cmd, cwd=ROOT_DIR)
-    return res.returncode
 
 
 def main(argv: list[str] | None = None) -> int:

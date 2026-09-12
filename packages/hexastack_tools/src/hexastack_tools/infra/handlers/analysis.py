@@ -7,11 +7,16 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import importlib
+import importlib.util
 import json
 import shutil
 import subprocess
+import sys
 import tempfile
+import time
 from pathlib import Path
+from typing import Any
 
 from hexastack_tools.domain.analysis import (
     CodeQlScanReport,
@@ -23,6 +28,123 @@ from hexastack_tools.domain.analysis import (
     UpdateInlineSnapshotsCommand,
 )
 from hexastack_tools.utils.workspace import get_repo_root
+
+
+def run_target_fuzz(
+    target: str,
+    runs: int = 1000,
+    engine: str = "auto",
+) -> list[dict[str, Any]]:
+    """Execute selected fuzzing targets.
+
+    Args:
+        target: Target name ('all', 'sanitizer', 'proto', 'owasp').
+        runs: Number of fuzzing iterations to run per target.
+        engine: Engine selection ('auto', 'atheris', 'standalone').
+
+    Returns:
+        List of dictionaries with run summary metrics.
+
+    Raises:
+        ValueError: If target name is unrecognized.
+    """
+    repo_root = get_repo_root()
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    results: list[dict[str, Any]] = []
+
+    use_atheris = False
+    if engine in ("auto", "atheris"):
+        try:
+            use_atheris = importlib.util.find_spec("atheris") is not None
+        except Exception:
+            # Ignore lookup failures when atheris is not installed
+            use_atheris = False
+
+    if target in ("all", "sanitizer"):
+        mod_san = importlib.import_module("fuzz.fuzz_log_sanitizer")
+        runner = (
+            mod_san.run_atheris
+            if use_atheris and engine != "standalone"
+            else mod_san.run_standalone
+        )
+        results.append(runner(runs=runs))
+
+    if target in ("all", "proto"):
+        mod_proto = importlib.import_module("fuzz.fuzz_proto_compiler")
+        proto_runs = min(runs, 500) if runs > 500 else runs
+        runner = (
+            mod_proto.run_atheris
+            if use_atheris and engine != "standalone"
+            else mod_proto.run_standalone
+        )
+        results.append(runner(runs=proto_runs))
+
+    if target in ("all", "owasp"):
+        start_time = time.perf_counter()
+        cmd = [
+            sys.executable,
+            "-m",
+            "pytest",
+            "packages/hexastack_fastapi/tests/properties/test_owasp_security_fuzz.py",
+            "-q",
+            "--no-cov",
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        dur = round(time.perf_counter() - start_time, 3)
+        passed = proc.returncode == 0
+        results.append(
+            {
+                "target": "OWASP Security Fuzz",
+                "engine": "hypothesis",
+                "runs": runs,
+                "duration_seconds": dur,
+                "crashes": 0 if passed else 1,
+                "redos_violations": 0,
+                "passed": passed,
+            }
+        )
+
+    if not results:
+        raise ValueError(
+            f"Unknown fuzz target: '{target}'. Choose from 'all', 'sanitizer', 'proto', 'owasp'."
+        )
+
+    return results
+
+
+def run_snapshot_update_for_dir(
+    target_dir: Path, mode: str, root_dir: Path | None = None
+) -> int:
+    """Run pytest in single-process snapshot mode for the target directory.
+
+    Args:
+        target_dir: Directory containing tests with snapshots.
+        mode: Snapshot mode ('create', 'fix', or 'review').
+        root_dir: Optional root directory path.
+
+    Returns:
+        Exit code from the pytest subprocess.
+    """
+    if not target_dir.is_dir():
+        return 1
+
+    root = root_dir or get_repo_root()
+    cmd = [
+        "uv",
+        "run",
+        "pytest",
+        str(target_dir),
+        "-n",
+        "0",
+        f"--inline-snapshot={mode}",
+        "--no-cov",
+        "-o",
+        "addopts=",
+    ]
+    res = subprocess.run(cmd, cwd=root)
+    return res.returncode
 
 
 class ScanCodeQlHandler:
@@ -117,6 +239,7 @@ class ScanCodeQlHandler:
                             if level in ("error", "critical"):
                                 critical_findings += 1
                 except Exception:
+                    # Ignore corrupted or unparseable SARIF JSON outputs
                     pass
 
             return CodeQlScanReport(
@@ -146,8 +269,6 @@ class FuzzRunHandler:
         Notes/Architectural Intent:
             Delegates execution to harness runners and standardizes metrics.
         """
-        from hexastack_tools.commands.fuzz import run_target_fuzz
-
         raw_results = run_target_fuzz(
             target=command.target,
             runs=command.runs,
@@ -191,7 +312,6 @@ class UpdateInlineSnapshotsHandler:
         Notes/Architectural Intent:
             Runs pytest in single-process mode with --inline-snapshot flags.
         """
-        from hexastack_tools.commands.inline_snapshot import run_snapshot_update_for_dir
         from hexastack_tools.utils.workspace import get_package_directories
 
         targets = (
@@ -203,7 +323,7 @@ class UpdateInlineSnapshotsHandler:
         exit_code = 0
         updated: list[str] = []
         for target in targets:
-            code = run_snapshot_update_for_dir(target, command.mode)
+            code = run_snapshot_update_for_dir(target, command.mode, self._root)
             updated.append(
                 str(
                     target.relative_to(self._root)
@@ -222,6 +342,8 @@ class UpdateInlineSnapshotsHandler:
 
 __all__ = [
     "FuzzRunHandler",
+    "run_snapshot_update_for_dir",
+    "run_target_fuzz",
     "ScanCodeQlHandler",
     "UpdateInlineSnapshotsHandler",
 ]

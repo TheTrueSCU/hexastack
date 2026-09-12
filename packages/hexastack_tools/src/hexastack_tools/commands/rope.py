@@ -8,9 +8,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import libcst as cst
 from rich.console import Console
 
+from hexastack_tools.infra.handlers.refactoring import (
+    FunctionAndMethodAlphabetizerCST,
+    sort_python_file,
+)
 from hexastack_tools.utils.workspace import (
     HexastackScriptArgumentParser,
     ensure_tool_installed,
@@ -20,95 +23,6 @@ from hexastack_tools.utils.workspace import (
 
 console = Console()
 ROOT_DIR = get_repo_root()
-
-
-class FunctionAndMethodAlphabetizerCST(cst.CSTTransformer):
-    """LibCST transformer to sort class methods and standalone functions alphabetically."""
-
-    def _is_main_guard(self, stmt: cst.CSTNode) -> bool:
-        """Check if statement is `if __name__ == '__main__':`.
-
-        Args:
-            stmt: CST node statement to inspect.
-
-        Returns:
-            True if stmt matches main guard, False otherwise.
-        """
-        if not isinstance(stmt, cst.If):
-            return False
-        test = stmt.test
-        if isinstance(test, cst.Comparison):
-            left = getattr(test.left, "value", None)
-            if left == "__name__":
-                for comp in test.comparisons:
-                    if getattr(comp.comparator, "value", "").strip("'\"") == "__main__":
-                        return True
-        return False
-
-    def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
-    ) -> cst.ClassDef:
-        """Alphabetize class methods while keeping class docstrings and dunder methods first.
-
-        Args:
-            original_node: Original ClassDef CST node.
-            updated_node: Updated ClassDef CST node.
-
-        Returns:
-            Alphabetized ClassDef CST node.
-        """
-        dunders = []
-        non_methods = []
-        methods = []
-
-        for stmt in updated_node.body.body:
-            if isinstance(stmt, cst.FunctionDef):
-                name = stmt.name.value
-                if name.startswith("__") and name.endswith("__"):
-                    dunders.append(stmt)
-                else:
-                    methods.append(stmt)
-            else:
-                non_methods.append(stmt)
-
-        sorted_methods = sorted(methods, key=lambda m: m.name.value.lower())
-        new_body = non_methods + dunders + sorted_methods
-        return updated_node.with_changes(
-            body=updated_node.body.with_changes(body=new_body)
-        )
-
-    def leave_Module(
-        self, original_node: cst.Module, updated_node: cst.Module
-    ) -> cst.Module:
-        """Alphabetize top-level standalone functions while preserving module headers and main guards.
-
-        Args:
-            original_node: Original Module CST node.
-            updated_node: Updated Module CST node.
-
-        Returns:
-            Alphabetized Module CST node.
-        """
-        module_header = []
-        functions = []
-        trailing_statements = []
-        collecting_header = True
-
-        for stmt in updated_node.body:
-            if isinstance(stmt, cst.FunctionDef):
-                collecting_header = False
-                functions.append(stmt)
-            elif self._is_main_guard(stmt):
-                collecting_header = False
-                trailing_statements.append(stmt)
-            elif collecting_header:
-                module_header.append(stmt)
-            else:
-                trailing_statements.append(stmt)
-
-        sorted_functions = sorted(functions, key=lambda f: f.name.value.lower())
-        new_body = module_header + sorted_functions + trailing_statements
-        return updated_node.with_changes(body=new_body)
 
 
 def get_line_offsets(filepath: Path, start_line: int, end_line: int) -> tuple[int, int]:
@@ -421,28 +335,6 @@ def handle_use_function(args: argparse.Namespace) -> None:
         )
     finally:
         proj.close()
-
-
-def sort_python_file(file_path: Path) -> bool:
-    """Sort functions and class methods in a Python file alphabetically.
-
-    Args:
-        file_path: Path to target Python file.
-
-    Returns:
-        True if file content was changed, False otherwise.
-    """
-    try:
-        source_code = file_path.read_text(encoding="utf-8")
-        tree = cst.parse_module(source_code)
-        transformer = FunctionAndMethodAlphabetizerCST()
-        modified_tree = tree.visit(transformer)
-        if modified_tree.code != source_code:
-            file_path.write_text(modified_tree.code, encoding="utf-8")
-            return True
-        return False
-    except Exception:
-        return False
 
 
 def alphabetize_main(argv: list[str] | None = None) -> int:

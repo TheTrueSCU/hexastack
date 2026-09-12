@@ -8,6 +8,9 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import difflib
+import subprocess
+import tomllib
+from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -20,6 +23,11 @@ from hexastack_tools.domain.generators import (
     PydepsReport,
     UsageDocsReport,
 )
+from hexastack_tools.utils.help_extractor import (
+    extract_command_tree_bfs,
+    extract_commands_parallel,
+    extract_subcommands_from_help,
+)
 from hexastack_tools.utils.import_linter import get_present_layers
 from hexastack_tools.utils.pydeps import (
     generate_overview_diagram,
@@ -29,7 +37,192 @@ from hexastack_tools.utils.workspace import (
     get_package_directories,
     get_package_directory,
     get_repo_root,
+    resolve_affected_packages,
 )
+
+_TOOLS_SECTION_MAP: dict[str, list[str]] = {
+    "🔍 GitHub & PR Examination Tools": [
+        "gh-pr-examine",
+        "gh-checks",
+        "gh-repo",
+        "gh-security",
+        "gh-code-scanning",
+    ],
+    "🛡️ Security & Code Quality Gateways": [
+        "codeql-scan",
+        "check-test-parity",
+        "check-all-statements",
+        "fix-all-statements",
+        "import-linter-run",
+        "import-linter-generate",
+        "deptry-run",
+        "generate-usage-docs",
+    ],
+    "🧪 Test Execution, Contracts & Mutation": [
+        "pytest-run",
+        "pytest-archon-generate",
+        "inline-snapshot-update",
+        "mutmut-run",
+        "mutmut-inspect",
+    ],
+    "📦 Code Architecture & Distribution": [
+        "pydeps-generate",
+        "pypi-check",
+        "pypi-build",
+        "pypi-publish",
+        "alphabetizer",
+        "rope-run",
+    ],
+}
+
+
+def build_tools_usage_markdown(root: Path) -> str:
+    """Generate canonical USAGE.md for hexastack-tools using parallel command help extraction."""
+    pyproject_path = root / "packages" / "hexastack_tools" / "pyproject.toml"
+    data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    scripts: dict[str, str] = data.get("project", {}).get("scripts", {})
+
+    all_cmds = [[cmd] for cmd in sorted(scripts.keys())]
+    help_map = extract_commands_parallel(all_cmds)
+
+    lines: list[str] = [
+        "# Hexastack Developer Tools & Usage Guide (`hexastack-tools`)",
+        "",
+        "> Canonical developer command reference and CLI catalog automatically generated from tool entrypoints.",
+        "",
+        "---",
+        "",
+        "## 🏛️ Dogfooding Hexagonal Architecture",
+        "",
+        "`hexastack-tools` is built strictly according to Hexastack's hexagonal design principles:",
+        "- **`domain/`**: Pure data contracts (`PrSummary`, `CheckRunFinding`, `ReviewThread`, `OutputFormat`).",
+        "- **`ports/`**: Clean interface contracts (`GitHubApiPort`).",
+        "- **`adapters/`**: Pluggable presenters (`rich`, `json`, `plain`) and GitHub API REST/GraphQL clients.",
+        "- **`commands/`**: High-performance Typer/Argparse CLI applications with pipe auto-detection.",
+        "- **`utils/`**: Shared monorepo workspace discovery and package graph resolvers.",
+        "",
+        "---",
+        "",
+        "## ⚙️ Output Presentation Formats",
+        "",
+        "All inspection commands support `--format / -f`:",
+        "- **`auto` (default)**: Automatically outputs interactive ANSI tables/panels when attached to a terminal TTY, and switches to clean, tab-delimited plain text (`TSV`) when standard output is piped into Unix filters (`grep`, `awk`, `cut`, `xargs`, etc.).",
+        "- **`rich`**: Interactive Rich tables and color-coded status badges.",
+        "- **`json`**: Structured JSON for automation, CI scripts, and AI agents.",
+        "- **`plain`**: Machine-readable TSV stream.",
+        "",
+        "---",
+        "",
+        "## 🛠️ CLI Commands & Usage Catalog",
+        "",
+    ]
+
+    documented_cmds: set[str] = set()
+
+    for section_title, cmd_list in _TOOLS_SECTION_MAP.items():
+        lines.append(f"### {section_title}\n")
+        for cmd in cmd_list:
+            if cmd not in scripts:
+                continue
+            documented_cmds.add(cmd)
+            help_text = help_map.get((cmd,), "")
+            lines.append(f"#### `{cmd}`\n")
+            lines.append("```text")
+            lines.append(help_text)
+            lines.append("```\n")
+
+    unmapped = sorted(set(scripts.keys()) - documented_cmds)
+    if unmapped:
+        lines.append("### 🔧 Additional Workspace Tools\n")
+        for cmd in unmapped:
+            help_text = help_map.get((cmd,), "")
+            lines.append(f"#### `{cmd}`\n")
+            lines.append("```text")
+            lines.append(help_text)
+            lines.append("```\n")
+
+    return "\n".join(lines).strip() + "\n"
+
+
+def build_umbrella_usage_markdown(root: Path) -> str:
+    """Generate canonical USAGE.md for the umbrella hexastack package using BFS command tree traversal."""
+    tree = extract_command_tree_bfs(["hexastack"])
+    main_help = tree.get(("hexastack",), "")
+    subcommands = extract_subcommands_from_help(main_help)
+
+    lines: list[str] = [
+        "# Hexastack CLI & Framework Usage Guide (`hexastack`)",
+        "",
+        "> Canonical reference guide and command catalog for the Hexastack Unified Developer CLI.",
+        "",
+        "---",
+        "",
+        "## 🚀 Unified Entrypoint (`hexastack`)",
+        "",
+        "```text",
+        main_help,
+        "```",
+        "",
+        "---",
+        "",
+        "## 🛠️ Subcommand Reference Catalog",
+        "",
+    ]
+
+    for sub in subcommands:
+        sub_help = tree.get(("hexastack", sub), "")
+        lines.append(f"### `hexastack {sub}`\n")
+        lines.append("```text")
+        lines.append(sub_help)
+        lines.append("```\n")
+
+    return "\n".join(lines).strip() + "\n"
+
+
+_TARGET_GENERATORS: dict[str, tuple[str, Callable[[Path], str]]] = {
+    "tools": (
+        "packages/hexastack_tools/USAGE.md",
+        build_tools_usage_markdown,
+    ),
+    "hexastack": (
+        "packages/hexastack/USAGE.md",
+        build_umbrella_usage_markdown,
+    ),
+}
+
+
+def _get_changed_files_for_git() -> list[str]:
+    """Retrieve modified files from git staged/unstaged or HEAD commit."""
+    try:
+        res = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return [line.strip() for line in res.stdout.splitlines() if line.strip()]
+    except Exception:
+        # Ignore git diff failure when outside git workspace
+        return []
+
+
+def resolve_impacted_usage_targets(root: Path) -> list[str]:
+    """Resolve targets based on git changes, or all if no changes detected."""
+    changed = _get_changed_files_for_git()
+    if not changed:
+        return list(_TARGET_GENERATORS.keys())
+
+    affected = resolve_affected_packages(changed, root)
+    if affected is None:
+        return list(_TARGET_GENERATORS.keys())
+
+    targets: list[str] = []
+    if "tools" in affected:
+        targets.append("tools")
+    if "hexastack" in affected or "cli" in affected:
+        targets.append("hexastack")
+
+    return targets or list(_TARGET_GENERATORS.keys())
 
 
 class GeneratePydepsHandler:
@@ -123,11 +316,6 @@ class GenerateUsageDocsHandler:
             Delegates markdown generation to target builders, producing diffs
             for any file differing from generated output.
         """
-        from hexastack_tools.commands.usage_docs import (
-            _TARGET_GENERATORS,
-            resolve_impacted_usage_targets,
-        )
-
         if command.package and command.package != "all":
             targets = [command.package]
         elif command.package == "all":
@@ -248,7 +436,12 @@ class GenerateArchonTestsHandler:
 
 
 __all__ = [
+    "_TARGET_GENERATORS",
+    "_TOOLS_SECTION_MAP",
+    "build_tools_usage_markdown",
+    "build_umbrella_usage_markdown",
     "GenerateArchonTestsHandler",
     "GeneratePydepsHandler",
     "GenerateUsageDocsHandler",
+    "resolve_impacted_usage_targets",
 ]

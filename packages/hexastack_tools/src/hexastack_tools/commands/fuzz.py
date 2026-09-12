@@ -9,104 +9,15 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import argparse
-import importlib
-import importlib.util
-import subprocess
-import sys
-import time
 from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from hexastack_tools.utils.workspace import get_repo_root
+from hexastack_tools.infra.handlers.analysis import run_target_fuzz
 
 console = Console()
-
-
-def run_target_fuzz(
-    target: str,
-    runs: int = 1000,
-    engine: str = "auto",
-) -> list[dict[str, Any]]:
-    """Execute selected fuzzing targets.
-
-    Args:
-        target: Target name ('all', 'sanitizer', 'proto', 'owasp').
-        runs: Number of fuzzing iterations to run per target.
-        engine: Engine selection ('auto', 'atheris', 'standalone').
-
-    Returns:
-        List of dictionaries with run summary metrics.
-
-    Raises:
-        ValueError: If target name is unrecognized.
-    """
-    repo_root = get_repo_root()
-    if str(repo_root) not in sys.path:
-        sys.path.insert(0, str(repo_root))
-
-    results: list[dict[str, Any]] = []
-
-    use_atheris = False
-    if engine in ("auto", "atheris"):
-        try:
-            use_atheris = importlib.util.find_spec("atheris") is not None
-        except Exception:
-            use_atheris = False
-
-    if target in ("all", "sanitizer"):
-        mod_san = importlib.import_module("fuzz.fuzz_log_sanitizer")
-        runner = (
-            mod_san.run_atheris
-            if use_atheris and engine != "standalone"
-            else mod_san.run_standalone
-        )
-        results.append(runner(runs=runs))
-
-    if target in ("all", "proto"):
-        mod_proto = importlib.import_module("fuzz.fuzz_proto_compiler")
-        # Proto compiler runs are heavier; scale default if high
-        proto_runs = min(runs, 500) if runs > 500 else runs
-        runner = (
-            mod_proto.run_atheris
-            if use_atheris and engine != "standalone"
-            else mod_proto.run_standalone
-        )
-        results.append(runner(runs=proto_runs))
-
-    if target in ("all", "owasp"):
-        start_time = time.perf_counter()
-        cmd = [
-            sys.executable,
-            "-m",
-            "pytest",
-            "packages/hexastack_fastapi/tests/properties/test_owasp_security_fuzz.py",
-            "-q",
-            "--no-cov",
-        ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-        dur = round(time.perf_counter() - start_time, 3)
-        passed = proc.returncode == 0
-        results.append(
-            {
-                "target": "OWASP Security Fuzz",
-                "engine": "hypothesis",
-                "runs": runs,
-                "duration_seconds": dur,
-                "crashes": 0 if passed else 1,
-                "redos_violations": 0,
-                "passed": passed,
-            }
-        )
-
-    if not results:
-        raise ValueError(
-            f"Unknown fuzz target: '{target}'. Choose from 'all', 'sanitizer', 'proto', 'owasp'."
-        )
-
-    return results
 
 
 def display_fuzz_results(results: list[dict[str, Any]]) -> int:

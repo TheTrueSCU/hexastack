@@ -133,7 +133,7 @@ def test_main_cli_success():
                 "standalone",
             ],
         ),
-        patch("hexastack_tools.commands.fuzz.run_target_fuzz") as mock_run,
+        patch("hexastack_tools.infra.handlers.analysis.run_target_fuzz") as mock_run,
         patch("hexastack_tools.commands.fuzz.display_fuzz_results") as mock_display,
     ):
         mock_run.return_value = [{"passed": True, "crashes": 0, "redos_violations": 0}]
@@ -151,7 +151,7 @@ def test_main_cli_error_handling():
     with (
         patch("sys.argv", ["fuzz-run", "--target", "all"]),
         patch(
-            "hexastack_tools.commands.fuzz.run_target_fuzz",
+            "hexastack_tools.infra.handlers.analysis.run_target_fuzz",
             side_effect=ValueError("boom"),
         ),
     ):

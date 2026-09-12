@@ -75,7 +75,8 @@ def test_fuzz_run_handler(tmp_path: Path) -> None:
         }
     ]
     with patch(
-        "hexastack_tools.commands.fuzz.run_target_fuzz", return_value=mock_metrics
+        "hexastack_tools.infra.handlers.analysis.run_target_fuzz",
+        return_value=mock_metrics,
     ):
         report = handler.handle(FuzzRunCommand(target="sanitizer", runs=100))
         assert report.all_passed is True
@@ -90,7 +91,7 @@ def test_update_inline_snapshots_handler(tmp_path: Path) -> None:
     handler = UpdateInlineSnapshotsHandler(root=tmp_path)
 
     with patch(
-        "hexastack_tools.commands.inline_snapshot.run_snapshot_update_for_dir",
+        "hexastack_tools.infra.handlers.analysis.run_snapshot_update_for_dir",
         return_value=0,
     ):
         report = handler.handle(

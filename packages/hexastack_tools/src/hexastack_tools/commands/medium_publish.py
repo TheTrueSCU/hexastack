@@ -303,7 +303,7 @@ def _resolve_article_path(slug: str) -> Path:
     console.print(
         f"[red]Error:[/] Cannot find article [bold]{slug!r}[/] under {medium_dir}"
     )
-    sys.exit(1)
+    raise SystemExit(1)
 
 
 def _get_medium_dir() -> Path:
@@ -660,10 +660,9 @@ def _regenerate_blog_index(repo_root: Path, medium_dir: Path) -> None:
     content = blog_index.read_text(encoding="utf-8")
     # Replace between the series header and the > URLs populate line
     new_content = re.sub(
-        r"(\| # \| Title \|.*?\n)((?:\|.*\n)*)(\n>)",
-        lambda m: f"{table}\n{m.group(3)}",
+        r"(\| # \| Title \|[^\n]*\n)(?:\|[^\n]*\n)*(\n>)",
+        lambda m: f"{table}\n{m.group(2)}",
         content,
-        flags=re.DOTALL,
     )
     if new_content != content:
         blog_index.write_text(new_content, encoding="utf-8")

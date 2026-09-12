@@ -247,9 +247,9 @@ def test_create_governance_bus_wires_and_dispatches():
         assert isinstance(pydeps_res, PydepsReport)
 
     with (
-        patch("hexastack_tools.commands.usage_docs._TARGET_GENERATORS", {}),
+        patch("hexastack_tools.infra.handlers.generators._TARGET_GENERATORS", {}),
         patch(
-            "hexastack_tools.commands.usage_docs.resolve_impacted_usage_targets",
+            "hexastack_tools.infra.handlers.generators.resolve_impacted_usage_targets",
             return_value=[],
         ),
     ):
@@ -273,7 +273,9 @@ def test_create_governance_bus_wires_and_dispatches():
         codeql_res = bus.dispatch(ScanCodeQlCommand())
         assert isinstance(codeql_res, CodeQlScanReport)
 
-    with patch("hexastack_tools.commands.fuzz.run_target_fuzz", return_value=[]):
+    with patch(
+        "hexastack_tools.infra.handlers.analysis.run_target_fuzz", return_value=[]
+    ):
         fuzz_res = bus.dispatch(FuzzRunCommand())
         assert isinstance(fuzz_res, FuzzRunReport)
 

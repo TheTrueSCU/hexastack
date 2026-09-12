@@ -22,7 +22,7 @@ def test_alphabetize_code_handler(tmp_path: Path) -> None:
 
     handler = AlphabetizeCodeHandler(root=tmp_path)
     with patch(
-        "hexastack_tools.commands.rope.sort_python_file",
+        "hexastack_tools.infra.handlers.refactoring.sort_python_file",
         return_value=True,
     ):
         report = handler.handle(AlphabetizeCodeCommand(targets=(code_file,)))

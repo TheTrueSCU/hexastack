@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import libcst as cst
+
 from hexastack_tools.domain.refactoring import (
     AlphabetizeCodeCommand,
     AlphabetizeCodeReport,
@@ -16,6 +18,92 @@ from hexastack_tools.domain.refactoring import (
     PublishMediumArticlesCommand,
 )
 from hexastack_tools.utils.workspace import get_repo_root
+
+
+class FunctionAndMethodAlphabetizerCST(cst.CSTTransformer):
+    """LibCST transformer to sort class methods and standalone functions alphabetically."""
+
+    def _is_main_guard(self, stmt: cst.CSTNode) -> bool:
+        if not isinstance(stmt, cst.If):
+            return False
+        test = stmt.test
+        if isinstance(test, cst.Comparison):
+            left = getattr(test.left, "value", None)
+            if left == "__name__":
+                for comp in test.comparisons:
+                    if getattr(comp.comparator, "value", "").strip("'\"") == "__main__":
+                        return True
+        return False
+
+    def leave_ClassDef(
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+    ) -> cst.ClassDef:
+        dunders = []
+        non_methods = []
+        methods = []
+
+        for stmt in updated_node.body.body:
+            if isinstance(stmt, cst.FunctionDef):
+                name = stmt.name.value
+                if name.startswith("__") and name.endswith("__"):
+                    dunders.append(stmt)
+                else:
+                    methods.append(stmt)
+            else:
+                non_methods.append(stmt)
+
+        sorted_methods = sorted(methods, key=lambda m: m.name.value.lower())
+        new_body = non_methods + dunders + sorted_methods
+        return updated_node.with_changes(
+            body=updated_node.body.with_changes(body=new_body)
+        )
+
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:
+        module_header = []
+        functions = []
+        trailing_statements = []
+        collecting_header = True
+
+        for stmt in updated_node.body:
+            if isinstance(stmt, cst.FunctionDef):
+                collecting_header = False
+                functions.append(stmt)
+            elif self._is_main_guard(stmt):
+                collecting_header = False
+                trailing_statements.append(stmt)
+            elif collecting_header:
+                module_header.append(stmt)
+            else:
+                trailing_statements.append(stmt)
+
+        sorted_functions = sorted(functions, key=lambda f: f.name.value.lower())
+        new_body = module_header + sorted_functions + trailing_statements
+        return updated_node.with_changes(body=new_body)
+
+
+def sort_python_file(file_path: Path) -> bool:
+    """Sort functions and class methods in a Python file alphabetically.
+
+    Args:
+        file_path: Path to target Python file.
+
+    Returns:
+        True if file content was changed, False otherwise.
+    """
+    try:
+        source_code = file_path.read_text(encoding="utf-8")
+        tree = cst.parse_module(source_code)
+        transformer = FunctionAndMethodAlphabetizerCST()
+        modified_tree = tree.visit(transformer)
+        if modified_tree.code != source_code:
+            file_path.write_text(modified_tree.code, encoding="utf-8")
+            return True
+        return False
+    except Exception:
+        # Ignore unparseable or corrupted source files
+        return False
 
 
 class AlphabetizeCodeHandler:
@@ -47,8 +135,6 @@ class AlphabetizeCodeHandler:
         return str(file_path)
 
     def _process_file(self, file_path: Path, dry_run: bool) -> tuple[str, bool]:
-        from hexastack_tools.commands.rope import sort_python_file
-
         rel = self._to_rel_path(file_path)
         try:
             if dry_run:
@@ -133,5 +219,7 @@ class PublishMediumArticlesHandler:
 
 __all__ = [
     "AlphabetizeCodeHandler",
+    "FunctionAndMethodAlphabetizerCST",
     "PublishMediumArticlesHandler",
+    "sort_python_file",
 ]
