@@ -1,7 +1,16 @@
-"""Domain models and data contracts for developer tooling."""
+"""Domain models and CQRS commands for GitHub inspection and verification.
+
+Notes/Architectural Intent:
+    Encapsulates GitHub API data structures, check run findings, PR summaries,
+    and CQRS commands without external HTTP or presenter dependencies.
+"""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+
+from hexastack_core.domain.command import Command
 
 
 class OutputFormat(StrEnum):
@@ -33,7 +42,7 @@ class CheckRunFinding:
     name: str
     status: str
     conclusion: str
-    details_url: str
+    details_url: str = ""
     workflow_name: str | None = None
     started_at: str | None = None
     completed_at: str | None = None
@@ -138,13 +147,99 @@ class RepoStatus:
     require_conversation_resolution: bool = False
 
 
+@dataclass(frozen=True)
+class ChecksReport:
+    """CI check runs finding report."""
+
+    ref_or_pr: str
+    check_runs: tuple[CheckRunFinding, ...] = ()
+
+    @property
+    def has_failure(self) -> bool:
+        """Return True if any check run concluded with failure."""
+        return any(c.conclusion.lower() == "failure" for c in self.check_runs)
+
+
+@dataclass(frozen=True)
+class CodeScanningReport:
+    """Aggregated code scanning findings or single alert inspection."""
+
+    alerts: tuple[SecurityAlert, ...] = ()
+    single_alert: SecurityAlert | None = None
+    state: str = "open"
+
+
+@dataclass(frozen=True)
+class SecurityCommentsReport:
+    """Pull request review and security threads report."""
+
+    pr_number: int
+    threads: tuple[ReviewThread, ...] = ()
+
+
+@dataclass(frozen=True)
+class ExaminePrReport:
+    """Comprehensive PR summary report with optional failed logs."""
+
+    summary: PrSummary
+    show_details: bool = False
+    failed_logs: dict[str, str] | None = None
+
+
+# CQRS Commands
+
+
+class ExaminePrCommand(Command):
+    """Command requesting examination of a GitHub Pull Request."""
+
+    pr_number: int | None = None
+    show_details: bool = False
+
+
+class InspectChecksCommand(Command):
+    """Command requesting inspection of CI status checks for a PR or ref."""
+
+    ref_or_pr: str
+
+
+class InspectCodeScanningCommand(Command):
+    """Command requesting inspection of GitHub code scanning / CodeQL alerts."""
+
+    alert_number: int | None = None
+    rule_filter: str | None = None
+    package_filter: str | None = None
+    severity_filter: str | None = None
+    state: str = "open"
+
+
+class InspectRepoCommand(Command):
+    """Command requesting inspection of repository settings and governance."""
+
+    repo_name: str | None = None
+
+
+class InspectSecurityCommentsCommand(Command):
+    """Command requesting inspection of review comments and security threads on a PR."""
+
+    pr_number: int
+
+
 __all__ = [
     "AlertSeverity",
     "CheckRunFinding",
+    "ChecksReport",
+    "CodeScanningReport",
+    "ExaminePrCommand",
+    "ExaminePrReport",
+    "InspectChecksCommand",
+    "InspectCodeScanningCommand",
+    "InspectRepoCommand",
+    "InspectSecurityCommentsCommand",
     "OutputFormat",
     "PrSummary",
     "RepoStatus",
     "ReviewComment",
     "ReviewThread",
     "SecurityAlert",
+    "SecurityCommentsReport",
 ]

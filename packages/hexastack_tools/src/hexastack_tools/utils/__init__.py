@@ -1,5 +1,13 @@
 """Utils package init for hexastack_tools."""
 
+from hexastack_tools.utils.all_statements import (
+    check_file_all,
+    fix_file_all,
+)
+from hexastack_tools.utils.test_parity import (
+    check_package_parity,
+    check_test_directories_inits,
+)
 from hexastack_tools.utils.workspace import (
     HEX_LAYERS,
     LAYER_RESTRICTIONS,
@@ -21,6 +29,10 @@ from hexastack_tools.utils.workspace import (
 )
 
 __all__ = [
+    "check_file_all",
+    "check_package_parity",
+    "check_test_directories_inits",
+    "fix_file_all",
     "get_downstream_dependents",
     "get_package_dependencies",
     "get_package_directories",

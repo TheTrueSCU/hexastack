@@ -95,9 +95,37 @@ name = "Hexagonal architecture layer hierarchy"
 type = "layers"
 containers = ["hexastack_tools"]
 layers = [
+    "infra",
     "adapters",
     "ports",
     "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_tools.domain"]
+forbidden_modules = [
+    "hexastack_tools.ports",
+    "hexastack_tools.adapters",
+    "hexastack_tools.infra",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for ports"
+type = "forbidden"
+source_modules = ["hexastack_tools.ports"]
+forbidden_modules = [
+    "hexastack_tools.adapters",
+    "hexastack_tools.infra",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for adapters"
+type = "forbidden"
+source_modules = ["hexastack_tools.adapters"]
+forbidden_modules = [
+    "hexastack_tools.infra",
 ]
 
 [[tool.importlinter.contracts]]

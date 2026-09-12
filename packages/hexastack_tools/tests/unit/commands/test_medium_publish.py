@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -257,6 +257,32 @@ def test_run_main_status_no_api_key(medium_dir: Path) -> None:
         patch("sys.argv", ["medium-publish", "--status"]),
     ):
         run_main()  # should not raise
+
+
+def test_run_main_status_with_json_format(medium_dir: Path) -> None:
+    """--status with --format json dispatches to governance bus."""
+    with (
+        patch(
+            "hexastack_tools.commands.medium_publish._get_medium_dir",
+            return_value=medium_dir,
+        ),
+        patch("sys.argv", ["medium-publish", "--status", "--format", "json"]),
+        patch(
+            "hexastack_tools.infra.bootstrap.create_governance_bus"
+        ) as mock_bus_factory,
+    ):
+        from hexastack_tools.domain.refactoring import MediumPublishReport
+
+        mock_bus = MagicMock()
+        mock_bus.dispatch.return_value = MediumPublishReport(
+            published_count=0,
+            total_count=0,
+            is_successful=True,
+            details=(),
+        )
+        mock_bus_factory.return_value = mock_bus
+        run_main()
+        assert mock_bus.dispatch.called
 
 
 # ---------------------------------------------------------------------------

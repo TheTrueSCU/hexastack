@@ -12,6 +12,62 @@ from rich.table import Table
 console = Console()
 
 
+def _parse_complexipy_output(
+    raw_output: str, max_complexity: int
+) -> list[tuple[str, str, int]]:
+    """Parse raw plain complexipy output into list of violations."""
+    violations: list[tuple[str, str, int]] = []
+    current_file = ""
+
+    for line in raw_output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split()
+        if parts[-1].isdigit():
+            score = int(parts[-1])
+            func_name = " ".join(parts[:-1]) if len(parts) > 1 else "unknown"
+            file_path = current_file or "unknown"
+            if len(parts) >= 3 and ("/" in parts[0] or "\\" in parts[0]):
+                file_path = parts[0]
+                func_name = parts[1]
+            if score > max_complexity:
+                violations.append((file_path, func_name, score))
+        else:
+            current_file = line
+
+    return violations
+
+
+def _render_violations(
+    violations: list[tuple[str, str, int]], max_complexity: int
+) -> int:
+    """Display table of violations and return exit code 1."""
+    table = Table(
+        title=f"[bold red]Cognitive Complexity Violations (> {max_complexity})[/bold red]",
+        show_header=True,
+        header_style="bold magenta",
+    )
+    table.add_column("File", style="cyan")
+    table.add_column("Function / Method", style="bold yellow")
+    table.add_column("Complexity Score", justify="right", style="bold red")
+
+    for file_path, func_name, score in sorted(
+        violations, key=lambda x: x[2], reverse=True
+    ):
+        table.add_row(file_path, func_name, str(score))
+
+    console.print(table)
+    console.print(
+        Panel(
+            f"[bold red]❌ {len(violations)} function(s) exceeded the maximum allowed cognitive complexity ({max_complexity}).[/bold red]\n"
+            "Refactor these methods by extracting subroutines or helper functions.",
+            border_style="red",
+        )
+    )
+    return 1
+
+
 def run_complexipy(
     paths: list[str],
     max_complexity: int = 25,
@@ -46,49 +102,9 @@ def run_complexipy(
             )
         return proc.returncode
 
-    raw_output = proc.stdout.strip()
-
-    violations: list[tuple[str, str, int]] = []
-
-    for line in raw_output.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split()
-        if len(parts) >= 3:
-            file_path = parts[0]
-            func_name = parts[1]
-            try:
-                score = int(parts[2])
-                if score > max_complexity:
-                    violations.append((file_path, func_name, score))
-            except ValueError:
-                continue
-
+    violations = _parse_complexipy_output(proc.stdout.strip(), max_complexity)
     if violations:
-        table = Table(
-            title=f"[bold red]Cognitive Complexity Violations (> {max_complexity})[/bold red]",
-            show_header=True,
-            header_style="bold magenta",
-        )
-        table.add_column("File", style="cyan")
-        table.add_column("Function / Method", style="bold yellow")
-        table.add_column("Complexity Score", justify="right", style="bold red")
-
-        for file_path, func_name, score in sorted(
-            violations, key=lambda x: x[2], reverse=True
-        ):
-            table.add_row(file_path, func_name, str(score))
-
-        console.print(table)
-        console.print(
-            Panel(
-                f"[bold red]❌ {len(violations)} function(s) exceeded the maximum allowed cognitive complexity ({max_complexity}).[/bold red]\n"
-                "Refactor these methods by extracting subroutines or helper functions.",
-                border_style="red",
-            )
-        )
-        return 1
+        return _render_violations(violations, max_complexity)
 
     if proc.returncode != 0:
         if proc.stderr:

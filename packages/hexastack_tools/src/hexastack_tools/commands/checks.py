@@ -6,9 +6,9 @@ from typing import Annotated
 
 import typer
 
-from hexastack_tools.adapters.github import GitHubHttpAdapter
-from hexastack_tools.adapters.presenters.checks import present_checks
-from hexastack_tools.domain.github import OutputFormat
+from hexastack_tools.adapters.presenters.github import create_github_presenter
+from hexastack_tools.domain.github import InspectChecksCommand, OutputFormat
+from hexastack_tools.infra.bootstrap import create_governance_bus
 
 app = typer.Typer(
     help="Inspect GitHub CI and status checks.",
@@ -36,17 +36,13 @@ def checks(
 ) -> None:
     """Inspect CI status checks for a given PR number or Git ref."""
     try:
-        with GitHubHttpAdapter() as client:
-            if ref_or_pr.isdigit():
-                summary = client.get_pr_summary(int(ref_or_pr))
-                check_runs = list(summary.check_runs)
-            else:
-                check_runs = client.get_check_runs(ref_or_pr)
+        bus = create_governance_bus()
+        report = bus.dispatch(InspectChecksCommand(ref_or_pr=ref_or_pr))
 
-        present_checks(check_runs, ref_or_pr, output_format=output_format)
-        has_failure = any(c.conclusion.lower() == "failure" for c in check_runs)
-        if has_failure:
-            raise typer.Exit(code=1)
+        presenter = create_github_presenter(output_format=output_format.value)
+        exit_code = presenter.present_checks(report)
+        if exit_code != 0:
+            raise typer.Exit(code=exit_code)
     except typer.Exit:
         raise
     except Exception as exc:

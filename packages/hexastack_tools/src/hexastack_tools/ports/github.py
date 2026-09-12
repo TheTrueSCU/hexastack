@@ -7,18 +7,24 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Any, Protocol, runtime_checkable
 
 from hexastack_tools.domain.github import (
     CheckRunFinding,
+    ChecksReport,
+    CodeScanningReport,
+    ExaminePrReport,
     PrSummary,
     RepoStatus,
     ReviewThread,
     SecurityAlert,
+    SecurityCommentsReport,
 )
 
 __all__ = [
     "GitHubApiPort",
+    "GitHubPresenterPort",
 ]
 
 
@@ -119,4 +125,63 @@ class GitHubApiPort(Protocol):
 
         Returns:
             List of workflow run summary dictionaries.
+        """
+
+
+class GitHubPresenterPort(ABC):
+    """Abstract port interface for presenting GitHub inspection diagnostics."""
+
+    @abstractmethod
+    def present_pr_summary(self, report: ExaminePrReport) -> int:
+        """Render comprehensive Pull Request summary dashboard.
+
+        Args:
+            report: ExaminePrReport domain model.
+
+        Returns:
+            Exit code (0 if clean/healthy, 1 if blocked or has failures).
+        """
+
+    @abstractmethod
+    def present_checks(self, report: ChecksReport) -> int:
+        """Render CI check runs status table.
+
+        Args:
+            report: ChecksReport domain model.
+
+        Returns:
+            Exit code (0 if all passed, 1 if any check failed).
+        """
+
+    @abstractmethod
+    def present_repo_status(self, status: RepoStatus) -> int:
+        """Render repository governance and permissions status.
+
+        Args:
+            status: RepoStatus domain model.
+
+        Returns:
+            Exit code (0 for success).
+        """
+
+    @abstractmethod
+    def present_security_comments(self, report: SecurityCommentsReport) -> int:
+        """Render PR review threads and security discussion comments.
+
+        Args:
+            report: SecurityCommentsReport domain model.
+
+        Returns:
+            Exit code (0 for success).
+        """
+
+    @abstractmethod
+    def present_code_scanning(self, report: CodeScanningReport) -> int:
+        """Render CodeQL security alerts and remediation details.
+
+        Args:
+            report: CodeScanningReport domain model.
+
+        Returns:
+            Exit code (0 for success).
         """

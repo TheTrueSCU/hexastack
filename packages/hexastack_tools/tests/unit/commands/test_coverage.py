@@ -73,3 +73,100 @@ def test_audit_redundant_tests_nonexistent_cov(tmp_path: Path) -> None:
     """Verify empty list when .coverage DB is absent."""
     res = audit_redundant_tests(cov_path=tmp_path / ".coverage")
     assert res == []
+
+
+@patch("hexastack_tools.commands.coverage.create_governance_bus")
+@patch("hexastack_tools.commands.coverage.create_testing_presenter")
+@patch("sys.exit")
+def test_boundary_audit_main_json(
+    mock_exit: MagicMock,
+    mock_create_presenter: MagicMock,
+    mock_bus: MagicMock,
+    tmp_path: Path,
+) -> None:
+    """Verify boundary_audit_main with --format json dispatches and presents."""
+    cov_file = tmp_path / ".coverage"
+    cov_file.write_text("dummy cov")
+
+    mock_presenter = MagicMock()
+    mock_create_presenter.return_value = mock_presenter
+    mock_presenter.present_boundary_audit.return_value = 0
+
+    with patch(
+        "sys.argv", ["pytest-boundary-audit", "--cov-file", str(cov_file), "-f", "json"]
+    ):
+        boundary_audit_main()
+
+    mock_bus.return_value.dispatch.assert_called_once()
+    mock_create_presenter.assert_called_once_with("json")
+    mock_presenter.present_boundary_audit.assert_called_once()
+    mock_exit.assert_called_once_with(0)
+
+
+@patch("hexastack_tools.commands.coverage.create_governance_bus")
+@patch("hexastack_tools.commands.coverage.create_testing_presenter")
+@patch("sys.exit")
+def test_redundancy_audit_main_markdown(
+    mock_exit: MagicMock,
+    mock_create_presenter: MagicMock,
+    mock_bus: MagicMock,
+    tmp_path: Path,
+) -> None:
+    """Verify redundancy_audit_main with --format markdown dispatches and presents."""
+    cov_file = tmp_path / ".coverage"
+    cov_file.write_text("dummy cov")
+
+    mock_presenter = MagicMock()
+    mock_create_presenter.return_value = mock_presenter
+    mock_presenter.present_redundancy_audit.return_value = 0
+
+    with patch(
+        "sys.argv",
+        ["pytest-redundancy-audit", "--cov-file", str(cov_file), "-f", "markdown"],
+    ):
+        redundancy_audit_main()
+
+    mock_bus.return_value.dispatch.assert_called_once()
+    mock_create_presenter.assert_called_once_with("markdown")
+    mock_presenter.present_redundancy_audit.assert_called_once()
+    mock_exit.assert_called_once_with(0)
+
+
+@patch("hexastack_tools.commands.coverage.create_governance_bus")
+@patch("hexastack_tools.commands.coverage.create_testing_presenter")
+@patch("sys.exit")
+def test_impact_main_json(
+    mock_exit: MagicMock,
+    mock_create_presenter: MagicMock,
+    mock_bus: MagicMock,
+    tmp_path: Path,
+) -> None:
+    """Verify impact_main with --format json dispatches and presents."""
+    cov_file = tmp_path / ".coverage"
+    cov_file.write_text("dummy cov")
+
+    mock_presenter = MagicMock()
+    mock_create_presenter.return_value = mock_presenter
+    mock_presenter.present_impact_analysis.return_value = 0
+
+    with patch(
+        "sys.argv",
+        ["pytest-impact", "--cov-file", str(cov_file), "-f", "json", "--dry-run"],
+    ):
+        impact_main()
+
+    mock_bus.return_value.dispatch.assert_called_once()
+    mock_create_presenter.assert_called_once_with("json")
+    mock_presenter.present_impact_analysis.assert_called_once()
+    mock_exit.assert_called_once_with(0)
+
+
+@patch("sys.exit")
+def test_boundary_audit_main_missing_cov(mock_exit: MagicMock, tmp_path: Path) -> None:
+    """Verify boundary_audit_main exits 1 on missing coverage file."""
+    with patch(
+        "sys.argv",
+        ["pytest-boundary-audit", "--cov-file", str(tmp_path / "missing.cov")],
+    ):
+        boundary_audit_main()
+    mock_exit.assert_called_once_with(1)

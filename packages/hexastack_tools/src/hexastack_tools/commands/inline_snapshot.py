@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
+from hexastack_tools.infra.handlers.analysis import run_snapshot_update_for_dir
 from hexastack_tools.utils.workspace import (
     HexastackScriptArgumentParser,
     get_package_directories,
@@ -16,29 +16,19 @@ ROOT_DIR = get_repo_root()
 VALID_MODES = ["create", "fix", "review"]
 
 
-def run_snapshot_update_for_dir(target_dir: Path, mode: str) -> int:
-    """Run pytest in single-process snapshot mode for the target directory."""
-    if not target_dir.is_dir():
-        return 1
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for inline-snapshot-update.
 
-    cmd = [
-        "uv",
-        "run",
-        "pytest",
-        str(target_dir),
-        "-n",
-        "0",
-        f"--inline-snapshot={mode}",
-        "--no-cov",
-        "-o",
-        "addopts=",
-    ]
-    res = subprocess.run(cmd, cwd=ROOT_DIR)
-    return res.returncode
+    Args:
+        argv: Optional command-line arguments list.
 
+    Returns:
+        Exit code (0 for success, non-zero for test failures).
 
-def main() -> int:
-    """CLI entrypoint for inline-snapshot-update."""
+    Notes/Architectural Intent:
+        Dispatches UpdateInlineSnapshotsCommand across the governance bus and renders
+        results via the configured AnalysisPresenterPort.
+    """
     parser = HexastackScriptArgumentParser(
         description="Update or review inline-snapshots across Hexastack test suites."
     )
@@ -49,7 +39,14 @@ def main() -> int:
         default="fix",
         help="inline-snapshot mode: 'create' for new snapshots, 'fix' to update changed values, 'review' to diff (default: fix).",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
+    args = parser.parse_args(argv)
 
     targets: list[Path] = []
     if args.files:
@@ -63,13 +60,21 @@ def main() -> int:
     else:
         targets.extend(get_package_directories(ROOT_DIR))
 
-    exit_code = 0
-    for target in targets:
-        code = run_snapshot_update_for_dir(target, args.mode)
-        if code != 0:
-            exit_code = code
+    from hexastack_tools.adapters.presenters.analysis import (
+        create_analysis_presenter,
+    )
+    from hexastack_tools.domain.analysis import UpdateInlineSnapshotsCommand
+    from hexastack_tools.infra.bootstrap import create_governance_bus
 
-    return exit_code
+    bus = create_governance_bus()
+    presenter = create_analysis_presenter(args.format)
+
+    cmd = UpdateInlineSnapshotsCommand(
+        targets=tuple(targets),
+        mode=args.mode,
+    )
+    report = bus.dispatch(cmd)
+    return presenter.present_inline_snapshots(report)
 
 
 __all__ = [

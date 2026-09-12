@@ -6,9 +6,9 @@ from typing import Annotated
 
 import typer
 
-from hexastack_tools.adapters.github import GitHubHttpAdapter
 from hexastack_tools.adapters.presenters.security import present_security_comments
-from hexastack_tools.domain.github import OutputFormat
+from hexastack_tools.domain.github import InspectSecurityCommentsCommand, OutputFormat
+from hexastack_tools.infra.bootstrap import create_governance_bus
 
 app = typer.Typer(
     help="Inspect security and review comments on a GitHub PR.",
@@ -36,11 +36,12 @@ def security(
 ) -> None:
     """Fetch and display review comments and security findings for a PR."""
     try:
-        with GitHubHttpAdapter() as client:
-            summary = client.get_pr_summary(pr_number)
-            threads = summary.review_threads
+        bus = create_governance_bus()
+        report = bus.dispatch(InspectSecurityCommentsCommand(pr_number=pr_number))
 
-        present_security_comments(threads, pr_number, output_format=output_format)
+        present_security_comments(
+            report.threads, pr_number, output_format=output_format
+        )
     except Exception as exc:
         typer.secho(f"Error querying PR comments: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from exc

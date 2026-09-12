@@ -8,7 +8,8 @@ import typer
 
 from hexastack_tools.adapters.github import GitHubHttpAdapter
 from hexastack_tools.adapters.presenters.repo import present_repo_status
-from hexastack_tools.domain.github import OutputFormat
+from hexastack_tools.domain.github import InspectRepoCommand, OutputFormat
+from hexastack_tools.infra.bootstrap import create_governance_bus
 
 app = typer.Typer(
     help="Inspect GitHub repository configuration, actions permissions, and environments.",
@@ -46,7 +47,8 @@ def repo_status(
 
     try:
         with GitHubHttpAdapter(owner=owner, repo=target_repo) as client:
-            status = client.get_repo_status(owner=owner, repo=target_repo)
+            bus = create_governance_bus(github_client=client)
+            status = bus.dispatch(InspectRepoCommand(repo_name=repo_name))
 
         present_repo_status(status, output_format=output_format)
     except Exception as exc:
@@ -63,4 +65,9 @@ def main() -> None:
     app()
 
 
-__all__ = ["app", "main", "repo_status"]
+__all__ = [
+    "app",
+    "GitHubHttpAdapter",
+    "main",
+    "repo_status",
+]

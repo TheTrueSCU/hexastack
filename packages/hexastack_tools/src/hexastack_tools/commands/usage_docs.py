@@ -4,208 +4,19 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import subprocess
 import sys
-import tomllib
 from pathlib import Path
 
 from rich.console import Console
 
-from hexastack_tools.utils.help_extractor import (
-    extract_command_tree_bfs,
-    extract_commands_parallel,
-    extract_subcommands_from_help,
-)
-from hexastack_tools.utils.workspace import (
-    get_repo_root,
-    resolve_affected_packages,
+from hexastack_tools.infra.handlers.generators import (
+    _TARGET_GENERATORS,
+    build_tools_usage_markdown,
+    build_umbrella_usage_markdown,
+    resolve_impacted_usage_targets,
 )
 
 console = Console()
-
-_TOOLS_SECTION_MAP: dict[str, list[str]] = {
-    "🔍 GitHub & PR Examination Tools": [
-        "gh-pr-examine",
-        "gh-checks",
-        "gh-repo",
-        "gh-security",
-        "gh-code-scanning",
-    ],
-    "🛡️ Security & Code Quality Gateways": [
-        "codeql-scan",
-        "check-test-parity",
-        "check-all-statements",
-        "fix-all-statements",
-        "import-linter-run",
-        "import-linter-generate",
-        "deptry-run",
-        "generate-usage-docs",
-    ],
-    "🧪 Test Execution, Contracts & Mutation": [
-        "pytest-run",
-        "pytest-archon-generate",
-        "inline-snapshot-update",
-        "mutmut-run",
-        "mutmut-inspect",
-    ],
-    "📦 Code Architecture & Distribution": [
-        "pydeps-generate",
-        "pypi-check",
-        "pypi-build",
-        "pypi-publish",
-        "alphabetizer",
-        "rope-run",
-    ],
-}
-
-
-def build_tools_usage_markdown(root: Path) -> str:
-    """Generate canonical USAGE.md for hexastack-tools using parallel command help extraction."""
-    pyproject_path = root / "packages" / "hexastack_tools" / "pyproject.toml"
-    data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
-    scripts: dict[str, str] = data.get("project", {}).get("scripts", {})
-
-    # Extract help for all registered scripts concurrently
-    all_cmds = [[cmd] for cmd in sorted(scripts.keys())]
-    help_map = extract_commands_parallel(all_cmds)
-
-    lines: list[str] = [
-        "# Hexastack Developer Tools & Usage Guide (`hexastack-tools`)",
-        "",
-        "> Canonical developer command reference and CLI catalog automatically generated from tool entrypoints.",
-        "",
-        "---",
-        "",
-        "## 🏛️ Dogfooding Hexagonal Architecture",
-        "",
-        "`hexastack-tools` is built strictly according to Hexastack's hexagonal design principles:",
-        "- **`domain/`**: Pure data contracts (`PrSummary`, `CheckRunFinding`, `ReviewThread`, `OutputFormat`).",
-        "- **`ports/`**: Clean interface contracts (`GitHubApiPort`).",
-        "- **`adapters/`**: Pluggable presenters (`rich`, `json`, `plain`) and GitHub API REST/GraphQL clients.",
-        "- **`commands/`**: High-performance Typer/Argparse CLI applications with pipe auto-detection.",
-        "- **`utils/`**: Shared monorepo workspace discovery and package graph resolvers.",
-        "",
-        "---",
-        "",
-        "## ⚙️ Output Presentation Formats",
-        "",
-        "All inspection commands support `--format / -f`:",
-        "- **`auto` (default)**: Automatically outputs interactive ANSI tables/panels when attached to a terminal TTY, and switches to clean, tab-delimited plain text (`TSV`) when standard output is piped into Unix filters (`grep`, `awk`, `cut`, `xargs`, etc.).",
-        "- **`rich`**: Interactive Rich tables and color-coded status badges.",
-        "- **`json`**: Structured JSON for automation, CI scripts, and AI agents.",
-        "- **`plain`**: Machine-readable TSV stream.",
-        "",
-        "---",
-        "",
-        "## 🛠️ CLI Commands & Usage Catalog",
-        "",
-    ]
-
-    documented_cmds: set[str] = set()
-
-    for section_title, cmd_list in _TOOLS_SECTION_MAP.items():
-        lines.append(f"### {section_title}\n")
-        for cmd in cmd_list:
-            if cmd not in scripts:
-                continue
-            documented_cmds.add(cmd)
-            help_text = help_map.get((cmd,), "")
-            lines.append(f"#### `{cmd}`\n")
-            lines.append("```text")
-            lines.append(help_text)
-            lines.append("```\n")
-
-    unmapped = sorted(set(scripts.keys()) - documented_cmds)
-    if unmapped:
-        lines.append("### 🔧 Additional Workspace Tools\n")
-        for cmd in unmapped:
-            help_text = help_map.get((cmd,), "")
-            lines.append(f"#### `{cmd}`\n")
-            lines.append("```text")
-            lines.append(help_text)
-            lines.append("```\n")
-
-    return "\n".join(lines).strip() + "\n"
-
-
-def build_umbrella_usage_markdown(root: Path) -> str:
-    """Generate canonical USAGE.md for the umbrella hexastack package using BFS command tree traversal."""
-    tree = extract_command_tree_bfs(["hexastack"])
-    main_help = tree.get(("hexastack",), "")
-    subcommands = extract_subcommands_from_help(main_help)
-
-    lines: list[str] = [
-        "# Hexastack CLI & Framework Usage Guide (`hexastack`)",
-        "",
-        "> Canonical reference guide and command catalog for the Hexastack Unified Developer CLI.",
-        "",
-        "---",
-        "",
-        "## 🚀 Unified Entrypoint (`hexastack`)",
-        "",
-        "```text",
-        main_help,
-        "```",
-        "",
-        "---",
-        "",
-        "## 🛠️ Subcommand Reference Catalog",
-        "",
-    ]
-
-    for sub in subcommands:
-        sub_help = tree.get(("hexastack", sub), "")
-        lines.append(f"### `hexastack {sub}`\n")
-        lines.append("```text")
-        lines.append(sub_help)
-        lines.append("```\n")
-
-    return "\n".join(lines).strip() + "\n"
-
-
-_TARGET_GENERATORS = {
-    "tools": (
-        "packages/hexastack_tools/USAGE.md",
-        build_tools_usage_markdown,
-    ),
-    "hexastack": (
-        "packages/hexastack/USAGE.md",
-        build_umbrella_usage_markdown,
-    ),
-}
-
-
-def _get_changed_files_for_git() -> list[str]:
-    """Retrieve modified files from git staged/unstaged or HEAD commit."""
-    try:
-        res = subprocess.run(
-            ["git", "diff", "--name-only", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return [line.strip() for line in res.stdout.splitlines() if line.strip()]
-    except Exception:
-        return []
-
-
-def resolve_impacted_usage_targets(root: Path) -> list[str]:
-    """Resolve targets based on git changes, or all if no changes detected."""
-    changed = _get_changed_files_for_git()
-    if not changed:
-        return list(_TARGET_GENERATORS.keys())
-
-    affected = resolve_affected_packages(changed, root)
-    if affected is None:
-        return list(_TARGET_GENERATORS.keys())
-
-    targets: list[str] = []
-    if "tools" in affected:
-        targets.append("tools")
-    if "hexastack" in affected or "cli" in affected:
-        targets.append("hexastack")
-
-    return targets or list(_TARGET_GENERATORS.keys())
 
 
 def process_package_usage(
@@ -250,8 +61,19 @@ def process_package_usage(
     return True
 
 
-def main() -> None:
-    """CLI entrypoint for generate-usage-docs."""
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for generate-usage-docs.
+
+    Args:
+        argv: Optional command-line arguments list.
+
+    Returns:
+        Exit code (0 for success/up-to-date, 1 if out of date).
+
+    Notes/Architectural Intent:
+        Dispatches GenerateUsageDocsCommand across the governance bus and renders
+        results via the configured GeneratorPresenterPort.
+    """
     parser = argparse.ArgumentParser(
         description="Generate, verify, and fix USAGE.md documentation for Hexastack packages."
     )
@@ -280,36 +102,35 @@ def main() -> None:
         action="store_true",
         help="Re-generate and format USAGE.md files directly on disk.",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
+    args = parser.parse_args(argv)
 
-    root = get_repo_root()
+    from hexastack_tools.adapters.presenters.generators import (
+        create_generator_presenter,
+    )
+    from hexastack_tools.domain.generators import GenerateUsageDocsCommand
+    from hexastack_tools.infra.bootstrap import create_governance_bus
 
-    if args.package and args.package != "all":
-        targets = [args.package]
-    elif args.package == "all":
-        targets = list(_TARGET_GENERATORS.keys())
-    elif args.affected:
-        targets = resolve_impacted_usage_targets(root)
-    else:
-        # Default behavior: if --check without flags, check impacted or all
-        targets = (
-            resolve_impacted_usage_targets(root)
-            if args.verify
-            else list(_TARGET_GENERATORS.keys())
-        )
+    bus = create_governance_bus()
+    presenter = create_generator_presenter(args.format)
 
-    all_ok = True
-    for target in targets:
-        ok = process_package_usage(
-            target_key=target,
-            root=root,
-            verify=args.verify,
-            fix=args.fix or (not args.verify),
-        )
-        if not ok:
-            all_ok = False
-
-    sys.exit(0 if all_ok else 1)
+    cmd = GenerateUsageDocsCommand(
+        package=args.package,
+        affected_only=args.affected or (args.verify and args.package is None),
+        check_only=args.verify,
+        fix=args.fix or (not args.verify),
+    )
+    report = bus.dispatch(cmd)
+    code = presenter.present_usage_docs(report)
+    if argv is None:
+        sys.exit(code)
+    return code
 
 
 __all__ = [

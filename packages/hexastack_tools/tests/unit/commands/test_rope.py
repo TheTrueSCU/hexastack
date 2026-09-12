@@ -106,3 +106,30 @@ def test_rope_run_dispatch(mock_rename: MagicMock) -> None:
     code = run_main()
     assert code == 0
     mock_rename.assert_called_once()
+
+
+def test_alphabetize_main_dispatches_bus(tmp_path: Path) -> None:
+    """Verify alphabetize_main dispatches AlphabetizeCodeCommand and formats."""
+    from hexastack_tools.domain.refactoring import AlphabetizeCodeReport
+
+    py_file = tmp_path / "foo.py"
+    py_file.write_text("def b(): pass\ndef a(): pass\n", encoding="utf-8")
+
+    mock_bus = MagicMock()
+    mock_report = AlphabetizeCodeReport(
+        reordered_files=(str(py_file),),
+        unchanged_files=(),
+        is_successful=True,
+    )
+    mock_bus.dispatch.return_value = mock_report
+
+    with (
+        patch("hexastack_tools.commands.rope.ensure_tool_installed"),
+        patch(
+            "hexastack_tools.infra.bootstrap.create_governance_bus",
+            return_value=mock_bus,
+        ),
+    ):
+        code = alphabetize_main([str(py_file), "--format", "json"])
+        assert code == 0
+        assert mock_bus.dispatch.called
