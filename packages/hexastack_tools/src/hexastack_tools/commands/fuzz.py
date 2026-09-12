@@ -176,8 +176,19 @@ def display_fuzz_results(results: list[dict[str, Any]]) -> int:
     return 1
 
 
-def main() -> int:
-    """CLI entrypoint for fuzz-run command."""
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for fuzz-run command.
+
+    Args:
+        argv: Optional command-line arguments list.
+
+    Returns:
+        Exit code (0 if all harnesses passed, 1 otherwise).
+
+    Notes/Architectural Intent:
+        Dispatches FuzzRunCommand across the governance bus and renders
+        results via the configured AnalysisPresenterPort.
+    """
     parser = argparse.ArgumentParser(
         description="Run Atheris coverage-guided and OWASP security fuzz harnesses across Hexastack packages."
     )
@@ -202,13 +213,33 @@ def main() -> int:
         choices=["auto", "atheris", "standalone"],
         help="Fuzzing engine (default: auto)",
     )
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+
+    from hexastack_tools.adapters.presenters.analysis import (
+        create_analysis_presenter,
+    )
+    from hexastack_tools.domain.analysis import FuzzRunCommand
+    from hexastack_tools.infra.bootstrap import create_governance_bus
+
+    bus = create_governance_bus()
+    presenter = create_analysis_presenter(args.format)
+
+    cmd = FuzzRunCommand(
+        target=args.target,
+        runs=args.runs,
+        engine=args.engine,
+    )
     try:
-        results = run_target_fuzz(
-            target=args.target, runs=args.runs, engine=args.engine
-        )
-        return display_fuzz_results(results)
+        report = bus.dispatch(cmd)
+        return presenter.present_fuzz(report)
     except Exception as exc:
         console.print(f"[bold red]Fuzz runner error:[/bold red] {exc}")
         return 1

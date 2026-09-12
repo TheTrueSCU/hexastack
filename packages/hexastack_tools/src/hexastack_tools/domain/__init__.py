@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+from hexastack_tools.domain.analysis import (
+    CodeQlScanReport,
+    FuzzRunCommand,
+    FuzzRunReport,
+    FuzzTargetResult,
+    InlineSnapshotsReport,
+    ScanCodeQlCommand,
+    UpdateInlineSnapshotsCommand,
+)
 from hexastack_tools.domain.dependencies import (
     AuditExtrasParityCommand,
     DependencyAuditItem,
@@ -16,6 +25,15 @@ from hexastack_tools.domain.dependencies import (
     RunImportLinterCommand,
     RunUnifiedDepsAuditCommand,
     UnifiedDependencyAuditReport,
+)
+from hexastack_tools.domain.generators import (
+    ArchonReport,
+    GenerateArchonTestsCommand,
+    GeneratePydepsCommand,
+    GenerateUsageDocsCommand,
+    PydepsDiagramResult,
+    PydepsReport,
+    UsageDocsReport,
 )
 from hexastack_tools.domain.github import (
     AlertSeverity,
@@ -64,6 +82,12 @@ from hexastack_tools.domain.pypi import (
     ReproducibleBuildReport,
     VerifyReproducibleBuildCommand,
 )
+from hexastack_tools.domain.refactoring import (
+    AlphabetizeCodeCommand,
+    AlphabetizeCodeReport,
+    MediumPublishReport,
+    PublishMediumArticlesCommand,
+)
 from hexastack_tools.domain.testing import (
     AuditTestBoundariesCommand,
     AuditTestRedundancyCommand,
@@ -83,6 +107,9 @@ from hexastack_tools.domain.testing import (
 
 __all__ = [
     "AlertSeverity",
+    "AlphabetizeCodeCommand",
+    "AlphabetizeCodeReport",
+    "ArchonReport",
     "AuditComplexityCommand",
     "AuditExtrasParityCommand",
     "AuditTestBoundariesCommand",
@@ -97,6 +124,7 @@ __all__ = [
     "ChecksReport",
     "CheckStatus",
     "CheckTestParityCommand",
+    "CodeQlScanReport",
     "CodeScanningReport",
     "DependencyAuditItem",
     "DeptryAuditReport",
@@ -105,15 +133,23 @@ __all__ = [
     "ExaminePrReport",
     "ExtraParityViolation",
     "ExtrasAuditResult",
+    "FuzzRunCommand",
+    "FuzzRunReport",
+    "FuzzTargetResult",
+    "GenerateArchonTestsCommand",
     "GenerateImportLinterConfigCommand",
+    "GeneratePydepsCommand",
+    "GenerateUsageDocsCommand",
     "ImpactedTestsReport",
     "ImportLinterPackageResult",
     "ImportLinterReport",
+    "InlineSnapshotsReport",
     "InspectChecksCommand",
     "InspectCodeScanningCommand",
     "InspectMutationCacheCommand",
     "InspectRepoCommand",
     "InspectSecurityCommentsCommand",
+    "MediumPublishReport",
     "MutantCategory",
     "MutantRecord",
     "MutationAuditReport",
@@ -124,7 +160,10 @@ __all__ = [
     "PackagePublishResult",
     "PackageReleaseCheck",
     "PrSummary",
+    "PublishMediumArticlesCommand",
     "PublishPackagesCommand",
+    "PydepsDiagramResult",
+    "PydepsReport",
     "PyPiBuildReport",
     "PyPiCheckReport",
     "PyPiPublishReport",
@@ -146,8 +185,11 @@ __all__ = [
     "RunUnifiedDepsAuditCommand",
     "SanityCheckReport",
     "SanityTarget",
+    "ScanCodeQlCommand",
     "SecurityAlert",
     "SecurityCommentsReport",
     "UnifiedDependencyAuditReport",
+    "UpdateInlineSnapshotsCommand",
+    "UsageDocsReport",
     "VerifyReproducibleBuildCommand",
 ]

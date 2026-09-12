@@ -178,8 +178,19 @@ def _display_sarif_results(sarif_path: Path, root: Path) -> int:
     return 1 if any(r.get("level") in ("error", "critical") for r in results) else 0
 
 
-def main() -> int:
-    """CLI entrypoint for codeql-scan."""
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for codeql-scan.
+
+    Args:
+        argv: Optional command-line arguments list.
+
+    Returns:
+        Exit code (0 for clean scan, 1 for errors or critical findings).
+
+    Notes/Architectural Intent:
+        Dispatches ScanCodeQlCommand across the governance bus and renders
+        results via the configured AnalysisPresenterPort.
+    """
     parser = argparse.ArgumentParser(
         description="Run local CodeQL security and quality analysis with auto-detection."
     )
@@ -204,13 +215,31 @@ def main() -> int:
         default=0,
         help="Number of analysis threads (0 for auto).",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
+    args = parser.parse_args(argv)
 
-    return run_local_codeql_scan(
+    from hexastack_tools.adapters.presenters.analysis import (
+        create_analysis_presenter,
+    )
+    from hexastack_tools.domain.analysis import ScanCodeQlCommand
+    from hexastack_tools.infra.bootstrap import create_governance_bus
+
+    bus = create_governance_bus()
+    presenter = create_analysis_presenter(args.format)
+
+    cmd = ScanCodeQlCommand(
         query_suite=args.suite,
         output_sarif=args.output,
         threads=args.threads,
     )
+    report = bus.dispatch(cmd)
+    return presenter.present_codeql(report)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from hexastack_cqrs.adapters.buses.command.synchronous import SynchronousCommandBus
@@ -24,12 +25,22 @@ from hexastack_tools.adapters.runners.subprocess_runner import (
 from hexastack_tools.adapters.runners.testing_runner import (
     SubprocessTestingRunnerAdapter,
 )
+from hexastack_tools.domain.analysis import (
+    FuzzRunCommand,
+    ScanCodeQlCommand,
+    UpdateInlineSnapshotsCommand,
+)
 from hexastack_tools.domain.dependencies import (
     AuditExtrasParityCommand,
     GenerateImportLinterConfigCommand,
     RunDeptryAuditCommand,
     RunImportLinterCommand,
     RunUnifiedDepsAuditCommand,
+)
+from hexastack_tools.domain.generators import (
+    GenerateArchonTestsCommand,
+    GeneratePydepsCommand,
+    GenerateUsageDocsCommand,
 )
 from hexastack_tools.domain.github import (
     CheckRunFinding,
@@ -58,6 +69,10 @@ from hexastack_tools.domain.pypi import (
     PublishPackagesCommand,
     VerifyReproducibleBuildCommand,
 )
+from hexastack_tools.domain.refactoring import (
+    AlphabetizeCodeCommand,
+    PublishMediumArticlesCommand,
+)
 from hexastack_tools.domain.testing import (
     AuditTestBoundariesCommand,
     AuditTestRedundancyCommand,
@@ -65,12 +80,22 @@ from hexastack_tools.domain.testing import (
     RunImpactedTestsCommand,
     RunMutationTestsCommand,
 )
+from hexastack_tools.infra.handlers.analysis import (
+    FuzzRunHandler,
+    ScanCodeQlHandler,
+    UpdateInlineSnapshotsHandler,
+)
 from hexastack_tools.infra.handlers.dependencies import (
     AuditExtrasParityHandler,
     GenerateImportLinterConfigHandler,
     RunDeptryAuditHandler,
     RunImportLinterHandler,
     RunUnifiedDepsAuditHandler,
+)
+from hexastack_tools.infra.handlers.generators import (
+    GenerateArchonTestsHandler,
+    GeneratePydepsHandler,
+    GenerateUsageDocsHandler,
 )
 from hexastack_tools.infra.handlers.github import (
     ExaminePrHandler,
@@ -93,6 +118,10 @@ from hexastack_tools.infra.handlers.pypi import (
     CheckPyPiReleasesHandler,
     PublishPackagesHandler,
     VerifyReproducibleBuildHandler,
+)
+from hexastack_tools.infra.handlers.refactoring import (
+    AlphabetizeCodeHandler,
+    PublishMediumArticlesHandler,
 )
 from hexastack_tools.infra.handlers.testing import (
     AuditTestBoundariesHandler,
@@ -160,6 +189,7 @@ def create_governance_bus(
     testing_runner: TestingRunnerPort | None = None,
     github_client: GitHubApiPort | None = None,
     pypi_client: PyPiClientPort | None = None,
+    repo_root: Path | None = None,
 ) -> SynchronousCommandBus:
     """Construct and configure CommandBus with all governance handlers registered.
 
@@ -171,6 +201,7 @@ def create_governance_bus(
             SubprocessTestingRunnerAdapter.
         github_client: Optional GitHubApiPort adapter. Defaults to GitHubHttpAdapter.
         pypi_client: Optional PyPiClientPort adapter. Defaults to SubprocessPyPiRunnerAdapter.
+        repo_root: Optional Path to repository root. Defaults to auto-detection.
 
     Returns:
         Configured SynchronousCommandBus instance.
@@ -275,5 +306,32 @@ def create_governance_bus(
 
     verify_repro_handler = VerifyReproducibleBuildHandler(actual_pypi_client)
     registry.register(VerifyReproducibleBuildCommand, verify_repro_handler.handle)
+
+    # 7. Register generator and documentation handlers
+    pydeps_handler = GeneratePydepsHandler(root=repo_root)
+    registry.register(GeneratePydepsCommand, pydeps_handler.handle)
+
+    usage_docs_handler = GenerateUsageDocsHandler(root=repo_root)
+    registry.register(GenerateUsageDocsCommand, usage_docs_handler.handle)
+
+    archon_handler = GenerateArchonTestsHandler(root=repo_root)
+    registry.register(GenerateArchonTestsCommand, archon_handler.handle)
+
+    # 8. Register analysis and fuzzing handlers
+    codeql_handler = ScanCodeQlHandler(root=repo_root)
+    registry.register(ScanCodeQlCommand, codeql_handler.handle)
+
+    fuzz_handler = FuzzRunHandler(root=repo_root)
+    registry.register(FuzzRunCommand, fuzz_handler.handle)
+
+    snapshots_handler = UpdateInlineSnapshotsHandler(root=repo_root)
+    registry.register(UpdateInlineSnapshotsCommand, snapshots_handler.handle)
+
+    # 9. Register refactoring and publishing handlers
+    alpha_handler = AlphabetizeCodeHandler(root=repo_root)
+    registry.register(AlphabetizeCodeCommand, alpha_handler.handle)
+
+    medium_handler = PublishMediumArticlesHandler(root=repo_root)
+    registry.register(PublishMediumArticlesCommand, medium_handler.handle)
 
     return bus

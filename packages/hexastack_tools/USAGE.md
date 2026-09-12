@@ -158,6 +158,7 @@ options:
 
 ```text
 usage: codeql-scan [-h] [--suite SUITE] [--output OUTPUT] [--threads THREADS]
+                   [-f {table,json,markdown}]
 
 Run local CodeQL security and quality analysis with auto-detection.
 
@@ -168,6 +169,8 @@ options:
   --output, -o OUTPUT   Optional destination path for generated SARIF report.
   --threads, -t THREADS
                         Number of analysis threads (0 for auto).
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `check-test-parity`
@@ -283,7 +286,7 @@ options:
 
 ```text
 usage: generate-usage-docs [-h] [-p {tools,hexastack,all}] [-A] [--check]
-                           [--fix]
+                           [--fix] [-f {table,json,markdown}]
 
 Generate, verify, and fix USAGE.md documentation for Hexastack packages.
 
@@ -298,6 +301,8 @@ options:
                         generation (pre-commit quality gate).
   --fix                 Re-generate and format USAGE.md files directly on
                         disk.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 ### 🧪 Test Execution, Contracts & Mutation
@@ -328,6 +333,7 @@ options:
 
 ```text
 usage: pytest-archon-generate [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                              [-f {table,json,markdown}] [--force]
                               [files ...]
 
 Generate pytest-archon boundary tests for packages.
@@ -342,6 +348,9 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
+  --force               Overwrite existing test_hexagonal_boundaries.py files.
 ```
 
 #### `inline-snapshot-update`
@@ -349,6 +358,7 @@ options:
 ```text
 usage: inline-snapshot-update [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                               [--mode {create,fix,review}]
+                              [-f {table,json,markdown}]
                               [files ...]
 
 Update or review inline-snapshots across Hexastack test suites.
@@ -367,6 +377,8 @@ options:
                         inline-snapshot mode: 'create' for new snapshots,
                         'fix' to update changed values, 'review' to diff
                         (default: fix).
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `mutmut-run`
@@ -424,6 +436,7 @@ options:
 
 ```text
 usage: pydeps-generate [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                       [-f {table,json,markdown}]
                        [files ...]
 
 Generate architecture dependency diagrams using pydeps.
@@ -438,6 +451,8 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `pypi-check`
@@ -504,7 +519,9 @@ options:
 #### `alphabetizer`
 
 ```text
-usage: alphabetizer [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a] [files ...]
+usage: alphabetizer [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                    [-f {table,json,markdown}]
+                    [files ...]
 
 Alphabetize functions and class methods across packages deterministically.
 
@@ -518,6 +535,8 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `rope-run`
@@ -605,7 +624,7 @@ options:
 
 ```text
 usage: fuzz-run [-h] [-t {all,sanitizer,proto,owasp}] [-n RUNS]
-                [-e {auto,atheris,standalone}]
+                [-e {auto,atheris,standalone}] [-f {table,json,markdown}]
 
 Run Atheris coverage-guided and OWASP security fuzz harnesses across Hexastack
 packages.
@@ -617,6 +636,8 @@ options:
   -n, --runs RUNS       Number of fuzzed runs per harness (default: 1000)
   -e, --engine {auto,atheris,standalone}
                         Fuzzing engine (default: auto)
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `medium-publish`
@@ -624,25 +645,31 @@ options:
 ```text
 usage: medium-publish [-h] [--publish] [--all-drafts] [--status]
                       [--medium-url URL] [--api-key API_KEY] [--dry-run]
+                      [-f {table,json,markdown}]
                       [slug]
 
 Manage docs/medium drafts on DEV.to. Two-pass workflow: upload drafts →
 publish in order → import to Medium.
 
 positional arguments:
-  slug               Article filename stem (e.g. 'ai-guardrails-manifesto').
-                     Required unless --all-drafts or --status is set.
+  slug                  Article filename stem (e.g. 'ai-guardrails-
+                        manifesto'). Required unless --all-drafts or --status
+                        is set.
 
 options:
-  -h, --help         show this help message and exit
-  --publish          Publish the draft on DEV.to (PATCH draft→published,
-                     capture URL).
-  --all-drafts       Upload ALL local articles without a devto_id as drafts.
-  --status           Show a status table of all articles and their publish
-                     state.
-  --medium-url URL   Record the Medium URL for a slug after manual import.
-  --api-key API_KEY  DEV.to API key (overrides DEVTO_API_KEY env var).
-  --dry-run          Parse and display payload without making any API calls.
+  -h, --help            show this help message and exit
+  --publish             Publish the draft on DEV.to (PATCH draft→published,
+                        capture URL).
+  --all-drafts          Upload ALL local articles without a devto_id as
+                        drafts.
+  --status              Show a status table of all articles and their publish
+                        state.
+  --medium-url URL      Record the Medium URL for a slug after manual import.
+  --api-key API_KEY     DEV.to API key (overrides DEVTO_API_KEY env var).
+  --dry-run             Parse and display payload without making any API
+                        calls.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `pypi-reproducible-check`
@@ -722,6 +749,7 @@ options:
 
 ```text
 usage: rope-alphabetizer [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                         [-f {table,json,markdown}]
                          [files ...]
 
 Alphabetize functions and class methods across packages deterministically.
@@ -736,6 +764,8 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `sanity-check`

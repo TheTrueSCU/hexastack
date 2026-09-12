@@ -6,11 +6,27 @@ Notes/Architectural Intent:
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+from hexastack_tools.domain.analysis import (
+    CodeQlScanReport,
+    FuzzRunCommand,
+    FuzzRunReport,
+    InlineSnapshotsReport,
+    ScanCodeQlCommand,
+    UpdateInlineSnapshotsCommand,
+)
 from hexastack_tools.domain.dependencies import (
     AuditExtrasParityCommand,
     ExtrasAuditResult,
+)
+from hexastack_tools.domain.generators import (
+    ArchonReport,
+    GenerateArchonTestsCommand,
+    GeneratePydepsCommand,
+    GenerateUsageDocsCommand,
+    PydepsReport,
+    UsageDocsReport,
 )
 from hexastack_tools.domain.github import (
     ChecksReport,
@@ -42,6 +58,12 @@ from hexastack_tools.domain.pypi import (
     PyPiPublishReport,
     ReproducibleBuildReport,
     VerifyReproducibleBuildCommand,
+)
+from hexastack_tools.domain.refactoring import (
+    AlphabetizeCodeCommand,
+    AlphabetizeCodeReport,
+    MediumPublishReport,
+    PublishMediumArticlesCommand,
 )
 from hexastack_tools.domain.testing import (
     AuditTestBoundariesCommand,
@@ -205,3 +227,67 @@ def test_create_governance_bus_wires_and_dispatches():
 
     repro_res = bus.dispatch(VerifyReproducibleBuildCommand())
     assert isinstance(repro_res, ReproducibleBuildReport)
+
+    # 7. Test dispatching Generator commands
+    with (
+        patch(
+            "hexastack_tools.infra.handlers.generators.generate_overview_diagram",
+            return_value="ov.svg",
+        ),
+        patch(
+            "hexastack_tools.infra.handlers.generators.generate_package_diagram",
+            return_value="pkg.svg",
+        ),
+        patch(
+            "hexastack_tools.infra.handlers.generators.get_package_directories",
+            return_value=[],
+        ),
+    ):
+        pydeps_res = bus.dispatch(GeneratePydepsCommand())
+        assert isinstance(pydeps_res, PydepsReport)
+
+    with (
+        patch("hexastack_tools.commands.usage_docs._TARGET_GENERATORS", {}),
+        patch(
+            "hexastack_tools.commands.usage_docs.resolve_impacted_usage_targets",
+            return_value=[],
+        ),
+    ):
+        usage_res = bus.dispatch(GenerateUsageDocsCommand(check_only=True))
+        assert isinstance(usage_res, UsageDocsReport)
+
+    with (
+        patch(
+            "hexastack_tools.infra.handlers.generators.get_package_directories",
+            return_value=[],
+        ),
+    ):
+        archon_res = bus.dispatch(GenerateArchonTestsCommand())
+        assert isinstance(archon_res, ArchonReport)
+
+    # 8. Test dispatching Analysis commands
+    with (
+        patch("shutil.which", return_value=None),
+        patch("pathlib.Path.is_file", return_value=False),
+    ):
+        codeql_res = bus.dispatch(ScanCodeQlCommand())
+        assert isinstance(codeql_res, CodeQlScanReport)
+
+    with patch("hexastack_tools.commands.fuzz.run_target_fuzz", return_value=[]):
+        fuzz_res = bus.dispatch(FuzzRunCommand())
+        assert isinstance(fuzz_res, FuzzRunReport)
+
+    with patch(
+        "hexastack_tools.utils.workspace.get_package_directories", return_value=[]
+    ):
+        snap_res = bus.dispatch(UpdateInlineSnapshotsCommand())
+        assert isinstance(snap_res, InlineSnapshotsReport)
+
+    # 9. Test dispatching Refactoring commands
+    alpha_res = bus.dispatch(
+        AlphabetizeCodeCommand(targets=(Path("/tmp/nonexistent.py"),))
+    )
+    assert isinstance(alpha_res, AlphabetizeCodeReport)
+
+    medium_res = bus.dispatch(PublishMediumArticlesCommand())
+    assert isinstance(medium_res, MediumPublishReport)
