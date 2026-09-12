@@ -15,7 +15,6 @@ from hexastack_tools.utils.workspace import (
     get_example_directory,
     get_package_directories,
     get_package_directory,
-    get_present_layers,
     get_repo_root,
     resolve_affected_packages,
 )
@@ -190,41 +189,55 @@ def run_main() -> None:
     sys.exit(res.returncode)
 
 
-def archon_generate_main() -> None:
-    """CLI entrypoint for pytest-archon-generate."""
+def archon_generate_main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for pytest-archon-generate.
+
+    Args:
+        argv: Optional command-line arguments list.
+
+    Returns:
+        Exit code (0 for success, non-zero for failure).
+
+    Notes/Architectural Intent:
+        Dispatches GenerateArchonTestsCommand across the governance bus and renders
+        results via the configured GeneratorPresenterPort.
+    """
     parser = HexastackScriptArgumentParser(
         description="Generate pytest-archon boundary tests for packages."
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing test_hexagonal_boundaries.py files.",
+    )
+    args = parser.parse_args(argv)
+
+    from hexastack_tools.adapters.presenters.generators import (
+        create_generator_presenter,
+    )
+    from hexastack_tools.domain.generators import GenerateArchonTestsCommand
+    from hexastack_tools.infra.bootstrap import create_governance_bus
 
     root = get_repo_root()
-    packages = (
-        [get_package_directory(p, root) for p in args.packages]
-        if args.packages
-        else get_package_directories(root)
+    bus = create_governance_bus(repo_root=root)
+    presenter = create_generator_presenter(args.format)
+
+    cmd = GenerateArchonTestsCommand(
+        packages=tuple(args.packages) if args.packages else (),
+        force=args.force,
     )
-
-    for pkg_path in packages:
-        pkg_name = pkg_path.name
-        if not get_present_layers(pkg_path):
-            continue
-
-        test_lines = [
-            f'"""Hexagonal architecture boundary tests for {pkg_name}."""',
-            "",
-            "from hexastack_core.testing import assert_clean_architecture",
-            "",
-            "",
-            f"def test_{pkg_name.replace('-', '_')}_clean_architecture():",
-            f'    """Assert {pkg_name} strictly complies with Hexagonal layer isolation."""',
-            f'    assert_clean_architecture("{pkg_name.replace("-", "_")}")',
-            "",
-        ]
-        arch_dir = pkg_path / "tests" / "architecture"
-        arch_dir.mkdir(parents=True, exist_ok=True)
-        (arch_dir / "test_hexagonal_boundaries.py").write_text(
-            "\n".join(test_lines).strip() + "\n"
-        )
+    report = bus.dispatch(cmd)
+    code = presenter.present_archon(report)
+    if code != 0:
+        sys.exit(code)
+    return code
 
 
 __all__ = [

@@ -68,3 +68,65 @@ def test_code_scanning_tables() -> None:
 def test_code_scanning_main_callable() -> None:
     """Verify code scanning command entrypoint."""
     assert callable(main)
+
+
+def test_inspect_single_alert_dispatches() -> None:
+    """Verify inspect_single_alert dispatches command and calls presenter."""
+    from unittest.mock import MagicMock, patch
+
+    from hexastack_tools.commands.code_scanning import inspect_single_alert
+    from hexastack_tools.domain.github import CodeScanningReport
+
+    mock_bus = MagicMock()
+    mock_report = CodeScanningReport()
+    mock_bus.dispatch.return_value = mock_report
+
+    mock_presenter = MagicMock()
+    mock_presenter.present_code_scanning.return_value = 0
+
+    with (
+        patch(
+            "hexastack_tools.commands.code_scanning.create_governance_bus",
+            return_value=mock_bus,
+        ),
+        patch(
+            "hexastack_tools.commands.code_scanning.create_github_presenter",
+            return_value=mock_presenter,
+        ),
+    ):
+        code = inspect_single_alert(101, format_name="json")
+
+    assert code == 0
+    mock_bus.dispatch.assert_called_once()
+    mock_presenter.present_code_scanning.assert_called_once_with(mock_report)
+
+
+def test_inspect_and_bucket_alerts_dispatches() -> None:
+    """Verify inspect_and_bucket_alerts dispatches command and calls presenter."""
+    from unittest.mock import MagicMock, patch
+
+    from hexastack_tools.commands.code_scanning import inspect_and_bucket_alerts
+    from hexastack_tools.domain.github import CodeScanningReport
+
+    mock_bus = MagicMock()
+    mock_report = CodeScanningReport()
+    mock_bus.dispatch.return_value = mock_report
+
+    mock_presenter = MagicMock()
+    mock_presenter.present_code_scanning.return_value = 0
+
+    with (
+        patch(
+            "hexastack_tools.commands.code_scanning.create_governance_bus",
+            return_value=mock_bus,
+        ),
+        patch(
+            "hexastack_tools.commands.code_scanning.create_github_presenter",
+            return_value=mock_presenter,
+        ),
+    ):
+        code = inspect_and_bucket_alerts(rule_filter="test", format_name="markdown")
+
+    assert code == 0
+    mock_bus.dispatch.assert_called_once()
+    mock_presenter.present_code_scanning.assert_called_once_with(mock_report)

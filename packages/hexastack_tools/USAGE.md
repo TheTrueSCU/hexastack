@@ -124,7 +124,8 @@ Usage: gh-security [OPTIONS] {pr_number}
 ```text
 usage: gh-code-scanning [-h] [--rule RULE] [--package PACKAGE]
                         [--severity SEVERITY]
-                        [--state {open,closed,dismissed,all}] [--details]
+                        [--state {open,closed,dismissed,all}]
+                        [--format {rich,json,markdown}] [--details]
                         [alert]
 
 Bucket and inspect GitHub CodeQL security & quality code-scanning alerts.
@@ -144,6 +145,9 @@ options:
                         'note').
   --state {open,closed,dismissed,all}
                         Alert state ('open', 'closed', 'dismissed', 'all').
+  --format, -f {rich,json,markdown}
+                        Output format: rich (interactive tables), json
+                        (structured), markdown.
   --details, -d         Print detailed contextual panels for all matching
                         alerts.
 ```
@@ -154,6 +158,7 @@ options:
 
 ```text
 usage: codeql-scan [-h] [--suite SUITE] [--output OUTPUT] [--threads THREADS]
+                   [-f {table,json,markdown}]
 
 Run local CodeQL security and quality analysis with auto-detection.
 
@@ -164,21 +169,28 @@ options:
   --output, -o OUTPUT   Optional destination path for generated SARIF report.
   --threads, -t THREADS
                         Number of analysis threads (0 for auto).
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `check-test-parity`
 
 ```text
-╭──────────────────────────────────────────────────────────────────────────────╮
-│ ✅ All source modules mirror unit tests 1:1 and all test directories contain │
-│ __init__.py.                                                                 │
-╰──────────────────────────────────────────────────────────────────────────────╯
+usage: check-test-parity [-h] [-f {table,json,markdown}]
+
+Verify 1:1 symmetry between src modules and unit tests.
+
+options:
+  -h, --help            show this help message and exit
+  -f, --format {table,json,markdown}
+                        Output format (table, json, markdown). Default: table.
 ```
 
 #### `check-all-statements`
 
 ```text
 usage: check-all-statements [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                            [-f {table,json,markdown}]
                             [files ...]
 
 Verify __all__ is deduplicated and sorted.
@@ -193,12 +205,15 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output format (table, json, markdown). Default: table.
 ```
 
 #### `fix-all-statements`
 
 ```text
 usage: fix-all-statements [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                          [-f {table,json,markdown}]
                           [files ...]
 
 Format, alphabetize, and deduplicate __all__ statements.
@@ -213,21 +228,25 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output format (table, json, markdown). Default: table.
 ```
 
 #### `import-linter-run`
 
 ```text
-usage: import-linter-run [-h] [--all] [files ...]
+usage: import-linter-run [-h] [--all] [-f {table,json,markdown}] [files ...]
 
 Run import-linter per package.
 
 positional arguments:
-  files       Changed files passed by pre-commit
+  files                 Changed files passed by pre-commit
 
 options:
-  -h, --help  show this help message and exit
-  --all       Run across all packages unconditionally
+  -h, --help            show this help message and exit
+  --all                 Run across all packages unconditionally
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `import-linter-generate`
@@ -253,19 +272,21 @@ options:
 #### `deptry-run`
 
 ```text
-usage: deptry-run [-h]
+usage: deptry-run [-h] [-f {table,json,markdown}]
 
 Run deptry per package.
 
 options:
-  -h, --help  show this help message and exit
+  -h, --help            show this help message and exit
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `generate-usage-docs`
 
 ```text
 usage: generate-usage-docs [-h] [-p {tools,hexastack,all}] [-A] [--check]
-                           [--fix]
+                           [--fix] [-f {table,json,markdown}]
 
 Generate, verify, and fix USAGE.md documentation for Hexastack packages.
 
@@ -280,6 +301,8 @@ options:
                         generation (pre-commit quality gate).
   --fix                 Re-generate and format USAGE.md files directly on
                         disk.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 ### 🧪 Test Execution, Contracts & Mutation
@@ -310,6 +333,7 @@ options:
 
 ```text
 usage: pytest-archon-generate [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                              [-f {table,json,markdown}] [--force]
                               [files ...]
 
 Generate pytest-archon boundary tests for packages.
@@ -324,6 +348,9 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
+  --force               Overwrite existing test_hexagonal_boundaries.py files.
 ```
 
 #### `inline-snapshot-update`
@@ -331,6 +358,7 @@ options:
 ```text
 usage: inline-snapshot-update [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
                               [--mode {create,fix,review}]
+                              [-f {table,json,markdown}]
                               [files ...]
 
 Update or review inline-snapshots across Hexastack test suites.
@@ -349,6 +377,8 @@ options:
                         inline-snapshot mode: 'create' for new snapshots,
                         'fix' to update changed values, 'review' to diff
                         (default: fix).
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `mutmut-run`
@@ -356,7 +386,7 @@ options:
 ```text
 usage: mutmut-run [-h]
                   [-p {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}]
-                  [-a] [-r]
+                  [-a] [-r] [--format {table,json,markdown}]
 
 Run mutation tests.
 
@@ -365,13 +395,15 @@ options:
   -p, --package {ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}
   -a, --all
   -r, --refresh         Clear cached mutants before running mutation tests.
+  --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `mutmut-inspect`
 
 ```text
 usage: mutmut-inspect [-h] [--summary] [-p PACKAGE] [-f FILE] [-a] [-c]
-                      [-n LIMIT]
+                      [-n LIMIT] [--format {table,json,markdown}]
 
 Inspect .mutmut-cache with automated mutant classification (Critical vs
 Ignorable)
@@ -393,6 +425,9 @@ options:
                         functions executing mutant lines.
   -n, --limit LIMIT     Maximum number of mutant lines to display (default:
                         25).
+  --format {table,json,markdown}
+                        Output presentation format: table, json, or markdown
+                        (default: table).
 ```
 
 ### 📦 Code Architecture & Distribution
@@ -401,6 +436,7 @@ options:
 
 ```text
 usage: pydeps-generate [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                       [-f {table,json,markdown}]
                        [files ...]
 
 Generate architecture dependency diagrams using pydeps.
@@ -415,23 +451,31 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `pypi-check`
 
 ```text
-usage: pypi-check [-h]
+usage: pypi-check [-h] [-p PACKAGE] [--format {rich,json,markdown}]
 
 Verify package release version availability against PyPI index.
 
 options:
-  -h, --help  show this help message and exit
+  -h, --help            show this help message and exit
+  -p, --package PACKAGE
+                        Specific package name to check (default: all workspace
+                        packages)
+  --format, -f {rich,json,markdown}
+                        Output format: rich (tables), json, markdown.
 ```
 
 #### `pypi-build`
 
 ```text
 usage: pypi-build [-h] [--out-dir OUT_DIR] [--reproducible-check]
+                  [--format {rich,json,markdown}]
 
 Build distribution packages (wheels and sdists) for all workspace packages.
 
@@ -441,6 +485,8 @@ options:
                         (default: dist/)
   --reproducible-check  Audit build determinism and verify byte-for-byte
                         reproducibility before building
+  --format, -f {rich,json,markdown}
+                        Output format: rich (tables), json, markdown.
 ```
 
 #### `pypi-publish`
@@ -448,29 +494,34 @@ options:
 ```text
 usage: pypi-publish [-h] [--dist-dir DIST_DIR] [--build] [--no-build]
                     [--token TOKEN] [--delay DELAY] [--force]
+                    [--format {rich,json,markdown}]
 
 Build and publish workspace packages to PyPI, skipping already published
 releases.
 
 options:
-  -h, --help           show this help message and exit
-  --dist-dir DIST_DIR  Directory containing pre-built distribution packages
-                       (default: dist/)
-  --build              Automatically build distribution packages before
-                       publishing (default: True)
-  --no-build           Skip building and publish existing artifacts in dist/
-  --token TOKEN        PyPI upload token (defaults to UV_PUBLISH_TOKEN or
-                       PYPI_TOKEN env vars)
-  --delay DELAY        Delay in seconds between package uploads (default:
-                       2.0s)
-  --force              Attempt upload even if version is already marked as
-                       published on PyPI
+  -h, --help            show this help message and exit
+  --dist-dir DIST_DIR   Directory containing pre-built distribution packages
+                        (default: dist/)
+  --build               Automatically build distribution packages before
+                        publishing (default: True)
+  --no-build            Skip building and publish existing artifacts in dist/
+  --token TOKEN         PyPI upload token (defaults to UV_PUBLISH_TOKEN or
+                        PYPI_TOKEN env vars)
+  --delay DELAY         Delay in seconds between package uploads (default:
+                        2.0s)
+  --force               Attempt upload even if version is already marked as
+                        published on PyPI
+  --format, -f {rich,json,markdown}
+                        Output format: rich (tables), json, markdown.
 ```
 
 #### `alphabetizer`
 
 ```text
-usage: alphabetizer [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a] [files ...]
+usage: alphabetizer [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                    [-f {table,json,markdown}]
+                    [files ...]
 
 Alphabetize functions and class methods across packages deterministically.
 
@@ -484,6 +535,8 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `rope-run`
@@ -518,14 +571,17 @@ options:
 #### `check-extras-parity`
 
 ```text
-usage: check-extras-parity [-h] [--diagram]
+usage: check-extras-parity [-h] [--diagram] [-f {table,json,markdown}]
 
 Audit optional extras parity across workspace subpackages and umbrella
 package.
 
 options:
-  -h, --help  show this help message and exit
-  --diagram   Generate and print Mermaid dependency diagram of package extras.
+  -h, --help            show this help message and exit
+  --diagram             Generate and print Mermaid dependency diagram of
+                        package extras.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `complexipy-run`
@@ -550,22 +606,25 @@ options:
 
 ```text
 usage: deps-audit [-h] [--diagrams] [--deptry-only] [--extras-only]
+                  [-f {table,json,markdown}]
 
 Unified dependency, optional extras, and architecture auditor for Hexastack.
 
 options:
-  -h, --help     show this help message and exit
-  --diagrams     Regenerate all Pydeps SVG import graphs and Mermaid extras
-                 diagrams.
-  --deptry-only  Only run deptry source import audits.
-  --extras-only  Only run optional extras parity checks.
+  -h, --help            show this help message and exit
+  --diagrams            Regenerate all Pydeps SVG import graphs and Mermaid
+                        extras diagrams.
+  --deptry-only         Only run deptry source import audits.
+  --extras-only         Only run optional extras parity checks.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `fuzz-run`
 
 ```text
 usage: fuzz-run [-h] [-t {all,sanitizer,proto,owasp}] [-n RUNS]
-                [-e {auto,atheris,standalone}]
+                [-e {auto,atheris,standalone}] [-f {table,json,markdown}]
 
 Run Atheris coverage-guided and OWASP security fuzz harnesses across Hexastack
 packages.
@@ -577,6 +636,8 @@ options:
   -n, --runs RUNS       Number of fuzzed runs per harness (default: 1000)
   -e, --engine {auto,atheris,standalone}
                         Fuzzing engine (default: auto)
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `medium-publish`
@@ -584,31 +645,38 @@ options:
 ```text
 usage: medium-publish [-h] [--publish] [--all-drafts] [--status]
                       [--medium-url URL] [--api-key API_KEY] [--dry-run]
+                      [-f {table,json,markdown}]
                       [slug]
 
 Manage docs/medium drafts on DEV.to. Two-pass workflow: upload drafts →
 publish in order → import to Medium.
 
 positional arguments:
-  slug               Article filename stem (e.g. 'ai-guardrails-manifesto').
-                     Required unless --all-drafts or --status is set.
+  slug                  Article filename stem (e.g. 'ai-guardrails-
+                        manifesto'). Required unless --all-drafts or --status
+                        is set.
 
 options:
-  -h, --help         show this help message and exit
-  --publish          Publish the draft on DEV.to (PATCH draft→published,
-                     capture URL).
-  --all-drafts       Upload ALL local articles without a devto_id as drafts.
-  --status           Show a status table of all articles and their publish
-                     state.
-  --medium-url URL   Record the Medium URL for a slug after manual import.
-  --api-key API_KEY  DEV.to API key (overrides DEVTO_API_KEY env var).
-  --dry-run          Parse and display payload without making any API calls.
+  -h, --help            show this help message and exit
+  --publish             Publish the draft on DEV.to (PATCH draft→published,
+                        capture URL).
+  --all-drafts          Upload ALL local articles without a devto_id as
+                        drafts.
+  --status              Show a status table of all articles and their publish
+                        state.
+  --medium-url URL      Record the Medium URL for a slug after manual import.
+  --api-key API_KEY     DEV.to API key (overrides DEVTO_API_KEY env var).
+  --dry-run             Parse and display payload without making any API
+                        calls.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `pypi-reproducible-check`
 
 ```text
 usage: pypi-reproducible-check [-h] [-p PACKAGE] [--epoch EPOCH]
+                               [--format {rich,json,markdown}]
 
 Verify byte-for-byte reproducible builds across workspace packages.
 
@@ -619,56 +687,69 @@ options:
                         packages)
   --epoch EPOCH         Custom SOURCE_DATE_EPOCH timestamp (default: git
                         commit timestamp)
+  --format, -f {rich,json,markdown}
+                        Output format: rich (tables), json, markdown.
 ```
 
 #### `pytest-boundary-audit`
 
 ```text
 usage: pytest-boundary-audit [-h] [--cov-file COV_FILE]
+                             [-f {table,json,markdown}]
 
 Audit .coverage execution contexts for hexagonal architectural layer leaks.
 
 options:
-  -h, --help           show this help message and exit
-  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
+  -h, --help            show this help message and exit
+  --cov-file COV_FILE   Path to .coverage database (default: .coverage)
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `pytest-impact`
 
 ```text
-usage: pytest-impact [-h] [--base BASE] [--cov-file COV_FILE] [--dry-run] ...
+usage: pytest-impact [-h] [--base BASE] [--cov-file COV_FILE] [--dry-run]
+                     [-f {table,json,markdown}]
+                     ...
 
 Run only tests impacted by modified lines using git diff and .coverage data.
 
 positional arguments:
-  pytest_args          Extra flags passed directly to pytest (e.g. -- -v -s)
+  pytest_args           Extra flags passed directly to pytest (e.g. -- -v -s)
 
 options:
-  -h, --help           show this help message and exit
-  --base BASE          Git ref or branch to diff against (e.g. 'main',
-                       'origin/main', 'HEAD~1'). Defaults to unstaged/staged
-                       working tree.
-  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
-  --dry-run            Print selected test targets without executing pytest.
+  -h, --help            show this help message and exit
+  --base BASE           Git ref or branch to diff against (e.g. 'main',
+                        'origin/main', 'HEAD~1'). Defaults to unstaged/staged
+                        working tree.
+  --cov-file COV_FILE   Path to .coverage database (default: .coverage)
+  --dry-run             Print selected test targets without executing pytest.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `pytest-redundancy-audit`
 
 ```text
 usage: pytest-redundancy-audit [-h] [--cov-file COV_FILE] [-n LIMIT]
+                               [-f {table,json,markdown}]
 
 Identify redundant unit tests providing zero unique branch coverage.
 
 options:
-  -h, --help           show this help message and exit
-  --cov-file COV_FILE  Path to .coverage database (default: .coverage)
-  -n, --limit LIMIT    Maximum redundant tests to display (default: 25)
+  -h, --help            show this help message and exit
+  --cov-file COV_FILE   Path to .coverage database (default: .coverage)
+  -n, --limit LIMIT     Maximum redundant tests to display (default: 25)
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `rope-alphabetizer`
 
 ```text
 usage: rope-alphabetizer [-h] [-p PACKAGES] [--path CUSTOM_PATHS] [-a]
+                         [-f {table,json,markdown}]
                          [files ...]
 
 Alphabetize functions and class methods across packages deterministically.
@@ -683,6 +764,8 @@ options:
                         Target specific package(s) (e.g. -p auth -p core).
   --path CUSTOM_PATHS   Target custom directory or file path(s).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output presentation format (default: table).
 ```
 
 #### `sanity-check`
@@ -691,7 +774,8 @@ options:
 usage: sanity-check [-h]
                     [-p {all,ai,auth,cli,core,cqrs,db,events,fastapi,flags,graphql,grpc,hexastack,hexastack_ai,hexastack_auth,hexastack_cli,hexastack_core,hexastack_cqrs,hexastack_db,hexastack_events,hexastack_fastapi,hexastack_flags,hexastack_graphql,hexastack_grpc,hexastack_logging,hexastack_mcp,hexastack_otel,hexastack_tools,hexastack_ui,logging,mcp,otel,tools,ui}]
                     [-e {financial-ledger,financial_ledger,todo-app,todo_app,trip-booking,trip_booking}]
-                    [-a] [--fix] [--skip-tests] [-mx MAX_COMPLEXITY]
+                    [-a] [-f {table,json,markdown}] [--fix] [--skip-tests]
+                    [-mx MAX_COMPLEXITY]
                     [files ...]
 
 Fast scoped sanity check runner for Hexastack packages, examples, and files.
@@ -706,6 +790,8 @@ options:
   -e, --example {financial-ledger,financial_ledger,todo-app,todo_app,trip-booking,trip_booking}
                         Target example project(s) (e.g. -e trip-booking).
   -a, --all             Run across all packages unconditionally.
+  -f, --format {table,json,markdown}
+                        Output representation format (default: table).
   --fix                 Automatically apply autofixes (ruff --fix, ruff
                         format, fix-all-statements).
   --skip-tests          Skip running pytest suites (run static analysis and

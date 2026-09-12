@@ -10,7 +10,6 @@ from typing import Any
 
 import libcst as cst
 from rich.console import Console
-from rich.panel import Panel
 
 from hexastack_tools.utils.workspace import (
     HexastackScriptArgumentParser,
@@ -446,43 +445,48 @@ def sort_python_file(file_path: Path) -> bool:
         return False
 
 
-def alphabetize_main() -> None:
+def alphabetize_main(argv: list[str] | None = None) -> int:
     """CLI entrypoint for batch alphabetization.
 
+    Args:
+        argv: Optional command-line arguments list.
+
+    Returns:
+        Exit code (0 for success, non-zero for failure).
+
     Notes/Architectural Intent:
-        Alphabetizes standalone functions and class methods across files.
+        Dispatches AlphabetizeCodeCommand across the governance bus and renders
+        results via the configured RefactoringPresenterPort.
     """
     ensure_tool_installed("libcst", extra_name="rope")
 
     parser = HexastackScriptArgumentParser(
         description="Alphabetize functions and class methods across packages deterministically."
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
+    args = parser.parse_args(argv)
 
     py_files = resolve_target_python_files(args)
-    if not py_files:
-        console.print(
-            Panel.fit(
-                "[dim]No Python files found matching the criteria.[/dim]",
-                border_style="dim",
-            )
-        )
-        return
-
-    modified_count = 0
-    for file_path in py_files:
-        if sort_python_file(file_path):
-            modified_count += 1
-            console.print(
-                f"  [cyan]Alphabetized:[/cyan] {file_path.relative_to(ROOT_DIR)}"
-            )
-
-    console.print(
-        Panel.fit(
-            f"[bold green]✨ Alphabetization complete: Processed {len(py_files)} file(s), {modified_count} modified.[/bold green]",
-            border_style="green",
-        )
+    from hexastack_tools.adapters.presenters.refactoring import (
+        create_refactoring_presenter,
     )
+    from hexastack_tools.domain.refactoring import AlphabetizeCodeCommand
+    from hexastack_tools.infra.bootstrap import create_governance_bus
+
+    bus = create_governance_bus()
+    presenter = create_refactoring_presenter(args.format)
+
+    cmd = AlphabetizeCodeCommand(
+        targets=tuple(py_files),
+    )
+    report = bus.dispatch(cmd)
+    return presenter.present_alphabetize(report)
 
 
 def run_main() -> int:

@@ -1,6 +1,6 @@
 """Unit tests for hexastack_tools ports."""
 
-from hexastack_tools.ports.github import GitHubApiPort
+from hexastack_tools.ports.github import GitHubApiPort, GitHubPresenterPort
 
 
 class DummyGitHubAdapter:
@@ -29,7 +29,30 @@ class DummyGitHubAdapter:
         pass
 
 
+class DummyGitHubPresenter(GitHubPresenterPort):
+    def present_pr_summary(self, report):
+        return 0
+
+    def present_checks(self, report):
+        return 0
+
+    def present_repo_status(self, status):
+        return 0
+
+    def present_security_comments(self, report):
+        return 0
+
+    def present_code_scanning(self, report):
+        return 0
+
+
 def test_github_api_port_runtime_checkable() -> None:
     """Verify GitHubApiPort protocol runtime checkability."""
     adapter = DummyGitHubAdapter()
     assert isinstance(adapter, GitHubApiPort)
+
+
+def test_github_presenter_port_instantiation() -> None:
+    """Verify GitHubPresenterPort abstract interface contracts."""
+    presenter = DummyGitHubPresenter()
+    assert isinstance(presenter, GitHubPresenterPort)

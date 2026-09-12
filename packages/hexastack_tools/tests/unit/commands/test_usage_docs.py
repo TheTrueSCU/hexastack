@@ -38,3 +38,27 @@ def test_resolve_impacted_usage_targets() -> None:
 def test_usage_docs_main_callable() -> None:
     """Verify CLI entrypoint is callable."""
     assert callable(main)
+
+
+def test_usage_docs_main_dispatches_bus() -> None:
+    """Verify usage docs main dispatches GenerateUsageDocsCommand and formats."""
+    from unittest.mock import MagicMock, patch
+
+    from hexastack_tools.domain.generators import UsageDocsReport
+
+    mock_bus = MagicMock()
+    mock_report = UsageDocsReport(
+        up_to_date_files=("packages/hexastack_tools/USAGE.md",),
+        updated_files=(),
+        stale_files=(),
+        diffs=(),
+        is_valid=True,
+    )
+    mock_bus.dispatch.return_value = mock_report
+
+    with patch(
+        "hexastack_tools.infra.bootstrap.create_governance_bus", return_value=mock_bus
+    ):
+        code = main(["--check", "--package", "tools", "--format", "json"])
+        assert code == 0
+        assert mock_bus.dispatch.called

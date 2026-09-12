@@ -856,6 +856,13 @@ def _build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Parse and display payload without making any API calls.",
     )
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
     return parser
 
 
@@ -882,6 +889,37 @@ def _require_api_key(args: argparse.Namespace) -> str:
     return key
 
 
+def _handle_status_mode(args: argparse.Namespace, medium_dir: Path) -> None:
+    """Handle --status mode presentation via presenter or table."""
+    if getattr(args, "format", "table") != "table":
+        from hexastack_tools.adapters.presenters.refactoring import (
+            create_refactoring_presenter,
+        )
+        from hexastack_tools.domain.refactoring import PublishMediumArticlesCommand
+        from hexastack_tools.infra.bootstrap import create_governance_bus
+
+        bus = create_governance_bus()
+        presenter = create_refactoring_presenter(args.format)
+        report = bus.dispatch(PublishMediumArticlesCommand(dry_run=True))
+        presenter.present_medium_publish(report)
+        return
+    _show_status(medium_dir)
+
+
+def _handle_medium_url_mode(args: argparse.Namespace, medium_dir: Path) -> None:
+    """Handle recording a Medium URL for a published article."""
+    if not args.slug:
+        console.print("[red]Error:[/] Provide a slug with --medium-url.")
+        sys.exit(1)
+    article_path = _resolve_article_path(args.slug)
+    payload = _parse_article(article_path.read_text("utf-8"), article_path)
+    payload.front_matter.medium_url = args.medium_url
+    if not args.dry_run:
+        _write_front_matter(payload)
+        _update_readme_registry(medium_dir)
+        console.print(f"[green]✓[/] Recorded Medium URL for [bold]{args.slug}[/]")
+
+
 def run_main() -> None:  # noqa: C901
     """Entrypoint for the medium-publish CLI command.
 
@@ -900,25 +938,16 @@ def run_main() -> None:  # noqa: C901
 
     # --status: no API key needed
     if args.status:
-        _show_status(medium_dir)
+        _handle_status_mode(args, medium_dir)
+        return
+
+    # --medium-url: record a Medium URL after manual import
+    if args.medium_url:
+        _handle_medium_url_mode(args, medium_dir)
         return
 
     api_key = _require_api_key(args)
     slug_map = _build_slug_url_map(medium_dir)
-
-    # --medium-url: record a Medium URL after manual import
-    if args.medium_url:
-        if not args.slug:
-            console.print("[red]Error:[/] Provide a slug with --medium-url.")
-            sys.exit(1)
-        article_path = _resolve_article_path(args.slug)
-        payload = _parse_article(article_path.read_text("utf-8"), article_path)
-        payload.front_matter.medium_url = args.medium_url
-        if not args.dry_run:
-            _write_front_matter(payload)
-            _update_readme_registry(medium_dir)
-            console.print(f"[green]✓[/] Recorded Medium URL for [bold]{args.slug}[/]")
-        return
 
     # --all-drafts: bulk draft upload
     if args.all_drafts:

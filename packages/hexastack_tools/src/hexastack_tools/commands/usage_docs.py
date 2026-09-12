@@ -17,7 +17,6 @@ from hexastack_tools.utils.help_extractor import (
     extract_subcommands_from_help,
 )
 from hexastack_tools.utils.workspace import (
-    get_repo_root,
     resolve_affected_packages,
 )
 
@@ -250,8 +249,19 @@ def process_package_usage(
     return True
 
 
-def main() -> None:
-    """CLI entrypoint for generate-usage-docs."""
+def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint for generate-usage-docs.
+
+    Args:
+        argv: Optional command-line arguments list.
+
+    Returns:
+        Exit code (0 for success/up-to-date, 1 if out of date).
+
+    Notes/Architectural Intent:
+        Dispatches GenerateUsageDocsCommand across the governance bus and renders
+        results via the configured GeneratorPresenterPort.
+    """
     parser = argparse.ArgumentParser(
         description="Generate, verify, and fix USAGE.md documentation for Hexastack packages."
     )
@@ -280,36 +290,35 @@ def main() -> None:
         action="store_true",
         help="Re-generate and format USAGE.md files directly on disk.",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output presentation format (default: table).",
+    )
+    args = parser.parse_args(argv)
 
-    root = get_repo_root()
+    from hexastack_tools.adapters.presenters.generators import (
+        create_generator_presenter,
+    )
+    from hexastack_tools.domain.generators import GenerateUsageDocsCommand
+    from hexastack_tools.infra.bootstrap import create_governance_bus
 
-    if args.package and args.package != "all":
-        targets = [args.package]
-    elif args.package == "all":
-        targets = list(_TARGET_GENERATORS.keys())
-    elif args.affected:
-        targets = resolve_impacted_usage_targets(root)
-    else:
-        # Default behavior: if --check without flags, check impacted or all
-        targets = (
-            resolve_impacted_usage_targets(root)
-            if args.verify
-            else list(_TARGET_GENERATORS.keys())
-        )
+    bus = create_governance_bus()
+    presenter = create_generator_presenter(args.format)
 
-    all_ok = True
-    for target in targets:
-        ok = process_package_usage(
-            target_key=target,
-            root=root,
-            verify=args.verify,
-            fix=args.fix or (not args.verify),
-        )
-        if not ok:
-            all_ok = False
-
-    sys.exit(0 if all_ok else 1)
+    cmd = GenerateUsageDocsCommand(
+        package=args.package,
+        affected_only=args.affected or (args.verify and args.package is None),
+        check_only=args.verify,
+        fix=args.fix or (not args.verify),
+    )
+    report = bus.dispatch(cmd)
+    code = presenter.present_usage_docs(report)
+    if argv is None:
+        sys.exit(code)
+    return code
 
 
 __all__ = [

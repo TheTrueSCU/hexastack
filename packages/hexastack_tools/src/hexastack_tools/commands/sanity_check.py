@@ -1,37 +1,36 @@
-"""Fast scoped sanity check runner for Hexastack packages, examples, and files.
+"""CLI Driving Adapter for Scoped Sanity Check Runner.
 
 Notes/Architectural Intent:
-    Provides a high-velocity inner development loop command that executes the full
-    battery of repository quality gates (Ruff lint/format, Ty typechecking, complexipy
-    cognitive complexity, __all__ sorting, test parity, and scoped pytest execution)
-    against a specific package, example, or modified git diff in seconds.
+    Acts strictly as a driving adapter: parses CLI arguments, builds domain
+    commands, dispatches them through the CommandBusPort, and forwards reports
+    to the GovernancePresenterPort.
 """
 
 from __future__ import annotations
 
 import argparse
-import os
-import shutil
 import subprocess
 import sys
-import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
 from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 
-from hexastack_tools.commands.all_statements import check_file_all, fix_file_all
-from hexastack_tools.commands.test_parity import (
-    _check_package_src_symmetry,
-    _check_package_test_symmetry,
-    check_test_directories_inits,
+from hexastack_cqrs.ports.buses import CommandBusPort
+from hexastack_tools.adapters.presenters.governance import (
+    create_governance_presenter,
+)
+from hexastack_tools.domain.governance import (
+    CheckResult,
+    RunSanityCheckCommand,
+    SanityCheckReport,
+    SanityTarget,
+)
+from hexastack_tools.infra.bootstrap import create_governance_bus
+from hexastack_tools.ports.governance import (
+    GovernancePresenterPort,
+    ToolRunnerPort,
 )
 from hexastack_tools.utils.workspace import (
-    VALID_EXAMPLES,
-    VALID_PACKAGES,
     get_example_directory,
     get_package_directories,
     get_package_directory,
@@ -40,7 +39,6 @@ from hexastack_tools.utils.workspace import (
 
 __all__ = [
     "CheckResult",
-    "find_executable",
     "main",
     "resolve_targets",
     "run_sanity_check",
@@ -48,501 +46,82 @@ __all__ = [
 ]
 
 
-@dataclass
-class SanityTarget:
-    """Target component to run sanity checks against.
-
-    Notes/Architectural Intent:
-        Encapsulates paths and metadata for packages, examples, or individual source files.
-    """
-
-    name: str
-    kind: Literal["package", "example", "file"]
-    path: Path
-    src_paths: list[Path]
-    test_paths: list[Path]
-
-
-@dataclass
-class CheckResult:
-    """Outcome of an individual sanity check step.
-
-    Notes/Architectural Intent:
-        Structured result tracking step status, elapsed duration, and failure diagnostics.
-    """
-
-    step_name: str
-    target_name: str
-    status: Literal["PASS", "FAIL", "SKIP"]
-    duration_seconds: float
-    details: str
-    error_output: str = ""
-
-
-def find_executable(name: str) -> str:
-    """Locate executable in virtual environment bin directory or system PATH.
-
-    Args:
-        name: Name of the binary executable.
-
-    Returns:
-        Absolute or resolved path to the executable string.
-
-    Notes/Architectural Intent:
-        Prefers virtualenv binaries matching sys.executable directory over system PATH.
-    """
-    venv_bin = Path(sys.executable).parent / name
-    if venv_bin.is_file():
-        return str(venv_bin)
-    which_bin = shutil.which(name)
-    if which_bin:
-        return which_bin
-    return name
-
-
-def _execute_subprocess(
-    cmd: list[str], cwd: Path | None = None, env: dict[str, str] | None = None
-) -> tuple[int, str, str, float]:
-    """Execute command subprocess and measure elapsed duration.
-
-    Args:
-        cmd: Command and arguments sequence.
-        cwd: Optional working directory.
-        env: Optional environment variables dictionary.
-
-    Returns:
-        Tuple of (exit_code, stdout, stderr, duration_seconds).
-    """
-    start = time.perf_counter()
-    try:
-        proc = subprocess.run(
-            cmd,
-            cwd=cwd,
-            env=env,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        duration = time.perf_counter() - start
-        return proc.returncode, proc.stdout, proc.stderr, duration
-    except Exception as exc:
-        duration = time.perf_counter() - start
-        return 1, "", str(exc), duration
-
-
-def _check_ruff(paths: list[Path], target_name: str, fix: bool = False) -> CheckResult:
-    """Run Ruff linter and formatter check.
-
-    Args:
-        paths: Paths to lint and format check.
-        target_name: Human-readable target name.
-        fix: Whether to automatically fix violations before checking.
-
-    Returns:
-        CheckResult detailing status and diagnostics.
-    """
-    path_strs = [str(p) for p in paths if p.exists()]
-    if not path_strs:
-        return CheckResult(
-            "Ruff Lint/Format", target_name, "SKIP", 0.0, "No paths found"
-        )
-
-    ruff_bin = find_executable("ruff")
-
-    if fix:
-        subprocess.run(
-            [ruff_bin, "check", "--fix", *path_strs], capture_output=True, check=False
-        )
-        subprocess.run(
-            [ruff_bin, "format", *path_strs], capture_output=True, check=False
-        )
-
-    code_chk, out_chk, err_chk, dur_chk = _execute_subprocess(
-        [ruff_bin, "check", *path_strs]
-    )
-    if code_chk != 0:
-        return CheckResult(
-            "Ruff Lint",
-            target_name,
-            "FAIL",
-            dur_chk,
-            "Lint errors detected",
-            error_output=(out_chk + "\n" + err_chk).strip(),
-        )
-
-    code_fmt, out_fmt, err_fmt, dur_fmt = _execute_subprocess(
-        [ruff_bin, "format", "--check", *path_strs]
-    )
-    if code_fmt != 0:
-        return CheckResult(
-            "Ruff Format",
-            target_name,
-            "FAIL",
-            dur_chk + dur_fmt,
-            "Formatting required (run with --fix)",
-            error_output=(out_fmt + "\n" + err_fmt).strip(),
-        )
-
-    return CheckResult(
-        "Ruff Lint/Format",
-        target_name,
-        "PASS",
-        dur_chk + dur_fmt,
-        "Code style clean",
+def _create_package_target(name: str, pkg_dir: Path) -> SanityTarget:
+    """Construct SanityTarget for a package directory."""
+    src_dir = pkg_dir / "src"
+    test_dir = pkg_dir / "tests"
+    return SanityTarget(
+        name=name,
+        kind="package",
+        path=pkg_dir,
+        src_paths=(src_dir,) if src_dir.is_dir() else (pkg_dir,),
+        test_paths=(test_dir,) if test_dir.is_dir() else (),
     )
 
 
-def _check_ty(paths: list[Path], target_name: str) -> CheckResult:
-    """Run Ty static type checker.
-
-    Args:
-        paths: Directory or file paths to typecheck.
-        target_name: Human-readable target name.
-
-    Returns:
-        CheckResult detailing type diagnostics.
-    """
-    path_strs = [str(p) for p in paths if p.exists()]
-    if not path_strs:
-        return CheckResult("Ty Typecheck", target_name, "SKIP", 0.0, "No paths found")
-
-    ty_bin = find_executable("ty")
-    code, out, err, duration = _execute_subprocess([ty_bin, "check", *path_strs])
-
-    if code != 0:
-        return CheckResult(
-            "Ty Typecheck",
-            target_name,
-            "FAIL",
-            duration,
-            "Type diagnostics reported",
-            error_output=(out + "\n" + err).strip(),
-        )
-
-    return CheckResult(
-        "Ty Typecheck",
-        target_name,
-        "PASS",
-        duration,
-        "All type checks passed",
-    )
-
-
-def _check_complexipy(
-    paths: list[Path], target_name: str, max_complexity: int = 25
-) -> CheckResult:
-    """Audit cognitive complexity using complexipy.
-
-    Args:
-        paths: Paths to inspect.
-        target_name: Human-readable target name.
-        max_complexity: Maximum allowed cognitive complexity per method.
-
-    Returns:
-        CheckResult with complexity status.
-    """
-    path_strs = [str(p) for p in paths if p.exists()]
-    if not path_strs:
-        return CheckResult(
-            "Cognitive Complexity", target_name, "SKIP", 0.0, "No paths found"
-        )
-
-    cpx_bin = find_executable("complexipy")
-    code, out, err, duration = _execute_subprocess(
-        [
-            cpx_bin,
-            *path_strs,
-            "--max-complexity-allowed",
-            str(max_complexity),
-            "--plain",
-        ]
-    )
-
-    violations: list[str] = []
-    for line in out.splitlines():
-        parts = line.strip().split()
-        if len(parts) >= 3:
-            try:
-                score = int(parts[2])
-                if score > max_complexity:
-                    violations.append(
-                        f"{parts[0]} :: {parts[1]} (score: {score} > {max_complexity})"
-                    )
-            except ValueError:
-                continue
-
-    if violations or (code != 0 and not out.strip()):
-        err_msg = "\n".join(violations) if violations else err.strip()
-        return CheckResult(
-            "Cognitive Complexity",
-            target_name,
-            "FAIL",
-            duration,
-            f"{len(violations)} function(s) exceeded threshold {max_complexity}",
-            error_output=err_msg,
-        )
-
-    return CheckResult(
-        "Cognitive Complexity",
-        target_name,
-        "PASS",
-        duration,
-        f"All functions <= {max_complexity}",
-    )
-
-
-def _check_all_statements(
-    paths: list[Path], target_name: str, fix: bool = False
-) -> CheckResult:
-    """Verify strictly sorted __all__ statements in Python files.
-
-    Args:
-        paths: Target directory or file paths.
-        target_name: Human-readable target name.
-        fix: Whether to format __all__ before verifying.
-
-    Returns:
-        CheckResult detailing __all__ integrity.
-    """
-    start = time.perf_counter()
-    py_files: list[Path] = []
-    for p in paths:
-        if p.is_file() and p.suffix == ".py":
-            py_files.append(p)
-        elif p.is_dir():
-            py_files.extend(sorted(p.rglob("*.py")))
-
-    if not py_files:
-        return CheckResult(
-            "__all__ Integrity", target_name, "SKIP", 0.0, "No python files found"
-        )
-
-    if fix:
-        for f in py_files:
-            fix_file_all(f)
-
-    errors: list[str] = []
-    for f in py_files:
-        errors.extend(check_file_all(f))
-
-    duration = time.perf_counter() - start
-    if errors:
-        return CheckResult(
-            "__all__ Integrity",
-            target_name,
-            "FAIL",
-            duration,
-            f"{len(errors)} violation(s) in __all__ declarations",
-            error_output="\n".join(errors),
-        )
-
-    return CheckResult(
-        "__all__ Integrity",
-        target_name,
-        "PASS",
-        duration,
-        "Declarations strictly sorted",
-    )
-
-
-def _check_test_parity_step(target: SanityTarget, repo_root: Path) -> CheckResult:
-    """Verify 1:1 test symmetry and __init__.py presence.
-
-    Args:
-        target: SanityTarget under audit.
-        repo_root: Repository root path.
-
-    Returns:
-        CheckResult detailing test symmetry.
-    """
-    start = time.perf_counter()
-    if target.kind != "package":
-        return CheckResult(
-            "Test Parity", target.name, "SKIP", 0.0, "Non-package target"
-        )
-
-    pkg_dir = target.path
-    src_dir = pkg_dir / "src" / pkg_dir.name
-    unit_tests_dir = pkg_dir / "tests" / "unit"
-
-    errors: list[str] = []
-    if (pkg_dir / "tests").is_dir():
-        errors.extend(check_test_directories_inits(repo_root))
-
-    if src_dir.is_dir() and unit_tests_dir.is_dir():
-        errors.extend(
-            _check_package_src_symmetry(pkg_dir, repo_root, src_dir, unit_tests_dir)
-        )
-        errors.extend(
-            _check_package_test_symmetry(pkg_dir, repo_root, src_dir, unit_tests_dir)
-        )
-
-    duration = time.perf_counter() - start
-    if errors:
-        return CheckResult(
-            "Test Parity",
-            target.name,
-            "FAIL",
-            duration,
-            f"{len(errors)} parity violation(s)",
-            error_output="\n".join(errors),
-        )
-
-    return CheckResult(
-        "Test Parity",
-        target.name,
-        "PASS",
-        duration,
-        "1:1 test symmetry verified",
-    )
-
-
-def _run_pytest_step(target: SanityTarget, skip_tests: bool = False) -> CheckResult:
-    """Run pytest suite scoped to the target component.
-
-    Args:
-        target: Target component.
-        skip_tests: Whether to skip pytest execution.
-
-    Returns:
-        CheckResult with test outcomes.
-    """
-    if skip_tests:
-        return CheckResult(
-            "Pytest Suite", target.name, "SKIP", 0.0, "Skipped via --skip-tests"
-        )
-
-    test_dirs = [str(p) for p in target.test_paths if p.exists()]
-    if not test_dirs:
-        return CheckResult("Pytest Suite", target.name, "SKIP", 0.0, "No tests found")
-
-    env = os.environ.copy()
-    if target.kind == "example":
-        src_path = str((target.path / "src").resolve())
-        current_pypath = env.get("PYTHONPATH", "")
-        env["PYTHONPATH"] = (
-            f"{src_path}{os.pathsep}{current_pypath}" if current_pypath else src_path
-        )
-
-    cmd = [sys.executable, "-m", "pytest", *test_dirs, "-q", "--no-cov"]
-    code, out, err, duration = _execute_subprocess(cmd, env=env)
-
-    if code != 0:
-        return CheckResult(
-            "Pytest Suite",
-            target.name,
-            "FAIL",
-            duration,
-            "Tests failed",
-            error_output=(out + "\n" + err).strip(),
-        )
-
-    return CheckResult(
-        "Pytest Suite",
-        target.name,
-        "PASS",
-        duration,
-        "All tests passed",
+def _create_example_target(name: str, ex_dir: Path) -> SanityTarget:
+    """Construct SanityTarget for an example directory."""
+    src_dir = ex_dir / "src"
+    test_dir = ex_dir / "tests"
+    return SanityTarget(
+        name=name,
+        kind="example",
+        path=ex_dir,
+        src_paths=(src_dir,) if src_dir.is_dir() else (ex_dir,),
+        test_paths=(test_dir,) if test_dir.is_dir() else (),
     )
 
 
 def _detect_git_targets(repo_root: Path) -> list[SanityTarget]:
-    """Detect modified packages, examples, or files from git status.
-
-    Args:
-        repo_root: Root path of the repository.
-
-    Returns:
-        List of detected SanityTarget instances.
-    """
+    """Inspect git status for modified packages and examples."""
     try:
         proc = subprocess.run(
             ["git", "status", "--porcelain"],
             cwd=repo_root,
             capture_output=True,
             text=True,
-            check=True,
+            check=False,
         )
-        lines = proc.stdout.splitlines()
     except Exception:
         return []
 
-    changed_files: list[Path] = []
-    for line in lines:
-        parts = line.strip().split(maxsplit=1)
-        if len(parts) == 2:
-            changed_files.append(repo_root / parts[1])
+    touched_pkgs: set[str] = set()
+    touched_examples: set[str] = set()
 
-    packages_touched: set[str] = set()
-    examples_touched: set[str] = set()
-
-    for file_path in changed_files:
-        try:
-            rel = file_path.relative_to(repo_root)
-            parts = rel.parts
-            if len(parts) >= 2 and parts[0] == "packages":
-                packages_touched.add(parts[1])
-            elif len(parts) >= 2 and parts[0] == "examples":
-                examples_touched.add(parts[1])
-        except ValueError:
+    for line in proc.stdout.splitlines():
+        if len(line) < 4:
             continue
+        rel_path = line[3:].strip()
+        parts = Path(rel_path).parts
+        if len(parts) >= 2 and parts[0] == "packages":
+            touched_pkgs.add(parts[1])
+        elif len(parts) >= 2 and parts[0] == "examples":
+            touched_examples.add(parts[1])
 
     targets: list[SanityTarget] = []
-    for pkg in sorted(packages_touched):
-        pkg_dir = get_package_directory(pkg, repo_root)
-        if pkg_dir.is_dir():
-            targets.append(_create_package_target(pkg, pkg_dir))
+    for pkg in sorted(touched_pkgs):
+        try:
+            pkg_dir = get_package_directory(pkg, repo_root)
+            if pkg_dir.is_dir():
+                targets.append(_create_package_target(pkg, pkg_dir))
+        except RuntimeError:
+            continue
 
-    for ex in sorted(examples_touched):
-        ex_dir = get_example_directory(ex, repo_root)
-        if ex_dir.is_dir():
-            targets.append(_create_example_target(ex, ex_dir))
+    for ex in sorted(touched_examples):
+        try:
+            ex_dir = get_example_directory(ex, repo_root)
+            if ex_dir.is_dir():
+                targets.append(_create_example_target(ex, ex_dir))
+        except RuntimeError:
+            continue
 
     return targets
-
-
-def _create_package_target(name: str, pkg_dir: Path) -> SanityTarget:
-    """Construct SanityTarget for a workspace package."""
-    src_dir = pkg_dir / "src"
-    tests_dir = pkg_dir / "tests"
-    src_paths = [src_dir] if src_dir.is_dir() else [pkg_dir]
-    test_paths = [tests_dir] if tests_dir.is_dir() else []
-    return SanityTarget(
-        name=name,
-        kind="package",
-        path=pkg_dir,
-        src_paths=src_paths,
-        test_paths=test_paths,
-    )
-
-
-def _create_example_target(name: str, ex_dir: Path) -> SanityTarget:
-    """Construct SanityTarget for an example application."""
-    src_dir = ex_dir / "src"
-    tests_dir = ex_dir / "tests"
-    src_paths = [src_dir] if src_dir.is_dir() else [ex_dir]
-    test_paths = [tests_dir] if tests_dir.is_dir() else []
-    return SanityTarget(
-        name=name,
-        kind="example",
-        path=ex_dir,
-        src_paths=src_paths,
-        test_paths=test_paths,
-    )
 
 
 def _resolve_package_targets(
     packages: list[str] | None, repo_root: Path
 ) -> list[SanityTarget]:
-    """Resolve target packages from CLI package arguments.
-
-    Args:
-        packages: Package names or 'all'.
-        repo_root: Root path of repository.
-
-    Returns:
-        List of resolved SanityTarget package targets.
-    """
+    """Resolve target packages from CLI package arguments."""
     if not packages:
         return []
     targets: list[SanityTarget] = []
@@ -559,15 +138,7 @@ def _resolve_package_targets(
 def _resolve_example_targets(
     examples: list[str] | None, repo_root: Path
 ) -> list[SanityTarget]:
-    """Resolve example projects from CLI arguments.
-
-    Args:
-        examples: Example names.
-        repo_root: Root path of repository.
-
-    Returns:
-        List of resolved SanityTarget example targets.
-    """
+    """Resolve example projects from CLI arguments."""
     if not examples:
         return []
     return [
@@ -579,15 +150,7 @@ def _resolve_example_targets(
 def _resolve_file_targets(
     files: list[str] | None, repo_root: Path
 ) -> list[SanityTarget]:
-    """Resolve individual file targets from CLI arguments.
-
-    Args:
-        files: Sequence of file or directory path strings.
-        repo_root: Root path of repository.
-
-    Returns:
-        List of resolved SanityTarget file targets.
-    """
+    """Resolve individual file targets from CLI arguments."""
     if not files:
         return []
     targets: list[SanityTarget] = []
@@ -599,22 +162,15 @@ def _resolve_file_targets(
                     name=file_p.name,
                     kind="file",
                     path=file_p,
-                    src_paths=[file_p],
-                    test_paths=[],
+                    src_paths=(file_p,),
+                    test_paths=(),
                 )
             )
     return targets
 
 
 def _resolve_fallback_targets(repo_root: Path) -> list[SanityTarget]:
-    """Resolve fallback targets via git status or whole-workspace default.
-
-    Args:
-        repo_root: Root path of repository.
-
-    Returns:
-        List of detected or fallback SanityTarget objects.
-    """
+    """Resolve fallback targets via git status or whole-workspace default."""
     git_targets = _detect_git_targets(repo_root)
     if git_targets:
         return git_targets
@@ -658,7 +214,11 @@ def run_sanity_check(
     fix: bool = False,
     skip_tests: bool = False,
     max_complexity: int = 25,
+    format_type: str = "table",
     console: Console | None = None,
+    bus: CommandBusPort | None = None,
+    presenter: GovernancePresenterPort | None = None,
+    runner: ToolRunnerPort | None = None,
 ) -> int:
     """Execute complete sanity check battery across targets and render dashboard.
 
@@ -668,123 +228,93 @@ def run_sanity_check(
         fix: Whether to auto-format and fix violations.
         skip_tests: Whether to skip pytest suites.
         max_complexity: Cognitive complexity ceiling per function.
+        format_type: Output representation format ('table', 'json', 'markdown').
         console: Optional Rich Console instance.
+        bus: Optional CommandBusPort instance for CQRS dispatch.
+        presenter: Optional GovernancePresenterPort for report output.
+        runner: Optional ToolRunnerPort adapter.
 
     Returns:
         0 if all sanity checks pass, 1 otherwise.
 
     Notes/Architectural Intent:
-        Single-step inner loop runner executing formatting, typecheck, complexity,
-        parity, and test verification with rich dashboard output.
+        Dogfoods Hexastack CQRS: builds a RunSanityCheckCommand and dispatches
+        through the CommandBusPort, delegating presentation to GovernancePresenterPort.
     """
-    c = console or Console()
-    all_results: list[CheckResult] = []
-
-    for target in targets:
-        # Check 1: Ruff
-        all_results.append(
-            _check_ruff(target.src_paths + target.test_paths, target.name, fix=fix)
-        )
-
-        # Check 2: Ty Typecheck
-        all_results.append(_check_ty(target.src_paths + target.test_paths, target.name))
-
-        # Check 3: Complexipy
-        all_results.append(
-            _check_complexipy(
-                target.src_paths, target.name, max_complexity=max_complexity
-            )
-        )
-
-        # Check 4: __all__ Integrity
-        all_results.append(
-            _check_all_statements(target.src_paths, target.name, fix=fix)
-        )
-
-        # Check 5: Test Parity (for packages)
-        if target.kind == "package":
-            all_results.append(_check_test_parity_step(target, repo_root))
-
-        # Check 6: Pytest Suite
-        all_results.append(_run_pytest_step(target, skip_tests=skip_tests))
-
-    # Render Dashboard Table
-    table = Table(
-        title="[bold cyan]Hexastack Scoped Sanity Check Dashboard[/bold cyan]",
-        show_header=True,
-        header_style="bold magenta",
+    actual_bus = bus or create_governance_bus(runner=runner)
+    actual_presenter = presenter or create_governance_presenter(
+        format_type=format_type,
+        console=console,
     )
-    table.add_column("Check", style="cyan", width=22)
-    table.add_column("Target", style="bold yellow", width=20)
-    table.add_column("Status", justify="center", width=10)
-    table.add_column("Duration", justify="right", width=10)
-    table.add_column("Details", style="dim")
 
-    has_failure = False
-    for r in all_results:
-        status_style = (
-            "[bold green]✅ PASS[/bold green]"
-            if r.status == "PASS"
-            else (
-                "[bold red]❌ FAIL[/bold red]"
-                if r.status == "FAIL"
-                else "[dim]⏭️ SKIP[/dim]"
-            )
-        )
-        if r.status == "FAIL":
-            has_failure = True
-
-        table.add_row(
-            r.step_name,
-            r.target_name,
-            status_style,
-            f"{r.duration_seconds:.2f}s",
-            r.details,
-        )
-
-    c.print()
-    c.print(table)
-    c.print()
-
-    # If failures, print diagnostic panels
-    if has_failure:
-        for r in all_results:
-            if r.status == "FAIL" and r.error_output:
-                c.print(
-                    Panel(
-                        r.error_output,
-                        title=f"[bold red]❌ {r.step_name} Failure ({r.target_name})[/bold red]",
-                        border_style="red",
-                    )
-                )
-        return 1
-
-    total_duration = sum(r.duration_seconds for r in all_results)
-    c.print(
-        Panel.fit(
-            f"[bold green]✨ All {len(all_results)} sanity checks passed in {total_duration:.2f}s![/bold green]",
-            border_style="green",
-        )
+    cmd = RunSanityCheckCommand(
+        targets=tuple(targets),
+        repo_root=repo_root,
+        fix=fix,
+        skip_tests=skip_tests,
+        max_complexity=max_complexity,
     )
-    return 0
+
+    report: SanityCheckReport = actual_bus.dispatch(cmd)
+    return actual_presenter.present_sanity_dashboard(report)
 
 
-def main() -> None:
-    """CLI entrypoint for sanity-check."""
+def _build_parser() -> argparse.ArgumentParser:
+    """Construct argument parser with target choices and execution flags."""
     parser = argparse.ArgumentParser(
-        description="Fast scoped sanity check runner for Hexastack packages, examples, and files."
+        prog="sanity-check",
+        description="Fast scoped sanity check runner for Hexastack packages, examples, and files.",
     )
-    parser.add_argument(
-        "files",
-        nargs="*",
-        help="Specific files or directories to verify.",
-    )
+    valid_packages = [
+        "all",
+        "ai",
+        "auth",
+        "cli",
+        "core",
+        "cqrs",
+        "db",
+        "events",
+        "fastapi",
+        "flags",
+        "graphql",
+        "grpc",
+        "hexastack",
+        "hexastack_ai",
+        "hexastack_auth",
+        "hexastack_cli",
+        "hexastack_core",
+        "hexastack_cqrs",
+        "hexastack_db",
+        "hexastack_events",
+        "hexastack_fastapi",
+        "hexastack_flags",
+        "hexastack_graphql",
+        "hexastack_grpc",
+        "hexastack_logging",
+        "hexastack_mcp",
+        "hexastack_otel",
+        "hexastack_tools",
+        "hexastack_ui",
+        "logging",
+        "mcp",
+        "otel",
+        "tools",
+        "ui",
+    ]
+    valid_examples = [
+        "financial-ledger",
+        "financial_ledger",
+        "todo-app",
+        "todo_app",
+        "trip-booking",
+        "trip_booking",
+    ]
     parser.add_argument(
         "-p",
         "--package",
         dest="packages",
         action="append",
-        choices=["all", *VALID_PACKAGES],
+        choices=valid_packages,
         help="Target package(s) (e.g. -p cqrs -p events).",
     )
     parser.add_argument(
@@ -792,7 +322,7 @@ def main() -> None:
         "--example",
         dest="examples",
         action="append",
-        choices=VALID_EXAMPLES,
+        choices=valid_examples,
         help="Target example project(s) (e.g. -e trip-booking).",
     )
     parser.add_argument(
@@ -803,23 +333,44 @@ def main() -> None:
         help="Run across all packages unconditionally.",
     )
     parser.add_argument(
+        "-f",
+        "--format",
+        dest="format",
+        choices=["table", "json", "markdown"],
+        default="table",
+        help="Output representation format (default: table).",
+    )
+    parser.add_argument(
         "--fix",
+        dest="fix",
         action="store_true",
         help="Automatically apply autofixes (ruff --fix, ruff format, fix-all-statements).",
     )
     parser.add_argument(
         "--skip-tests",
+        dest="skip_tests",
         action="store_true",
         help="Skip running pytest suites (run static analysis and parity only).",
     )
     parser.add_argument(
         "-mx",
         "--max-complexity",
+        dest="max_complexity",
         type=int,
         default=25,
         help="Cognitive complexity threshold (default: 25).",
     )
+    parser.add_argument(
+        "files",
+        nargs="*",
+        help="Specific files or directories to verify.",
+    )
+    return parser
 
+
+def main() -> None:
+    """CLI entrypoint for sanity-check."""
+    parser = _build_parser()
     args = parser.parse_args()
     repo_root = get_repo_root()
     targets = resolve_targets(args, repo_root)
@@ -830,5 +381,10 @@ def main() -> None:
         fix=args.fix,
         skip_tests=args.skip_tests,
         max_complexity=args.max_complexity,
+        format_type=args.format,
     )
     sys.exit(exit_code)
+
+
+if __name__ == "__main__":
+    main()
