@@ -19,6 +19,7 @@ members = [
     "hexastack-events",
     "hexastack-fastapi",
     "hexastack-flags",
+    "hexastack-flow",
     "hexastack-graphql",
     "hexastack-grpc",
     "hexastack-logging",
@@ -1896,6 +1897,20 @@ wheels = [
 ]
 
 [[package]]
+name = "hexaflow"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "rich" },
+    { name = "typer" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/54/70/2f59e553a6644091d157721aa3fd0a26fc05f38f9f716a406375db5baf65/hexaflow-0.1.0.tar.gz", hash = "sha256:15253c1ab75546e2a4a66e71755ebb21f1c2ff22603c3c9f2845bd0fd1e2c5c4", size = 71377, upload-time = "2026-09-13T00:57:46.007Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/4e/45759b6c268ee452d25a942200837ba2edaacde155552e9ed0f06124c5dd/hexaflow-0.1.0-py3-none-any.whl", hash = "sha256:f1d2449ef8d2159a1f49f0883c828d6817f81e29657f992ae6347a809c836ba8", size = 34835, upload-time = "2026-09-13T00:57:44.83Z" },
+]
+
+[[package]]
 name = "hexastack"
 version = "0.4.0"
 source = { editable = "packages/hexastack" }
@@ -1917,6 +1932,7 @@ all = [
     { name = "hexastack-events" },
     { name = "hexastack-fastapi" },
     { name = "hexastack-flags" },
+    { name = "hexastack-flow" },
     { name = "hexastack-graphql" },
     { name = "hexastack-grpc", extra = ["reflection"] },
     { name = "hexastack-logging", extra = ["all", "sentry"] },
@@ -1937,6 +1953,7 @@ cli = [
 ]
 db = [
     { name = "hexastack-db" },
+    { name = "hexastack-flow", extra = ["db"] },
 ]
 devtools = [
     { name = "hexastack-ui", extra = ["devtools"] },
@@ -1952,6 +1969,7 @@ duckdb = [
 ]
 events = [
     { name = "hexastack-events" },
+    { name = "hexastack-flow", extra = ["events"] },
 ]
 fastapi = [
     { name = "hexastack-fastapi" },
@@ -1965,6 +1983,9 @@ flagd = [
 ]
 flags = [
     { name = "hexastack-flags" },
+]
+flow = [
+    { name = "hexastack-flow" },
 ]
 fsspec = [
     { name = "hexastack-core", extra = ["fsspec"] },
@@ -2124,6 +2145,10 @@ requires-dist = [
     { name = "hexastack-flags", marker = "extra == 'all'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", marker = "extra == 'flags'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", extras = ["flagd"], marker = "extra == 'flagd'", editable = "packages/hexastack_flags" },
+    { name = "hexastack-flow", marker = "extra == 'all'", editable = "packages/hexastack_flow" },
+    { name = "hexastack-flow", marker = "extra == 'flow'", editable = "packages/hexastack_flow" },
+    { name = "hexastack-flow", extras = ["db"], marker = "extra == 'db'", editable = "packages/hexastack_flow" },
+    { name = "hexastack-flow", extras = ["events"], marker = "extra == 'events'", editable = "packages/hexastack_flow" },
     { name = "hexastack-graphql", marker = "extra == 'all'", editable = "packages/hexastack_graphql" },
     { name = "hexastack-graphql", marker = "extra == 'graphql'", editable = "packages/hexastack_graphql" },
     { name = "hexastack-grpc", marker = "extra == 'grpc'", editable = "packages/hexastack_grpc" },
@@ -2155,7 +2180,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "fsspec", "graphql", "grpc", "huey", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "qdrant", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "sql", "sqlite", "structlog", "testing", "textual", "tools", "ui", "valkey", "web", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "qdrant", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "sql", "sqlite", "structlog", "testing", "textual", "tools", "ui", "valkey", "web", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2522,6 +2547,42 @@ requires-dist = [
 provides-extras = ["flagd"]
 
 [[package]]
+name = "hexastack-flow"
+version = "0.4.0"
+source = { editable = "packages/hexastack_flow" }
+dependencies = [
+    { name = "hexaflow" },
+    { name = "hexastack-core" },
+    { name = "hexastack-cqrs" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "hexastack-db" },
+    { name = "hexastack-events" },
+    { name = "sqlalchemy" },
+]
+db = [
+    { name = "hexastack-db" },
+    { name = "sqlalchemy" },
+]
+events = [
+    { name = "hexastack-events" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "hexaflow", specifier = ">=0.1.0" },
+    { name = "hexastack-core", editable = "packages/hexastack_core" },
+    { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "hexastack-db", marker = "extra == 'db'", editable = "packages/hexastack_db" },
+    { name = "hexastack-events", marker = "extra == 'events'", editable = "packages/hexastack_events" },
+    { name = "hexastack-flow", extras = ["db", "events"], marker = "extra == 'all'", editable = "packages/hexastack_flow" },
+    { name = "sqlalchemy", marker = "extra == 'db'", specifier = ">=2.0.0" },
+]
+provides-extras = ["db", "events", "all"]
+
+[[package]]
 name = "hexastack-graphql"
 version = "0.4.0"
 source = { editable = "packages/hexastack_graphql" }
@@ -2680,6 +2741,7 @@ source = { editable = "packages/hexastack_tools" }
 dependencies = [
     { name = "coverage" },
     { name = "deptry" },
+    { name = "hexaflow" },
     { name = "hexastack-cli" },
     { name = "hexastack-core" },
     { name = "hexastack-cqrs" },
@@ -2713,6 +2775,7 @@ rope = [
 requires-dist = [
     { name = "coverage", specifier = ">=7.6.0" },
     { name = "deptry", specifier = ">=0.23.0" },
+    { name = "hexaflow", specifier = ">=0.1.0" },
     { name = "hexastack-cli", editable = "packages/hexastack_cli" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },

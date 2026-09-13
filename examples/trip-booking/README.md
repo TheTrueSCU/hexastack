@@ -3,7 +3,7 @@
 [![Hexastack Framework](https://img.shields.io/badge/Hexastack-Architecture-blue)](https://github.com/TheTrueSCU/hexastack)
 [![Coverage](https://img.shields.io/badge/Coverage-%E2%89%A590%25-brightgreen)](tests/)
 
-A production-grade reference microservice demonstrating the **Distributed Saga Orchestration Pattern** with automated reverse (LIFO) compensating transactions, built on [Hexastack](https://github.com/TheTrueSCU/hexastack).
+A production-grade reference microservice demonstrating the **Distributed Saga Orchestration Pattern** implemented via [`hexastack-flow`](../../packages/hexastack_flow) (`hexaflow.Workflow`) with automated reverse (LIFO) compensating transactions, built on [Hexastack](https://github.com/TheTrueSCU/hexastack).
 
 ---
 
@@ -49,7 +49,7 @@ sequenceDiagram
   - `driven/`: In-memory implementations of all 4 booking services, equipped with failure injection flags.
   - `driving/`: FastAPI HTTP REST routes (`POST /trips/book`, `GET /trips/health`).
 - **`infra/`**:
-  - `saga.py`: Declarative `@saga` and `@step` workflow coordinator (`TripBookingCoordinator`) with automated LIFO compensation mapping.
+  - `saga.py`: Workflow coordinator (`TripBookingCoordinator`) built with `hexaflow.Workflow` and native step compensation with automated LIFO compensation unwinding on failure.
   - `cli.py`: Interactive Typer CLI tool for executing the saga and observing compensation unwinding in real time.
 
 ---

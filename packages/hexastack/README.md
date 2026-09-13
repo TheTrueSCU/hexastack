@@ -53,6 +53,7 @@ graph TD
         GRPC["hexastack-grpc (hexastack[grpc])"]
         DB["hexastack-db (hexastack[db])"]
         FLAGS["hexastack-flags (hexastack[flags])"]
+        FLOW["hexastack-flow (hexastack[flow])"]
         UVICORN["uvicorn[standard] (hexastack[web])"]
     end
 
@@ -82,6 +83,7 @@ graph TD
 - `[db]` / `[sql]`: Installs `hexastack-db` for persistence and Alembic migrations.
 - `[fastapi]`: Installs `hexastack-fastapi`.
 - `[flags]`: Installs `hexastack-flags` for CNCF OpenFeature enterprise feature flag providers (Flagd, Unleash, Flipt).
+- `[flow]`: Installs `hexastack-flow` for durable workflow and saga orchestration with hexaflow, CQRS step runners, DB checkpoints, and event streaming.
 - `[graphql]`: Installs `hexastack-graphql`.
 - `[mcp]`: Installs `hexastack-mcp` for Model Context Protocol AI agent tools.
 - `[grpc]`: Installs `hexastack-grpc` for high-performance RPC services.
@@ -103,6 +105,9 @@ pip install "hexastack[testing]"
 
 # CNCF OpenFeature flags
 pip install "hexastack[flags]"
+
+# Durable workflows & saga orchestration
+pip install "hexastack[flow]"
 
 # Security & RBAC
 pip install "hexastack[auth]"

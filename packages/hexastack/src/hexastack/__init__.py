@@ -12,11 +12,14 @@ if TYPE_CHECKING:
     import hexastack_db as db
     import hexastack_events as events
     import hexastack_fastapi as fastapi
+    import hexastack_flags as flags
+    import hexastack_flow as flow
     import hexastack_graphql as graphql
     import hexastack_grpc as grpc
     import hexastack_logging as logging
     import hexastack_mcp as mcp
     import hexastack_otel as otel
+    import hexastack_ui as ui
 
 __all__ = [
     "ai",
@@ -27,11 +30,14 @@ __all__ = [
     "db",
     "events",
     "fastapi",
+    "flags",
+    "flow",
     "graphql",
     "grpc",
     "logging",
     "mcp",
     "otel",
+    "ui",
 ]
 
 _installed_shorthands: list[str] = []

@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import time
 
+from hexaflow import InMemoryStateStore, StepContext, Workflow
+
 from hexastack_cqrs.ports.buses import CommandBusPort
 from hexastack_tools.domain.governance import (
     AuditComplexityCommand,
@@ -204,74 +206,111 @@ class RunSanityCheckHandler:
         target: SanityTarget,
         command: RunSanityCheckCommand,
     ) -> list[CheckResult]:
-        """Execute standard check battery for a single target."""
-        results: list[CheckResult] = []
-        combined_paths = target.src_paths + target.test_paths
+        """Execute standard check battery for a single target via a hexaflow Workflow DAG.
 
-        # 1. Lint / Format
-        results.append(
-            self._bus.dispatch(
+        Notes/Architectural Intent:
+            Dogfoods hexaflow to organize checks into a directed acyclic graph.
+            Static leaf checks (lint, all_statements, test_parity) run first,
+            followed by static analysis (typecheck, complexity) and dynamic test
+            execution (pytest), collecting CheckResults through step checkpoints.
+        """
+        combined_paths = target.src_paths + target.test_paths
+        wf = Workflow(
+            f"sanity-{target.name}",
+            state_store=InMemoryStateStore(),
+        )
+
+        # Stage 1: Static Checks
+        @wf.step(name="lint", stage="static_checks")
+        def _lint(ctx: StepContext) -> CheckResult:
+            return self._bus.dispatch(
                 RunLinterCommand(
                     paths=combined_paths,
                     target_name=target.name,
                     fix=command.fix,
                 )
             )
-        )
 
-        # 2. Ty Typecheck
-        results.append(
-            self._bus.dispatch(
-                RunTypecheckCommand(
-                    paths=combined_paths,
-                    target_name=target.name,
-                )
-            )
-        )
-
-        # 3. Complexity
-        results.append(
-            self._bus.dispatch(
-                AuditComplexityCommand(
-                    paths=target.src_paths,
-                    target_name=target.name,
-                    max_complexity=command.max_complexity,
-                )
-            )
-        )
-
-        # 4. __all__ Integrity
-        results.append(
-            self._bus.dispatch(
+        @wf.step(name="all_statements", stage="static_checks")
+        def _all_statements(ctx: StepContext) -> CheckResult:
+            return self._bus.dispatch(
                 CheckAllStatementsCommand(
                     paths=target.src_paths,
                     target_name=target.name,
                     fix=command.fix,
                 )
             )
-        )
 
-        # 5. Test Parity
         if target.kind == "package":
-            results.append(
-                self._bus.dispatch(
+
+            @wf.step(name="test_parity", stage="static_checks")
+            def _test_parity(ctx: StepContext) -> CheckResult:
+                return self._bus.dispatch(
                     CheckTestParityCommand(
                         target=target,
                         repo_root=command.repo_root,
                     )
                 )
+
+        # Stage 2: Deep Analysis (depends on lint)
+        @wf.step(name="typecheck", stage="analysis", depends_on=["lint"])
+        def _typecheck(ctx: StepContext) -> CheckResult:
+            return self._bus.dispatch(
+                RunTypecheckCommand(
+                    paths=combined_paths,
+                    target_name=target.name,
+                )
             )
 
-        # 6. Pytest
-        results.append(
-            self._bus.dispatch(
+        @wf.step(name="complexity", stage="analysis", depends_on=["lint"])
+        def _complexity(ctx: StepContext) -> CheckResult:
+            return self._bus.dispatch(
+                AuditComplexityCommand(
+                    paths=target.src_paths,
+                    target_name=target.name,
+                    max_complexity=command.max_complexity,
+                )
+            )
+
+        # Stage 3: Verification (depends on typecheck and complexity)
+        @wf.step(
+            name="pytest",
+            stage="verification",
+            depends_on=["typecheck", "complexity"],
+        )
+        def _pytest(ctx: StepContext) -> CheckResult:
+            return self._bus.dispatch(
                 RunPytestCommand(
                     target=target,
                     repo_root=command.repo_root,
                     skip=command.skip_tests,
                 )
             )
-        )
+
+        state = wf.run()
+
+        # Collect results in canonical order for presentation consistency
+        expected_step_order = ["lint", "typecheck", "complexity", "all_statements"]
+        if target.kind == "package":
+            expected_step_order.append("test_parity")
+        expected_step_order.append("pytest")
+
+        results: list[CheckResult] = []
+        for step_name in expected_step_order:
+            cp = state.step_checkpoints.get(step_name)
+            if cp and isinstance(cp.output_payload, CheckResult):
+                results.append(cp.output_payload)
+            elif cp and cp.error_traceback:
+                results.append(
+                    CheckResult(
+                        check_name=step_name,
+                        target_name=target.name,
+                        status=CheckStatus.FAIL,
+                        duration=0.0,
+                        details="Step execution failed",
+                        error_output=cp.error_traceback,
+                    )
+                )
 
         return results
 
