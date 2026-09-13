@@ -11,6 +11,7 @@ requires-python = ">=3.13"
 dependencies = [
     "coverage>=7.6.0",
     "deptry>=0.23.0",
+    "hexaflow>=0.1.0",
     "hexastack-cli",
     "hexastack-core",
     "hexastack-cqrs",

@@ -2741,6 +2741,7 @@ source = { editable = "packages/hexastack_tools" }
 dependencies = [
     { name = "coverage" },
     { name = "deptry" },
+    { name = "hexaflow" },
     { name = "hexastack-cli" },
     { name = "hexastack-core" },
     { name = "hexastack-cqrs" },
@@ -2774,6 +2775,7 @@ rope = [
 requires-dist = [
     { name = "coverage", specifier = ">=7.6.0" },
     { name = "deptry", specifier = ">=0.23.0" },
+    { name = "hexaflow", specifier = ">=0.1.0" },
     { name = "hexastack-cli", editable = "packages/hexastack_cli" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
