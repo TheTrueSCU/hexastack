@@ -63,6 +63,7 @@ hexastack-db = { workspace = true }
 hexastack-events = { workspace = true }
 hexastack-fastapi = { workspace = true }
 hexastack-flags = { workspace = true }
+hexastack-flow = { workspace = true }
 hexastack-graphql = { workspace = true }
 hexastack-grpc = { workspace = true }
 hexastack-logging = { workspace = true }
@@ -247,6 +248,7 @@ known-first-party = [
     "hexastack_events",
     "hexastack_fastapi",
     "hexastack_flags",
+    "hexastack_flow",
     "hexastack_graphql",
     "hexastack_grpc",
     "hexastack_logging",

@@ -57,6 +57,7 @@ graph TD
         AUTH["hexastack-auth (RBAC & @authorize Middleware)"]
         BUS["hexastack-cqrs (Command, Query & Event Buses)"]
         EVENTS["hexastack-events (CloudEvents, Outbox & NATS JetStream)"]
+        FLOW["hexastack-flow (Durable Workflows, Sagas & Checkpointing)"]
         MW["Middleware (Correlation, Auth, Tracing, Retry, UnitOfWork)"]
     end
 
@@ -75,6 +76,7 @@ graph TD
     GQL --> BUS
     MCP --> BUS
     GRPC --> BUS
+    FLOW --> BUS
     BUS --> MW
     AUTH --> MW
     EVENTS --> BUS
@@ -117,6 +119,7 @@ graph TD
     DB["hexastack-db (Persistence & Migrations)"]
     Events["hexastack-events (CloudEvents, Outbox & NATS JetStream)"]
     FastAPI["hexastack-fastapi (REST API)"]
+    Flow["hexastack-flow (Durable Workflows & Sagas)"]
     GraphQL["hexastack-graphql (Strawberry GraphQL)"]
     GRPC["hexastack-grpc (gRPC / Protobuf)"]
     Logging["hexastack-logging (Telemetry)"]
@@ -132,6 +135,7 @@ graph TD
     Umbrella -. optional .-> DB
     Umbrella -. optional .-> AI
     Umbrella -. optional .-> FastAPI
+    Umbrella -. optional .-> Flow
     Umbrella -. optional .-> GraphQL
     Umbrella -. optional .-> MCP
     Umbrella -. optional .-> GRPC
@@ -140,6 +144,10 @@ graph TD
     CQRS --> Core
     Events --> Core
     Events --> CQRS
+    Flow --> Core
+    Flow --> CQRS
+    Flow -. optional .-> DB
+    Flow -. optional .-> Events
     Logging --> Core
     Auth --> Core
     Auth --> CQRS
@@ -174,6 +182,7 @@ graph TD
 | [`hexastack-events`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), NATS JetStream distributed event bus, and janus async-sync thread bridge | `pip install hexastack-events` | `hexastack[events]` |
 | [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
 | [`hexastack-flags`](file:///home/rjdw/Projects/hexastack/packages/hexastack_flags) | CNCF OpenFeature provider adapters (Flagd, In-Memory, Env) and enterprise feature toggling | `pip install hexastack-flags` | `hexastack[flags]` |
+| [`hexastack-flow`](file:///home/rjdw/Projects/hexastack/packages/hexastack_flow) | Hexagonal workflow engine integrating hexaflow with CQRS, DB checkpoints, and Events | `pip install hexastack-flow` | `hexastack[flow]` |
 | [`hexastack-graphql`](file:///home/rjdw/Projects/hexastack/packages/hexastack_graphql) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
 | [`hexastack-grpc`](file:///home/rjdw/Projects/hexastack/packages/hexastack_grpc) | High-performance gRPC presentation adapter, interceptors (correlation, logging, timing) | `pip install hexastack-grpc[reflection]` | `hexastack[grpc]` |
 | [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
@@ -230,6 +239,9 @@ pip install "hexastack[web]"
 
 # Database integration with SQLite/Postgres & Alembic migrations
 pip install "hexastack[db]"
+
+# Durable workflows & saga orchestration with hexaflow
+pip install "hexastack[flow]"
 
 # Complete ecosystem installation
 pip install "hexastack[all]"

@@ -1,0 +1,54 @@
+[project]
+name = "hexastack-flow"
+version = "0.4.0"
+description = "Hexagonal workflow engine adapter integrating hexaflow with CQRS, DB, and Events"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "hexaflow>=0.1.0",
+    "hexastack-core",
+    "hexastack-cqrs",
+]
+
+[project.optional-dependencies]
+db = [
+    "hexastack-db",
+    "sqlalchemy>=2.0.0",
+]
+events = [
+    "hexastack-events",
+]
+all = [
+    "hexastack-flow[db,events]",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+flow = "hexastack_flow.infra.bootstrap:FlowBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }
+hexastack-db = { workspace = true }
+hexastack-events = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_flow"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_flow"]
+layers = [
+    "infra",
+    "adapters",
+    "ports",
+    "domain",
+]

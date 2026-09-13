@@ -5,7 +5,7 @@ description = "Distributed Saga Orchestration Reference Application (Trip Bookin
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "hexastack[fastapi,cli]>=0.1.0",
+    "hexastack[fastapi,cli,flow]>=0.1.0",
 ]
 
 [project.scripts]

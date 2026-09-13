@@ -2,8 +2,8 @@
 
 Notes/Architectural Intent:
     Assembles the 4-step distributed transaction (Flight -> Hotel -> Car -> Payment)
-    using hexastack-cqrs declarative @saga and @step decorators.
-    Executes via InMemorySagaOrchestrator and guarantees strict LIFO compensation unwinding on failure.
+    as a hexaflow Workflow DAG with automated reverse (LIFO) compensation unwinding on failure.
+    Demonstrates how workflows natively subsume the Saga pattern.
 """
 
 from __future__ import annotations
@@ -11,9 +11,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
-from hexastack_cqrs.adapters.sagas import InMemorySagaOrchestrator, InMemorySagaStorage
-from hexastack_cqrs.domain.sagas import SagaDefinition, SagaStatus
-from hexastack_cqrs.infra.decorators import saga, step
+from hexaflow import StepContext, Workflow, WorkflowStatus
 
 from trip_booking.domain.models import (
     BookingStatus,
@@ -32,13 +30,12 @@ from trip_booking.ports.services import (
 )
 
 
-@saga(name="TripBookingSaga")
 class TripBookingCoordinator:
-    """Orchestrator coordinator that binds domain services into a compensable Saga workflow.
+    """Workflow coordinator that binds domain services into a compensable trip booking workflow.
 
     Notes/Architectural Intent:
         Encapsulates saga step sequencing, cross-step state passing, and compensation mapping
-        using hexastack-cqrs declarative @saga and @step decorators.
+        using hexaflow DAG workflows with reverse (LIFO) compensation unwinding on failure.
     """
 
     def __init__(
@@ -47,17 +44,12 @@ class TripBookingCoordinator:
         hotel_service: HotelServicePort,
         car_rental_service: CarRentalPort,
         payment_service: PaymentServicePort,
-        orchestrator: InMemorySagaOrchestrator | None = None,
     ) -> None:
         self.flight_service = flight_service
         self.hotel_service = hotel_service
         self.car_rental_service = car_rental_service
         self.payment_service = payment_service
-        self.orchestrator = orchestrator or InMemorySagaOrchestrator(
-            storage=InMemorySagaStorage()
-        )
 
-    @step(name="BookFlight", order=1, compensate="cancel_flight")
     def book_flight(self, request: TripBookingRequest) -> FlightReservation:
         """Step 1: Reserve airline flight for requested destination.
 
@@ -77,7 +69,6 @@ class TripBookingCoordinator:
         """
         self.flight_service.cancel_flight(reservation)
 
-    @step(name="ReserveHotel", order=2, compensate="cancel_hotel")
     def reserve_hotel(self, request: TripBookingRequest) -> HotelReservation:
         """Step 2: Reserve hotel accommodation.
 
@@ -97,7 +88,6 @@ class TripBookingCoordinator:
         """
         self.hotel_service.cancel_hotel(reservation)
 
-    @step(name="RentCar", order=3, compensate="cancel_car")
     def rent_car(self, request: TripBookingRequest) -> CarReservation:
         """Step 3: Rent rental vehicle.
 
@@ -117,7 +107,6 @@ class TripBookingCoordinator:
         """
         self.car_rental_service.cancel_car(reservation)
 
-    @step(name="ProcessPayment", order=4, compensate="refund_payment")
     def process_payment(
         self, request: TripBookingRequest, ctx: dict[str, Any]
     ) -> PaymentReceipt:
@@ -125,7 +114,7 @@ class TripBookingCoordinator:
 
         Args:
             request: Customer booking request parameters.
-            ctx: Accumulated saga execution context containing prior step outputs.
+            ctx: Accumulated execution context containing prior step outputs.
 
         Returns:
             Confirmed PaymentReceipt.
@@ -144,22 +133,8 @@ class TripBookingCoordinator:
         """
         self.payment_service.refund_payment(receipt)
 
-    def build_saga(self, context: Any = None) -> SagaDefinition:
-        """Construct the 4-step compensable saga definition for the requested trip.
-
-        Args:
-            context: Customer booking request parameters.
-
-        Returns:
-            Configured SagaDefinition instance.
-
-        Notes/Architectural Intent:
-            Dynamically synthesized by @saga decorator from @step declarations.
-        """
-        raise NotImplementedError("Synthesized by @saga decorator")
-
     def execute(self, request: TripBookingRequest) -> TripBookingSummary:
-        """Execute the trip booking saga synchronously.
+        """Execute the trip booking workflow synchronously with LIFO compensation unwinding.
 
         Args:
             request: Customer trip request.
@@ -168,14 +143,77 @@ class TripBookingCoordinator:
             TripBookingSummary with final status and confirmed or compensated itinerary.
         """
         trip_id = f"trip-{uuid4().hex[:8]}"
-        saga_def = self.build_saga(request)
-        result = self.orchestrator.execute(saga_def)
+        wf = Workflow("TripBookingWorkflow")
+        step_outputs: dict[str, Any] = {}
+        compensated_steps: list[str] = []
 
-        if result.status == SagaStatus.COMPLETED:
-            flight: FlightReservation = result.step_results["BookFlight"]
-            hotel: HotelReservation = result.step_results["ReserveHotel"]
-            car: CarReservation = result.step_results["RentCar"]
-            payment: PaymentReceipt = result.step_results["ProcessPayment"]
+        def _cancel_flight() -> None:
+            compensated_steps.append("BookFlight")
+            flight_res = step_outputs.get("BookFlight")
+            if flight_res is not None:
+                self.cancel_flight(flight_res)
+
+        def _cancel_hotel() -> None:
+            compensated_steps.append("ReserveHotel")
+            hotel_res = step_outputs.get("ReserveHotel")
+            if hotel_res is not None:
+                self.cancel_hotel(hotel_res)
+
+        def _cancel_car() -> None:
+            compensated_steps.append("RentCar")
+            car_res = step_outputs.get("RentCar")
+            if car_res is not None:
+                self.cancel_car(car_res)
+
+        def _refund_payment() -> None:
+            compensated_steps.append("ProcessPayment")
+            payment_res = step_outputs.get("ProcessPayment")
+            if payment_res is not None:
+                self.refund_payment(payment_res)
+
+        @wf.step(name="BookFlight", compensation=_cancel_flight)
+        def _step_flight(ctx: StepContext) -> FlightReservation:
+            res = self.book_flight(request)
+            step_outputs["BookFlight"] = res
+            return res
+
+        @wf.step(
+            name="ReserveHotel",
+            depends_on=["BookFlight"],
+            compensation=_cancel_hotel,
+        )
+        def _step_hotel(ctx: StepContext) -> HotelReservation:
+            res = self.reserve_hotel(request)
+            step_outputs["ReserveHotel"] = res
+            return res
+
+        @wf.step(
+            name="RentCar",
+            depends_on=["ReserveHotel"],
+            compensation=_cancel_car,
+        )
+        def _step_car(ctx: StepContext) -> CarReservation:
+            res = self.rent_car(request)
+            step_outputs["RentCar"] = res
+            return res
+
+        @wf.step(
+            name="ProcessPayment",
+            depends_on=["RentCar"],
+            compensation=_refund_payment,
+        )
+        def _step_payment(ctx: StepContext) -> PaymentReceipt:
+            res = self.process_payment(request, step_outputs)
+            step_outputs["ProcessPayment"] = res
+            return res
+
+        state = wf.run()
+
+        if state.status == WorkflowStatus.COMPLETED:
+            flight: FlightReservation = step_outputs["BookFlight"]
+            hotel: HotelReservation = step_outputs["ReserveHotel"]
+            car: CarReservation = step_outputs["RentCar"]
+            payment: PaymentReceipt = step_outputs["ProcessPayment"]
             return TripBookingSummary(
                 trip_id=trip_id,
                 customer_id=request.customer_id,
@@ -189,13 +227,18 @@ class TripBookingCoordinator:
                 compensated_steps=[],
             )
 
-        # Failure / Compensation occurred
-        compensated_steps = result.compensated_steps
+        # Failure occurred -> abort unwinds all completed steps in reverse LIFO order
+        wf.abort(state.run_id)
 
-        flight_res = result.step_results.get("BookFlight")
-        hotel_res = result.step_results.get("ReserveHotel")
-        car_res = result.step_results.get("RentCar")
-        payment_res = result.step_results.get("ProcessPayment")
+        error_msg = state.error_summary
+        for cp in state.step_checkpoints.values():
+            if cp.error_traceback and not error_msg:
+                error_msg = cp.error_traceback
+
+        flight_res = step_outputs.get("BookFlight")
+        hotel_res = step_outputs.get("ReserveHotel")
+        car_res = step_outputs.get("RentCar")
+        payment_res = step_outputs.get("ProcessPayment")
 
         return TripBookingSummary(
             trip_id=trip_id,
@@ -208,7 +251,7 @@ class TripBookingCoordinator:
             car=car_res,
             payment=payment_res,
             compensated_steps=compensated_steps,
-            error_message=result.error,
+            error_message=error_msg,
         )
 
 
