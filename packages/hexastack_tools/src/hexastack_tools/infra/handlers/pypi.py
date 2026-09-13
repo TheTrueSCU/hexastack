@@ -14,6 +14,14 @@ import time
 import tomllib
 from pathlib import Path
 
+from hexaflow import (
+    InMemoryStateStore,
+    StepContext,
+    StepStatus,
+    Workflow,
+    WorkflowExecutionState,
+)
+
 from hexastack_tools.domain.pypi import (
     BuildPackagesCommand,
     CheckPyPiReleasesCommand,
@@ -155,13 +163,11 @@ class BuildPackagesHandler:
         self._repo_root = repo_root or get_repo_root()
 
     def handle(self, command: BuildPackagesCommand) -> PyPiBuildReport:
-        """Handle BuildPackagesCommand.
+        """Handle BuildPackagesCommand via a hexaflow Workflow DAG.
 
-        Args:
-            command: BuildPackagesCommand specifying optional target directory and package.
-
-        Returns:
-            PyPiBuildReport summarizing build outcomes across packages.
+        Notes/Architectural Intent:
+            Orchestrates package distribution builds as a discrete hexaflow Workflow
+            with checkpoints recorded for each build target.
         """
         target_dist = command.target_dist or (self._repo_root / "dist")
         target_dist.mkdir(parents=True, exist_ok=True)
@@ -174,10 +180,24 @@ class BuildPackagesHandler:
         if command.package_name:
             packages = [p for p in packages if p.name == command.package_name]
 
+        wf = Workflow("pypi-build", state_store=InMemoryStateStore())
+
+        def _make_build_action(target_pkg: PackageMetadata):
+            def _build(ctx: StepContext) -> PackageBuildResult:
+                ok, output = self._client.build_package(target_pkg.name, target_dist)
+                return PackageBuildResult(package=target_pkg, success=ok, output=output)
+
+            return _build
+
+        for pkg in packages:
+            wf.step(name=f"build_{pkg.name}", stage="build")(_make_build_action(pkg))
+
+        state = wf.run()
         results: list[PackageBuildResult] = []
         for pkg in packages:
-            ok, output = self._client.build_package(pkg.name, target_dist)
-            results.append(PackageBuildResult(package=pkg, success=ok, output=output))
+            cp = state.step_checkpoints.get(f"build_{pkg.name}")
+            if cp and isinstance(cp.output_payload, PackageBuildResult):
+                results.append(cp.output_payload)
 
         return PyPiBuildReport(target_dist=target_dist, results=tuple(results))
 
@@ -249,14 +269,85 @@ class PublishPackagesHandler:
             detail="Upload Failed",
         )
 
+    def _create_build_step(self, pkg: PackageMetadata, target_dist: Path):
+        """Construct executable build step action for a package."""
+
+        def _action(ctx: StepContext) -> tuple[bool, str]:
+            ok, out = self._client.build_package(pkg.name, target_dist)
+            if not ok:
+                raise RuntimeError(f"Build failed before publish for {pkg.name}")
+            return (ok, out)
+
+        return _action
+
+    def _create_publish_step(
+        self,
+        pkg: PackageMetadata,
+        target_dist: Path,
+        token: str | None,
+        delay: float,
+        skip_existing: bool,
+    ):
+        """Construct executable publish step action for a package."""
+
+        def _action(ctx: StepContext) -> PackagePublishResult:
+            return self._publish_single(
+                pkg=pkg,
+                target_dist=target_dist,
+                token=token,
+                delay=delay,
+                skip_existing=skip_existing,
+            )
+
+        return _action
+
+    def _check_build_failures(
+        self,
+        state: WorkflowExecutionState,
+        packages: list[PackageMetadata],
+    ) -> PackagePublishResult | None:
+        """Check if any package build step failed."""
+        for pkg in packages:
+            cp = state.step_checkpoints.get(f"build_{pkg.name}")
+            if cp and (cp.status == StepStatus.FAILED or cp.error_traceback):
+                return PackagePublishResult(
+                    package=pkg,
+                    outcome="failed",
+                    is_success=False,
+                    detail="Build failed before publish",
+                )
+        return None
+
+    def _collect_publish_results(
+        self,
+        state: WorkflowExecutionState,
+        packages: list[PackageMetadata],
+    ) -> list[PackagePublishResult]:
+        """Extract publish step outcomes from workflow checkpoints."""
+        results: list[PackagePublishResult] = []
+        for pkg in packages:
+            cp = state.step_checkpoints.get(f"publish_{pkg.name}")
+            if cp and isinstance(cp.output_payload, PackagePublishResult):
+                results.append(cp.output_payload)
+            elif cp and cp.error_traceback:
+                results.append(
+                    PackagePublishResult(
+                        package=pkg,
+                        outcome="failed",
+                        is_success=False,
+                        detail=f"Publish step error: {cp.error_traceback}",
+                    )
+                )
+        return results
+
     def handle(self, command: PublishPackagesCommand) -> PyPiPublishReport:
-        """Handle PublishPackagesCommand.
+        """Handle PublishPackagesCommand via a hexaflow Workflow DAG.
 
-        Args:
-            command: PublishPackagesCommand specifying publish options.
-
-        Returns:
-            PyPiPublishReport summarizing publication outcomes.
+        Notes/Architectural Intent:
+            Orchestrates package distribution publishing as a multi-stage workflow.
+            If build_first is active, each package build is executed in the build stage,
+            and corresponding publish steps depend directly on their respective build
+            checkpoints.
         """
         target_dist = command.dist_dir or (self._repo_root / "dist")
         auth_token = (
@@ -273,32 +364,30 @@ class PublishPackagesHandler:
         if command.package_name:
             packages = [p for p in packages if p.name == command.package_name]
 
+        wf = Workflow("pypi-publish", state_store=InMemoryStateStore())
+
         if command.build_first:
             for pkg in packages:
-                ok, _ = self._client.build_package(pkg.name, target_dist)
-                if not ok:
-                    return PyPiPublishReport(
-                        results=(
-                            PackagePublishResult(
-                                package=pkg,
-                                outcome="failed",
-                                is_success=False,
-                                detail="Build failed before publish",
-                            ),
-                        )
-                    )
+                wf.step(name=f"build_{pkg.name}", stage="build")(
+                    self._create_build_step(pkg, target_dist)
+                )
 
-        results: list[PackagePublishResult] = []
         for pkg in packages:
-            res = self._publish_single(
-                pkg=pkg,
-                target_dist=target_dist,
-                token=auth_token,
-                delay=command.delay,
-                skip_existing=command.skip_existing,
+            deps = [f"build_{pkg.name}"] if command.build_first else []
+            wf.step(name=f"publish_{pkg.name}", stage="publish", depends_on=deps)(
+                self._create_publish_step(
+                    pkg, target_dist, auth_token, command.delay, command.skip_existing
+                )
             )
-            results.append(res)
 
+        state = wf.run()
+
+        if command.build_first:
+            build_failure = self._check_build_failures(state, packages)
+            if build_failure:
+                return PyPiPublishReport(results=(build_failure,))
+
+        results = self._collect_publish_results(state, packages)
         return PyPiPublishReport(results=tuple(results))
 
 
