@@ -80,7 +80,7 @@ uv run trip-booking book --customer cust-007 --destination Honolulu --fail-at pa
 ## 4. Run Tests & Coverage
 
 ```bash
-uv run pytest-run -e trip-booking
+uv run hexaqual test run -e trip-booking
 ```
 
 Target test coverage is $\ge 90\%$ with strict 1:1 test parity and invariant validation.

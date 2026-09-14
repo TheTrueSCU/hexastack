@@ -55,9 +55,12 @@ examples/financial-ledger/
 ## 3. Running Tests & Quality Gates
 
 ```bash
-# 1. Run Unit and Property-Based Fuzzing Tests (with >= 90% coverage enforcement)
+# 1. Run Unit and Property-Based Fuzzing Tests via Hexaqual (with >= 90% coverage enforcement)
+uv run hexaqual test run -e financial-ledger
+
+# 2. Or run directly with pytest
 PYTHONPATH=examples/financial-ledger/src uv run pytest examples/financial-ledger/tests --cov=examples/financial-ledger/src/financial_ledger
 
-# 2. Verify Hexagonal Layer Contracts with Import-Linter
+# 3. Verify Hexagonal Layer Contracts with Import-Linter
 PYTHONPATH=examples/financial-ledger/src uv run lint-imports --config=examples/financial-ledger/.importlinter
 ```

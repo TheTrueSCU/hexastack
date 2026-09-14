@@ -9,12 +9,12 @@ Notes/Architectural Intent:
         pass/fail as expected but are not written back to source. This is correct
         CI behaviour.
 
-        To create or update snapshots, use the dedicated script which disables
+        To create or update snapshots, use hexaqual which disables
         xdist for a single-process run:
 
-            uv run python scripts/update_snapshots.py --package <name> --mode fix
-            uv run python scripts/update_snapshots.py --package <name> --mode create
-            uv run python scripts/update_snapshots.py --package <name> --mode review
+            uv run hexaqual test snapshot --package <name> --mode fix
+            uv run hexaqual test snapshot --package <name> --mode create
+            uv run hexaqual test snapshot --package <name> --mode review
 """
 
 import pytest
@@ -33,7 +33,7 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers",
         "snapshot: mark a test as containing inline-snapshot assertions. "
-        "Run with 'uv run python scripts/update_snapshots.py' to create or fix.",
+        "Run with 'uv run hexaqual test snapshot' to create or fix.",
     )
     config.addinivalue_line(
         "markers",

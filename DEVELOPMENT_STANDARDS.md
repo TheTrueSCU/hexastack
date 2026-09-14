@@ -22,7 +22,7 @@ To balance development speed with code reliability, we employ a tiered testing a
 ### Mutation Testing (Deep Quality Lane)
 *   **Dependency:** `mutmut<3` (v2.x AST engine).
 *   **Configuration:** `mutmut_config.py` filters non-logical boilerplate, type annotations, and logging to prevent false positives.
-*   **Execution:** On-demand or scheduled via `scripts/run_mutation_tests.py --package <name>`.
+*   **Execution:** On-demand or scheduled via `hexaqual mutate run -p <pkg>`.
 
 ---
 
@@ -50,7 +50,7 @@ jobs:
 
 We use pre-commit to ensure code quality **before** it hits the repository.
 
-*   **Hexagonal Architecture Enforcement:** `import-linter` (`lint-imports`) enforcing strict domain/ports purity and inter-package independence.
+*   **Hexagonal Architecture Enforcement:** `import-linter` (`hexaqual imports check` / `hexaqual sanity`) enforcing strict domain/ports purity and inter-package independence.
 *   **Linting & Formatting:** `ruff` (with `--fix`) and `ruff-format`.
 *   **Standard Hooks:** Trailing whitespace, end-of-file fixes, YAML validation, large file checks.
 *   **Type Safety:** `ty check` (using `language: system` to leverage uv environments).

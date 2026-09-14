@@ -317,7 +317,7 @@ print(response.json())
 Execute the entire test suite covering unit tests, failure injection, API routes, and CLI commands:
 
 ```bash
-uv run pytest-run -e trip-booking
+uv run hexaqual test run -e trip-booking
 ```
 
 All 19 tests pass with $\ge 90\%$ test coverage.

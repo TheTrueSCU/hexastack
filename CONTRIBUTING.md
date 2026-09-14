@@ -31,7 +31,7 @@ hexastack/
 │   └── <pkg>/
 │       ├── src/<pkg>/ # Source code
 │       └── tests/     # Unit, integration, and property-based tests
-├── scripts/           # Monorepo tooling (pre-commit helpers, diagram generation, …)
+├── examples/          # Reference microservices (financial-ledger, trip-booking)
 └── docs/              # MkDocs documentation site
 ```
 
@@ -124,13 +124,13 @@ def my_function(x: int) -> str:
 
 | Test type | Required? | Location | Scope / Policy |
 |---|---|---|---|
-| Unit tests for all public API | ✅ Yes — mandatory | `tests/unit/` | 100% parity across public classes, functions, and handlers. Enforced by `check-test-parity`. |
+| Unit tests for all public API | ✅ Yes — mandatory | `tests/unit/` | 100% parity across public classes, functions, and handlers. Enforced by `hexaqual parity test`. |
 | Integration tests | ✅ Yes — mandatory | `tests/integration/` | Required for all database, outbox, gRPC, and third-party adapters. |
 | Property-based (Hypothesis) | ✅ Yes — mandatory | `tests/properties/` | Required for serialization algorithms, domain logic, and state machines. |
 | End-to-End & Browser (Playwright) | ✅ Yes | `tests/e2e/` | Required for new CLI workflows and UI dashboard views. |
-| Mutation testing (mutmut) | 🔄 Periodic CI | — | Automated periodic regression suite. |
+| Mutation testing (mutmut) | 🔄 Periodic CI | — | Automated periodic regression suite (`hexaqual mutate run`). |
 
-`check-test-parity` runs in pre-commit and will block commits if any public module is missing a corresponding test suite. Minimum line coverage must remain $\ge 90\%$.
+`hexaqual parity test` (enforced automatically via `hexaqual-sanity` in pre-commit) will block commits if any public module is missing a corresponding test suite. Minimum line coverage must remain $\ge 90\%$.
 
 Run tests locally:
 

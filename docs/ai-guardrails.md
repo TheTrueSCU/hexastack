@@ -11,7 +11,7 @@
    - `ports/` defines abstract ABC interfaces (`@abstractmethod`).
    - `adapters/` contains concrete implementations (e.g. database, HTTP, Redis, buses). Adapters must **never** import from `infra/`.
    - `infra/` contains pipeline orchestrators, registries, middlewares, and bootstrap logic.
-   - Enforced by `import-linter` via `uv run import-linter-run` or pre-commit.
+   - Enforced by `import-linter` via `uv run hexaqual imports check` or pre-commit.
 
 2. **Docstrings & Public APIs**:
    - Every public module, class, method, and function must have **Google-style docstrings**.
@@ -62,8 +62,8 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 | `uv run hexaqual test boundary` | Audits test suites for branch boundary and edge-case assertions. |
 | `uv run hexaqual test redundancy` | Analyzes test execution overlap and flags duplicate test paths. |
 | `uv run hexaqual test impact` | Selectively runs tests impacted by current git diff changes. |
-| `uv run inline-snapshot-update` | Updates inline snapshots across workspace test suites. |
-| `uv run fuzz-run` | Executes Atheris coverage-guided and OWASP security fuzz harnesses across packages. |
+| `uv run hexaqual test snapshot` | Updates or reviews inline snapshots across workspace test suites. |
+| `uv run hexaqual test fuzz` | Executes Atheris coverage-guided and OWASP security fuzz harnesses across packages. |
 
 ### Governance, Architecture & Packaging Tools
 | Tool Command | Purpose |
@@ -82,7 +82,7 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 | `uv run hexaqual release check` | Validates package build distributions and PyPI release version status. |
 | `uv run hexaqual release publish` | Smart PyPI publisher skipping existing releases and handling rate limits. |
 | `uv run hexaqual release reproducible` | Verifies byte-for-byte reproducible wheel package builds across clean environments. |
-| `uv run lint-imports` | Validates root package import boundaries via `.importlinter`. |
+| `uv run hexaqual imports check` | Validates root package import boundaries via `.importlinter`. |
 | `uv run ruff check packages/<pkg>` | Runs Ruff linter on target package. |
 | `uv run ty check packages/<pkg>/src` | Fast static type analysis with Ty. |
 

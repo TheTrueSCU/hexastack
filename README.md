@@ -320,11 +320,11 @@ Hexastack maintains a comprehensive quality hierarchy to ensure any project—wh
 | **Lint & Idiomatic Code Style** | `ruff` (UP/D/S/B/SIM) | ✅ | ✅ | Scaffolded in `pyproject.toml` + `.pre-commit-config.yaml` |
 | **Load & Concurrency Benchmarking** | `locust` | — | — | CLI command: `hexastack load` + default `locustfile.py` |
 | **Memory Allocation Flamegraph** | `memray` | — | — | CLI command: `hexastack profile memory --bin <FILE>` |
-| **Mutation Testing** | `mutmut` | — | — | `scripts/run_mutation_tests.py` suite |
+| **Mutation Testing** | `mutmut` | — | — | `hexaqual mutate run` suite |
 | **Negative API Contract Fuzzing** | `schemathesis` | — | ✅ | OpenAPI negative payload fuzzing integration |
 | **Property-Based Invariant Fuzzing** | `hypothesis` | — | ✅ | Scaffolded sample in `tests/hypothesis/` |
 | **Protobuf Linting & Breaking Changes** | `buf` | — | ✅ | Scaffolded `buf.yaml` + CLI: `hexastack grpc lint/breaking` |
-| **Public API Surface Integrity** | AST Visitor | ✅ | ✅ | `scripts/pre_commit/all_statements.py` (`check-all-statements`) |
+| **Public API Surface Integrity** | AST Visitor | ✅ | ✅ | `hexaqual statements check` (`__all__` integrity) |
 | **Realistic Synthetic Test Data** | `faker` | — | ✅ | Pre-configured `faker` pytest fixture support |
 | **Secret & Key Leak Prevention** | `detect-secrets` | ✅ | ✅ | Automated `.secrets.baseline` in pre-commit |
 | **Statement & Branch Coverage** | `coverage.py` | — | ✅ | Pre-configured `fail_under = 90` threshold |
@@ -391,63 +391,63 @@ uv run pytest
 uv run ty check packages
 
 # Validate hexagonal architecture import boundaries
-uv run import-linter-run
+uv run hexaqual imports check
 ```
 
-### Mutation Testing (`mutmut`)
+### Mutation Testing (`hexaqual mutate`)
 
-Hexastack uses `mutmut` to ensure high test efficacy and verify that tests fail when code is mutated.
+Hexastack uses `mutmut` via Hexaqual to ensure high test efficacy and verify that tests fail when code is mutated.
 
-#### 1. Mutation Test Runner (`scripts/run_mutation_tests.py`)
+#### 1. Mutation Test Runner (`hexaqual mutate run`)
 
 Run mutations across a specific subsystem or the whole monorepo:
 
 ```bash
 # Run mutation tests against a specific package (e.g. db, auth, cqrs, core)
-uv run python scripts/run_mutation_tests.py --package db
-uv run python scripts/run_mutation_tests.py --package auth
+uv run hexaqual mutate run -p db
+uv run hexaqual mutate run -p auth
 
 # Run mutation tests against all packages sequentially
-uv run python scripts/run_mutation_tests.py --all
+uv run hexaqual mutate run -a
 
-# Inspect the diff of a specific surviving mutant by ID
-uv run python scripts/run_mutation_tests.py --show 42
+# Clear package cache and re-run mutation tests from scratch
+uv run hexaqual mutate run -p db -r
 ```
 
-#### 2. Mutation Cache Inspector (`scripts/inspect_mutants.py`)
+#### 2. Mutation Cache Inspector (`hexaqual mutate inspect`)
 
-Analyze `.mutmut-cache` to identify remaining surviving mutants, hotspot files, and line-level details:
+Analyze mutation results to identify remaining surviving mutants, hotspot files, and line-level details:
 
 ```bash
-# Display high-level survivor counts grouped by package and top files
-uv run python scripts/inspect_mutants.py --summary
+# Display high-level triage summary of surviving mutants
+uv run hexaqual mutate inspect -s
 
-# Inspect surviving mutants in a specific package
-uv run python scripts/inspect_mutants.py --package db --limit 25
+# Display actionable critical surviving mutants for a package
+uv run hexaqual mutate inspect -p db -act
 
-# Inspect surviving mutants matching a specific filename
-uv run python scripts/inspect_mutants.py --file engine.py
+# Correlate surviving mutants with .coverage to show covering test functions
+uv run hexaqual mutate inspect -p db -act -c
 ```
 
-### Selective Testing & Impact-Driven Test Runner (`pytest-run`)
+### Selective Testing & Impact-Driven Test Runner (`hexaqual test`)
 
-Hexastack features a direct, in-process workspace test runner (`scripts.pytest.run:main`) backed by an automated dependency DAG resolver:
+Hexastack features a direct, in-process workspace test runner backed by Hexaqual's automated dependency DAG resolver:
 
 ```bash
-# Run 100% full workspace unit & integration test suite
-uv run pytest-run
+# Run full workspace unit & integration test suite
+uv run hexaqual test run
 
 # Run tests ONLY for packages affected by current git changeset (and their downstream dependents)
-uv run pytest-run -A
+uv run hexaqual test run -A
 
 # Target specific packages directly
-uv run pytest-run -p fastapi -p core
+uv run hexaqual test run -p fastapi -p core
 
 # Run only deep property-based state machine fuzzing suites
-uv run pytest-run -P
+uv run hexaqual test run -P
 
-# List impacted packages and target test directories without running pytest
-uv run pytest-run -A --list
+# Run only unit tests
+uv run hexaqual test run -U
 ```
 
 ### Staged Fail-Fast CI Pipeline
@@ -457,13 +457,13 @@ The GitHub Actions workflow is orchestrated across 3 dependent fail-fast stages 
 ```mermaid
 graph TD
     subgraph Stage 1: Quality Gate & Governance [Fast Fail, ~15-25s]
-        QG["1. Pre-Commit Quality Gate<br/>ruff, ty check, vulture, jscpd, pip-audit"]
+        QG["1. Pre-Commit Quality Gate<br/>hexaqual sanity, pip-audit, vulture, jscpd"]
         BUF["2. Protobuf Governance<br/>buf lint, breaking change check"]
     end
 
     subgraph Stage 2: Verification & Diagrams [Needs: Stage 1]
-        TEST["3. Unit & Integration Tests<br/>pytest-run with affected targeting"]
-        DIAG["4. Architecture Diagrams<br/>pydeps freshness check"]
+        TEST["3. Unit & Integration Tests<br/>hexaqual test run with affected targeting"]
+        DIAG["4. Architecture Diagrams<br/>hexaqual deps graph freshness check"]
     end
 
     subgraph Stage 3: Deep Fuzzing & Releases [Needs: Stage 2]
