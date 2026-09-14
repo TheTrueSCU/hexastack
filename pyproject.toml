@@ -89,7 +89,7 @@ dev = [
     "ty>=0.0.75",
 
     "vulture>=2.16",
-    "zensical>=0.0.59",
+    "zensical>=0.0.60",
 ]
 
 [tool.ty.environment]
