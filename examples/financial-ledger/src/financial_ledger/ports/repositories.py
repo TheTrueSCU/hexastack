@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from financial_ledger.domain.models import Account, JournalTransaction, TransactionEntry
 
@@ -22,7 +21,7 @@ class AccountRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_by_id(self, account_id: str) -> Optional[Account]:
+    def get_by_id(self, account_id: str) -> Account | None:
         """Retrieve an account by its unique identifier."""
         raise NotImplementedError
 
@@ -41,7 +40,7 @@ class LedgerRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_transaction(self, transaction_id: str) -> Optional[JournalTransaction]:
+    def get_transaction(self, transaction_id: str) -> JournalTransaction | None:
         """Retrieve a transaction by identifier."""
         raise NotImplementedError
 

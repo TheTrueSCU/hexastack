@@ -22,7 +22,7 @@
 ### 🛡️ Quality Verification Checklist
 
 - [ ] `pre-commit run --all-files` passes cleanly across all hooks (Ruff, ty, buf, deptry, import-linter, pip-audit).
-- [ ] `uv run check-test-parity` passes 100% cleanly (1:1 source-to-test mirror symmetry & directory `__init__.py`).
+- [ ] `uv run hexaqual parity test` passes 100% cleanly (1:1 source-to-test mirror symmetry & directory `__init__.py`).
 - [ ] Unit & integration tests pass with $\ge 90\%$ branch coverage.
 - [ ] GitHub Advanced Security (CodeQL) reports 0 new vulnerabilities.
 - [ ] All required checks satisfied by `CI Success (All Required Checks)` status gate.

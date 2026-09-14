@@ -61,32 +61,21 @@ repos:
 
   - repo: local
     hooks:
-      - id: all-statements
-        name: __all__ integrity (check-all-statements)
-        entry: uv run check-all-statements
+      - id: hexaqual-sanity
+        name: hexaqual sanity check (lint, ty, complexity, __all__, parity, deptry)
+        entry: uv run hexaqual sanity -a --skip-tests
         language: system
         types: [python]
         pass_filenames: false
       - id: extras-parity
-        name: optional extras parity (check-extras-parity)
-        entry: uv run check-extras-parity
+        name: optional extras parity (hexaqual parity extras)
+        entry: uv run hexaqual parity extras
         language: system
         files: ^(packages/.*/pyproject\.toml|pyproject\.toml)$
-        pass_filenames: false
-      - id: complexipy
-        name: complexipy
-        entry: uv run complexipy-run packages --max-complexity-allowed 25
-        language: system
-        types: [python]
         pass_filenames: false
       - id: cpd
         name: cpd (copy-paste detector)
         entry: cpd packages/ --threshold 5 --min-tokens 50 --ignore "**/tests/**,**/testing/**" --no-tips
-        language: system
-        pass_filenames: false
-      - id: deptry
-        name: deptry (dependency tree auditor)
-        entry: uv run deptry-run
         language: system
         pass_filenames: false
       - id: docs-build
@@ -96,10 +85,10 @@ repos:
         files: ^(docs/|zensical\.toml|mkdocs\.yml)
         pass_filenames: false
       - id: usage-docs
-        name: usage docs integrity (generate-usage-docs --check)
-        entry: uv run generate-usage-docs --check
+        name: usage docs integrity (hexaqual docs usage --check)
+        entry: uv run hexaqual docs usage --check
         language: system
-        files: ^packages/(hexastack|hexastack_tools)/.*$
+        files: ^packages/hexastack/.*$
         pass_filenames: false
       - id: import-linter-root
         name: import-linter (package boundaries)
@@ -109,7 +98,7 @@ repos:
         pass_filenames: false
       - id: import-linter-packages
         name: import-linter (hexagonal boundaries)
-        entry: uv run import-linter-run
+        entry: uv run hexaqual deps linter
         language: system
         files: ^packages/.*(\.py|pyproject\.toml)$
         pass_filenames: true
@@ -117,18 +106,6 @@ repos:
         name: pip-audit (dependency vulnerability scan)
         entry: uv run pip-audit --local --vulnerability-service pypi --ignore-vuln PYSEC-2026-2447 --timeout 30
         language: system
-        pass_filenames: false
-      - id: test-parity
-        name: test parity (src <-> unit test & __init__.py)
-        entry: uv run check-test-parity
-        language: system
-        types: [python]
-        pass_filenames: false
-      - id: ty-check
-        name: ty check
-        entry: uv run ty check packages
-        language: system
-        types: [python]
         pass_filenames: false
       - id: vulture
         name: vulture (dead code detector)

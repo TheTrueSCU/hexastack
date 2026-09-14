@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+
 import pytest
 
 from financial_ledger.adapters.driven.database import (
@@ -21,7 +22,6 @@ from financial_ledger.domain.commands import (
 from financial_ledger.domain.exceptions import (
     AccountAlreadyExistsError,
     AccountFrozenError,
-    AccountNotFoundError,
     InsufficientFundsError,
     InvalidAmountError,
     UnbalancedTransactionError,

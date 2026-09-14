@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+
 from financial_ledger.infra.bootstrap import create_app
 
 __all__ = [

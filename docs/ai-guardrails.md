@@ -19,67 +19,70 @@
 
 3. **`__all__` Integrity**:
    - Every `__all__` list must be strictly sorted alphabetically (casefold ordering).
-   - Enforced by `check-all-statements`. Auto-fix with `uv run fix-all-statements -p <package>` or `uv run fix-all-statements -a`.
+   - Enforced by `hexaqual statements check` (or `hexaqual sanity`). Auto-fix with `uv run hexaqual statements fix -p <package>` or `uv run hexaqual statements fix`.
 
 4. **Testing Rigor & Parity**:
    - Every `src/<pkg>/<path>.py` file requires a matching `tests/unit/<path>/test_<name>.py` and `__init__.py`.
-   - Pre-commit quality gate checks test symmetry and fails if parity is broken.
+   - Pre-commit quality gate checks test symmetry via `hexaqual parity test` (or `hexaqual sanity`) and fails if parity is broken.
    - Target test coverage is $\ge 90\%$.
    - When writing assertions in tests, assign method return values to variables first (e.g., `res = cache.delete("key"); assert res is True`) to prevent CodeQL *"assert statement with side-effect"* warnings.
 
 ---
 
-## 2. Developer Tools & Workspace Commands
+## 2. Developer Tools & Workspace Commands (Hexaqual Suite)
+
+Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual[all]>=0.2.0`) as its unified quality, governance, and release engineering toolsuite.
 
 ### GitHub & PR Diagnostic Tools
 | Tool Command | Purpose |
 |---|---|
-| `uv run gh-pr-examine <pr-number>` | Single-step PR dashboard inspecting CI check runs, review threads, and conclusion. |
-| `uv run gh-pr-examine <pr-number> --details` | Expands review threads and full comment body snippets. |
-| `uv run gh-pr-examine --watch` | Continuously polls CI check status until completion. |
-| `uv run gh-checks <pr-number>` | Lists detailed GitHub Actions status checks and run conclusions. |
-| `uv run gh-repo [owner/repo]` | Inspects GitHub repository settings, Actions permissions, and environments. |
-| `uv run gh-code-scanning` | Queries CodeQL alerts and scanning status. |
-| `uv run gh-security` | Summarizes GitHub security advisories and Dependabot alerts. |
+| `uv run hexaqual gh pr <pr-number>` | Single-step PR dashboard inspecting CI check runs, review threads, and conclusion. |
+| `uv run hexaqual gh pr <pr-number> -d` | Expands review threads and full comment body snippets (`--details`). |
+| `uv run hexaqual gh pr <pr-number> -w` | Continuously polls CI check status until completion (`--watch`). |
+| `uv run hexaqual gh checks <pr-number>` | Lists detailed GitHub Actions status checks and run conclusions. |
+| `uv run hexaqual gh repo [owner/repo]` | Inspects GitHub repository settings, Actions permissions, and environments. |
+| `uv run hexaqual gh code-scanning` | Queries CodeQL alerts and scanning status. |
+| `uv run hexaqual gh security` | Summarizes GitHub security advisories and Dependabot alerts. |
 
 ### Mutation Testing & Coverage Fortification Tools
 | Tool Command | Purpose |
 |---|---|
-| `uv run mutmut-run -p <pkg>` | Runs mutation testing scoped to a specific package. |
-| `uv run mutmut-run -p <pkg> -r` | Clears package cache and re-runs mutation tests from scratch. |
-| `uv run mutmut-run -a` | Sequentially executes mutation testing across all workspace packages. |
-| `uv run mutmut-inspect --summary` | High-level triage summary of surviving mutants (Critical, Equivalent, Ignorable). |
-| `uv run mutmut-inspect -p <pkg> -a` | Displays actionable critical surviving mutants for a package. |
-| `uv run mutmut-inspect -p <pkg> -a -c` | Correlates surviving mutants with `.coverage` to show covering test functions. |
-| `uv run pytest-run -p <pkg>` | Runs pytest for a specific package with dynamic xdist and coverage. |
-| `uv run pytest-run -e <example>` | Runs pytest for an example project (e.g. `financial-ledger`), configuring `PYTHONPATH` automatically. |
-| `uv run pytest-run --with-context` | Runs tests capturing per-test execution contexts into `.coverage`. |
-| `uv run pytest-boundary-audit` | Audits test suites for branch boundary and edge-case assertions. |
-| `uv run pytest-redundancy-audit` | Analyzes test execution overlap and flags duplicate test paths. |
-| `uv run pytest-impact` | Selectively runs tests impacted by current git diff changes. |
+| `uv run hexaqual mutate run -p <pkg>` | Runs mutation testing scoped to a specific package. |
+| `uv run hexaqual mutate run -p <pkg> -r` | Clears package cache and re-runs mutation tests from scratch (`--reset`). |
+| `uv run hexaqual mutate run -a` | Sequentially executes mutation testing across all workspace packages (`--all`). |
+| `uv run hexaqual mutate inspect -s` | High-level triage summary of surviving mutants (Critical, Equivalent, Ignorable) (`--summary`). |
+| `uv run hexaqual mutate inspect -p <pkg> -act` | Displays actionable critical surviving mutants for a package (`--actionable`). |
+| `uv run hexaqual mutate inspect -p <pkg> -act -c` | Correlates surviving mutants with `.coverage` to show covering test functions (`--correlated`). |
+| `uv run hexaqual test run -p <pkg>` | Runs pytest for a specific package with dynamic xdist and coverage. |
+| `uv run hexaqual test run -e <example>` | Runs pytest for an example project (e.g. `financial-ledger`), configuring `PYTHONPATH` automatically. |
+| `uv run hexaqual test run -U` | Restricts test execution to unit tests (`--unit`). |
+| `uv run hexaqual test run -P` | Restricts test execution to property-based / Hypothesis tests (`--properties`). |
+| `uv run hexaqual test run -A` | Selectively runs only packages affected by the current git diff (`--affected`). |
+| `uv run hexaqual test run --with-context` | Runs tests capturing per-test execution contexts into `.coverage`. |
+| `uv run hexaqual test boundary` | Audits test suites for branch boundary and edge-case assertions. |
+| `uv run hexaqual test redundancy` | Analyzes test execution overlap and flags duplicate test paths. |
+| `uv run hexaqual test impact` | Selectively runs tests impacted by current git diff changes. |
 | `uv run inline-snapshot-update` | Updates inline snapshots across workspace test suites. |
 | `uv run fuzz-run` | Executes Atheris coverage-guided and OWASP security fuzz harnesses across packages. |
 
 ### Governance, Architecture & Packaging Tools
 | Tool Command | Purpose |
 |---|---|
-| `uv run sanity-check [-p <pkg>] [-e <example>]` | Fast scoped pre-commit validator (Ruff, Ty, complexipy, `__all__`, test parity, pytest) with Rich dashboard. |
-| `uv run check-all-statements` | Validates that `__all__` is sorted and deduplicated across all packages. |
-| `uv run fix-all-statements -p <pkg>` | Auto-formats and alphabetizes `__all__` in a specific package. |
-| `uv run fix-all-statements -a` | Auto-formats and alphabetizes `__all__` across all packages. |
-| `uv run check-test-parity` | Validates 1:1 symmetry between `src/` modules and `tests/unit/` files. |
-| `uv run check-extras-parity` | Audits subpackage optional extras forwarding into umbrella packaging. |
-| `uv run deps-audit` | Unified dependency runner (deptry + extras parity audit across workspace). |
-| `uv run deps-audit --diagrams` | Regenerates Pydeps architecture SVGs and Mermaid extras dependency graph. |
-| `uv run import-linter-run` | Validates package and hexagonal architecture layer boundaries. |
-| `uv run deptry-run` | Audits declared dependencies, unused deps, and transitive dependencies across packages. |
-| `uv run generate-usage-docs --check` | Verifies whether USAGE.md files are up to date with CLI entrypoints. |
-| `uv run generate-usage-docs --fix` | Regenerates and formats USAGE.md files for tools and umbrella CLI. |
-| `uv run pypi-build` | Builds sdist and wheel packages for distribution. |
-| `uv run pypi-check` | Validates package build distributions and PyPI release version status. |
-| `uv run pypi-publish` | Smart PyPI publisher skipping existing releases and handling rate limits. |
-| `uv run medium-publish <slug>` | Two-pass article publisher (DEV.to draft/publish, doc link resolution, Medium syndication helper). |
-| `uv run codeql-scan` | Runs local CodeQL database creation and query scanning. |
+| `uv run hexaqual sanity [-p <pkg>] [-e <example>]` | Fast scoped validator (Ruff, Ty, complexipy, `__all__`, test parity, pytest) with Rich dashboard (`check` or `sanity`). |
+| `uv run hexaqual sanity -a --skip-tests` | Full workspace pre-commit quality check across all 17 packages in ~11s. |
+| `uv run hexaqual statements check` | Validates that `__all__` is sorted and deduplicated across all packages. |
+| `uv run hexaqual statements fix -p <pkg>` | Auto-formats and alphabetizes `__all__` in a specific package. |
+| `uv run hexaqual statements fix` | Auto-formats and alphabetizes `__all__` across all files. |
+| `uv run hexaqual parity test` | Validates 1:1 symmetry between `src/` modules and `tests/unit/` files. |
+| `uv run hexaqual parity extras` | Audits subpackage optional extras forwarding into umbrella packaging. |
+| `uv run hexaqual parity extras --diagram` | Regenerates Mermaid extras dependency graph. |
+| `uv run hexaqual docs usage --check` | Verifies whether USAGE.md files are up to date with CLI entrypoints. |
+| `uv run hexaqual docs usage --fix` | Regenerates and formats USAGE.md files for tools and umbrella CLI. |
+| `uv run hexaqual release build` | Builds sdist and wheel packages for distribution. |
+| `uv run hexaqual release check` | Validates package build distributions and PyPI release version status. |
+| `uv run hexaqual release publish` | Smart PyPI publisher skipping existing releases and handling rate limits. |
+| `uv run hexaqual release reproducible` | Verifies byte-for-byte reproducible wheel package builds across clean environments. |
+| `uv run lint-imports` | Validates root package import boundaries via `.importlinter`. |
 | `uv run ruff check packages/<pkg>` | Runs Ruff linter on target package. |
 | `uv run ty check packages/<pkg>/src` | Fast static type analysis with Ty. |
 
@@ -100,9 +103,9 @@
 When diagnosing GitHub Actions CI runs or review threads:
 
 ```bash
-# 1. View overall PR status & checks
-gh pr view <pr-number>
-gh pr checks <pr-number>
+# 1. View overall PR status & checks via Hexaqual
+uv run hexaqual gh pr <pr-number>
+uv run hexaqual gh checks <pr-number>
 
 # 2. View failed logs for a specific GitHub workflow run
 gh run view <run-id> --log-failed
@@ -124,12 +127,14 @@ gh run list --branch <branch-name>
 - `hexastack-db`: Sync/Async SQLAlchemy and SQLModel repositories and UnitOfWork adapters.
 - `hexastack-events`: Distributed events, CloudEvent envelopes, NATS JetStream, Huey, Apprise, and Janus bridge.
 - `hexastack-flags`: Dynamic feature flagging adapters (OpenFeature, Redis, YAML, env).
+- `hexastack-flow`: Orchestration and workflow engine components.
 - `hexastack-graphql`: Strawberry GraphQL schema registration, queries, and mutations.
 - `hexastack-grpc`: Protobuf and gRPC service adapters, interceptors, and decorators.
 - `hexastack-ai`: LLM agents, memory adapters, and tool executors.
 - `hexastack-auth`: Authentication, JWT/OAuth2 token validation, and RBAC policies.
 - `hexastack-logging`: Structured JSON logging and Logfire tracing.
 - `hexastack-otel`: OpenTelemetry metrics and distributed tracing instrumentation.
-- `hexastack-tools`: Internal developer tooling (`gh-pr-examine`, `check-all-statements`, linters, smart PyPI publisher).
 - `hexastack-ui`: Interactive NiceGUI DevTools console, command dispatcher, and telemetry visualizer.
 - `hexastack-cli`: CLI scaffolding engine and Typer driving adapters.
+- `hexastack`: Umbrella package aggregating all subpackages and CLI entrypoints.
+*(Note: Quality, testing, and release engineering are powered by the standalone `hexaqual` dev dependency).*

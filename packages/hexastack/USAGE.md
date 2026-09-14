@@ -1,10 +1,32 @@
-# Hexastack CLI & Framework Usage Guide (`hexastack`)
+# Hexaqual Quality Suite & CLI Catalog (`hexastack` / `hs`)
 
-> Canonical reference guide and command catalog for the Hexastack Unified Developer CLI.
+> Canonical developer command reference and CLI catalog automatically generated from the complete command hierarchy.
 
 ---
 
-## 🚀 Unified Entrypoint (`hexastack`)
+## 🏛️ Dogfooding Hexagonal Architecture
+
+`hexaqual` is built strictly according to Hexagonal Architecture design principles:
+- **`domain/`**: Pure data contracts (`PrSummary`, `CheckRunFinding`, `ReviewThread`, `OutputFormat`).
+- **`ports/`**: Clean interface contracts (`GitHubApiPort`, `GovernancePresenterPort`, `ToolRunnerPort`, `PyPiClientPort`).
+- **`adapters/`**: Pluggable presenters (`rich`, `json`, `plain`), subcommands, and runners.
+- **`cli/`**: Unified Typer CLI driving adapter (`hexaqual`).
+- **`infra/`**: Command dispatchers, handlers, and execution orchestration.
+- **`utils/`**: Workspace discovery, AST parsing, and package graph resolvers.
+
+---
+
+## ⚙️ Output Presentation Formats
+
+All inspection commands support `--format / -f`:
+- **`auto` (default)**: Automatically outputs interactive ANSI tables/panels when attached to a terminal TTY, and switches to clean, tab-delimited plain text (`TSV`) when standard output is piped into Unix filters (`grep`, `awk`, `cut`, `xargs`, etc.).
+- **`rich`**: Interactive Rich tables and color-coded status badges.
+- **`json`**: Structured JSON for automation, CI scripts, and AI agents.
+- **`plain`**: Machine-readable TSV stream.
+
+---
+
+## 🚀 Unified Root Entrypoint (`hexastack` (alias: `hs`))
 
 ```text
 Usage: hexastack [OPTIONS] COMMAND [ARGS]...
@@ -47,16 +69,164 @@ Usage: hexastack [OPTIONS] COMMAND [ARGS]...
 
 ---
 
-## 🛠️ Subcommand Reference Catalog
+## 🛠️ Complete Subcommand Tree Reference
 
-### `hexastack info`
+### `hexastack db`
 
 ```text
-Usage: hexastack info [OPTIONS]
+Usage: hexastack db [OPTIONS] COMMAND [ARGS]...
 
- Display installed Hexastack packages and optional dependency statuses.
+ Database migration management (requires hexastack).
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ init      Scaffold a new migrations directory.                               │
+│ migrate   Apply pending database migrations (upgrade to head).               │
+│ check     Verify there is no unapplied schema drift or missing migrations    │
+│           (Alembic check).                                                   │
+│ revision  Generate a new migration revision script.                          │
+│ current   Show the current applied revision.                                 │
+│ history   Show migration revision history.                                   │
+│ stamp     Stamp the database at a revision without running migrations.       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack db check`
+
+```text
+Usage: hexastack db check [OPTIONS]
+
+ Verify there is no unapplied schema drift or missing migrations (Alembic
+ check).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --dir         <str>  Migrations directory. [default: migrations]             │
+│ --url         <str>  Database URL (overrides DATABASE_URL env var).          │
+│ --help               Show this message and exit.                             │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack db current`
+
+```text
+Usage: hexastack db current [OPTIONS]
+
+ Show the current applied revision.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --dir         <str>  Migrations directory. [default: migrations]             │
+│ --url         <str>  Database URL (overrides DATABASE_URL env var).          │
+│ --help               Show this message and exit.                             │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack db history`
+
+```text
+Usage: hexastack db history [OPTIONS]
+
+ Show migration revision history.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --dir         <str>  Migrations directory. [default: migrations]             │
+│ --url         <str>  Database URL (overrides DATABASE_URL env var).          │
+│ --help               Show this message and exit.                             │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack db init`
+
+```text
+Usage: hexastack db init [OPTIONS] [directory]
+
+ Scaffold a new migrations directory.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│   directory      <str>  Path to create the migrations directory.             │
+│                         [default: migrations]                                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack db migrate`
+
+```text
+Usage: hexastack db migrate [OPTIONS]
+
+ Apply pending database migrations (upgrade to head).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --dir             <str>  Migrations directory. [default: migrations]         │
+│ --revision        <str>  Target revision. [default: head]                    │
+│ --url             <str>  Database URL (overrides DATABASE_URL env var).      │
+│ --help                   Show this message and exit.                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack db revision`
+
+```text
+Usage: hexastack db revision [OPTIONS] {message}
+
+ Generate a new migration revision script.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    message      <str>  Short description of the migration. [required]      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --dir                    <str>  Migrations directory. [default: migrations]  │
+│ --no-autogenerate               Disable schema autogeneration.               │
+│ --url                    <str>  Database URL (overrides DATABASE_URL env     │
+│                                 var).                                        │
+│ --help                          Show this message and exit.                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack db stamp`
+
+```text
+Usage: hexastack db stamp [OPTIONS] [revision]
+
+ Stamp the database at a revision without running migrations.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│   revision      <str>  Revision to stamp (default: head). [default: head]    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --dir         <str>  Migrations directory. [default: migrations]             │
+│ --url         <str>  Database URL (overrides DATABASE_URL env var).          │
+│ --help               Show this message and exit.                             │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+### `hexastack demo`
+
+```text
+Usage: hexastack demo [OPTIONS] COMMAND [ARGS]...
+
+ Demo management commands
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ ping  Send a test ping command through the CQRS execution pipeline.          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack demo ping`
+
+```text
+Usage: hexastack demo ping [OPTIONS]
+
+ Send a test ping command through the CQRS execution pipeline.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --message                 <str>                                              │
 │ --output          -o      <str>  Output format: table, json, or plain        │
 │                                  (CI/pipe friendly).                         │
 │                                  [default: table]                            │
@@ -72,6 +242,26 @@ Usage: hexastack info [OPTIONS]
 │ --tenant-id               <str>  Tenant isolation identifier for             │
 │                                  multi-tenancy.                              │
 │ --help                           Show this message and exit.                 │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+### `hexastack dev`
+
+```text
+Usage: hexastack dev [OPTIONS]
+
+ Launch concurrent multi-transport dev environment (REST on 8000, gRPC on
+ 50051, Outbox relay).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --host       -h                 <str>  Bind host address.                    │
+│                                        [default: 127.0.0.1]                  │
+│ --port       -p                 <int>  REST HTTP port. [default: 8000]       │
+│ --grpc-port                     <int>  gRPC port. [default: 50051]           │
+│ --grpc           --no-grpc             Launch gRPC server. [default: grpc]   │
+│ --outbox         --no-outbox           Launch Outbox relay daemon.           │
+│                                        [default: outbox]                     │
+│ --help                                 Show this message and exit.           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -101,41 +291,150 @@ Usage: hexastack doctor [OPTIONS]
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack status`
+### `hexastack gRPC`
 
 ```text
-Usage: hexastack status [OPTIONS]
+Usage: hexastack [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'gRPC'.                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+### `hexastack grpc`
+
+```text
+Usage: hexastack grpc [OPTIONS] COMMAND [ARGS]...
+
+ High-performance gRPC server management.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ serve     Launch the gRPC server daemon.                                     │
+│ compile   Compile discovered @proto_schema inline strings and @proto_file    │
+│           definitions into Python stubs.                                     │
+│ list      Inspect and list registered gRPC services, RPC methods, and        │
+│           protobuf schemas.                                                  │
+│ lint      Lint Protobuf schemas using Buf (requires buf CLI in PATH).        │
+│ breaking  Detect backwards-incompatible Protobuf breaking changes against a  │
+│           git reference.                                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack grpc breaking`
+
+```text
+Usage: hexastack grpc breaking [OPTIONS]
+
+ Detect backwards-incompatible Protobuf breaking changes against a git
+ reference.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --against  -a      <str>  Git reference or branch to compare against (e.g.   │
+│                           .git#branch=main).                                 │
+│                           [default: .git#branch=main]                        │
+│ --path     -p      <str>  Path to current proto workspace. [default: .]      │
+│ --help                    Show this message and exit.                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack grpc compile`
+
+```text
+Usage: hexastack grpc compile [OPTIONS]
+
+ Compile discovered @proto_schema inline strings and @proto_file definitions
+ into Python stubs.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --out-dir  -o      <str>  Target output directory for generated protobuf     │
+│                           stubs.                                             │
+│                           [default: src/generated/grpc]                      │
+│ --file     -f      <str>  Optional explicit .proto file path(s) to compile.  │
+│ --help                    Show this message and exit.                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack grpc definitions`
+
+```text
+Usage: hexastack grpc [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack grpc --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'definitions'.                                               │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack grpc git`
+
+```text
+Usage: hexastack grpc [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack grpc --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'git'.                                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack grpc lint`
+
+```text
+Usage: hexastack grpc lint [OPTIONS]
+
+ Lint Protobuf schemas using Buf (requires buf CLI in PATH).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --path  -p      <str>  Path to proto files or buf.yaml workspace.            │
+│                        [default: .]                                          │
+│ --help                 Show this message and exit.                           │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack grpc list`
+
+```text
+Usage: hexastack grpc list [OPTIONS]
+
+ Inspect and list registered gRPC services, RPC methods, and protobuf schemas.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack grpc protobuf`
+
+```text
+Usage: hexastack grpc [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack grpc --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'protobuf'.                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack grpc serve`
+
+```text
+Usage: hexastack grpc serve [OPTIONS]
+
+ Launch the gRPC server daemon.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --host  -h      <str>  Bind host. [default: 0.0.0.0]                         │
+│ --port  -p      <int>  Bind port. [default: 50051]                           │
+│ --help                 Show this message and exit.                           │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+### `hexastack info`
+
+```text
+Usage: hexastack info [OPTIONS]
 
  Display installed Hexastack packages and optional dependency statuses.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --output          -o      <str>  Output format: table, json, or plain        │
-│                                  (CI/pipe friendly).                         │
-│                                  [default: table]                            │
-│ --input           -i      <str>  Input JSON payload string, file path, or    │
-│                                  '-' for stdin.                              │
-│ --quiet           -q             Quiet mode: suppress decorative terminal    │
-│                                  output.                                     │
-│ --debug                          Enable debug mode and render formatted      │
-│                                  error tracebacks.                           │
-│ --correlation-id          <str>  Explicit correlation ID for request         │
-│                                  tracing.                                    │
-│ --user-id                 <str>  Authenticated user context identifier.      │
-│ --tenant-id               <str>  Tenant isolation identifier for             │
-│                                  multi-tenancy.                              │
-│ --help                           Show this message and exit.                 │
-╰──────────────────────────────────────────────────────────────────────────────╯
-```
-
-### `hexastack ping`
-
-```text
-Usage: hexastack ping [OPTIONS]
-
- Send a test ping command through the CQRS execution pipeline.
-
-╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --message                 <str>                                              │
 │ --output          -o      <str>  Output format: table, json, or plain        │
 │                                  (CI/pipe friendly).                         │
 │                                  [default: table]                            │
@@ -178,64 +477,71 @@ Usage: hexastack init [OPTIONS]
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack serve`
+### `hexastack inspect`
 
 ```text
-Usage: hexastack serve [OPTIONS]
+Usage: hexastack inspect [OPTIONS] COMMAND [ARGS]...
 
- Launch the Hexastack local development server (requires hexastack).
+ Inspect management commands
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --host    -h                 <str>  Bind host address. [default: 127.0.0.1]  │
-│ --port    -p                 <int>  Bind port number. [default: 8000]        │
-│ --reload      --no-reload           Enable live reloading. [default: reload] │
-│ --help                              Show this message and exit.              │
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ registry  Display registered CQRS commands, queries, and configurations.     │
+│ handlers  Display registered CQRS commands, queries, and configurations.     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack dev`
+#### `hexastack inspect handlers`
 
 ```text
-Usage: hexastack dev [OPTIONS]
+Usage: hexastack inspect handlers [OPTIONS]
 
- Launch concurrent multi-transport dev environment (REST on 8000, gRPC on
- 50051, Outbox relay).
+ Display registered CQRS commands, queries, and configurations.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --host       -h                 <str>  Bind host address.                    │
-│                                        [default: 127.0.0.1]                  │
-│ --port       -p                 <int>  REST HTTP port. [default: 8000]       │
-│ --grpc-port                     <int>  gRPC port. [default: 50051]           │
-│ --grpc           --no-grpc             Launch gRPC server. [default: grpc]   │
-│ --outbox         --no-outbox           Launch Outbox relay daemon.           │
-│                                        [default: outbox]                     │
-│ --help                                 Show this message and exit.           │
+│ --output          -o      <str>  Output format: table, json, or plain        │
+│                                  (CI/pipe friendly).                         │
+│                                  [default: table]                            │
+│ --input           -i      <str>  Input JSON payload string, file path, or    │
+│                                  '-' for stdin.                              │
+│ --quiet           -q             Quiet mode: suppress decorative terminal    │
+│                                  output.                                     │
+│ --debug                          Enable debug mode and render formatted      │
+│                                  error tracebacks.                           │
+│ --correlation-id          <str>  Explicit correlation ID for request         │
+│                                  tracing.                                    │
+│ --user-id                 <str>  Authenticated user context identifier.      │
+│ --tenant-id               <str>  Tenant isolation identifier for             │
+│                                  multi-tenancy.                              │
+│ --help                           Show this message and exit.                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack gRPC`
+#### `hexastack inspect registry`
 
 ```text
-Usage: hexastack [OPTIONS] COMMAND [ARGS]...
-Try 'hexastack --help' for help.
-╭─ Error ──────────────────────────────────────────────────────────────────────╮
-│ No such command 'gRPC'.                                                      │
-╰──────────────────────────────────────────────────────────────────────────────╯
-```
+Usage: hexastack inspect registry [OPTIONS]
 
-### `hexastack ui`
-
-```text
-Usage: hexastack ui [OPTIONS]
-
- Launch the Hexastack DevTools interactive web UI (requires hexastack).
+ Display registered CQRS commands, queries, and configurations.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --host    -h                 <str>  Bind host. [default: 127.0.0.1]          │
-│ --port    -p                 <int>  Bind port. [default: 8000]               │
-│ --reload      --no-reload           Enable auto-reloading.                   │
-│                                     [default: no-reload]                     │
-│ --help                              Show this message and exit.              │
+│ --output          -o      <str>  Output format: table, json, or plain        │
+│                                  (CI/pipe friendly).                         │
+│                                  [default: table]                            │
+│ --input           -i      <str>  Input JSON payload string, file path, or    │
+│                                  '-' for stdin.                              │
+│ --quiet           -q             Quiet mode: suppress decorative terminal    │
+│                                  output.                                     │
+│ --debug                          Enable debug mode and render formatted      │
+│                                  error tracebacks.                           │
+│ --correlation-id          <str>  Explicit correlation ID for request         │
+│                                  tracing.                                    │
+│ --user-id                 <str>  Authenticated user context identifier.      │
+│ --tenant-id               <str>  Tenant isolation identifier for             │
+│                                  multi-tenancy.                              │
+│ --help                           Show this message and exit.                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -263,34 +569,67 @@ Usage: hexastack load [OPTIONS]
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack inspect`
+### `hexastack mcp`
 
 ```text
-Usage: hexastack inspect [OPTIONS] COMMAND [ARGS]...
+Usage: hexastack mcp [OPTIONS] COMMAND [ARGS]...
 
- Inspect management commands
+ Model Context Protocol (MCP) AI agent tools and server.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-│ registry  Display registered CQRS commands, queries, and configurations.     │
-│ handlers  Display registered CQRS commands, queries, and configurations.     │
+│ run     Launch the MCP server in stdio mode (for Claude, Cursor, Gemini,     │
+│         Antigravity).                                                        │
+│ config  Generate MCP JSON configuration for Gemini / Antigravity, Claude     │
+│         Desktop, or Cursor.                                                  │
+│ list    Inspect and list registered MCP tools, prompt templates, and         │
+│         resources.                                                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack demo`
+#### `hexastack mcp config`
 
 ```text
-Usage: hexastack demo [OPTIONS] COMMAND [ARGS]...
+Usage: hexastack mcp config [OPTIONS]
 
- Demo management commands
+ Generate MCP JSON configuration for Gemini / Antigravity, Claude Desktop, or
+ Cursor.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --client   -c      <str>  Target client: 'antigravity', 'gemini', 'claude',  │
+│                           'cursor'.                                          │
+│                           [default: antigravity]                             │
+│ --name     -n      <str>  Server name in the MCP client config.              │
+│                           [default: hexastack]                               │
+│ --command          <str>  Custom executable command (defaults to 'uv run     │
+│                           hexastack mcp run').                               │
+│ --help                    Show this message and exit.                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack mcp list`
+
+```text
+Usage: hexastack mcp list [OPTIONS]
+
+ Inspect and list registered MCP tools, prompt templates, and resources.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────╮
-│ ping  Send a test ping command through the CQRS execution pipeline.          │
+```
+
+#### `hexastack mcp run`
+
+```text
+Usage: hexastack mcp run [OPTIONS]
+
+ Launch the MCP server in stdio mode (for Claude, Cursor, Gemini, Antigravity).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -322,67 +661,212 @@ Usage: hexastack new [OPTIONS] COMMAND [ARGS]...
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack db`
+#### `hexastack new DevTools`
 
 ```text
-Usage: hexastack db [OPTIONS] COMMAND [ARGS]...
-
- Database migration management (requires hexastack).
-
-╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────╮
-│ init      Scaffold a new migrations directory.                               │
-│ migrate   Apply pending database migrations (upgrade to head).               │
-│ check     Verify there is no unapplied schema drift or missing migrations    │
-│           (Alembic check).                                                   │
-│ revision  Generate a new migration revision script.                          │
-│ current   Show the current applied revision.                                 │
-│ history   Show migration revision history.                                   │
-│ stamp     Stamp the database at a revision without running migrations.       │
+Usage: hexastack new [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack new --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'DevTools'.                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack mcp`
+#### `hexastack new Server`
 
 ```text
-Usage: hexastack mcp [OPTIONS] COMMAND [ARGS]...
-
- Model Context Protocol (MCP) AI agent tools and server.
-
-╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────╮
-│ run     Launch the MCP server in stdio mode (for Claude, Cursor, Gemini,     │
-│         Antigravity).                                                        │
-│ config  Generate MCP JSON configuration for Gemini / Antigravity, Claude     │
-│         Desktop, or Cursor.                                                  │
-│ list    Inspect and list registered MCP tools, prompt templates, and         │
-│         resources.                                                           │
+Usage: hexastack new [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack new --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'Server'.                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack grpc`
+#### `hexastack new Transactional`
 
 ```text
-Usage: hexastack grpc [OPTIONS] COMMAND [ARGS]...
+Usage: hexastack new [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack new --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'Transactional'.                                             │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
 
- High-performance gRPC server management.
+#### `hexastack new enterprise`
+
+```text
+Usage: hexastack new enterprise [OPTIONS] {name}
+
+ Scaffold a production Enterprise microservice with all modules enabled.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    name      <str>  Name of the new microservice project. [required]       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --description  -d      <str>  Project description.                           │
+│                               [default: A full-featured enterprise Hexastack │
+│                               microservice.]                                 │
+│ --db                   <str>  Database driver: in-memory, sqlite, postgres.  │
+│                               [default: sqlite]                              │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack new event-driven`
+
+```text
+Usage: hexastack new event-driven [OPTIONS] {name}
+
+ Scaffold an Event-Driven service with CloudEvents and Transactional Outbox.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    name      <str>  Name of the new microservice project. [required]       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --description  -d      <str>  Project description.                           │
+│                               [default: An event-driven Hexastack service.]  │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack new graphql-service`
+
+```text
+Usage: hexastack new graphql-service [OPTIONS] {name}
+
+ Scaffold a GraphQL data-graph gateway microservice (Strawberry + GraphiQL).
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    name      <str>  Name of the new microservice project. [required]       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --description  -d      <str>  Project description.                           │
+│                               [default: A modern GraphQL microservice        │
+│                               powered by Hexastack.]                         │
+│ --db                   <str>  Database driver: in-memory, sqlite, postgres.  │
+│                               [default: in-memory]                           │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack new grpc-service`
+
+```text
+Usage: hexastack new grpc-service [OPTIONS] {name}
+
+ Scaffold a high-performance gRPC microservice (Protobuf + Server Reflection).
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    name      <str>  Name of the new microservice project. [required]       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --description  -d      <str>  Project description.                           │
+│                               [default: A high-performance gRPC microservice │
+│                               powered by Hexastack.]                         │
+│ --db                   <str>  Database driver: in-memory, sqlite, postgres.  │
+│                               [default: in-memory]                           │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack new mcp-agent`
+
+```text
+Usage: hexastack new mcp-agent [OPTIONS] {name}
+
+ Scaffold an AI Model Context Protocol (MCP) server & agent tools service.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    name      <str>  Name of the new microservice project. [required]       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --description  -d      <str>  Project description.                           │
+│                               [default: An MCP AI agent tools service        │
+│                               powered by Hexastack.]                         │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack new minimal`
+
+```text
+Usage: hexastack new minimal [OPTIONS] {name}
+
+ Scaffold a lightweight CLI or worker service (Core + CQRS + Logging).
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    name      <str>  Name of the new microservice project. [required]       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --description  -d      <str>  Project description.                           │
+│                               [default: A lightweight Hexastack service.]    │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack new modules`
+
+```text
+Usage: hexastack new [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack new --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'modules'.                                                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack new tools`
+
+```text
+Usage: hexastack new [OPTIONS] COMMAND [ARGS]...
+Try 'hexastack new --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'tools'.                                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack new web-api`
+
+```text
+Usage: hexastack new web-api [OPTIONS] {name}
+
+ Scaffold a RESTful Web API microservice (FastAPI + UoW + DevTools UI).
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    name      <str>  Name of the new microservice project. [required]       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --description  -d      <str>  Project description.                           │
+│                               [default: A modern RESTful microservice        │
+│                               powered by Hexastack.]                         │
+│ --db                   <str>  Database driver: in-memory, sqlite, postgres.  │
+│                               [default: in-memory]                           │
+│ --help                        Show this message and exit.                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+### `hexastack ping`
+
+```text
+Usage: hexastack ping [OPTIONS]
+
+ Send a test ping command through the CQRS execution pipeline.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ───────────────────────────────────────────────────────────────────╮
-│ serve     Launch the gRPC server daemon.                                     │
-│ compile   Compile discovered @proto_schema inline strings and @proto_file    │
-│           definitions into Python stubs.                                     │
-│ list      Inspect and list registered gRPC services, RPC methods, and        │
-│           protobuf schemas.                                                  │
-│ lint      Lint Protobuf schemas using Buf (requires buf CLI in PATH).        │
-│ breaking  Detect backwards-incompatible Protobuf breaking changes against a  │
-│           git reference.                                                     │
+│ --message                 <str>                                              │
+│ --output          -o      <str>  Output format: table, json, or plain        │
+│                                  (CI/pipe friendly).                         │
+│                                  [default: table]                            │
+│ --input           -i      <str>  Input JSON payload string, file path, or    │
+│                                  '-' for stdin.                              │
+│ --quiet           -q             Quiet mode: suppress decorative terminal    │
+│                                  output.                                     │
+│ --debug                          Enable debug mode and render formatted      │
+│                                  error tracebacks.                           │
+│ --correlation-id          <str>  Explicit correlation ID for request         │
+│                                  tracing.                                    │
+│ --user-id                 <str>  Authenticated user context identifier.      │
+│ --tenant-id               <str>  Tenant isolation identifier for             │
+│                                  multi-tenancy.                              │
+│ --help                           Show this message and exit.                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -400,5 +884,95 @@ Usage: hexastack profile [OPTIONS] COMMAND [ARGS]...
 │ cpu     Capture CPU flamegraph with py-spy (attach to PID or wrap server     │
 │         command).                                                            │
 │ memory  Generate memory allocation flamegraph using memray.                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack profile cpu`
+
+```text
+Usage: hexastack profile cpu [OPTIONS]
+
+ Capture CPU flamegraph with py-spy (attach to PID or wrap server command).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --pid       -p      <int>  Target process ID to attach to.                   │
+│ --duration  -d      <int>  Profiling duration in seconds. [default: 15]      │
+│ --output    -o      <str>  Output SVG flamegraph filepath.                   │
+│                            [default: cpu_flamegraph.svg]                     │
+│ --rate      -r      <int>  Samples per second. [default: 100]                │
+│ --help                     Show this message and exit.                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack profile memory`
+
+```text
+Usage: hexastack profile memory [OPTIONS]
+
+ Generate memory allocation flamegraph using memray.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --bin     -b      <str>  Intermediate binary memory capture file.            │
+│                          [default: mem_profile.bin]                          │
+│ --output  -o      <str>  Output HTML flamegraph filepath.                    │
+│                          [default: mem_flamegraph.html]                      │
+│ --help                   Show this message and exit.                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+### `hexastack serve`
+
+```text
+Usage: hexastack serve [OPTIONS]
+
+ Launch the Hexastack local development server (requires hexastack).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --host    -h                 <str>  Bind host address. [default: 127.0.0.1]  │
+│ --port    -p                 <int>  Bind port number. [default: 8000]        │
+│ --reload      --no-reload           Enable live reloading. [default: reload] │
+│ --help                              Show this message and exit.              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+### `hexastack status`
+
+```text
+Usage: hexastack status [OPTIONS]
+
+ Display installed Hexastack packages and optional dependency statuses.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --output          -o      <str>  Output format: table, json, or plain        │
+│                                  (CI/pipe friendly).                         │
+│                                  [default: table]                            │
+│ --input           -i      <str>  Input JSON payload string, file path, or    │
+│                                  '-' for stdin.                              │
+│ --quiet           -q             Quiet mode: suppress decorative terminal    │
+│                                  output.                                     │
+│ --debug                          Enable debug mode and render formatted      │
+│                                  error tracebacks.                           │
+│ --correlation-id          <str>  Explicit correlation ID for request         │
+│                                  tracing.                                    │
+│ --user-id                 <str>  Authenticated user context identifier.      │
+│ --tenant-id               <str>  Tenant isolation identifier for             │
+│                                  multi-tenancy.                              │
+│ --help                           Show this message and exit.                 │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+### `hexastack ui`
+
+```text
+Usage: hexastack ui [OPTIONS]
+
+ Launch the Hexastack DevTools interactive web UI (requires hexastack).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --host    -h                 <str>  Bind host. [default: 127.0.0.1]          │
+│ --port    -p                 <int>  Bind port. [default: 8000]               │
+│ --reload      --no-reload           Enable auto-reloading.                   │
+│                                     [default: no-reload]                     │
+│ --help                              Show this message and exit.              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```

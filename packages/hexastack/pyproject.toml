@@ -160,9 +160,6 @@ testing = [
 textual = [
     "hexastack-ui[textual]",
 ]
-tools = [
-    "hexastack-tools",
-]
 ui = [
     "hexastack-ui[all]",
 ]
@@ -188,7 +185,6 @@ all = [
     "hexastack-logging[all,sentry]",
     "hexastack-mcp",
     "hexastack-otel[otlp]",
-    "hexastack-tools",
     "hexastack-ui[all]",
     "uvicorn[standard]>=0.30.0",
 ]
@@ -219,7 +215,6 @@ hexastack-graphql = { workspace = true }
 hexastack-grpc = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
-hexastack-tools = { workspace = true }
 hexastack-ui = { workspace = true }
 
 [tool.importlinter]

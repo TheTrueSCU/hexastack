@@ -8,11 +8,11 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
-import uuid
 
 from financial_ledger.domain.exceptions import (
     AccountFrozenError,

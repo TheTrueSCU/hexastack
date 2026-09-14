@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import copy
 import threading
-from typing import Optional
 
 from financial_ledger.domain.models import Account, JournalTransaction, TransactionEntry
 from financial_ledger.ports.repositories import (
@@ -29,7 +28,7 @@ class InMemoryAccountRepository(AccountRepositoryPort):
         with self._lock:
             self._storage[account.account_id] = copy.deepcopy(account)
 
-    def get_by_id(self, account_id: str) -> Optional[Account]:
+    def get_by_id(self, account_id: str) -> Account | None:
         with self._lock:
             acc = self._storage.get(account_id)
             return copy.deepcopy(acc) if acc is not None else None
@@ -55,7 +54,7 @@ class InMemoryLedgerRepository(LedgerRepositoryPort):
                     self._account_entries[entry.account_id] = []
                 self._account_entries[entry.account_id].append(copy.deepcopy(entry))
 
-    def get_transaction(self, transaction_id: str) -> Optional[JournalTransaction]:
+    def get_transaction(self, transaction_id: str) -> JournalTransaction | None:
         with self._lock:
             tx = self._transactions.get(transaction_id)
             return copy.deepcopy(tx) if tx is not None else None

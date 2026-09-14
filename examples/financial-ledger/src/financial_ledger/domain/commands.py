@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+
 from hexastack_core.domain import Command, Query
 from pydantic import BaseModel, Field
 

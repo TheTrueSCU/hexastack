@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from hypothesis import given, strategies as st
+
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from financial_ledger.domain.exceptions import UnbalancedTransactionError
 from financial_ledger.domain.models import (

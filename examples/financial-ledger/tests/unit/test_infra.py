@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from fastapi import FastAPI
+
 import pytest
+from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from financial_ledger.adapters.driven.database import (
@@ -15,7 +16,6 @@ from financial_ledger.domain.commands import (
     CreateAccountCommand,
     FreezeAccountCommand,
     GetAccountBalanceQuery,
-    ListLedgerEntriesQuery,
     PostingLineDto,
     RecordTransactionCommand,
     TransferMoneyCommand,

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
 import uuid
+from decimal import Decimal
 
 from hexastack_cqrs.infra.decorators import command_handler, query_handler
 

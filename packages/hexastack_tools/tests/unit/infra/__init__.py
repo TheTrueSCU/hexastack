@@ -1,1 +1,0 @@
-"""Tests infra package init."""
