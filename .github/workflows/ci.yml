@@ -170,7 +170,7 @@ jobs:
         run: uv run hexaqual test run -A -P --no-cov
 
       - name: Run Coverage-Guided & Security Fuzzing
-        run: uv run fuzz-run --target all --runs 250 --engine auto
+        run: uv run hexaqual test fuzz --target all --runs 250 --engine auto
 
   # =========================================================================
   # Stage 4: E2E Browser, Narrator Demos & Visual Accessibility (axe-core)

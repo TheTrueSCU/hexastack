@@ -41,4 +41,4 @@ jobs:
       - name: Execute Coverage-Guided & OWASP Fuzzing
         run: |
           RUNS="${{ github.event.inputs.runs || '5000' }}"
-          uv run fuzz-run --target all --runs "$RUNS" --engine auto
+          uv run hexaqual test fuzz --target all --runs "$RUNS" --engine auto
