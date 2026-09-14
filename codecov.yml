@@ -110,10 +110,10 @@ component_management:
       paths:
         - packages/hexastack_otel/src/**
 
-    - component_id: hexastack_tools
-      name: hexastack-tools
+    - component_id: hexastack_flow
+      name: hexastack-flow
       paths:
-        - packages/hexastack_tools/src/**
+        - packages/hexastack_flow/src/**
 
     - component_id: hexastack_ui
       name: hexastack-ui

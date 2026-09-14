@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v0.5.0 (2026-09-14)
+
+### Highlights & Features
+* **Tooling Extraction & Modularization (`hexaqual`)**: Formally extracted internal `hexastack-tools` into the standalone [`hexaqual`](https://github.com/TheTrueSCU/hexaqual) quality, governance, and release engineering toolchain (`hexaqual[all]>=0.3.0`). Subsumed all legacy CLI entrypoints into unified, CQRS-dispatched commands (`hexaqual sanity`, `hexaqual parity`, `hexaqual mutate`, `hexaqual release`, `hexaqual gh`, `hexaqual statements`).
+* **Workflow Engine Extraction & Integration (`hexaflow`)**: Extracted declarative DAG execution and orchestration primitives into the standalone [`hexaflow`](https://github.com/TheTrueSCU/hexaflow) engine (`hexaflow>=0.2.0`), powering `hexastack-flow` with durable saga orchestration, `TriggerRule.ALL_SUCCESS_OR_SKIPPED` skip propagation, and dynamic Typer CLI binding (`WorkflowCliBinder`).
+* **Colocated Dynamic Fuzz Harnesses**: Relocated root fuzz harnesses into package test suites (`packages/hexastack_logging/tests/fuzz/test_fuzz_log_sanitizer.py` and `packages/hexastack_grpc/tests/fuzz/test_fuzz_proto_compiler.py`), supported by dynamic fuzz discovery in `hexaqual test fuzz`.
+* **Full Architectural Test Parity**: Added dedicated hexagonal boundary tests (`test_hexagonal_boundaries.py`) across all 17 packages, including `hexastack_flow` and `hexastack_ui`, verified by `hexaqual parity architecture`.
+* **Dynamic Package Boundary Verification**: Updated `tests/architecture/test_package_boundaries.py` with dynamic package discovery and validation across all workspace packages.
+* **Unified Workspace Lockstep Versioning (v0.5.0)**: Synchronized version bump across root workspace and all 17 packages (`hexastack`, `hexastack_ai`, `hexastack_auth`, `hexastack_cli`, `hexastack_core`, `hexastack_cqrs`, `hexastack_db`, `hexastack_events`, `hexastack_fastapi`, `hexastack_flags`, `hexastack_flow`, `hexastack_graphql`, `hexastack_grpc`, `hexastack_logging`, `hexastack_mcp`, `hexastack_otel`, `hexastack_ui`).
+
 ## v0.4.0 (2026-09-10)
 
 ### Highlights & Features

@@ -42,9 +42,17 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Kafka Distributed Event Bus**: Apache Kafka / Redpanda driven adapter with consumer group balancing (`hexastack-events[kafka]` - Issue #75, PR #119).
 - [x] **AI Agent Long-Term Memory**: Vector database driven adapters (Qdrant, pgvector) with CQRS query caching (`hexastack-ai` - Issue #78).
 
+### v0.5.0 (Ecosystem Integration, Dynamic Fuzzing & Architectural Parity) ✅
+- [x] **Hexaflow v0.2.0 Integration**: Upgraded `hexastack-flow` with `TriggerRule.ALL_SUCCESS_OR_SKIPPED` skip propagation and dynamic CLI option binding (`WorkflowCliBinder`).
+- [x] **Hexaqual v0.3.0 Toolchain Dogfooding**: Quality gates upgraded with `hexaqual parity architecture` and dynamic fuzz discovery.
+- [x] **Colocated Fuzz Harnesses**: Relocated coverage-guided and adversarial fuzz harnesses into individual package test suites (`packages/hexastack_logging/tests/fuzz/`, `packages/hexastack_grpc/tests/fuzz/`).
+- [x] **Full Hexagonal Boundary Parity**: Added dedicated architectural boundary enforcement tests across all 17 workspace packages including `hexastack_flow` and `hexastack_ui`.
+- [x] **Dynamic Monorepo Boundary Enforcement**: Dynamic package discovery in `tests/architecture/test_package_boundaries.py`.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 17 subpackages to `v0.5.0`.
+
 ---
 
-## 🚀 Active Milestone: v0.5.0 (Edge, WASM & Multimodal Consoles)
+## 🚀 Active Milestone: v0.6.0 (Edge, WASM & Multimodal Consoles)
 - [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
 - [ ] **Textual Interactive Terminal UI**: Fullscreen terminal monitoring and operations console (`hexastack-ui[textual]`).
 - [ ] **Voice & WebRTC Audio Pipeline**: Real-time conversational audio bridge (`hexastack-ui[voice]`).

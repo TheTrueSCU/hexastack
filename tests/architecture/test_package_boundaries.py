@@ -7,24 +7,39 @@ from pathlib import Path
 import pytest
 from pytest_archon import archrule
 
-PACKAGES_ROOT = Path("packages")
+PACKAGES_ROOT = (
+    Path(__file__).resolve().parent.parent.parent / "packages"
+    if (Path(__file__).resolve().parent.parent.parent / "packages").is_dir()
+    else Path("packages")
+)
 
-ALL_KNOWN_PACKAGES = {
-    "hexastack",
-    "hexastack_ai",
-    "hexastack_auth",
-    "hexastack_cli",
-    "hexastack_core",
-    "hexastack_cqrs",
-    "hexastack_db",
-    "hexastack_events",
-    "hexastack_fastapi",
-    "hexastack_graphql",
-    "hexastack_grpc",
-    "hexastack_logging",
-    "hexastack_mcp",
-    "hexastack_otel",
-}
+ALL_KNOWN_PACKAGES = (
+    {
+        d.name
+        for d in PACKAGES_ROOT.iterdir()
+        if d.is_dir() and (d / "pyproject.toml").is_file()
+    }
+    if PACKAGES_ROOT.is_dir()
+    else {
+        "hexastack",
+        "hexastack_ai",
+        "hexastack_auth",
+        "hexastack_cli",
+        "hexastack_core",
+        "hexastack_cqrs",
+        "hexastack_db",
+        "hexastack_events",
+        "hexastack_fastapi",
+        "hexastack_flags",
+        "hexastack_flow",
+        "hexastack_graphql",
+        "hexastack_grpc",
+        "hexastack_logging",
+        "hexastack_mcp",
+        "hexastack_otel",
+        "hexastack_ui",
+    }
+)
 
 
 def get_available_packages() -> set[str]:

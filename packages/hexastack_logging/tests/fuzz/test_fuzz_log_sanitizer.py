@@ -8,18 +8,21 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
 import time
 from typing import Any
 
 try:
-    import atheris
+    atheris: Any = importlib.import_module("atheris")
+except ImportError:
+    atheris = None
 
+if atheris is not None:
     with atheris.instrument_imports():
         from hexastack_logging.infra.sanitizer import LogSanitizer
-except ImportError:
-    atheris = None  # type: ignore[assignment]
+else:
     from hexastack_logging.infra.sanitizer import LogSanitizer
 
 
@@ -27,7 +30,7 @@ _MAX_ALLOWED_DURATION_SECONDS = 0.05  # 50ms ReDoS threshold per input
 _sanitizer = LogSanitizer()
 
 
-def test_one_input(data: bytes) -> None:
+def fuzz_one_input(data: bytes) -> None:
     """Test one input against LogSanitizer regex and structural traversal.
 
     Args:
@@ -85,6 +88,12 @@ def test_one_input(data: bytes) -> None:
     assert isinstance(tb_out, str)
 
 
+def test_fuzz_sanitizer_smoke() -> None:
+    """Smoke test LogSanitizer fuzz harness under pytest."""
+    res = run_standalone(runs=20)
+    assert res["passed"] is True
+
+
 def run_standalone(runs: int = 1000) -> dict[str, Any]:
     """Execute standalone fuzzing loop without requiring native libFuzzer.
 
@@ -108,7 +117,7 @@ def run_standalone(runs: int = 1000) -> dict[str, Any]:
             seed_bytes = b"4111" + b" " * (i % 10) + b"2222 3333 4444" + seed_bytes
 
         try:
-            test_one_input(seed_bytes)
+            fuzz_one_input(seed_bytes)
         except TimeoutError:
             redos_violations += 1
         except Exception:
@@ -116,13 +125,13 @@ def run_standalone(runs: int = 1000) -> dict[str, Any]:
 
     total_time = time.perf_counter() - start_time
     return {
-        "target": "LogSanitizer",
-        "engine": "standalone",
-        "runs": runs,
-        "duration_seconds": round(total_time, 3),
         "crashes": crashes,
-        "redos_violations": redos_violations,
+        "duration_seconds": round(total_time, 3),
+        "engine": "standalone",
         "passed": crashes == 0 and redos_violations == 0,
+        "redos_violations": redos_violations,
+        "runs": runs,
+        "target": "LogSanitizer",
     }
 
 
@@ -145,7 +154,7 @@ def run_atheris(runs: int = 1000) -> dict[str, Any]:
     def harness(data: bytes) -> None:
         nonlocal crashes, redos_violations
         try:
-            test_one_input(data)
+            fuzz_one_input(data)
         except TimeoutError:
             redos_violations += 1
         except AssertionError:
@@ -160,31 +169,32 @@ def run_atheris(runs: int = 1000) -> dict[str, Any]:
 
     total_time = time.perf_counter() - start_time
     return {
-        "target": "LogSanitizer",
-        "engine": "atheris",
-        "runs": runs,
-        "duration_seconds": round(total_time, 3),
         "crashes": crashes,
-        "redos_violations": redos_violations,
+        "duration_seconds": round(total_time, 3),
+        "engine": "atheris",
         "passed": crashes == 0 and redos_violations == 0,
+        "redos_violations": redos_violations,
+        "runs": runs,
+        "target": "LogSanitizer",
     }
 
 
 def main() -> None:
     """CLI entrypoint for standalone Atheris execution."""
     if atheris is not None and len(sys.argv) > 1:
-        atheris.Setup(sys.argv, test_one_input)
+        atheris.Setup(sys.argv, fuzz_one_input)
         atheris.Fuzz()
     else:
         res = run_standalone(runs=1000)
-        print(f"Fuzzing completed: {res}")
+        sys.stdout.write(f"Fuzzing completed: {res}\n")
 
 
 __all__ = [
+    "fuzz_one_input",
     "main",
     "run_atheris",
     "run_standalone",
-    "test_one_input",
+    "test_fuzz_sanitizer_smoke",
 ]
 
 if __name__ == "__main__":

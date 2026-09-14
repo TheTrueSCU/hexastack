@@ -9,6 +9,7 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import contextlib
+import importlib
 import os
 import sys
 import tempfile
@@ -16,14 +17,16 @@ import time
 from typing import Any
 
 try:
-    import atheris
+    atheris: Any = importlib.import_module("atheris")
+except ImportError:
+    atheris = None
 
+if atheris is not None:
     with atheris.instrument_imports():
         from hexastack_grpc.domain.exceptions import ProtoCompilationError
         from hexastack_grpc.domain.models import ProtoSchemaMetadata
         from hexastack_grpc.infra.compiler import ProtoCompiler
-except ImportError:
-    atheris = None  # type: ignore[assignment]
+else:
     from hexastack_grpc.domain.exceptions import ProtoCompilationError
     from hexastack_grpc.domain.models import ProtoSchemaMetadata
     from hexastack_grpc.infra.compiler import ProtoCompiler
@@ -80,7 +83,7 @@ def _suppress_c_stderr():
         os.close(old_stderr)
 
 
-def test_one_input(data: bytes) -> None:
+def fuzz_one_input(data: bytes) -> None:
     """Test one fuzzed input against ProtoCompiler.compile_metadata.
 
     Args:
@@ -113,6 +116,12 @@ def test_one_input(data: bytes) -> None:
             ) from exc
 
 
+def test_fuzz_proto_compiler_smoke() -> None:
+    """Smoke test ProtoCompiler fuzz harness under pytest."""
+    res = run_standalone(runs=10)
+    assert res["passed"] is True
+
+
 def run_standalone(runs: int = 500) -> dict[str, Any]:
     """Execute standalone fuzzing loop for ProtoCompiler without native libFuzzer.
 
@@ -128,18 +137,18 @@ def run_standalone(runs: int = 500) -> dict[str, Any]:
     for i in range(runs):
         seed = os.urandom(min(32 + (i % 256), 2048))
         try:
-            test_one_input(seed)
+            fuzz_one_input(seed)
         except Exception:
             crashes += 1
 
     total_time = time.perf_counter() - start_time
     return {
-        "target": "ProtoCompiler",
-        "engine": "standalone",
-        "runs": runs,
-        "duration_seconds": round(total_time, 3),
         "crashes": crashes,
+        "duration_seconds": round(total_time, 3),
+        "engine": "standalone",
         "passed": crashes == 0,
+        "runs": runs,
+        "target": "ProtoCompiler",
     }
 
 
@@ -161,7 +170,7 @@ def run_atheris(runs: int = 500) -> dict[str, Any]:
     def harness(data: bytes) -> None:
         nonlocal crashes
         try:
-            test_one_input(data)
+            fuzz_one_input(data)
         except AssertionError:
             crashes += 1
 
@@ -174,30 +183,31 @@ def run_atheris(runs: int = 500) -> dict[str, Any]:
 
     total_time = time.perf_counter() - start_time
     return {
-        "target": "ProtoCompiler",
-        "engine": "atheris",
-        "runs": runs,
-        "duration_seconds": round(total_time, 3),
         "crashes": crashes,
+        "duration_seconds": round(total_time, 3),
+        "engine": "atheris",
         "passed": crashes == 0,
+        "runs": runs,
+        "target": "ProtoCompiler",
     }
 
 
 def main() -> None:
     """CLI entrypoint for standalone Atheris execution."""
     if atheris is not None and len(sys.argv) > 1:
-        atheris.Setup(sys.argv, test_one_input)
+        atheris.Setup(sys.argv, fuzz_one_input)
         atheris.Fuzz()
     else:
         res = run_standalone(runs=500)
-        print(f"ProtoCompiler fuzzing completed: {res}")
+        sys.stdout.write(f"ProtoCompiler fuzzing completed: {res}\n")
 
 
 __all__ = [
+    "fuzz_one_input",
     "main",
     "run_atheris",
     "run_standalone",
-    "test_one_input",
+    "test_fuzz_proto_compiler_smoke",
 ]
 
 if __name__ == "__main__":

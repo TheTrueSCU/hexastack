@@ -24,6 +24,8 @@
 4. **Testing Rigor & Parity**:
    - Every `src/<pkg>/<path>.py` file requires a matching `tests/unit/<path>/test_<name>.py` and `__init__.py`.
    - Pre-commit quality gate checks test symmetry via `hexaqual parity test` (or `hexaqual sanity`) and fails if parity is broken.
+   - Every package maintaining internal hexagonal layers requires a dedicated `tests/architecture/test_hexagonal_boundaries.py` suite, verified by `hexaqual parity architecture`.
+   - Coverage-guided and adversarial fuzz harnesses are colocated in `packages/<pkg>/tests/fuzz/` (and root `tests/properties/`) and dynamically executed via `hexaqual test fuzz`.
    - Target test coverage is $\ge 90\%$.
    - When writing assertions in tests, assign method return values to variables first (e.g., `res = cache.delete("key"); assert res is True`) to prevent CodeQL *"assert statement with side-effect"* warnings.
 
@@ -31,7 +33,7 @@
 
 ## 2. Developer Tools & Workspace Commands (Hexaqual Suite)
 
-Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual[all]>=0.2.0`) as its unified quality, governance, and release engineering toolsuite.
+Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual[all]>=0.3.0`) as its unified quality, governance, and release engineering toolsuite.
 
 ### GitHub & PR Diagnostic Tools
 | Tool Command | Purpose |
@@ -74,6 +76,7 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 | `uv run hexaqual statements fix -p <pkg>` | Auto-formats and alphabetizes `__all__` in a specific package. |
 | `uv run hexaqual statements fix` | Auto-formats and alphabetizes `__all__` across all files. |
 | `uv run hexaqual parity test` | Validates 1:1 symmetry between `src/` modules and `tests/unit/` files. |
+| `uv run hexaqual parity architecture` | Validates that all packages maintain dedicated `test_hexagonal_boundaries.py` architectural test suites. |
 | `uv run hexaqual parity extras` | Audits subpackage optional extras forwarding into umbrella packaging. |
 | `uv run hexaqual parity extras --diagram` | Regenerates Mermaid extras dependency graph. |
 | `uv run hexaqual docs usage --check` | Verifies whether USAGE.md files are up to date with CLI entrypoints. |
@@ -121,18 +124,21 @@ gh run list --branch <branch-name>
 
 ## 4. Active Packages in Workspace
 
+All 17 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.5.0`**):
+
 - `hexastack-core`: Primitives, ports, events, domain models, caching, rate limiting, and in-memory adapters.
 - `hexastack-cqrs`: Command and Query execution pipelines, registries, buses, and middleware.
 - `hexastack-fastapi`: FastAPI presentation layer, CQRS routing, rate limiting (`slowapi`/`limits`), auth, and UI.
 - `hexastack-db`: Sync/Async SQLAlchemy and SQLModel repositories and UnitOfWork adapters.
 - `hexastack-events`: Distributed events, CloudEvent envelopes, NATS JetStream, Huey, Apprise, and Janus bridge.
 - `hexastack-flags`: Dynamic feature flagging adapters (OpenFeature, Redis, YAML, env).
-- `hexastack-flow`: Orchestration and workflow engine components.
+- `hexastack-flow`: Orchestration and workflow engine components integrating `hexaflow>=0.2.0`.
 - `hexastack-graphql`: Strawberry GraphQL schema registration, queries, and mutations.
 - `hexastack-grpc`: Protobuf and gRPC service adapters, interceptors, and decorators.
 - `hexastack-ai`: LLM agents, memory adapters, and tool executors.
 - `hexastack-auth`: Authentication, JWT/OAuth2 token validation, and RBAC policies.
 - `hexastack-logging`: Structured JSON logging and Logfire tracing.
+- `hexastack-mcp`: Model Context Protocol (MCP) server adapter, tool registries, and Claude/Gemini bridges.
 - `hexastack-otel`: OpenTelemetry metrics and distributed tracing instrumentation.
 - `hexastack-ui`: Interactive NiceGUI DevTools console, command dispatcher, and telemetry visualizer.
 - `hexastack-cli`: CLI scaffolding engine and Typer driving adapters.
