@@ -1897,21 +1897,21 @@ wheels = [
 
 [[package]]
 name = "hexaflow"
-version = "0.2.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/45/d0fac45408d72d7f008154a5f7013783cee33ec22fe78095bd94e2e68023/hexaflow-0.2.0.tar.gz", hash = "sha256:a9f970f4a522f5a2ac0bdc408b42f61d086c34922b26406e14c3c67c7dfbce83", size = 103637, upload-time = "2026-09-14T14:38:50.234Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cf/6f/9d1e0a7dfbbfb5ba02867a2049be1e01c40a1cf6e6a37cc5ebd94207df3e/hexaflow-0.3.0.tar.gz", hash = "sha256:4e605c6d4e8f94714123b952774573976ea53ce76a583bba47c7897e06a9ff4f", size = 123995, upload-time = "2026-09-16T20:41:16.234Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/46/3934436eca566c2cdad93c1c30faa3df93d92fdd2c069f3ad9b79f51d5e8/hexaflow-0.2.0-py3-none-any.whl", hash = "sha256:56fca7e1edb94d5d4e01ce45780a5cec279ee9b0977f8e916d8929552f0c9a4d", size = 39100, upload-time = "2026-09-14T14:38:49.175Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/42/2e4f58c2f0dc5334fe6f3619c7a1cef238aa67ab65d07340c56932667d25/hexaflow-0.3.0-py3-none-any.whl", hash = "sha256:51ef9071219e0e2eec1e74c04df3f6129b0ed079a59cf5ded5bbf8a288dcc14c", size = 42487, upload-time = "2026-09-16T20:41:14.973Z" },
 ]
 
 [[package]]
 name = "hexaqual"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "complexipy" },
@@ -1928,9 +1928,9 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d3/6c/123ca32f1a18d6bc3a4727af8edcfc9e57f29cdad686ef51e4db6a54cd18/hexaqual-0.3.0.tar.gz", hash = "sha256:34c98a0ac9476ad6686a1a0e064bcbb3936c6a8976ed60b881bed54a2234bc5a", size = 281524, upload-time = "2026-09-14T15:31:43.182Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/87/3e/22a5ecea6a76b7e911aef1a5fcb8b10df93528aa3dc9c7d4d124b5a7477b/hexaqual-0.4.0.tar.gz", hash = "sha256:327a53ac51cfc38dffd1c7c4316510194a952e51af90c81591eddf2e7ccf8cc5", size = 302441, upload-time = "2026-09-16T22:15:43.504Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/c5/0f77455d8f41ff566520b49f6b715131a0c1bba6b5429137535e59e8193e/hexaqual-0.3.0-py3-none-any.whl", hash = "sha256:27cdec265c4a856b6cb3f0b8f0738bd02113aa1e596ebf0972b2284bb85cab7c", size = 210320, upload-time = "2026-09-14T15:31:41.697Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/07/2ec17c173ad6d3e3eb72920bd9f9b5e16ff6352d04fc1280065f5550c973/hexaqual-0.4.0-py3-none-any.whl", hash = "sha256:43737175dc7283d30ce4be4394ed4463a872835fdf0d1fbbff2bdf04ce7c26c0", size = 216105, upload-time = "2026-09-16T22:15:42.356Z" },
 ]
 
 [package.optional-dependencies]
@@ -1942,7 +1942,7 @@ all = [
 
 [[package]]
 name = "hexastack"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2208,7 +2208,7 @@ provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "doc
 
 [[package]]
 name = "hexastack-ai"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_ai" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2242,7 +2242,7 @@ provides-extras = ["qdrant", "all"]
 
 [[package]]
 name = "hexastack-auth"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_auth" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2288,7 +2288,7 @@ provides-extras = ["fastapi", "grpc", "opa", "openfga", "spiffe"]
 
 [[package]]
 name = "hexastack-cli"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_cli" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2314,7 +2314,7 @@ provides-extras = ["testing"]
 
 [[package]]
 name = "hexastack-core"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_core" }
 dependencies = [
     { name = "pydantic" },
@@ -2358,7 +2358,7 @@ provides-extras = ["filelock", "fsspec", "redis", "testing", "valkey"]
 
 [[package]]
 name = "hexastack-cqrs"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_cqrs" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2382,7 +2382,7 @@ provides-extras = ["huey"]
 
 [[package]]
 name = "hexastack-db"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_db" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2444,7 +2444,7 @@ provides-extras = ["sqlite", "postgresql", "pgvector", "duckdb", "migrations", "
 
 [[package]]
 name = "hexastack-events"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_events" }
 dependencies = [
     { name = "cloudevents" },
@@ -2508,7 +2508,7 @@ provides-extras = ["apprise", "dlt", "filelock", "huey", "janus", "kafka", "msgs
 
 [[package]]
 name = "hexastack-fastapi"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_fastapi" }
 dependencies = [
     { name = "fastapi" },
@@ -2548,7 +2548,7 @@ provides-extras = ["auth", "docs", "ratelimit", "testing"]
 
 [[package]]
 name = "hexastack-flags"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_flags" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2572,7 +2572,7 @@ provides-extras = ["flagd"]
 
 [[package]]
 name = "hexastack-flow"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_flow" }
 dependencies = [
     { name = "hexaflow" },
@@ -2596,7 +2596,7 @@ events = [
 
 [package.metadata]
 requires-dist = [
-    { name = "hexaflow", specifier = ">=0.2.0" },
+    { name = "hexaflow", specifier = ">=0.3.0" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-db", marker = "extra == 'db'", editable = "packages/hexastack_db" },
@@ -2608,7 +2608,7 @@ provides-extras = ["db", "events", "all"]
 
 [[package]]
 name = "hexastack-graphql"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_graphql" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2634,7 +2634,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-grpc"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_grpc" }
 dependencies = [
     { name = "grpcio" },
@@ -2662,7 +2662,7 @@ provides-extras = ["reflection"]
 
 [[package]]
 name = "hexastack-logging"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_logging" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2702,7 +2702,7 @@ provides-extras = ["loguru", "rich", "structlog", "all", "sentry"]
 
 [[package]]
 name = "hexastack-mcp"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_mcp" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2728,7 +2728,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-otel"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_otel" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2760,7 +2760,7 @@ provides-extras = ["otlp"]
 
 [[package]]
 name = "hexastack-ui"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/hexastack_ui" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2805,7 +2805,7 @@ provides-extras = ["fastapi", "nicegui", "devtools", "textual", "all"]
 
 [[package]]
 name = "hexastack-workspace"
-version = "0.5.0"
+version = "0.6.0"
 source = { virtual = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },
@@ -2889,7 +2889,7 @@ dev = [
     { name = "fsspec", specifier = ">=2024.1.0" },
     { name = "grpcio-reflection", specifier = ">=1.83.0" },
     { name = "grpcio-tools", specifier = ">=1.83.0" },
-    { name = "hexaqual", extras = ["all"], specifier = ">=0.3.0" },
+    { name = "hexaqual", extras = ["all"], specifier = ">=0.4.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "huey", specifier = ">=3.3.4" },
     { name = "hypothesis", specifier = ">=6.165.10" },

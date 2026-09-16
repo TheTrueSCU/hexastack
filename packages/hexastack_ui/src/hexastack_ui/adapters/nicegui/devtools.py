@@ -18,11 +18,33 @@ from hexastack_ui.adapters.nicegui.page import check_nicegui_installed, mount_ui
 if TYPE_CHECKING:
     from fastapi import FastAPI
 
+import importlib.resources
+
 __all__ = [
     "mount_devtools_dashboard",
 ]
 
-_STATIC_DIR = Path(__file__).parent / "static"
+
+def _resolve_static_dir() -> Path | None:
+    """Resolve static asset directory using PEP 451/616 importlib.resources.
+
+    Returns:
+        Path to static directory if present, else None.
+    """
+    try:
+        traversable = importlib.resources.files(
+            "hexastack_ui.adapters.nicegui"
+        ).joinpath("static")
+        if traversable.is_dir():
+            if isinstance(traversable, Path):
+                return traversable
+            candidate = Path(str(traversable))
+            if candidate.is_dir():
+                return candidate
+    except (TypeError, FileNotFoundError, ModuleNotFoundError):
+        pass
+    fallback = Path(__file__).parent / "static"
+    return fallback if fallback.is_dir() else None
 
 
 def _render_cqrs_messages(container: Container) -> None:
@@ -374,8 +396,9 @@ def mount_devtools_dashboard(
     from nicegui import app as nicegui_app
     from nicegui import ui
 
-    if _STATIC_DIR.is_dir():
-        nicegui_app.add_static_files("/_hexastack/ui/static", str(_STATIC_DIR))
+    static_dir = _resolve_static_dir()
+    if static_dir and static_dir.is_dir():
+        nicegui_app.add_static_files("/_hexastack/ui/static", str(static_dir))
 
     mount_ui_app(app, title=title)
 

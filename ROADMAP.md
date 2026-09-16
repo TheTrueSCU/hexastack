@@ -52,7 +52,17 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 
 ---
 
-## 🚀 Active Milestone: v0.6.0 (Edge, WASM & Multimodal Consoles)
+### v0.6.0 (Textual Terminal UI, Packaging Modernization & Engine Synchronization) ✅
+- [x] **Textual Interactive Terminal UI**: Fullscreen terminal monitoring and operations console in `hexastack-ui[textual]` (`TextualDevToolsApp`, `TextualDevToolsPresenter`).
+- [x] **Packaging Modernization (`importlib.resources`)**: Migrated static assets in `hexastack-ui` (`devtools.py`) to PEP 451/616 standard `importlib.resources.files()` for virtualenv and zip-safe execution.
+- [x] **CLI Output Formatting Alignment (`hexastack-cli`)**: Standardized `OutputFormat` enum, `format_option()` factory, and `resolve_format()` pipe detection aligning with `hexaqual` and `hexaqueue`.
+- [x] **Hexaqual Composite Action Integration**: Modernized CI quality gate using `TheTrueSCU/hexaqual@v0.4.0` turnkey composite action.
+- [x] **Workflow Engine Upgrade**: Upgraded `hexastack-flow` to `hexaflow>=0.3.0` (dynamic mapping `@wf.map_step`, Mermaid/ASCII DAG exporters).
+- [x] **Quality Toolchain Upgrade**: Upgraded workspace dev toolchain to `hexaqual[all]>=0.4.0`.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 17 subpackages to `v0.6.0`.
+
+---
+
+## 🚀 Active Milestone: v0.7.0 (Edge, WASM & Multimodal Consoles)
 - [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
-- [ ] **Textual Interactive Terminal UI**: Fullscreen terminal monitoring and operations console (`hexastack-ui[textual]`).
 - [ ] **Voice & WebRTC Audio Pipeline**: Real-time conversational audio bridge (`hexastack-ui[voice]`).

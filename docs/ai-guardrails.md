@@ -124,7 +124,7 @@ gh run list --branch <branch-name>
 
 ## 4. Active Packages in Workspace
 
-All 17 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.5.0`**):
+All 17 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.6.0`**):
 
 - `hexastack-core`: Primitives, ports, events, domain models, caching, rate limiting, and in-memory adapters.
 - `hexastack-cqrs`: Command and Query execution pipelines, registries, buses, and middleware.
@@ -132,7 +132,7 @@ All 17 packages in the workspace are maintained in lockstep version synchronizat
 - `hexastack-db`: Sync/Async SQLAlchemy and SQLModel repositories and UnitOfWork adapters.
 - `hexastack-events`: Distributed events, CloudEvent envelopes, NATS JetStream, Huey, Apprise, and Janus bridge.
 - `hexastack-flags`: Dynamic feature flagging adapters (OpenFeature, Redis, YAML, env).
-- `hexastack-flow`: Orchestration and workflow engine components integrating `hexaflow>=0.2.0`.
+- `hexastack-flow`: Orchestration and workflow engine components integrating `hexaflow>=0.3.0`.
 - `hexastack-graphql`: Strawberry GraphQL schema registration, queries, and mutations.
 - `hexastack-grpc`: Protobuf and gRPC service adapters, interceptors, and decorators.
 - `hexastack-ai`: LLM agents, memory adapters, and tool executors.

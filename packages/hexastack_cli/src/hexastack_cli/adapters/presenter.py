@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from hexastack_cli.domain.options import OutputFormat
 from hexastack_core.domain import Generic
 from hexastack_core.ports.presenter import PresenterPort
 
@@ -79,16 +80,33 @@ class RichTerminalPresenter(PresenterPort):
             self._console.print(f"[bold green]{data}[/bold green]")
         return data
 
+    def _present_markdown(self, instance: Generic, data: Any) -> Any:
+        """Render markdown formatted representation to stdout."""
+        if isinstance(data, dict):
+            title = type(instance).__name__
+            lines = [f"### {title}", "", "| Field | Value |", "|---|---|"]
+            for k, v in data.items():
+                val_str = json.dumps(v) if isinstance(v, dict | list) else str(v)
+                lines.append(f"| {k} | {val_str} |")
+            sys.stdout.write("\n".join(lines) + "\n")
+        elif isinstance(data, list):
+            lines = [f"- {item}" for item in data]
+            sys.stdout.write("\n".join(lines) + "\n")
+        else:
+            sys.stdout.write(f"**{data}**\n")
+        sys.stdout.flush()
+        return data
+
     def present(
         self,
         instance: Generic,
-        format_mode: str | None = None,
+        format_mode: str | OutputFormat | None = None,
     ) -> Any:
         """Format and print a domain Generic instance to stdout based on requested format mode.
 
         Args:
             instance: Domain Generic or DTO model instance.
-            format_mode: Optional format mode ('table', 'json', 'plain').
+            format_mode: Optional format mode ('table', 'json', 'plain', 'markdown').
 
         Returns:
             The presented raw data representation.
@@ -98,12 +116,17 @@ class RichTerminalPresenter(PresenterPort):
         """
         data = instance.model_dump() if isinstance(instance, BaseModel) else instance
 
-        mode = (format_mode or "table").lower()
+        if isinstance(format_mode, OutputFormat):
+            mode = format_mode.value
+        else:
+            mode = (format_mode or OutputFormat.TABLE.value).lower().strip()
 
-        if mode == "json":
+        if mode == OutputFormat.JSON.value:
             return self._present_json(data)
-        if mode == "plain":
+        if mode == OutputFormat.PLAIN.value:
             return self._present_plain(data)
+        if mode == OutputFormat.MARKDOWN.value:
+            return self._present_markdown(instance, data)
         return self._present_table(instance, data)
 
     def print_error(self, message: str) -> None:

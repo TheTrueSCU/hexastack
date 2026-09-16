@@ -15,6 +15,10 @@ from hexastack_cli.infra.decorators import (
     cli_group,
     cli_query,
 )
+from hexastack_cli.infra.options import (
+    format_option,
+    resolve_format,
+)
 
 __all__ = [
     "autodiscover_cli_commands",
@@ -25,7 +29,9 @@ __all__ = [
     "CliMetadata",
     "create_cli_app",
     "create_cli_visitor",
+    "format_option",
     "GroupMetadata",
     "HexastackCliConfig",
     "register_cli_config",
+    "resolve_format",
 ]

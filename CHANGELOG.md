@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v0.6.0 (2026-09-16)
+
+### Highlights & Features
+* **Interactive Terminal UI (`hexastack-ui[textual]`)**: Fullscreen interactive terminal operational dashboard built on Textual (`TextualDevToolsApp`, `TextualDevToolsPresenter`, `mount_textual_dashboard`), providing rich live inspection of CQRS contracts, runtime feature flags, DI container bindings, and middleware chains without browser or JavaScript dependencies.
+* **Packaging Modernization (`importlib.resources`)**: Migrated `hexastack-ui` (`devtools.py`) static asset discovery from `Path(__file__)` to PEP 451/616 compliant `importlib.resources.files()`, ensuring full zip-safe and isolated virtual environment compliance.
+* **Turnkey CI Quality Gate via Hexaqual**: Modernized `.github/workflows/ci.yml` `quality-gate` job to use `TheTrueSCU/hexaqual@v0.4.0` turnkey composite action with automated `uv`, Python, and pre-commit caching.
+* **CLI Output Formatting Alignment (`hexastack-cli`)**: Standardized `OutputFormat` enum (`auto`, `json`, `markdown`, `plain`, `rich`, `table`), `format_option()` factory, and `resolve_format()` pipe-detection in `hexastack-cli` alongside markdown presentation support in `RichTerminalPresenter`, fulfilling cross-ecosystem CLI alignment with `hexaqual` and `hexaqueue`.
+* **Workflow Engine Upgrade (`hexaflow>=0.3.0`)**: Upgraded `hexastack-flow` dependency to `hexaflow>=0.3.0`, introducing dynamic step mapping (`@wf.map_step`), runtime collection fan-out, dependency inference, and Mermaid/ASCII DAG exporters.
+* **Quality Suite Upgrade (`hexaqual>=0.4.0`)**: Upgraded workspace dev toolchain to `hexaqual[all]>=0.4.0`.
+* **Unified Workspace Lockstep Versioning (v0.6.0)**: Synchronized version bump across root workspace and all 17 subpackages (`hexastack`, `hexastack_ai`, `hexastack_auth`, `hexastack_cli`, `hexastack_core`, `hexastack_cqrs`, `hexastack_db`, `hexastack_events`, `hexastack_fastapi`, `hexastack_flags`, `hexastack_flow`, `hexastack_graphql`, `hexastack_grpc`, `hexastack_logging`, `hexastack_mcp`, `hexastack_otel`, `hexastack_ui`).
+
 ## v0.5.0 (2026-09-14)
 
 ### Highlights & Features

@@ -146,3 +146,43 @@ def test_rich_terminal_presenter_table():
     assert "SampleOutput" in rendered
     assert "Alice" in rendered
     assert "30" in rendered
+
+
+def test_rich_terminal_presenter_output_format_enum(capsys):
+    from hexastack_cli.domain.options import OutputFormat
+
+    presenter = RichTerminalPresenter()
+    item = SampleOutput(name="Dana", age=28)
+    out = presenter.present(item, format_mode=OutputFormat.JSON)
+
+    assert out == {"name": "Dana", "age": 28}
+    captured = capsys.readouterr()
+    parsed = json.loads(captured.out)
+    assert parsed == {"name": "Dana", "age": 28}
+
+
+def test_rich_terminal_presenter_markdown(capsys):
+    presenter = RichTerminalPresenter()
+
+    # 1. Dict / Model
+    item = SampleOutput(name="Eve", age=35)
+    out = presenter.present(item, format_mode="markdown")
+    assert out == {"name": "Eve", "age": 35}
+    captured = capsys.readouterr()
+    assert "### SampleOutput" in captured.out
+    assert "| name | Eve |" in captured.out
+    assert "| age | 35 |" in captured.out
+
+    # 2. List
+    list_item = ["alpha", "beta"]
+    out_list = presenter._present_markdown(item, list_item)
+    assert out_list == list_item
+    captured_list = capsys.readouterr()
+    assert "- alpha" in captured_list.out
+    assert "- beta" in captured_list.out
+
+    # 3. Scalar
+    out_scalar = presenter._present_markdown(item, "single_value")
+    assert out_scalar == "single_value"
+    captured_scalar = capsys.readouterr()
+    assert "**single_value**" in captured_scalar.out
