@@ -59,20 +59,17 @@ repos:
         additional_dependencies: ["@biomejs/biome@1.9.4"]
         files: ^packages/.*\.css$
 
-  - repo: local
+  - repo: https://github.com/TheTrueSCU/hexaqual
+    rev: 0ff7207
     hooks:
       - id: hexaqual-sanity
-        name: hexaqual sanity check (lint, ty, complexity, __all__, parity, deptry)
-        entry: uv run hexaqual sanity -a --skip-tests
-        language: system
-        types: [python]
-        pass_filenames: false
-      - id: extras-parity
-        name: optional extras parity (hexaqual parity extras)
-        entry: uv run hexaqual parity extras
-        language: system
-        files: ^(packages/.*/pyproject\.toml|pyproject\.toml)$
-        pass_filenames: false
+      - id: hexaqual-architecture
+      - id: hexaqual-linter
+      - id: hexaqual-extras
+      - id: hexaqual-usage-docs
+
+  - repo: local
+    hooks:
       - id: cpd
         name: cpd (copy-paste detector)
         entry: cpd packages/ --threshold 5 --min-tokens 50 --ignore "**/tests/**,**/testing/**" --no-tips
@@ -84,24 +81,12 @@ repos:
         language: system
         files: ^(docs/|zensical\.toml|mkdocs\.yml)
         pass_filenames: false
-      - id: usage-docs
-        name: usage docs integrity (hexaqual docs usage --check)
-        entry: uv run hexaqual docs usage --check
-        language: system
-        files: ^packages/hexastack/.*$
-        pass_filenames: false
       - id: import-linter-root
         name: import-linter (package boundaries)
         entry: uv run lint-imports
         language: system
         types: [python]
         pass_filenames: false
-      - id: import-linter-packages
-        name: import-linter (hexagonal boundaries)
-        entry: uv run hexaqual deps linter
-        language: system
-        files: ^packages/.*(\.py|pyproject\.toml)$
-        pass_filenames: true
       - id: pip-audit
         name: pip-audit (dependency vulnerability scan)
         entry: uv run pip-audit --local --vulnerability-service pypi --ignore-vuln PYSEC-2026-2447 --timeout 30
