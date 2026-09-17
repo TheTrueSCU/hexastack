@@ -101,7 +101,24 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 
 ---
 
-## 3. GitHub PR & CI Inspection Shortcuts
+## 3. Turnkey Workspace Agent Hub (`.agents/`)
+
+Hexastack provides a structured workspace agent hub located in [`.agents/`](file:///home/rjdw/Projects/hexastack/.agents/) designed to configure any modern AI pair programming assistant (Antigravity CLI, Cursor, Windsurf, Claude Code, GitHub Copilot) with zero architectural drift:
+
+- **Agent Rules (`.agents/rules/`)**:
+  - [`.agents/rules/hexaqual.md`](file:///home/rjdw/Projects/hexastack/.agents/rules/hexaqual.md): Enforces hexagonal boundary isolation, test symmetry parity, `__all__` sorting, cognitive complexity $\le 25$, and side-effect free test assertions.
+  - [`.agents/rules/graphify.md`](file:///home/rjdw/Projects/hexastack/.agents/rules/graphify.md): Mandates knowledge graph querying (`graphify query`, `graphify path`, `graphify explain`) prior to answering architectural questions, and incremental synchronization (`graphify update .`) following code modifications.
+
+- **Agent Workflows (`.agents/workflows/`)**:
+  - [`.agents/workflows/sanity.md`](file:///home/rjdw/Projects/hexastack/.agents/workflows/sanity.md): Standardized pre-commit quality check pipeline (`uv run hexaqual sanity -a --skip-tests`) run before committing code.
+  - [`.agents/workflows/graphify.md`](file:///home/rjdw/Projects/hexastack/.agents/workflows/graphify.md): Step-by-step workflow for updating the AST knowledge graph, verifying graph health, and re-exporting visualization artifacts.
+
+- **Local Memory Integration (`GEMINI.md`)**:
+  - `GEMINI.md` is symlinked directly to this document (`docs/ai-guardrails.md`) and added to `.git/info/exclude` to provide deep contextual anchoring without repo clutter.
+
+---
+
+## 4. GitHub PR & CI Inspection Shortcuts
 
 When diagnosing GitHub Actions CI runs or review threads:
 
@@ -122,7 +139,7 @@ gh run list --branch <branch-name>
 
 ---
 
-## 4. Active Packages in Workspace
+## 5. Active Packages in Workspace
 
 All 17 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.6.0`**):
 

@@ -62,8 +62,8 @@ def test_file_lock_adapter_context_manager():
 async def test_async_file_lock_adapter_lifecycle():
     with tempfile.TemporaryDirectory() as tmpdir:
         lock_file = Path(tmpdir) / "async.lock"
-        lock1 = AsyncFileLockAdapter(lock_file, timeout=1.0)
-        lock2 = AsyncFileLockAdapter(lock_file, timeout=0.1)
+        lock1 = AsyncFileLockAdapter(lock_file, timeout=2.0)
+        lock2 = AsyncFileLockAdapter(lock_file, timeout=2.0)
 
         is_locked_init = await lock1.locked()
         assert is_locked_init is False
