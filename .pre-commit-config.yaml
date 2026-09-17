@@ -60,10 +60,11 @@ repos:
         files: ^packages/.*\.css$
 
   - repo: https://github.com/TheTrueSCU/hexaqual
-    rev: v0.4.0
+    rev: v0.4.1
     hooks:
       - id: hexaqual-sanity
       - id: hexaqual-architecture
+      - id: hexaqual-diagrams
       - id: hexaqual-linter
       - id: hexaqual-extras
       - id: hexaqual-usage-docs
