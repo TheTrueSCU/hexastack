@@ -36,6 +36,7 @@ class NotificationPort(ABC):
         body: str,
         priority: NotificationPriority = NotificationPriority.NORMAL,
         tags: list[str] | None = None,
+        targets: list[str] | None = None,
     ) -> bool:
         """Send a notification message to configured destinations.
 
@@ -44,12 +45,18 @@ class NotificationPort(ABC):
             body: Markdown or plaintext content describing the event, digest, or alert.
             priority: Semantic urgency level of the notification.
             tags: Optional tags/categories used by providers (e.g. ntfy tags, slack channels, emojis).
+            targets: Optional list of ad-hoc destination URLs/endpoints for this notification dispatch.
 
         Returns:
             True if notification dispatched successfully to at least one target, False otherwise.
 
         Raises:
             Exception: Implementations should log delivery failures but propagate critical transport errors if unhandled.
+
+        Notes/Architectural Intent:
+            The optional `targets` parameter supports multi-tenant or ad-hoc routing (e.g. per-job
+            or per-run webhook URLs in queue/workflow systems) without requiring dynamic state mutation
+            on the shared adapter instance.
         """
 
 

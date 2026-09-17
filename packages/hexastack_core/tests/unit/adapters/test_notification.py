@@ -84,3 +84,37 @@ def test_stdout_notification_adapter_stdout(capsys: pytest.CaptureFixture[str]) 
     assert res is True
     captured = capsys.readouterr()
     assert "🔔 [ALERT][LOW] Ready\n  Worker online\n" in captured.out
+
+
+def test_in_memory_notification_adapter_with_targets() -> None:
+    """Verify InMemoryNotificationAdapter captures ad-hoc targets."""
+    adapter = InMemoryNotificationAdapter()
+    targets = ["slack://alerts", "discord://ops"]
+    res = adapter.notify(
+        title="Deploy Complete",
+        body="v1.2.0 deployed to prod",
+        priority=NotificationPriority.HIGH,
+        tags=["deploy"],
+        targets=targets,
+    )
+    assert res is True
+    assert len(adapter.notifications) == 1
+    record = adapter.notifications[0]
+    assert record.targets == targets
+
+
+def test_stdout_notification_adapter_with_targets(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Verify StdoutNotificationAdapter includes targets in formatted output."""
+    adapter = StdoutNotificationAdapter()
+    res = adapter.notify(
+        title="Ad-hoc Alert",
+        body="Routed to custom webhook",
+        priority=NotificationPriority.NORMAL,
+        tags=["webhook"],
+        targets=["https://webhook.site/test"],
+    )
+    assert res is True
+    captured = capsys.readouterr()
+    assert "-> [https://webhook.site/test]" in captured.out
