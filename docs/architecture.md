@@ -94,6 +94,18 @@ flowchart LR
 
 ---
 
+## 4. Hexa Ecosystem Architecture
+
+Hexastack forms the core enterprise application framework within the broader **Hexa Family**, working alongside:
+
+- [**`hexaqueue`**](https://github.com/TheTrueSCU/hexaqueue): High-throughput distributed HPC batch scheduler and cluster execution engine.
+- [**`hexaflow`**](https://github.com/TheTrueSCU/hexaflow): Lightweight, zero-dependency in-process workflow DAG engine.
+- [**`hexaqual`**](https://github.com/TheTrueSCU/hexaqual): Unified quality, testing, and release engineering governance suite.
+
+For the full interactive ecosystem architecture diagram and cross-repository contracts, see the [Hexa Ecosystem Architecture](ecosystem.md) guide.
+
+---
+
 ## In-Depth Articles
 
 !!! tip "On DEV.to"
