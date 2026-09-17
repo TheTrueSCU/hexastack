@@ -20,6 +20,7 @@ class NotificationRecord:
     body: str
     priority: NotificationPriority
     tags: list[str]
+    targets: list[str] | None = None
 
 
 class StdoutNotificationAdapter(NotificationPort):
@@ -50,12 +51,12 @@ class StdoutNotificationAdapter(NotificationPort):
         body: str,
         priority: NotificationPriority = NotificationPriority.NORMAL,
         tags: list[str] | None = None,
+        targets: list[str] | None = None,
     ) -> bool:
         """Format and write alert to stdout or destination file."""
         tag_str = f" [{', '.join(tags)}]" if tags else ""
-        formatted = (
-            f"{self.prefix}[{priority.value.upper()}]{tag_str} {title}\n  {body}\n"
-        )
+        target_str = f" -> [{', '.join(targets)}]" if targets else ""
+        formatted = f"{self.prefix}[{priority.value.upper()}]{tag_str}{target_str} {title}\n  {body}\n"
 
         if self.output_file:
             self.output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -81,6 +82,7 @@ class InMemoryNotificationAdapter(NotificationPort):
         body: str,
         priority: NotificationPriority = NotificationPriority.NORMAL,
         tags: list[str] | None = None,
+        targets: list[str] | None = None,
     ) -> bool:
         """Record notification in memory."""
         self.notifications.append(
@@ -89,6 +91,7 @@ class InMemoryNotificationAdapter(NotificationPort):
                 body=body,
                 priority=priority,
                 tags=list(tags or []),
+                targets=list(targets) if targets is not None else None,
             )
         )
         return True

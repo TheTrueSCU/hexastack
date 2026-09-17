@@ -85,3 +85,30 @@ def test_apprise_adapter_missing_dependency_guard() -> None:
         with pytest.raises(MissingDependencyError) as exc_info:
             AppriseNotificationAdapter()
         assert "Apprise is required" in str(exc_info.value)
+
+
+def test_apprise_adapter_notify_with_ad_hoc_targets() -> None:
+    """Verify notify method uses ephemeral dispatcher when targets are specified."""
+    mock_mod, mock_instance = _setup_mock_apprise()
+    mock_instance.notify.return_value = True
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setitem(sys.modules, "apprise", mock_mod)
+        adapter = AppriseNotificationAdapter(urls=["ntfy://base-channel"])
+        mock_instance.reset_mock()
+
+        result = adapter.notify(
+            title="Job Succeeded",
+            body="Job completed in 1.2s",
+            priority=NotificationPriority.NORMAL,
+            tags=["job"],
+            targets=["slack://custom-target", "discord://custom-target"],
+        )
+
+        assert result is True
+        # Verify ephemeral instance received add calls for both targets
+        assert mock_instance.add.call_count == 2
+        added_urls = [call[0][0] for call in mock_instance.add.call_args_list]
+        assert "slack://custom-target" in added_urls
+        assert "discord://custom-target" in added_urls
+        mock_instance.notify.assert_called_once()

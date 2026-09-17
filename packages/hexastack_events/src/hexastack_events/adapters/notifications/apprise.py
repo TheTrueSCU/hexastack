@@ -79,21 +79,43 @@ class AppriseNotificationAdapter(NotificationPort):
         body: str,
         priority: NotificationPriority = NotificationPriority.NORMAL,
         tags: list[str] | None = None,
+        targets: list[str] | None = None,
     ) -> bool:
-        """Send notification to all configured Apprise targets.
+        """Send notification to configured Apprise targets or ad-hoc target URLs.
 
         Args:
             title: Headline or summary of the alert.
             body: Detailed message content.
             priority: Urgency level of the alert.
             tags: Optional tags/categories passed to matching providers.
+            targets: Optional ad-hoc destination URLs to notify for this invocation without
+                mutating the adapter's persistent target configuration.
 
         Returns:
             True if delivered successfully to at least one target (or no targets configured), False otherwise.
+
+        Notes/Architectural Intent:
+            When `targets` is supplied, an ephemeral Apprise dispatcher instance is constructed
+            specifically for the call. This supports multi-tenant or per-job notification policies
+            without side-effect state mutations on shared adapter singletons.
         """
         apprise_mod = _get_apprise_module()
         notify_type = _map_priority_to_apprise(priority, apprise_mod)
         body_format = apprise_mod.NotifyFormat.MARKDOWN
+
+        if targets:
+            ephemeral = apprise_mod.Apprise(asset=getattr(self._apprise, "asset", None))
+            for url in targets:
+                ephemeral.add(url)
+            return bool(
+                ephemeral.notify(
+                    title=title,
+                    body=body,
+                    notify_type=notify_type,
+                    body_format=body_format,
+                    tag=tags,
+                )
+            )
 
         return bool(
             self._apprise.notify(
