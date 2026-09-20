@@ -52,3 +52,8 @@ docs/assets/demos/*.vtt
 docs/assets/demos/*.cast
 docs/assets/demos/*.tape
 site/
+
+# Hexaqual managed agent assets (materialized via hexaqual agents sync)
+.agents/rules/hexaqual-*
+.agents/workflows/hexaqual-*
+.agents/skills/hexaqual_*
