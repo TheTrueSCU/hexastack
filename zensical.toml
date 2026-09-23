@@ -1,7 +1,7 @@
 [project]
 site_name = "Hexastack"
 site_description = "The Enterprise Hexagonal Architecture Monorepo Framework for Python"
-site_url = "https://hexastack.dev"
+site_url = "https://dopplereffect.us/hexastack/"
 
 nav = [
     { "Overview" = "index.md" },

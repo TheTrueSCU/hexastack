@@ -7,16 +7,22 @@
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack)
 [![CI](https://github.com/TheTrueSCU/hexastack/actions/workflows/ci.yml/badge.svg)](https://github.com/TheTrueSCU/hexastack/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg)](https://codecov.io/github/TheTrueSCU/hexastack)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI: hexastack](https://img.shields.io/pypi/v/hexastack.svg)](https://pypi.org/project/hexastack/)
-[![Accessibility: WCAG 2.1 AA](https://img.shields.io/badge/accessibility-WCAG%202.1%20AA-brightgreen.svg)](https://www.w3.org/WAI/WCAG21/quickref/?levels=aa)
-[![Tested with: axe--core](https://img.shields.io/badge/tested%20with-axe--core-4353ff.svg?logo=deque)](https://github.com/dequelabs/axe-core)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type checker: ty](https://img.shields.io/badge/type%20checker-ty-blueviolet.svg)](https://github.com/astral-sh/ty)
+[![Powered by Hexaflow](https://img.shields.io/badge/powered%20by-hexaflow-0284c7.svg)](https://dopplereffect.us/hexaflow/)
+[![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
+
 [![OpenSSF Scorecard](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.scorecard.dev%2Fprojects%2Fgithub.com%2FTheTrueSCU%2Fhexastack&query=%24.score&label=OpenSSF%20Scorecard&color=blue)](https://securityscorecards.dev/viewer/?uri=github.com/TheTrueSCU/hexastack)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14264/badge)](https://www.bestpractices.dev/projects/14264)
 [![OpenSSF Best Practices: Progress](https://img.shields.io/cii/percentage/14264?label=OpenSSF%20Best%20Practices%3A%20Progress)](https://www.bestpractices.dev/projects/14264)
+[![Accessibility: WCAG 2.1 AA](https://img.shields.io/badge/accessibility-WCAG%202.1%20AA-brightgreen.svg)](https://www.w3.org/WAI/WCAG21/quickref/?levels=aa)
+[![Tested with: axe--core](https://img.shields.io/badge/tested%20with-axe--core-4353ff.svg?logo=deque)](https://github.com/dequelabs/axe-core)
+
+> 🌊 **Orchestration powered by [Hexaflow](https://dopplereffect.us/hexaflow/)** · 🛡️ **Quality & boundaries governed by [Hexaqual](https://dopplereffect.us/hexaqual/)** · ⚡ **Powers [Hexaqueue](https://dopplereffect.us/hexaqueue/)**
 
 ---
 

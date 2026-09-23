@@ -6,36 +6,32 @@
 
 ## 🏛️ The Four Pillars
 
-```
-                  ┌─────────────────────────────────────────┐
-                  │          ⚡ hexaqueue (v0.3.0)           │
-                  │    Distributed HPC Batch Scheduler      │
-                  └────────────────────┬────────────────────┘
-                                       │ consumes
-          ┌─────────────────────────────┼─────────────────────────────┐
-          ▼                                                           ▼
-┌─────────────────────────┐                                 ┌─────────────────┐
-│ 🏛️ hexastack (v0.6.0)   │                                 │ 📦 hexaflow     │
-│ Hexagonal Monorepo (17) │                                 │ (v0.3.0)        │
-│ • CQRS, gRPC, DB, Auth  │─────── consumes Workflow ──────>│ Localhost       │
-│ • hexastack-flow        │                                 │ DAG Engine      │
-└────────────┬────────────┘                                 └────────┬────────┘
-             │                                                       │
-             │                    governed by                        │
-             └───────────────────────►◄──────────────────────────────┘
-                                      │
-                          ┌────────────┴──────────┐
-                          │ 🛠️ hexaqual (v0.4.2)   │
-                          │ Unified Quality Suite │
-                          └───────────────────────┘
+```mermaid
+graph TD
+    classDef hq fill:#0284c7,stroke:#0369a1,stroke-width:2px,color:#ffffff;
+    classDef hs fill:#1e293b,stroke:#0f172a,stroke-width:2px,color:#ffffff;
+    classDef hf fill:#059669,stroke:#047857,stroke-width:2px,color:#ffffff;
+    classDef hqual fill:#d97706,stroke:#b45309,stroke-width:2px,color:#ffffff;
+
+    HQ["⚡ hexaqueue (v0.3.0)<br/>Distributed HPC Batch Scheduler"]:::hq
+    HS["🏛️ hexastack (v0.6.0)<br/>Hexagonal Monorepo (17 Packages)<br/>CQRS • gRPC • DB • Auth"]:::hs
+    HF["📦 hexaflow (v0.3.0)<br/>Resumable In-Process DAG Engine"]:::hf
+    HQUAL["🛠️ hexaqual (v0.5.1)<br/>Unified Quality, Governance & CI Plane"]:::hqual
+
+    HQ -->|"consumes core & CQRS"| HS
+    HQ -->|"executes DAG workflows"| HF
+    HS -->|"consumes in hexastack-flow"| HF
+    HQUAL -. "governs via CI & pre-commit" .-> HQ
+    HQUAL -. "governs via CI & pre-commit" .-> HS
+    HQUAL -. "governs via CI & pre-commit" .-> HF
 ```
 
 | Pillar | Focus & Invariants | Key Capabilities |
 |---|---|---|
-| [**`hexastack`**](https://github.com/TheTrueSCU/hexastack) | Enterprise Application Framework | 17 subpackages implementing pure Hexagonal Architecture (Ports & Adapters), CQRS dispatching, database repositories, transactional outbox with NATS JetStream, multi-protocol transports (FastAPI, gRPC, GraphQL, CLI), and NiceGUI/Textual DevTools. |
-| [**`hexaqueue`**](https://github.com/TheTrueSCU/hexaqueue) | Distributed Batch Scheduler | High-throughput, distributed execution and scheduling plane for HPC batch workloads, runners (GitHub, GitLab, Kueue), and multi-step workflows with split/join barrier resolution. |
-| [**`hexaflow`**](https://github.com/TheTrueSCU/hexaflow) | In-Process Workflow DAG Engine | Zero-external-dependency (stdlib + Pydantic) DAG executor with dynamic collection fan-out (`@wf.map_step`), automatic dependency inference, cycle detection, and SQLite state checkpointing. |
-| [**`hexaqual`**](https://github.com/TheTrueSCU/hexaqual) | Unified Quality & Governance Plane | Standalone developer toolsuite providing turnkey pre-commit hooks, CI composite actions, cognitive complexity enforcement, test parity checks, mutation testing triage, and architectural boundary verification. |
+| [**`hexastack`**](https://dopplereffect.us/hexastack/) | Enterprise Application Framework | 17 subpackages implementing pure Hexagonal Architecture (Ports & Adapters), CQRS dispatching, database repositories, transactional outbox with NATS JetStream, multi-protocol transports (FastAPI, gRPC, GraphQL, CLI), and NiceGUI/Textual DevTools. |
+| [**`hexaqueue`**](https://dopplereffect.us/hexaqueue/) | Distributed Batch Scheduler | High-throughput, distributed execution and scheduling plane for HPC batch workloads, runners (GitHub, GitLab, Kueue), and multi-step workflows with split/join barrier resolution. |
+| [**`hexaflow`**](https://dopplereffect.us/hexaflow/) | In-Process Workflow DAG Engine | Zero-external-dependency (stdlib + Pydantic) DAG executor with dynamic collection fan-out (`@wf.map_step`), automatic dependency inference, cycle detection, and SQLite state checkpointing. |
+| [**`hexaqual`**](https://dopplereffect.us/hexaqual/) | Unified Quality & Governance Plane | Standalone developer toolsuite providing turnkey pre-commit hooks, CI composite actions, cognitive complexity enforcement, test parity checks, mutation testing triage, and architectural boundary verification. |
 
 ---
 
@@ -189,8 +185,6 @@ flowchart TB
     hexaqueue -. "dev" .-> hexaqual
 ```
 
-> **Raw Diagram Source**: You can inspect or download the raw Mermaid source definition at [`docs/assets/hexa.mmd`](assets/hexa.mmd).
-
 ---
 
 ## 🔗 Cross-Repository Architectural Contracts
@@ -208,5 +202,5 @@ flowchart TB
    - `hexaqueue-workflow` orchestrates distributed batch pipelines by compiling workflow definitions into `hexaflow` execution DAGs, resolving distributed split/join barriers over `hexastack-grpc`.
 
 4. **`hexaqual` Governance Plane**:
-   - All four repositories are governed by `hexaqual` via pre-commit hooks and GitHub Actions composite workflows (`TheTrueSCU/hexaqual@v0.4.2`).
+   - All four repositories are governed by `hexaqual` via pre-commit hooks and GitHub Actions composite workflows (`TheTrueSCU/hexaqual@v0.5.1`).
    - Ensures strict 1:1 test parity, cognitive complexity $\le 15$, casefold `__all__` sorting, and import-linter hexagonal boundary enforcement across all packages.

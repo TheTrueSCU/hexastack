@@ -4,12 +4,14 @@
 
 **Vendor-agnostic OpenTelemetry distributed tracing and CQRS telemetry middleware for Hexastack.**
 
-Part of the [Hexastack Framework](https://github.com/TheTrueSCU/hexastack).
-
 [![PyPI: hexastack-otel](https://img.shields.io/pypi/v/hexastack-otel.svg)](https://pypi.org/project/hexastack-otel/)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_otel)](https://codecov.io/github/TheTrueSCU/hexastack)
+[![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
+[![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
+
+> Part of the [**Hexastack Framework**](https://dopplereffect.us/hexastack/) · Governed by [**Hexaqual**](https://dopplereffect.us/hexaqual/).
 
 ---
 
