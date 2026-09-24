@@ -86,6 +86,7 @@ loguru = [
     "hexastack-logging[loguru]",
 ]
 mcp = [
+    "hexastack-ai[mcp]",
     "hexastack-mcp",
 ]
 migrations = [

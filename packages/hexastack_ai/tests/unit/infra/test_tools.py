@@ -129,3 +129,77 @@ async def test_create_tool_for_message_async_handler():
     tool_fn = create_tool_for_message(CalculateTaxCommand, mock_pipeline)
     res = await tool_fn(amount=100.0, tax_rate=1.0)
     assert res == {"async_total": 200.0}
+
+
+def test_attach_mcp_registry(pipeline: ExecutionPipeline):
+    """Verify in-process discovery and read_only filtering from McpServerRegistry."""
+    from types import SimpleNamespace
+
+    from pydantic_ai import Agent
+
+    from hexastack_ai.infra.tools import attach_mcp_registry
+
+    def helper_fn(x: int) -> int:
+        return x * 2
+
+    mock_registry = SimpleNamespace(
+        tools=[
+            SimpleNamespace(
+                name="tax_tool",
+                target=CalculateTaxCommand,
+                read_only=False,
+            ),
+            SimpleNamespace(
+                name="balance_tool",
+                target=GetCustomerBalanceQuery,
+                read_only=True,
+            ),
+            SimpleNamespace(
+                name="helper_tool",
+                target=helper_fn,
+                read_only=True,
+            ),
+        ]
+    )
+
+    # 1. Normal mode: all tools attached
+    agent_all = Agent("test")
+    registered_all = attach_mcp_registry(agent_all, mock_registry, pipeline)
+    assert "tax_tool" in registered_all
+    assert "balance_tool" in registered_all
+    assert "helper_tool" in registered_all
+    assert len(registered_all) == 3
+
+    # 2. Read-only mode: mutating commands omitted
+    agent_ro = Agent("test")
+    registered_ro = attach_mcp_registry(
+        agent_ro, mock_registry, pipeline, read_only=True
+    )
+    assert "tax_tool" not in registered_ro
+    assert "balance_tool" in registered_ro
+    assert "helper_tool" in registered_ro
+    assert len(registered_ro) == 2
+
+
+def test_create_cqrs_agent_with_registry(pipeline: ExecutionPipeline):
+    """Verify create_cqrs_agent automatically attaches registry tools."""
+    from types import SimpleNamespace
+
+    mock_registry = SimpleNamespace(
+        tools=[
+            SimpleNamespace(
+                name="balance_tool",
+                target=GetCustomerBalanceQuery,
+                read_only=True,
+            ),
+        ]
+    )
+
+    agent = create_cqrs_agent(
+        pipeline=pipeline,
+        registry=mock_registry,
+        read_only=True,
+    )
+    assert agent is not None
+    res = agent.run_sync("Check balance for cust-1")
+    assert res is not None

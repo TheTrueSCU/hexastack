@@ -89,6 +89,7 @@ modules =
     hexastack_ui
 # Whitelist packages that have explicit/optional cross-dependencies
 ignore_imports =
+    hexastack_ai -> hexastack_mcp
     hexastack_auth -> hexastack_fastapi
     hexastack_graphql -> hexastack_fastapi
 

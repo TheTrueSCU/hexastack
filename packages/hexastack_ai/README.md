@@ -69,8 +69,11 @@ graph TD
 # Standalone install
 pip install hexastack-ai
 
+# With MCP integration (external servers & local registry)
+pip install "hexastack-ai[mcp]"
+
 # Via umbrella package
-pip install "hexastack[ai]"
+pip install "hexastack[ai,mcp]"
 ```
 
 ---
@@ -153,4 +156,31 @@ agent = create_cqrs_agent(
 
 # Agent selects appropriate tools and executes them via Hexastack ExecutionPipeline:
 result = agent.run_sync("Cancel subscription for user 123 due to pricing.")
+```
+
+### 3. In-Process Auto-Binding of Local `@mcp_tool` Registry
+
+```python
+from hexastack_ai.infra.tools import create_cqrs_agent
+from hexastack_mcp.infra.decorators import get_mcp_registry
+
+# Any command/query annotated with @mcp_tool is automatically bound in-process:
+agent = create_cqrs_agent(
+    pipeline=runtime.pipeline,
+    registry=get_mcp_registry(),
+    read_only=True,  # Restricts agent to read-only queries (least-privilege)
+    model="openai/gpt-4o",
+)
+```
+
+### 4. Consuming External MCP Servers (Filesystem, SQLite, Playwright)
+
+```python
+from mcp.client.session import ClientSession
+from hexastack_ai.adapters.mcp import attach_external_mcp_tools
+
+# Connect external MCP tools dynamically to any PydanticAI agent:
+async def setup_agent_with_mcp(agent, session: ClientSession):
+    registered_tools = await attach_external_mcp_tools(agent, session)
+    print(f"Attached external tools: {registered_tools}")
 ```

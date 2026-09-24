@@ -3,6 +3,10 @@ from hexastack_ai.adapters.cache.semantic import (
     SemanticVectorCache,
 )
 from hexastack_ai.adapters.litellm import LiteLlmAdapter
+from hexastack_ai.adapters.mcp import (
+    attach_external_mcp_tools,
+    create_mcp_client_tool,
+)
 from hexastack_ai.adapters.memory.in_memory import (
     AsyncInMemoryVectorMemoryAdapter,
     InMemoryVectorMemoryAdapter,
@@ -18,6 +22,8 @@ __all__ = [
     "AsyncInMemoryVectorMemoryAdapter",
     "AsyncQdrantVectorMemoryAdapter",
     "AsyncSemanticVectorCache",
+    "attach_external_mcp_tools",
+    "create_mcp_client_tool",
     "InMemoryVectorMemoryAdapter",
     "LiteLlmAdapter",
     "PgVectorMemoryAdapter",

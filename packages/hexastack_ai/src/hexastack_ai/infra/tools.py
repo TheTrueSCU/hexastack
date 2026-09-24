@@ -10,29 +10,79 @@ from hexastack_core.domain import Command, Generic, Query
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
 __all__ = [
+    "attach_mcp_registry",
     "create_cqrs_agent",
     "create_tool_for_message",
 ]
 
 
+def attach_mcp_registry(
+    agent: Agent[Any, Any],
+    registry: Any,
+    pipeline: ExecutionPipeline,
+    read_only: bool = False,
+) -> list[str]:
+    """Discover tools from an MCP server registry and attach them in-process to a PydanticAI Agent.
+
+    Notes/Architectural Intent:
+        Enables zero-overhead, in-process tool binding for CQRS commands and queries
+        registered via @mcp_tool without requiring loopback network IPC. Respects
+        least-privilege invariants when read_only is enabled.
+
+    Args:
+        agent: Target PydanticAI Agent instance.
+        registry: McpServerRegistry or object exposing a .tools metadata sequence.
+        pipeline: Target ExecutionPipeline for in-process execution.
+        read_only: When True, omits mutating commands and mounts only read-only queries.
+
+    Returns:
+        List of registered tool names.
+    """
+    tools = getattr(registry, "tools", [])
+    registered_names: list[str] = []
+
+    for tool_meta in tools:
+        is_tool_read_only = getattr(tool_meta, "read_only", False)
+        if read_only and not is_tool_read_only:
+            continue
+
+        target = getattr(tool_meta, "target", None)
+        if inspect.isclass(target):
+            tool_fn = create_tool_for_message(target, pipeline)
+            agent.tool_plain(tool_fn)
+            registered_names.append(getattr(tool_meta, "name", target.__name__))
+        elif callable(target):
+            agent.tool_plain(target)
+            registered_names.append(
+                getattr(tool_meta, "name", getattr(target, "__name__", "tool"))
+            )
+
+    return registered_names
+
+
 def create_cqrs_agent(
     pipeline: ExecutionPipeline,
-    messages: Sequence[type[Command | Query[Any]]],
+    messages: Sequence[type[Command | Query[Any]]] = (),
     model: str | Model = "test",
     system_prompt: str | None = None,
+    registry: Any | None = None,
+    read_only: bool = False,
 ) -> Agent[Any, Any]:
     """Assemble a PydanticAI Agent with CQRS message handlers reflected as tools.
 
     Notes/Architectural Intent:
         Bridges the CQRS message bus with AI agent capabilities. The agent can
         reason, select appropriate Commands/Queries, and invoke domain logic
-        through the standard Hexastack execution pipeline.
+        through the standard Hexastack execution pipeline. Automatically binds
+        tools from a local McpServerRegistry when provided.
 
     Args:
         pipeline: Target ExecutionPipeline.
-        messages: Sequence of Command/Query classes to expose as tools.
-        model: Target model string ('test', 'openai:gpt-4o', 'anthropic:claude-3-5-sonnet') or Model instance.
+        messages: Optional sequence of Command/Query classes to expose as tools.
+        model: Target model string ('test', 'openai:gpt-4o', etc.) or Model instance.
         system_prompt: Optional initial persona instructions.
+        registry: Optional McpServerRegistry to auto-discover @mcp_tool definitions.
+        read_only: When True, restricts auto-attached registry tools to queries only.
 
     Returns:
         Configured PydanticAI Agent instance.
@@ -46,6 +96,14 @@ def create_cqrs_agent(
     for msg_cls in messages:
         tool_fn = create_tool_for_message(msg_cls, pipeline)
         agent.tool_plain(tool_fn)
+
+    if registry is not None:
+        attach_mcp_registry(
+            agent=agent,
+            registry=registry,
+            pipeline=pipeline,
+            read_only=read_only,
+        )
 
     return agent
 

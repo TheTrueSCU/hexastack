@@ -2059,6 +2059,7 @@ loguru = [
     { name = "hexastack-logging", extra = ["loguru"] },
 ]
 mcp = [
+    { name = "hexastack-ai", extra = ["mcp"] },
     { name = "hexastack-mcp" },
 ]
 migrations = [
@@ -2149,6 +2150,7 @@ requires-dist = [
     { name = "faker", marker = "extra == 'testing'", specifier = ">=33.0.0" },
     { name = "hexastack-ai", marker = "extra == 'ai'", editable = "packages/hexastack_ai" },
     { name = "hexastack-ai", extras = ["all"], marker = "extra == 'all'", editable = "packages/hexastack_ai" },
+    { name = "hexastack-ai", extras = ["mcp"], marker = "extra == 'mcp'", editable = "packages/hexastack_ai" },
     { name = "hexastack-ai", extras = ["qdrant"], marker = "extra == 'qdrant'", editable = "packages/hexastack_ai" },
     { name = "hexastack-auth", marker = "extra == 'all'", editable = "packages/hexastack_auth" },
     { name = "hexastack-auth", marker = "extra == 'auth'", editable = "packages/hexastack_auth" },
@@ -2235,13 +2237,18 @@ dependencies = [
     { name = "hexastack-cqrs" },
     { name = "instructor" },
     { name = "litellm" },
+    { name = "mcp" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
 ]
 
 [package.optional-dependencies]
 all = [
+    { name = "hexastack-mcp" },
     { name = "qdrant-client" },
+]
+mcp = [
+    { name = "hexastack-mcp" },
 ]
 qdrant = [
     { name = "qdrant-client" },
@@ -2249,16 +2256,18 @@ qdrant = [
 
 [package.metadata]
 requires-dist = [
+    { name = "hexastack-ai", extras = ["mcp", "qdrant"], marker = "extra == 'all'", editable = "packages/hexastack_ai" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "hexastack-mcp", marker = "extra == 'mcp'", editable = "packages/hexastack_mcp" },
     { name = "instructor", specifier = ">=1.7.0" },
     { name = "litellm", specifier = ">=1.50.0" },
+    { name = "mcp", specifier = ">=1.3.0" },
     { name = "pydantic", specifier = ">=2.10.0" },
     { name = "pydantic-ai", specifier = ">=0.0.24" },
-    { name = "qdrant-client", marker = "extra == 'all'", specifier = ">=1.12.0" },
     { name = "qdrant-client", marker = "extra == 'qdrant'", specifier = ">=1.12.0" },
 ]
-provides-extras = ["qdrant", "all"]
+provides-extras = ["mcp", "qdrant", "all"]
 
 [[package]]
 name = "hexastack-auth"

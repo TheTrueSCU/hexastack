@@ -13,16 +13,20 @@ dependencies = [
     "hexastack-cqrs",
     "instructor>=1.7.0",
     "litellm>=1.50.0",
+    "mcp>=1.3.0",
     "pydantic>=2.10.0",
     "pydantic-ai>=0.0.24",
 ]
 
 [project.optional-dependencies]
+mcp = [
+    "hexastack-mcp",
+]
 qdrant = [
     "qdrant-client>=1.12.0",
 ]
 all = [
-    "qdrant-client>=1.12.0",
+    "hexastack-ai[mcp,qdrant]",
 ]
 
 [project.entry-points."hexastack.bootstrappers"]
@@ -35,6 +39,7 @@ build-backend = "uv_build"
 [tool.uv.sources]
 hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
+hexastack-mcp = { workspace = true }
 
 [tool.importlinter]
 root_packages = ["hexastack_ai"]

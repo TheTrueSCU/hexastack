@@ -7,7 +7,7 @@
 | Package | Purpose & Capabilities | PyPI Extras |
 |---|---|---|
 | [`hexastack`](https://pypi.org/project/hexastack/) | Umbrella distribution, diagnostic CLI, and project scaffolding engine (`hexastack new`). | `hexastack[all]` |
-| [`hexastack-ai`](https://pypi.org/project/hexastack-ai/) | LLM integration adapters (LiteLLM, Instructor, PydanticAI) & reflective agents. | `hexastack[ai]` |
+| [`hexastack-ai`](https://pypi.org/project/hexastack-ai/) | LLM integration adapters (LiteLLM, Instructor, PydanticAI), reflective agents, and external/local MCP client tool bridging. | `hexastack[ai]`, `hexastack[ai-mcp]` |
 | [`hexastack-auth`](https://pypi.org/project/hexastack-auth/) | JWT authentication, PBKDF2 hashing, and `@authorize` RBAC middleware. | `hexastack[auth]` |
 | [`hexastack-cli`](https://pypi.org/project/hexastack-cli/) | Typer & Rich CLI presentation adapter with `CliNarrator` demo recording. | `hexastack[cli]` |
 | [`hexastack-core`](https://pypi.org/project/hexastack-core/) | Kernel, `rodi` DI container, bootstrap lifecycle engine. | Core dependency |
@@ -20,7 +20,7 @@
 | [`hexastack-graphql`](https://pypi.org/project/hexastack-graphql/) | Strawberry GraphQL presentation adapter over CQRS. | `hexastack[graphql]` |
 | [`hexastack-grpc`](https://pypi.org/project/hexastack-grpc/) | Protobuf schema compilation, async gRPC server, and bidirectional streaming. | `hexastack[grpc]` |
 | [`hexastack-logging`](https://pypi.org/project/hexastack-logging/) | Structured JSON logging, PII sanitization, and Logfire integration. | Core dependency |
-| [`hexastack-mcp`](https://pypi.org/project/hexastack-mcp/) | Model Context Protocol (MCP) server & AI tool provider adapter. | `hexastack[mcp]` |
+| [`hexastack-mcp`](https://pypi.org/project/hexastack-mcp/) | Hardened Model Context Protocol (MCP) server, tool/resource/prompt registry, and SSE transport security. | `hexastack[mcp]` |
 | [`hexastack-otel`](https://pypi.org/project/hexastack-otel/) | OpenTelemetry distributed tracing and OTLP exporters. | `hexastack[otel]` |
 | [`hexastack-ui`](https://pypi.org/project/hexastack-ui/) | Interactive NiceGUI reactive DevTools console, command dispatcher, and telemetry visualizer. | `hexastack[ui]` |
 
