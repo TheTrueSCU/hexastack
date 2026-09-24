@@ -16,6 +16,8 @@ class McpToolMetadata:
     description: str | None = None
     kind: str = "command"  # "command", "query", or "function"
     target: Any | None = None
+    read_only: bool = False
+    required_roles: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

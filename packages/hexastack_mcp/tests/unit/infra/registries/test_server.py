@@ -9,7 +9,11 @@ from hexastack_core.domain.command import Command
 from hexastack_core.domain.query import Query
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_cqrs.infra.decorators import command_handler, query_handler
-from hexastack_mcp.domain.exceptions import ToolExecutionError
+from hexastack_mcp.domain.exceptions import (
+    ToolExecutionError,
+    ToolUnauthorizedError,
+    ToolValidationError,
+)
 from hexastack_mcp.domain.metadata import (
     McpPromptMetadata,
     McpResourceMetadata,
@@ -203,15 +207,19 @@ async def test_mcp_server_registry_tools_execution():
     assert isinstance(echo_item, TextContent)
     assert echo_item.text == "ECHO: hello AI"
 
-    # 6. Failing tool wrapper directly raises ToolExecutionError
+    # 6. Failing tool wrapper directly raises ToolValidationError (subclass of ToolExecutionError)
     cqrs_wrapper = reg._create_cqrs_tool_wrapper(FailCmd, "command", runtime.container)
-    assert getattr(cqrs_wrapper, "__name__", None) == "FailCmd"
-    assert getattr(cqrs_wrapper, "__doc__", None) == FailCmd.__doc__
-    assert getattr(cqrs_wrapper, "__annotations__", {}).get("message") is str
-    with pytest.raises(ToolExecutionError) as exc_info:
+    name_attr = getattr(cqrs_wrapper, "__name__", None)
+    assert name_attr == "FailCmd"
+    doc_attr = getattr(cqrs_wrapper, "__doc__", None)
+    assert doc_attr == FailCmd.__doc__
+    annotations_attr = getattr(cqrs_wrapper, "__annotations__", {}).get("message")
+    assert annotations_attr is str
+    with pytest.raises(ToolValidationError) as exc_info:
         await cqrs_wrapper(message="boom")
-    assert "Execution of MCP tool 'FailCmd' failed: Failing explicitly: boom" in str(
-        exc_info.value
+    err_str = str(exc_info.value)
+    assert (
+        "Validation failed for MCP tool 'FailCmd': Failing explicitly: boom" in err_str
     )
 
     # 7. Built-in diagnostic resources & Prompts
@@ -220,3 +228,85 @@ async def test_mcp_server_registry_tools_execution():
     prompts = await server.list_prompts()
     prompt_names = [p.name for p in prompts]
     assert "greet_user" in prompt_names
+
+
+@pytest.mark.anyio
+async def test_mcp_server_registry_read_only_mode():
+    """Verify that read_only=True config disables command tools both at mount and dispatch."""
+
+    @mcp_tool(name="ro_calc_tax", description="Calculate tax (command)")
+    class RoTaxCmd(CalculateTaxCommand):
+        pass
+
+    @mcp_tool(name="ro_get_version", kind="query", description="Get version (query)")
+    class RoVersionQry(GetServerVersionQuery):
+        pass
+
+    runtime = bootstrap(packages_to_scan=[__name__])
+    reg = get_mcp_registry()
+    cfg = HexastackMcpConfig(
+        server_name="Hexastack-ReadOnly-Server",
+        instructions="Read only instructions",
+        read_only=True,
+    )
+    server = reg.build_server(cfg, runtime.container)
+
+    tools = await server.list_tools()
+    tool_names = [t.name for t in tools]
+    # Commands must be omitted when read_only=True
+    assert "ro_calc_tax" not in tool_names
+    # Queries should be retained
+    assert "ro_get_version" in tool_names
+
+    # Test direct wrapper invocation when server_read_only is True on a command
+    cqrs_wrapper = reg._create_cqrs_tool_wrapper(
+        RoTaxCmd,
+        "command",
+        runtime.container,
+        read_only_tool=False,
+        server_read_only=True,
+    )
+    with pytest.raises(ToolUnauthorizedError) as exc_info:
+        await cqrs_wrapper(amount=100.0, rate=0.2)
+    err_msg = str(exc_info.value)
+    assert (
+        "Tool 'RoTaxCmd' is rejected: MCP server is operating in read-only mode."
+        in err_msg
+    )
+
+
+@pytest.mark.anyio
+async def test_mcp_server_parameter_validation_and_sanitization():
+    """Verify unexpected parameters are rejected and internal exceptions are sanitized."""
+
+    @dataclass(frozen=True)
+    class SensitiveCommand(Command):
+        data: str
+
+    @command_handler(SensitiveCommand)
+    class SensitiveHandler:
+        def __call__(self, cmd: SensitiveCommand) -> None:
+            raise RuntimeError("Database password leaked in trace: secret_pass_123")
+
+    runtime = bootstrap(packages_to_scan=[__name__])
+    reg = McpServerRegistry()
+
+    wrapper = reg._create_cqrs_tool_wrapper(
+        SensitiveCommand,
+        "command",
+        runtime.container,
+    )
+
+    # 1. Unexpected parameter injection defense
+    with pytest.raises(ToolValidationError) as exc_info:
+        await wrapper(data="test", injected_param="malicious_payload")
+    err_str = str(exc_info.value)
+    assert "Unexpected parameters for MCP tool 'SensitiveCommand'" in err_str
+    assert "injected_param" in err_str
+
+    # 2. Safe error sanitization: ensure secret is not leaked in exception message
+    with pytest.raises(ToolExecutionError) as exc_info_internal:
+        await wrapper(data="test")
+    sanitized_err = str(exc_info_internal.value)
+    assert "Internal error executing MCP tool 'SensitiveCommand'" in sanitized_err
+    assert "secret_pass_123" not in sanitized_err

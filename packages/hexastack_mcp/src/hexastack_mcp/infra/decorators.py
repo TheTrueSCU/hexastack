@@ -1,6 +1,7 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any
 
+from hexastack_core.domain.query import Query
 from hexastack_mcp.domain.metadata import (
     McpPromptMetadata,
     McpResourceMetadata,
@@ -101,17 +102,22 @@ def mcp_tool(
     *,
     description: str | None = None,
     kind: str = "command",
+    read_only: bool | None = None,
+    required_roles: Sequence[str] | None = None,
 ) -> Callable[[Any], Any]:
     """Decorator exposing a Command class, Query class, or function as an MCP Tool.
 
     Notes/Architectural Intent:
         Attaches discovery metadata for single-pass module scanning and registers
-        the tool in the default McpServerRegistry.
+        the tool in the default McpServerRegistry. Supports least-privilege scoping
+        via read_only and required_roles attributes.
 
     Args:
         name: Name of the tool presented to AI agents. Defaults to kebab/snake class name.
         description: Description of tool utility.
         kind: 'command', 'query', or 'function'.
+        read_only: Explicit flag indicating whether tool is side-effect-free. Defaults to True for queries.
+        required_roles: Optional sequence of role or permission scopes required to invoke the tool.
 
     Returns:
         Decorator function.
@@ -119,11 +125,19 @@ def mcp_tool(
 
     def decorator(target: Any) -> Any:
         tool_name = name or getattr(target, "__name__", "tool")
+        is_query_subclass = isinstance(target, type) and issubclass(target, Query)
+        is_read_only = (
+            read_only
+            if read_only is not None
+            else (kind == "query" or is_query_subclass)
+        )
         meta = McpToolMetadata(
             name=tool_name,
             description=description or getattr(target, "__doc__", None),
             kind=kind,
             target=target,
+            read_only=is_read_only,
+            required_roles=tuple(required_roles) if required_roles else (),
         )
         setattr(target, _MCP_TOOL_ATTR, meta)
         _default_registry.register_tool(meta)

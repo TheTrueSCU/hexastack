@@ -54,3 +54,53 @@ def test_create_mcp_sse_app_and_mount_defaults():
     # Check default mount on /mcp
     routes = [getattr(r, "path", None) for r in app.routes]
     assert "/mcp" in routes
+
+
+def test_fastapi_mcp_sse_bearer_auth():
+    app = FastAPI()
+    server = McpServer(name="TestAuthMCP")
+    sec = TransportSecuritySettings(
+        enable_dns_rebinding_protection=False,
+        allowed_hosts=["localhost", "127.0.0.1", "testserver"],
+    )
+    mount_mcp_sse(
+        app=app,
+        server=server,
+        path_prefix="/mcp",
+        sse_path="/sse",
+        transport_security=sec,
+        auth_token="super-secret-token",
+    )
+
+    client = TestClient(app, base_url="http://localhost")
+
+    # 1. Request without auth header should be rejected with 401
+    res_no_auth = client.post(
+        "/mcp/messages/",
+        json={"type": "ping"},
+        headers={"host": "localhost"},
+    )
+    res_no_auth_status = res_no_auth.status_code
+    assert res_no_auth_status == 401
+    res_no_auth_text = res_no_auth.text
+    assert "Unauthorized" in res_no_auth_text
+
+    # 2. Request with invalid token should be rejected with 401
+    res_bad_auth = client.post(
+        "/mcp/messages/",
+        json={"type": "ping"},
+        headers={"host": "localhost", "Authorization": "Bearer wrong-token"},
+    )
+    res_bad_auth_status = res_bad_auth.status_code
+    assert res_bad_auth_status == 401
+    res_bad_auth_text = res_bad_auth.text
+    assert "Unauthorized" in res_bad_auth_text
+
+    # 3. Request with valid token should pass authentication
+    res_good_auth = client.post(
+        "/mcp/messages/",
+        json={"type": "ping"},
+        headers={"host": "localhost", "Authorization": "Bearer super-secret-token"},
+    )
+    res_good_auth_status = res_good_auth.status_code
+    assert res_good_auth_status != 401

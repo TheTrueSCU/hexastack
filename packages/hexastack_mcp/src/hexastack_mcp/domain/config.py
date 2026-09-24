@@ -46,6 +46,14 @@ class HexastackMcpConfig(BaseModel):
         ],
         description="Allowed Host header values for SSE transport security.",
     )
+    read_only: bool = Field(
+        default=False,
+        description="Operate MCP server in read-only mode, exposing and permitting only Queries.",
+    )
+    auth_token: str | None = Field(
+        default=None,
+        description="Optional shared secret / Bearer token required for SSE client authorization.",
+    )
 
 
 __all__ = [

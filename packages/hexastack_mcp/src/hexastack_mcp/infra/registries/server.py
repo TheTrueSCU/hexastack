@@ -1,11 +1,13 @@
 import inspect
 import json
+import logging
 import platform
 import sys
 from collections.abc import Callable
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP as McpServer
+from mcp.server.transport_security import TransportSecuritySettings
 from rodi import Container
 
 from hexastack_core.domain.command import Command
@@ -14,13 +16,19 @@ from hexastack_cqrs.ports.buses import (
     CommandBusPort,
     QueryBusPort,
 )
-from hexastack_mcp.domain.exceptions import ToolExecutionError
+from hexastack_mcp.domain.exceptions import (
+    ToolExecutionError,
+    ToolUnauthorizedError,
+    ToolValidationError,
+)
 from hexastack_mcp.domain.metadata import (
     McpPromptMetadata,
     McpResourceMetadata,
     McpToolMetadata,
 )
 from hexastack_mcp.infra.config import HexastackMcpConfig
+
+logger = logging.getLogger(__name__)
 
 
 class McpServerRegistry:
@@ -42,19 +50,59 @@ class McpServerRegistry:
         target_cls: type[Any],
         kind: str,
         container: Container,
+        read_only_tool: bool = False,
+        server_read_only: bool = False,
     ) -> Callable[..., Any]:
-        """Synthesize a typed callable from a Command or Query class for MCP schema generation."""
+        """Synthesize a typed callable from a Command or Query class for MCP schema generation.
+
+        Notes/Architectural Intent:
+            Enforces strict parameter validation by rejecting unexpected kwargs,
+            guarantees read-only invariants to mitigate Confused Deputy attacks,
+            and sanitizes internal exception traces to prevent secret leakage.
+
+        Args:
+            target_cls: Target Command or Query class.
+            kind: 'command' or 'query'.
+            container: DI container resolving bus ports.
+            read_only_tool: Whether tool is marked read-only.
+            server_read_only: Whether server enforces read-only mode.
+
+        Returns:
+            Callable tool wrapper compatible with FastMCP.
+        """
         parameters = inspect_model_parameters(target_cls)
+        declared_param_names = {p.name for p in parameters}
 
         async def dynamic_mcp_tool(**kwargs: Any) -> Any:
+            if server_read_only and not read_only_tool:
+                raise ToolUnauthorizedError(
+                    f"Tool '{target_cls.__name__}' is rejected: MCP server is operating in read-only mode."
+                )
+
+            unexpected_params = set(kwargs.keys()) - declared_param_names
+            if unexpected_params:
+                raise ToolValidationError(
+                    f"Unexpected parameters for MCP tool '{target_cls.__name__}': {sorted(unexpected_params)}. "
+                    f"Allowed parameters: {sorted(declared_param_names)}"
+                )
+
             try:
                 instance = target_cls(**kwargs)
                 return await self._dispatch_cqrs_instance(
                     instance, target_cls, kind, container
                 )
+            except (ToolValidationError, ToolUnauthorizedError):
+                raise
+            except (ValueError, TypeError) as exc:
+                raise ToolValidationError(
+                    f"Validation failed for MCP tool '{target_cls.__name__}': {exc}"
+                ) from exc
             except Exception as exc:
+                logger.exception(
+                    "Internal failure executing MCP tool '%s'", target_cls.__name__
+                )
                 raise ToolExecutionError(
-                    f"Execution of MCP tool '{target_cls.__name__}' failed: {exc}"
+                    f"Internal error executing MCP tool '{target_cls.__name__}'. Please check server logs."
                 ) from exc
 
         # Set dynamic signature & annotations
@@ -107,14 +155,39 @@ class McpServerRegistry:
                     mime_type=res_meta.mime_type,
                 )(res_meta.handler)
 
-    def _mount_tools(self, server: McpServer, container: Container) -> None:
-        """Register all tool wrappers onto McpServer instance."""
+    def _mount_tools(
+        self,
+        server: McpServer,
+        container: Container,
+        config: HexastackMcpConfig | None = None,
+    ) -> None:
+        """Register all tool wrappers onto McpServer instance.
+
+        Notes/Architectural Intent:
+            Filters out mutating command tools if the MCP server operates in
+            read-only mode.
+
+        Args:
+            server: McpServer instance to mount tools onto.
+            container: DI Container for dependency resolution.
+            config: Optional HexastackMcpConfig for read-only evaluation.
+        """
+        server_read_only = bool(config and config.read_only)
         for tool_meta in self._tools:
+            if server_read_only and not tool_meta.read_only:
+                logger.info(
+                    "Skipping tool '%s' because MCP server is operating in read-only mode.",
+                    tool_meta.name,
+                )
+                continue
+
             if inspect.isclass(tool_meta.target):
                 tool_fn = self._create_cqrs_tool_wrapper(
                     target_cls=tool_meta.target,
                     kind=tool_meta.kind,
                     container=container,
+                    read_only_tool=tool_meta.read_only,
+                    server_read_only=server_read_only,
                 )
                 server.add_tool(
                     tool_fn,
@@ -199,13 +272,18 @@ class McpServerRegistry:
         Returns:
             Configured McpServer instance.
         """
+        sec = TransportSecuritySettings(
+            enable_dns_rebinding_protection=config.enable_dns_rebinding_protection,
+            allowed_hosts=list(config.allowed_hosts),
+        )
         server = McpServer(
             name=config.server_name,
             instructions=config.instructions,
+            transport_security=sec,
         )
 
         self._register_diagnostic_resources(server, config)
-        self._mount_tools(server, container)
+        self._mount_tools(server, container, config=config)
         self._mount_resources(server)
         self._mount_prompts(server)
 
