@@ -1,0 +1,57 @@
+[project]
+name = "hexastack-qual"
+version = "0.6.0"
+description = "Hexagonal quality, governance, and release adapter integrating hexaqual with CQRS, MCP, UI, and Events"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "hexaqual[all]>=0.6.0",
+    "hexastack-core",
+    "hexastack-cqrs",
+]
+
+[project.optional-dependencies]
+events = [
+    "hexastack-events",
+]
+mcp = [
+    "hexastack-mcp",
+]
+ui = [
+    "hexastack-ui",
+]
+all = [
+    "hexastack-qual[events,mcp,ui]",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+qual = "hexastack_qual.infra.bootstrap:QualBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }
+hexastack-events = { workspace = true }
+hexastack-mcp = { workspace = true }
+hexastack-ui = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_qual"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_qual"]
+layers = [
+    "infra",
+    "adapters",
+    "ports",
+    "domain",
+]

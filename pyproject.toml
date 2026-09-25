@@ -32,6 +32,7 @@ hexastack-grpc = { workspace = true }
 hexastack-logging = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
+hexastack-qual = { workspace = true }
 hexastack-ui = { workspace = true }
 
 

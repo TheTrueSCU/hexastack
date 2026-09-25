@@ -122,6 +122,18 @@ postgresql = [
 qdrant = [
     "hexastack-ai[qdrant]",
 ]
+qual = [
+    "hexastack-qual",
+]
+qual-events = [
+    "hexastack-qual[events]",
+]
+qual-mcp = [
+    "hexastack-qual[mcp]",
+]
+qual-ui = [
+    "hexastack-qual[ui]",
+]
 ratelimit = [
     "hexastack-fastapi[ratelimit]",
 ]
@@ -186,6 +198,7 @@ all = [
     "hexastack-logging[all,sentry]",
     "hexastack-mcp",
     "hexastack-otel[otlp]",
+    "hexastack-qual[all]",
     "hexastack-ui[all]",
     "uvicorn[standard]>=0.30.0",
 ]
@@ -216,6 +229,7 @@ hexastack-graphql = { workspace = true }
 hexastack-grpc = { workspace = true }
 hexastack-mcp = { workspace = true }
 hexastack-otel = { workspace = true }
+hexastack-qual = { workspace = true }
 hexastack-ui = { workspace = true }
 
 [tool.importlinter]
