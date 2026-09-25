@@ -5,29 +5,52 @@ description: Invoking quality and governance diagnostics via hexastack-qual MCP 
 
 # Workflow: Hexastack Quality MCP & Governance Automation
 
-This workflow defines how AI coding assistants interact with `hexastack-qual` via the Model Context Protocol (MCP) server or CLI to audit code quality, format exports, inspect surviving mutants, and verify test impact.
+This workflow defines how AI coding assistants interact with `hexastack-qual` via the standard Hexastack Model Context Protocol (MCP) server or CLI to audit code quality, format exports, inspect surviving mutants, and verify test impact.
 
-## 1. Running the Quality MCP Server
+## 1. Running the Unified MCP Server
 
-The quality MCP server exposes Hexastack/Hexaqual quality gates over standard stdio:
+Quality tools, resources, and prompt templates are automatically registered into Hexastack's unified MCP server via `QualBootstrapper` (order 36).
 
+### Launching the Server (stdio)
 ```bash
-# Direct CLI invocation
-uv run hexastack qual mcp
+uv run hexastack mcp run
 ```
 
-### Server Configuration (`mcpServers` in AI settings):
+### Inspecting Capabilities
+```bash
+uv run hexastack mcp list
+```
+
+### Portable Client Configuration
+Generate the portable configuration snippet for any supported AI coding assistant:
+```bash
+# For Antigravity / Gemini CLI:
+uv run hexastack mcp config -c antigravity
+
+# For Claude Desktop:
+uv run hexastack mcp config -c claude
+
+# For Cursor:
+uv run hexastack mcp config -c cursor
+```
+
+Standard configuration (`mcpServers` in AI client settings):
 ```json
 {
-  "hexastack-qual": {
-    "command": "uv",
-    "args": ["run", "hexastack", "qual", "mcp"],
-    "cwd": "/path/to/hexastack"
+  "mcpServers": {
+    "hexastack": {
+      "command": "uv",
+      "args": ["run", "hexastack", "mcp", "run"],
+      "env": {
+        "HEXASTACK_AI__PROVIDER": "gemini",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
   }
 }
 ```
 
-## 2. Available MCP Tools
+## 2. Available Quality MCP Tools
 
 AI agents can invoke these tools during pair programming sessions:
 
@@ -71,5 +94,5 @@ Gathers PR check run conclusions, CodeQL alerts, and unresolved review threads.
 
 ## 3. MCP Resources & Prompts
 
-- **Resource `workspace_scorecard://current`**: Read-only JSON representation of the latest quality scorecard for the active repository.
-- **Prompt `triage_mutants`**: Guided prompt template taking surviving mutant findings and generating targeted unit test recommendations to kill them.
+- **Resource `quality://workspace/scorecard`**: Read-only JSON representation of the latest quality scorecard for the active repository.
+- **Prompt `triage-mutants`**: Guided prompt template taking surviving mutant findings and generating targeted unit test recommendations to kill them.

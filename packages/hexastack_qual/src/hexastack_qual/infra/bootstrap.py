@@ -95,6 +95,15 @@ class QualBootstrapper(BootstrapperPort):
 
         context.properties["qual_runner"] = runner
 
+        # Wire into MCP registry if hexastack-mcp is installed
+        try:
+            from hexastack_mcp.infra.decorators import get_mcp_registry
+            from hexastack_qual.adapters.mcp.tools import register_quality_mcp_tools
+
+            register_quality_mcp_tools(get_mcp_registry())
+        except ImportError:
+            pass
+
     def register_config(self, registry: ConfigRegistry) -> None:
         """Phase 1: Register quality configuration schemas.
 
