@@ -6,7 +6,7 @@ Notes/Architectural Intent:
     and lifecycle domain event broadcasting.
 """
 
-from hexaflow import RetryPolicy, StageExecutionMode, Workflow
+from hexaflow import ExecutionPool, RetryPolicy, StageExecutionMode, Workflow
 
 from hexastack_flow import adapters, domain, infra, ports
 from hexastack_flow.adapters.cqrs.runner import CqrsWorkflowRunner
@@ -41,6 +41,7 @@ __all__ = [
     "CqrsWorkflowOrchestratorPort",
     "CqrsWorkflowRunner",
     "domain",
+    "ExecutionPool",
     "FlowBootstrapper",
     "infra",
     "ports",

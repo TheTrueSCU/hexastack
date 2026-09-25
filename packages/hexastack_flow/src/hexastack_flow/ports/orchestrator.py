@@ -88,3 +88,20 @@ class CqrsWorkflowOrchestratorPort(ABC):
             WorkflowNotFoundError: If run_id does not exist.
             WorkflowError: If rollback compensation encounters critical errors.
         """
+
+    @abstractmethod
+    def close(self) -> None:
+        """Release underlying engine worker pools and execution resources.
+
+        Notes/Architectural Intent:
+            Ensures child worker processes and threads allocated by the underlying
+            execution engine are gracefully shut down.
+        """
+
+    async def aclose(self) -> None:
+        """Asynchronously release underlying engine worker pools and resources.
+
+        Notes/Architectural Intent:
+            Delegates to close() by default to provide an async cleanup entrypoint.
+        """
+        self.close()

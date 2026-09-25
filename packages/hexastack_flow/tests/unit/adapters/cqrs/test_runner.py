@@ -167,3 +167,21 @@ def test_runner_abort() -> None:
     aborted_events = [e for e in events if isinstance(e, WorkflowAbortedEvent)]
     assert len(aborted_events) == 1
     assert aborted_events[0].reason == "Operator cancelled bad run"
+
+
+def test_runner_worker_pools_and_context_managers() -> None:
+    """Validate runner configuration with worker pools and context managers."""
+    with CqrsWorkflowRunner(max_process_workers=2, max_thread_workers=4) as runner:
+        engine = runner._engine
+        assert hasattr(engine, "_max_process_workers")
+        p_workers = getattr(engine, "_max_process_workers", None)
+        assert p_workers == 2
+        t_workers = getattr(engine, "_max_thread_workers", None)
+        assert t_workers == 4
+
+
+async def test_runner_async_context_manager() -> None:
+    """Validate runner async context manager cleanly releases engine pools."""
+    async with CqrsWorkflowRunner(max_process_workers=1) as runner:
+        engine = runner._engine
+        assert engine is not None

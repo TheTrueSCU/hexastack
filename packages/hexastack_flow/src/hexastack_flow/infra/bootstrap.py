@@ -40,7 +40,13 @@ class FlowBootstrapper(BootstrapperPort):
         if EventBusPort in di:
             event_bus = di.resolve(EventBusPort)
 
-        runner = CqrsWorkflowRunner(event_bus=event_bus)
+        max_process_workers = context.properties.get("flow_max_process_workers")
+        max_thread_workers = context.properties.get("flow_max_thread_workers")
+        runner = CqrsWorkflowRunner(
+            event_bus=event_bus,
+            max_process_workers=max_process_workers,
+            max_thread_workers=max_thread_workers,
+        )
         di.add_instance(runner, declared_class=CqrsWorkflowOrchestratorPort)
         context.properties["flow_runner"] = runner
 

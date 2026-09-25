@@ -7,6 +7,7 @@ Notes/Architectural Intent:
 """
 
 from datetime import UTC, datetime
+from types import TracebackType
 from typing import Any
 
 from hexaflow.adapters.engines.local_async import AsyncioWorkflowEngine
@@ -44,6 +45,8 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
         state_store: WorkflowStateStorePort | None = None,
         engine: WorkflowEnginePort | None = None,
         event_bus: EventBusPort | None = None,
+        max_process_workers: int | None = None,
+        max_thread_workers: int | None = None,
     ) -> None:
         """Initialize runner with state store, execution engine, and event bus.
 
@@ -51,9 +54,15 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
             state_store: WorkflowStateStorePort for persistence. Defaults to InMemoryStateStore.
             engine: WorkflowEnginePort for DAG execution. Defaults to AsyncioWorkflowEngine.
             event_bus: Optional EventBusPort for publishing workflow domain events.
+            max_process_workers: Optional maximum worker processes for ExecutionPool.PROCESS.
+            max_thread_workers: Optional maximum worker threads for ExecutionPool.THREAD.
         """
         self._store = state_store or InMemoryStateStore()
-        self._engine = engine or AsyncioWorkflowEngine(state_store=self._store)
+        self._engine = engine or AsyncioWorkflowEngine(
+            state_store=self._store,
+            max_process_workers=max_process_workers,
+            max_thread_workers=max_thread_workers,
+        )
         self._event_bus = event_bus
 
     def execute(
@@ -134,6 +143,40 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
             )
 
         return self._to_result(state)
+
+    def close(self) -> None:
+        """Release underlying engine worker pools and execution resources."""
+        self._engine.close()
+
+    async def aclose(self) -> None:
+        """Asynchronously release underlying engine worker pools and resources."""
+        await self._engine.aclose()
+
+    def __enter__(self) -> "CqrsWorkflowRunner":
+        """Enter context manager."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Exit context manager, releasing engine worker pools."""
+        self.close()
+
+    async def __aenter__(self) -> "CqrsWorkflowRunner":
+        """Enter async context manager."""
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Exit async context manager, asynchronously releasing engine worker pools."""
+        await self.aclose()
 
     def _emit_terminal_events(self, state: WorkflowExecutionState) -> None:
         """Publish lifecycle events based on execution state outcome.

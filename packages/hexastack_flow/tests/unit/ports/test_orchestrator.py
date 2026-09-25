@@ -80,13 +80,53 @@ def test_concrete_orchestrator_subclass() -> None:
                 ended_at=datetime.now(UTC),
             )
 
+        def close(self) -> None:
+            pass
+
     orch = DummyOrchestrator()
     wf = WorkflowDefinition(name="test_wf", stages=())
     res = orch.execute(wf)
-    assert res.status == "COMPLETED"
+    status = res.status
+    assert status == "COMPLETED"
 
     res_resume = orch.resume("run-1", wf)
-    assert res_resume.status == "COMPLETED"
+    status_resume = res_resume.status
+    assert status_resume == "COMPLETED"
 
     res_abort = orch.abort("run-1", wf)
-    assert res_abort.status == "CANCELLED"
+    status_abort = res_abort.status
+    assert status_abort == "CANCELLED"
+
+    orch.close()
+
+
+async def test_orchestrator_aclose() -> None:
+    """Verify asynchronous aclose delegates cleanly."""
+    from datetime import UTC, datetime
+
+    class AsyncOrchestrator(CqrsWorkflowOrchestratorPort):
+        def execute(self, workflow, initial_inputs=None):
+            return WorkflowExecutionResult(
+                run_id="r1",
+                workflow_name=workflow.name,
+                status="COMPLETED",
+                completed_steps=(),
+                failed_steps=(),
+                outputs={},
+                started_at=datetime.now(UTC),
+                ended_at=datetime.now(UTC),
+            )
+
+        def resume(self, run_id, workflow, patch_inputs=None):
+            return self.execute(workflow)
+
+        def abort(self, run_id, workflow, reason="Operator aborted"):
+            return self.execute(workflow)
+
+        def close(self) -> None:
+            self.closed = True
+
+    orch = AsyncOrchestrator()
+    await orch.aclose()
+    closed = getattr(orch, "closed", False)
+    assert closed is True
