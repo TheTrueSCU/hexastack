@@ -1,1 +1,1 @@
-"""Fuzz testing suites for hexastack-qual."""
+"""Fuzz testing package for hexastack-qual."""

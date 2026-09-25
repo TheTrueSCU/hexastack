@@ -50,24 +50,32 @@ async def test_run_sanity_check_handler_healthy() -> None:
     cmd = RunSanityCheckCommand(package="core", skip_tests=True)
     res = await handler(cmd)
 
-    assert res.is_healthy is True
-    assert event_bus.publish.call_count == 0
+    healthy = res.is_healthy
+    assert healthy is True
+    call_count = event_bus.publish.call_count
+    assert call_count == 0
 
 
 @pytest.mark.asyncio
 async def test_run_sanity_check_handler_unhealthy_emits_event() -> None:
-    """Ensure RunSanityCheckHandler publishes event on failure."""
-    check = QualityCheckResult(
+    """Ensure RunSanityCheckHandler publishes event on failure with exact failed checks."""
+    check_fail = QualityCheckResult(
         check_name="Ruff",
         target="core",
         status="fail",
+        duration_seconds=0.1,
+    )
+    check_pass = QualityCheckResult(
+        check_name="Ty",
+        target="core",
+        status="pass",
         duration_seconds=0.1,
     )
     auditor = MagicMock()
     auditor.run_sanity.return_value = QualityScorecard(
         target="core",
         is_healthy=False,
-        checks=[check],
+        checks=[check_fail, check_pass],
     )
     event_bus = AsyncMock()
 
@@ -75,23 +83,73 @@ async def test_run_sanity_check_handler_unhealthy_emits_event() -> None:
     cmd = RunSanityCheckCommand(package="core")
     res = await handler(cmd)
 
-    assert res.is_healthy is False
-    assert event_bus.publish.call_count == 1
+    healthy = res.is_healthy
+    assert healthy is False
+    call_count = event_bus.publish.call_count
+    assert call_count == 1
+    event = event_bus.publish.call_args[0][0]
+    target = event.target
+    assert target == "core"
+    failed_checks = event.failed_checks
+    assert failed_checks == ["Ruff"]
 
 
 @pytest.mark.asyncio
 async def test_format_statements_handler() -> None:
     """Ensure FormatStatementsHandler fixes statements and emits event if modified."""
     auditor = MagicMock()
-    auditor.fix_statements.return_value = 2
+    auditor.fix_statements.return_value = 1
     event_bus = AsyncMock()
 
     handler = FormatStatementsHandler(auditor=auditor, event_bus=event_bus)
     cmd = FormatStatementsCommand(package="events")
     count = await handler(cmd)
 
-    assert count == 2
-    assert event_bus.publish.call_count == 1
+    assert count == 1
+    call_count = event_bus.publish.call_count
+    assert call_count == 1
+    event = event_bus.publish.call_args[0][0]
+    target = event.target
+    assert target == "events"
+    modified = event.files_modified
+    assert modified == 1
+
+
+@pytest.mark.asyncio
+async def test_format_statements_handler_workspace_target() -> None:
+    """Ensure FormatStatementsHandler defaults to workspace target when package is None."""
+    auditor = MagicMock()
+    auditor.fix_statements.return_value = 5
+    event_bus = AsyncMock()
+
+    handler = FormatStatementsHandler(auditor=auditor, event_bus=event_bus)
+    cmd = FormatStatementsCommand(package=None)
+    count = await handler(cmd)
+
+    assert count == 5
+    call_count = event_bus.publish.call_count
+    assert call_count == 1
+    event = event_bus.publish.call_args[0][0]
+    target = event.target
+    assert target == "workspace"
+    modified = event.files_modified
+    assert modified == 5
+
+
+@pytest.mark.asyncio
+async def test_format_statements_handler_no_modification_no_event() -> None:
+    """Ensure FormatStatementsHandler does not emit event when 0 files were modified."""
+    auditor = MagicMock()
+    auditor.fix_statements.return_value = 0
+    event_bus = AsyncMock()
+
+    handler = FormatStatementsHandler(auditor=auditor, event_bus=event_bus)
+    cmd = FormatStatementsCommand(package="events")
+    count = await handler(cmd)
+
+    assert count == 0
+    call_count = event_bus.publish.call_count
+    assert call_count == 0
 
 
 @pytest.mark.asyncio

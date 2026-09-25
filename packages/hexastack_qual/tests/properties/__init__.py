@@ -1,1 +1,1 @@
-"""Property-based testing suites for hexastack-qual."""
+"""Property-based tests package for hexastack-qual."""

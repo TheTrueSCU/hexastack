@@ -1,9 +1,9 @@
-"""Atheris coverage-guided and adversarial fuzz harness for quality scorecard parsing.
+"""Atheris coverage-guided and adversarial fuzz harness for hexastack-qual report parser.
 
 Notes/Architectural Intent:
-    Stress tests QualityScorecard, MutantReport, and ComplexityMetric JSON deserializers
-    against pathological Unicode, mutated JSON structures, recursive dictionaries,
-    and truncated byte payloads to verify schema validation resilience and zero crash defects.
+    Stress tests QualityScorecard and MutantReport deserialization and validation
+    against pathological Unicode byte streams, deeply nested payloads, boundary integers,
+    and corrupted JSON to ensure zero unhandled exceptions or denial-of-service vulnerabilities.
 """
 
 from __future__ import annotations
@@ -15,17 +15,28 @@ import sys
 import time
 from typing import Any
 
-from hexastack_qual.domain.models import (
-    ComplexityMetric,
-    MutantReport,
-    QualityScorecard,
-)
 from pydantic import ValidationError
 
 try:
     atheris: Any = importlib.import_module("atheris")
 except ImportError:
     atheris = None
+
+if atheris is not None:
+    with atheris.instrument_imports():
+        from hexastack_qual.domain.models import (
+            ComplexityMetric,
+            MutantReport,
+            PrHealthSummary,
+            QualityScorecard,
+        )
+else:
+    from hexastack_qual.domain.models import (
+        ComplexityMetric,
+        MutantReport,
+        PrHealthSummary,
+        QualityScorecard,
+    )
 
 _MAX_ALLOWED_DURATION_SECONDS = 0.05  # 50ms per input
 
@@ -34,117 +45,122 @@ def fuzz_one_input(data: bytes) -> None:
     """Execute one fuzzed input against quality model deserializers.
 
     Args:
-        data: Arbitrary byte stream from libFuzzer or random generator.
+        data: Arbitrary byte stream from libFuzzer or generator.
+
+    Raises:
+        TimeoutError: If validation exceeds execution threshold.
     """
     if not data:
         return
 
-    # Decode with fallback
-    text = data.decode("utf-8", errors="replace")
-
     t0 = time.perf_counter()
 
-    # Fuzz QualityScorecard JSON parsing
-    try:
-        QualityScorecard.model_validate_json(text)
-    except (ValidationError, ValueError):
-        pass
-    except Exception as exc:
-        raise AssertionError(
-            f"QualityScorecard parsing crashed with unexpected exception: {type(exc).__name__}: {exc}"
-        ) from exc
+    # Attempt to decode as JSON or construct a structured payload
+    text = data.decode("utf-8", errors="replace")
+    parsed_json: Any = None
+    if text.startswith("{") and text.endswith("}"):
+        try:
+            parsed_json = json.loads(text)
+        except Exception:
+            parsed_json = None
 
-    # Fuzz MutantReport JSON parsing
+    # Test QualityScorecard parser
     try:
-        MutantReport.model_validate_json(text)
-    except (ValidationError, ValueError):
+        if parsed_json and isinstance(parsed_json, dict):
+            QualityScorecard.model_validate(parsed_json)
+        else:
+            QualityScorecard.model_validate_json(data)
+    except (ValidationError, ValueError, UnicodeDecodeError):
         pass
-    except Exception as exc:
-        raise AssertionError(
-            f"MutantReport parsing crashed with unexpected exception: {type(exc).__name__}: {exc}"
-        ) from exc
 
-    # Fuzz ComplexityMetric JSON parsing
+    # Test MutantReport parser
     try:
-        ComplexityMetric.model_validate_json(text)
-    except (ValidationError, ValueError):
+        if parsed_json and isinstance(parsed_json, dict):
+            MutantReport.model_validate(parsed_json)
+        else:
+            MutantReport.model_validate_json(data)
+    except (ValidationError, ValueError, UnicodeDecodeError):
         pass
-    except Exception as exc:
-        raise AssertionError(
-            f"ComplexityMetric parsing crashed with unexpected exception: {type(exc).__name__}: {exc}"
-        ) from exc
+
+    # Test PrHealthSummary parser
+    try:
+        if parsed_json and isinstance(parsed_json, dict):
+            PrHealthSummary.model_validate(parsed_json)
+        else:
+            PrHealthSummary.model_validate_json(data)
+    except (ValidationError, ValueError, UnicodeDecodeError):
+        pass
+
+    # Test ComplexityMetric parser
+    try:
+        if parsed_json and isinstance(parsed_json, dict):
+            ComplexityMetric.model_validate(parsed_json)
+        else:
+            ComplexityMetric.model_validate_json(data)
+    except (ValidationError, ValueError, UnicodeDecodeError):
+        pass
 
     elapsed = time.perf_counter() - t0
     if elapsed > _MAX_ALLOWED_DURATION_SECONDS:
         raise TimeoutError(
-            f"Quality scorecard parsing took {elapsed:.4f}s (> {_MAX_ALLOWED_DURATION_SECONDS}s)"
+            f"Fuzz iteration exceeded maximum time limit: {elapsed:.4f}s"
         )
 
 
 def test_fuzz_scorecard_parser_smoke() -> None:
-    """Smoke test quality scorecard parser fuzz harness under pytest."""
+    """Smoke test scorecard parser fuzz harness under pytest."""
     res = run_standalone(runs=25)
-    assert res["passed"] is True
+    is_passed = res["passed"]
+    assert is_passed is True
+    total_runs = res["runs"]
+    assert total_runs == 25
 
 
-def run_standalone(runs: int = 100) -> dict[str, Any]:
+def run_standalone(runs: int = 1000) -> dict[str, Any]:
     """Execute standalone fuzzing loop without requiring native libFuzzer.
 
     Args:
         runs: Number of random iterations to execute.
 
     Returns:
-        Summary dictionary with execution telemetry.
+        Summary dict containing execution status and iteration counts.
     """
-    start = time.perf_counter()
-    passed = 0
+    seeds: list[bytes] = [
+        b'{"target": "pkg1", "is_healthy": true}',
+        b'{"package_name": "core", "total_mutants": 10, "killed_mutants": 8}',
+        b'{"pr_number": 42, "title": "fix", "state": "open", "ci_status": "success"}',
+        b'{"function_name": "foo", "file_path": "a.py", "line_number": 1, "complexity": 5}',
+        b"",
+        b"\x00" * 32,
+        b"{" * 50 + b"}" * 50,
+        b'{"target": "\xff\xfe\xfd"}',
+        b'{"complexity": -99999999999999999999999999999999}',
+    ]
+
     rng = random.Random(42)  # noqa: S311
 
-    for i in range(runs):
-        choice = i % 4
-        if choice == 0:
-            # Valid minimal scorecard
-            payload = json.dumps(
-                {"target": f"pkg_{i}", "is_healthy": (i % 2 == 0), "checks": []}
-            ).encode()
-        elif choice == 1:
-            # Corrupted / invalid types
-            payload = json.dumps(
-                {"target": 12345, "is_healthy": "invalid_bool", "checks": "not_a_list"}
-            ).encode()
-        elif choice == 2:
-            # Random raw bytes
-            payload = bytes(rng.getrandbits(8) for _ in range(rng.randint(1, 128)))
+    for _ in range(runs):
+        choice = rng.choice(seeds)
+        # Apply mutations
+        mutation_type = rng.randint(0, 3)
+        if mutation_type == 0:
+            mutated = choice + rng.randbytes(rng.randint(1, 64))
+        elif mutation_type == 1:
+            mutated = rng.randbytes(rng.randint(1, 128))
+        elif mutation_type == 2 and len(choice) > 2:
+            idx = rng.randint(0, len(choice) - 1)
+            mutated = choice[:idx] + rng.randbytes(1) + choice[idx + 1 :]
         else:
-            # Truncated or malformed JSON
-            payload = (
-                b'{"target": "pkg", "is_healthy": true, "checks": [{"check_name": '
-            )
+            mutated = choice
 
-        fuzz_one_input(payload)
-        passed += 1
+        fuzz_one_input(mutated)
 
-    duration = time.perf_counter() - start
-    return {
-        "runs": runs,
-        "passed": passed == runs,
-        "duration_seconds": duration,
-    }
-
-
-def main() -> None:
-    """Entry point for native Atheris or standalone execution."""
-    if atheris is not None and len(sys.argv) > 1 and sys.argv[1] != "--standalone":
-        atheris.Setup(sys.argv, fuzz_one_input)
-        atheris.Fuzz()
-    else:
-        runs = 1000
-        print(f"Running standalone scorecard parser fuzzer ({runs} runs)...")  # noqa: T201
-        res = run_standalone(runs)
-        print(  # noqa: T201
-            f"Completed {res['runs']} runs in {res['duration_seconds']:.2f}s (passed: {res['passed']})"
-        )
+    return {"passed": True, "runs": runs}
 
 
 if __name__ == "__main__":
-    main()
+    if atheris is not None:
+        atheris.Setup(sys.argv, fuzz_one_input)
+        atheris.Fuzz()
+    else:
+        run_standalone(1000)

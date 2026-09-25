@@ -42,3 +42,7 @@ layers = [
     "ports",
     "domain",
 ]
+
+[tool.mutmut]
+runner = "pytest -x --assert=plain -o addopts=\"\""
+paths_to_mutate = "src"
