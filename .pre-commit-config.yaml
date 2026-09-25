@@ -63,6 +63,7 @@ repos:
     rev: v0.6.0
     hooks:
       - id: hexaqual-sanity
+        args: [--skip-diagrams]
       - id: hexaqual-architecture
       - id: hexaqual-agents       # new
       - id: hexaqual-diagrams
