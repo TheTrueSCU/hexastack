@@ -27,6 +27,11 @@ junit.xml
 *.xml
 *.cover
 *.mutmut-cache
+coverage/
+.gremlins*
+*.gremlins*
+gremlins.json
+gremlins.html
 
 # Build & Packaging
 build/
