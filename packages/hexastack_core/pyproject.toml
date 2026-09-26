@@ -103,3 +103,14 @@ forbidden_modules = [
     "hexastack_core.infra",
     "hexastack_core.testing",
 ]
+
+[tool.mutmut]
+runner = "pytest -x --assert=plain -o addopts=\"\""
+paths_to_mutate = "src"
+
+[tool.pytest-gremlins]
+paths = ["src"]
+operators = ["arithmetic", "boolean", "boundary", "comparison", "return"]
+workers = "auto"
+batch_size = 10
+cache = true

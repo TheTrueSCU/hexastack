@@ -58,3 +58,14 @@ layers = [
     "ports",
     "domain",
 ]
+
+[tool.mutmut]
+runner = "pytest -x --assert=plain -o addopts=\"\""
+paths_to_mutate = "src"
+
+[tool.pytest-gremlins]
+paths = ["src"]
+operators = ["arithmetic", "boolean", "boundary", "comparison", "return"]
+workers = "auto"
+batch_size = 10
+cache = true
