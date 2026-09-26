@@ -49,7 +49,9 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 ### Mutation Testing & Coverage Fortification Tools
 | Tool Command | Purpose |
 |---|---|
-| `uv run hexaqual mutate run -p <pkg>` | Runs mutation testing scoped to a specific package. |
+| `uv run hexaqual mutate run -p <pkg>` | Runs mutation testing scoped to a specific package (defaults to pytest-gremlins). |
+| `uv run hexaqual mutate run -p <pkg> -e gremlins -w auto --batch-size 10 -n 2` | Runs pytest-gremlins with decoupled xdist baseline (`-n`) and mutation worker crunching (`-w`). |
+| `uv run hexaqual mutate run -p <pkg> -e mutmut` | Runs mutmut engine for deep literal constant and token mutation audits. |
 | `uv run hexaqual mutate run -p <pkg> -r` | Clears package cache and re-runs mutation tests from scratch (`--reset`). |
 | `uv run hexaqual mutate run -a` | Sequentially executes mutation testing across all workspace packages (`--all`). |
 | `uv run hexaqual mutate inspect -s` | High-level triage summary of surviving mutants (Critical, Equivalent, Ignorable) (`--summary`). |

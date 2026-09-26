@@ -61,7 +61,7 @@ flowchart LR
 - **`complexipy`**: Cognitive complexity limit per function ($\le 15$).
 - **`ty check`**: Strict type checking with no untyped definitions.
 - **`hypothesis`**: Property-based fuzzing on core pipelines and routing algorithms.
-- **`mutmut`**: Mutation testing ensuring resilient assertions.
+- **`pytest-gremlins` & `mutmut`**: Dual-engine mutation testing verifying resilient assertions and boundary correctness.
 
 ---
 
