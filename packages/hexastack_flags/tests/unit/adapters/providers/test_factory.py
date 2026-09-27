@@ -14,10 +14,15 @@ from hexastack_flags.domain.models import (
 
 def test_initialize_in_memory_provider():
     """Verify in-memory provider initialization with custom flag dictionary."""
+    from hexastack_flags.adapters.openfeature import OpenFeatureFlagAdapter
+
     initialize_openfeature_provider(
         provider_type=FeatureFlagProviderType.IN_MEMORY,
-        in_memory_flags={"feature_x": True, "count": 10},
+        in_memory_flags={"feature_x": True, "feature_off": False, "count": 10},
     )
+    adapter = OpenFeatureFlagAdapter()
+    assert adapter.is_enabled("feature_x") is True
+    assert adapter.is_enabled("feature_off") is False
 
 
 def test_initialize_unleash_missing_dependency():
@@ -47,6 +52,11 @@ def test_initialize_flagd_provider():
     initialize_openfeature_provider(
         provider_type=FeatureFlagProviderType.FLAGD,
         options=FlagProviderOptions(host="localhost", port=8013, timeout_ms=3000),
+    )
+    # Also verify default options resolution when options is None
+    initialize_openfeature_provider(
+        provider_type=FeatureFlagProviderType.FLAGD,
+        options=None,
     )
 
 

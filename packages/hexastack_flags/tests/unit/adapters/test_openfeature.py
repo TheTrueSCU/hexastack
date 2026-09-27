@@ -22,6 +22,9 @@ def test_openfeature_adapter_in_memory():
     assert adapter.is_enabled("bool_flag", default=False) is True
     assert adapter.get_boolean_value("bool_flag", default=False) is True
     assert adapter.is_enabled("missing_flag", default=False) is False
+    assert adapter.is_enabled("missing_flag") is False
+    assert adapter.get_boolean_value("missing_flag") is False
+    assert adapter.get_boolean_details("missing_flag").value is False
 
     # 2. String
     assert adapter.get_string_value("string_flag", default="light") == "dark_mode"
@@ -116,14 +119,89 @@ def test_openfeature_adapter_details_unknown_reason_and_custom_provider_flags():
         variants = {"on": True, "off": False}
         default_variant = "on"
 
+    class MockFlagOnlyVariants:
+        variants = {"on": True}
+        state = "FALLBACK_STATE"
+
     mock_provider = MagicMock()
     mock_provider._flags = {
         "state_flag": MockFlagState(),
         "var_flag": MockFlagVariants(),
+        "only_var_flag": MockFlagOnlyVariants(),
         "raw_flag": 123,
     }
     of_api.set_provider(mock_provider)
     all_f = adapter.get_all_flags()
     assert all_f["state_flag"] == "ACTIVE"
     assert all_f["var_flag"] is True
+    assert all_f["only_var_flag"] == "FALLBACK_STATE"
     assert all_f["raw_flag"] == 123
+
+
+def test_openfeature_adapter_ambient_context_fallback():
+    """Verify ambient UserContext is automatically translated when context is omitted."""
+    from unittest.mock import MagicMock
+
+    from hexastack_core.utils.context import (
+        UserContext,
+        set_user_context,
+        user_ctx,
+    )
+    from hexastack_flags.adapters.openfeature import OpenFeatureFlagAdapter
+
+    token = set_user_context(
+        UserContext(user_id="user-ambient-42", tenant_id="tenant-42")
+    )
+    try:
+        mock_client = MagicMock()
+        adapter = OpenFeatureFlagAdapter(client=mock_client)
+
+        adapter.get_boolean_details("flag")
+        assert (
+            mock_client.get_boolean_details.call_args.kwargs[
+                "evaluation_context"
+            ].targeting_key
+            == "user-ambient-42"
+        )
+
+        adapter.get_boolean_value("flag")
+        assert (
+            mock_client.get_boolean_value.call_args.kwargs[
+                "evaluation_context"
+            ].targeting_key
+            == "user-ambient-42"
+        )
+
+        adapter.get_float_value("flag")
+        assert (
+            mock_client.get_float_value.call_args.kwargs[
+                "evaluation_context"
+            ].targeting_key
+            == "user-ambient-42"
+        )
+
+        adapter.get_integer_value("flag")
+        assert (
+            mock_client.get_integer_value.call_args.kwargs[
+                "evaluation_context"
+            ].targeting_key
+            == "user-ambient-42"
+        )
+
+        adapter.get_object_value("flag")
+        assert (
+            mock_client.get_object_value.call_args.kwargs[
+                "evaluation_context"
+            ].targeting_key
+            == "user-ambient-42"
+        )
+
+        adapter.get_string_value("flag")
+        assert (
+            mock_client.get_string_value.call_args.kwargs[
+                "evaluation_context"
+            ].targeting_key
+            == "user-ambient-42"
+        )
+    finally:
+        user_ctx.reset(token)

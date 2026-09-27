@@ -9,3 +9,5 @@ def test_flags_models() -> None:
     options = FlagProviderOptions(host="localhost", port=8013)
     assert options.host == "localhost"
     assert options.port == 8013
+    assert options.cache is True
+    assert options.timeout_ms == 5000
