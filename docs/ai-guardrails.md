@@ -50,7 +50,8 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 | Tool Command | Purpose |
 |---|---|
 | `uv run hexaqual mutate run -p <pkg>` | Runs mutation testing scoped to a specific package (defaults to pytest-gremlins). |
-| `uv run hexaqual mutate run -p <pkg> -e gremlins -w auto --batch-size 10 -n 2` | Runs pytest-gremlins with decoupled xdist baseline (`-n`) and mutation worker crunching (`-w`). |
+| `uv run hexaqual mutate run -p <pkg> -e gremlins -w auto --batch-size 10 -n auto` | Runs pytest-gremlins with decoupled xdist baseline (`-n`) and mutation worker crunching (`-w`). |
+| `uv run hexaqual mutate run -A -e gremlins -w auto` | Selectively runs mutation testing only on packages affected by git diff (`--affected`). |
 | `uv run hexaqual mutate run -p <pkg> -e mutmut` | Runs mutmut engine for deep literal constant and token mutation audits. |
 | `uv run hexaqual mutate run -p <pkg> -r` | Clears package cache and re-runs mutation tests from scratch (`--reset`). |
 | `uv run hexaqual mutate run -a` | Sequentially executes mutation testing across all workspace packages (`--all`). |
@@ -74,6 +75,9 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 |---|---|
 | `uv run hexaqual sanity [-p <pkg>] [-e <example>]` | Fast scoped validator (Ruff, Ty, complexipy, `__all__`, test parity, pytest) with Rich dashboard (`check` or `sanity`). |
 | `uv run hexaqual sanity -a --skip-tests` | Full workspace pre-commit quality check across all 17 packages in ~11s. |
+| `uv run hexaqual hooks install` | Installs all 5 Git lifecycle hooks (pre-commit, commit-msg, pre-push, post-merge, post-checkout). |
+| `uv run hexaqual hooks check` | Inspects installation status and manager type across all 5 Git hook stages. |
+| `uv run hexaqual agents sync` | Synchronizes universal agent guardrails and root AGENTS.md index. |
 | `uv run hexaqual statements check` | Validates that `__all__` is sorted and deduplicated across all packages. |
 | `uv run hexaqual statements fix -p <pkg>` | Auto-formats and alphabetizes `__all__` in a specific package. |
 | `uv run hexaqual statements fix` | Auto-formats and alphabetizes `__all__` across all files. |
