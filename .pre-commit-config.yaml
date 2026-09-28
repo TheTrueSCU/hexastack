@@ -60,7 +60,7 @@ repos:
         files: ^packages/.*\.css$
 
   - repo: https://github.com/TheTrueSCU/hexaqual
-    rev: v0.8.0
+    rev: v0.9.0
     hooks:
       - id: hexaqual-sanity
       - id: hexaqual-architecture
