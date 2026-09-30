@@ -17,16 +17,33 @@ on:
   pull_request:
     branches: [main]
 
+permissions: read-all
+
 jobs:
-  check:
-    name: Fast Quality Gate (Lint, Types, Unit Tests)
+  quality-gate:
+    name: Pre-Commit Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Quality Gate via Hexaqual
+        uses: TheTrueSCU/hexaqual@v0.9.0
+        with:
+          skip-hooks: hexaqual-agents
+
+  test-suite:
+    name: Unit & Architecture Tests
+    needs: [quality-gate]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
 
@@ -35,33 +52,11 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Pre-Commit Quality Checks
-        run: uv run pre-commit run --all-files
+      - name: Install Dependencies
+        run: uv sync
 
-      - name: Unit Tests
-        run: uv run pytest tests/unit
-
-  hypothesis:
-    name: Property-Based Fuzzing & Invariants
-    needs: check
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          enable-cache: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Hypothesis Fuzzing
-        run: uv run pytest tests/hypothesis
+      - name: Run Test Suite
+        run: uv run pytest
 """
 
 

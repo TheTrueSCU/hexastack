@@ -69,18 +69,37 @@ __pycache__
 
 
 def render_pyproject_toml(config: ScaffoldConfig, package_name: str) -> str:
+    extras_list: list[str] = []
     if config.template in ("web-api", "enterprise"):
-        extras = "[fastapi,db,ui]"
+        extras_list.extend(["fastapi", "db", "ui"])
     elif config.template == "grpc-service" or config.include_grpc:
-        extras = "[grpc,db,cli]"
+        extras_list.extend(["grpc", "db", "cli"])
     elif config.template == "graphql-service" or config.include_graphql:
-        extras = "[graphql,fastapi,db,cli]"
+        extras_list.extend(["graphql", "fastapi", "db", "cli"])
     elif config.template == "mcp-agent" or config.include_mcp:
-        extras = "[mcp,ai,cli]"
+        extras_list.extend(["mcp", "ai", "cli"])
     elif config.template == "event-driven" or config.include_events:
-        extras = "[events,cli]"
+        extras_list.extend(["events", "cli"])
     else:
-        extras = "[cli]"
+        extras_list.append("cli")
+
+    if config.include_qual and "qual" not in extras_list:
+        extras_list.append("qual")
+    if config.include_sentry and "sentry" not in extras_list:
+        extras_list.append("sentry")
+
+    extras_str = "[" + ",".join(sorted(set(extras_list))) + "]"
+
+    mutation_config = ""
+    if config.include_mutation:
+        mutation_config = """
+[tool.pytest-gremlins]
+paths = ["src"]
+operators = ["arithmetic", "boolean", "boundary", "comparison", "return"]
+workers = "auto"
+batch_size = 10
+cache = true
+"""
 
     return f"""[project]
 name = "{config.name}"
@@ -89,7 +108,7 @@ description = "{config.description}"
 readme = "README.md"
 requires-python = "{config.python_version}"
 dependencies = [
-    "hexastack{extras}>=0.1.0",
+    "hexastack{extras_str}>=0.7.0",
 ]
 
 [project.scripts]
@@ -101,23 +120,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "complexipy>=7.0.1",
-    "detect-secrets>=1.5.0",
-    "faker>=33.0.0",
-    "hypothesis>=6.100.0",
-    "import-linter>=2.13",
-    "locust>=2.31.0",
-    "memray>=1.13.0",
-    "pip-audit>=2.8.0",
-    "pre-commit>=3.8.0",
-    "py-spy>=0.3.14",
-    "pytest>=8.0.0",
-    "pytest-cov>=5.0.0",
-    "pytest-randomly>=4.1.0",
-    "pytest-xdist>=3.8.0",
-    "ruff>=0.16.2",
-    "ty>=0.0.69",
-    "vulture>=2.11",
+    "hexaqual[all]>=0.9.0",
 ]
 
 [tool.complexipy]
@@ -140,7 +143,7 @@ ignore = ["D100", "D104", "D107", "E501"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
-"""
+{mutation_config}"""
 
 
 def render_importlinter(package_name: str) -> str:
@@ -198,53 +201,33 @@ def render_precommit() -> str:
         args: ['--baseline', '.secrets.baseline']
         exclude: ^(\.venv|docs|_build)/
 
-  - repo: local
+  - repo: https://github.com/TheTrueSCU/hexaqual
+    rev: v0.9.0
     hooks:
-      - id: ruff-format
-        name: ruff format
-        entry: uv run ruff format
-        language: system
-        types: [python]
+      - id: hexaqual-sanity
+      - id: hexaqual-architecture
+      - id: hexaqual-agents
+"""
 
-      - id: ruff-lint
-        name: ruff check
-        entry: uv run ruff check --fix
-        language: system
-        types: [python]
 
-      - id: ty
-        name: ty (type checker)
-        entry: uv run ty check
-        language: system
-        types: [python]
-        pass_filenames: false
+def render_gitignore() -> str:
+    return """.git
+.gitignore
+.venv
+.pytest_cache
+.coverage
+.mutmut-cache
+.secrets.baseline
+htmlcov
+dist
+build
+__pycache__
+*.pyc
 
-      - id: import-linter
-        name: import-linter (hexagonal boundaries)
-        entry: uv run lint-imports
-        language: system
-        types: [python]
-        pass_filenames: false
-
-      - id: complexipy
-        name: complexipy (cyclomatic complexity)
-        entry: uv run complexipy src/
-        language: system
-        types: [python]
-        pass_filenames: false
-
-      - id: vulture
-        name: vulture (dead code detector)
-        entry: uv run vulture
-        language: system
-        files: ^src/.*\.py$
-        pass_filenames: false
-
-      - id: pip-audit
-        name: pip-audit (dependency vulnerability scan)
-        entry: uv run pip-audit --local
-        language: system
-        pass_filenames: false
+# Hexaqual managed agent assets
+.agents/rules/hexaqual-*
+.agents/workflows/hexaqual-*
+.agents/skills/hexaqual_*
 """
 
 

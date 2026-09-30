@@ -1,7 +1,20 @@
-import importlib
-import importlib.util
-import sys
+"""Hexastack: A modern Python enterprise hexagonal architecture framework.
+
+Notes/Architectural Intent:
+    Root umbrella package aggregating subpackage namespaces. Discovers
+    and exposes installed subpackages dynamically while providing helpful
+    installation guidance on uninstalled optional extras.
+"""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
+
+from hexastack.subpackages import (
+    discover_and_register_subpackages,
+    get_subpackage_dir,
+    handle_missing_subpackage,
+)
 
 if TYPE_CHECKING:
     import hexastack_ai as ai
@@ -40,32 +53,14 @@ __all__ = [
     "ui",
 ]
 
-_installed_shorthands: list[str] = []
-
-# Dynamically discover and expose only currently installed packages
-for _shorthand in __all__:
-    _module_name = f"hexastack_{_shorthand}"
-    if importlib.util.find_spec(_module_name) is not None:
-        try:
-            _mod = importlib.import_module(_module_name)
-            globals()[_shorthand] = _mod
-            sys.modules[f"hexastack.{_shorthand}"] = _mod
-            _installed_shorthands.append(_shorthand)
-        except (ImportError, AttributeError):
-            # Optional subpackage import failure; omit from installed shorthands
-            pass
+_installed_shorthands = discover_and_register_subpackages(globals(), __all__)
 
 
 def __dir__() -> list[str]:
     """Return only installed package shorthands and module globals."""
-    return sorted(set(list(globals().keys()) + _installed_shorthands))
+    return get_subpackage_dir(globals(), _installed_shorthands)
 
 
 def __getattr__(name: str) -> Any:
     """Provide clear guidance when an uninstalled optional package is accessed."""
-    if name in __all__:
-        raise AttributeError(
-            f"Package 'hexastack-{name}' is not installed. "
-            f"Install it via 'pip install hexastack[{name}]' or 'pip install hexastack-{name}'."
-        )
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    return handle_missing_subpackage(name, __all__)

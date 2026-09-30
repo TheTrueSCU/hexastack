@@ -44,8 +44,16 @@ def test_scaffold_project_generates_all_files():
         # Check tests layout
         tests_dir = proj_dir / "tests"
         assert (tests_dir / "conftest.py").exists()
-        assert (tests_dir / "unit" / "test_domain.py").exists()
+        assert (tests_dir / "architecture" / "test_hexagonal_boundaries.py").exists()
+        assert (tests_dir / "unit" / "domain" / "test_models.py").exists()
+        assert (tests_dir / "unit" / "ports" / "test_repositories.py").exists()
         assert (tests_dir / "hypothesis" / "test_domain_fuzz.py").exists()
+
+        # Check AI agent hub and gitignore
+        assert (proj_dir / ".agents" / "rules" / "order_service-invariants.md").exists()
+        assert (proj_dir / "AGENTS.md").exists()
+        assert (proj_dir / "GEMINI.md").exists()
+        assert (proj_dir / ".gitignore").exists()
 
 
 def test_scaffold_project_raises_if_directory_exists():
@@ -174,3 +182,20 @@ def test_scaffold_enterprise_includes_all_batteries():
         assert (
             proj_dir / "src" / "mega_service" / "adapters" / "driving" / "mcp.py"
         ).exists()
+
+
+def test_scaffold_with_sentry():
+    """Verify scaffolder generates Sentry .env.example when enabled."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest_dir = Path(tmpdir)
+        proj_dir = scaffold_project(
+            name="sentry-service",
+            template="web-api",
+            include_sentry=True,
+            output_dir=dest_dir,
+        )
+        assert (proj_dir / ".env.example").exists()
+        env_content = (proj_dir / ".env.example").read_text()
+        assert "SENTRY_DSN=" in env_content
+        pyproject = (proj_dir / "pyproject.toml").read_text()
+        assert "sentry" in pyproject

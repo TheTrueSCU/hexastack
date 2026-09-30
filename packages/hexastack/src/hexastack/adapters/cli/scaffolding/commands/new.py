@@ -2,7 +2,8 @@
 
 Notes/Architectural Intent:
     Provides subcommands for scaffolding archetypes (web-api, minimal, event-driven,
-    mcp-agent, grpc-service, graphql-service, enterprise).
+    mcp-agent, grpc-service, graphql-service, enterprise) with full control over quality,
+    agent guardrails, and mutation testing options.
 """
 
 from __future__ import annotations
@@ -46,12 +47,36 @@ def create_new_app() -> typer.Typer:
             "--db",
             help="Database driver: in-memory, sqlite, postgres.",
         ),
+        qual: bool = typer.Option(
+            True,
+            "--qual/--no-qual",
+            help="Include hexastack-qual quality governance and scorecard adapter.",
+        ),
+        agents: bool = typer.Option(
+            True,
+            "--agents/--no-agents",
+            help="Materialize turnkey universal .agents/ AI guardrails hub.",
+        ),
+        mutation: bool = typer.Option(
+            True,
+            "--mutation/--no-mutation",
+            help="Configure pytest-gremlins mutation testing baseline.",
+        ),
+        sentry: bool = typer.Option(
+            False,
+            "--sentry/--no-sentry",
+            help="Configure Sentry error tracking & distributed tracing.",
+        ),
     ) -> None:
         target_path = scaffold_project(
             name=name,
             template="web-api",
             description=description,
             db_type=db,
+            include_qual=qual,
+            include_agents=agents,
+            include_mutation=mutation,
+            include_sentry=sentry,
         )
         typer.echo(f"🎉 Created new Hexastack Web API project at '{target_path}'")
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
@@ -68,11 +93,35 @@ def create_new_app() -> typer.Typer:
             "-d",
             help="Project description.",
         ),
+        qual: bool = typer.Option(
+            True,
+            "--qual/--no-qual",
+            help="Include hexastack-qual quality governance and scorecard adapter.",
+        ),
+        agents: bool = typer.Option(
+            True,
+            "--agents/--no-agents",
+            help="Materialize turnkey universal .agents/ AI guardrails hub.",
+        ),
+        mutation: bool = typer.Option(
+            True,
+            "--mutation/--no-mutation",
+            help="Configure pytest-gremlins mutation testing baseline.",
+        ),
+        sentry: bool = typer.Option(
+            False,
+            "--sentry/--no-sentry",
+            help="Configure Sentry error tracking & distributed tracing.",
+        ),
     ) -> None:
         target_path = scaffold_project(
             name=name,
             template="minimal",
             description=description,
+            include_qual=qual,
+            include_agents=agents,
+            include_mutation=mutation,
+            include_sentry=sentry,
         )
         typer.echo(f"🎉 Created new Minimal Hexastack project at '{target_path}'")
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
@@ -89,12 +138,36 @@ def create_new_app() -> typer.Typer:
             "-d",
             help="Project description.",
         ),
+        qual: bool = typer.Option(
+            True,
+            "--qual/--no-qual",
+            help="Include hexastack-qual quality governance and scorecard adapter.",
+        ),
+        agents: bool = typer.Option(
+            True,
+            "--agents/--no-agents",
+            help="Materialize turnkey universal .agents/ AI guardrails hub.",
+        ),
+        mutation: bool = typer.Option(
+            True,
+            "--mutation/--no-mutation",
+            help="Configure pytest-gremlins mutation testing baseline.",
+        ),
+        sentry: bool = typer.Option(
+            False,
+            "--sentry/--no-sentry",
+            help="Configure Sentry error tracking & distributed tracing.",
+        ),
     ) -> None:
         target_path = scaffold_project(
             name=name,
             template="event-driven",
             description=description,
             include_events=True,
+            include_qual=qual,
+            include_agents=agents,
+            include_mutation=mutation,
+            include_sentry=sentry,
         )
         typer.echo(f"🎉 Created new Event-Driven Hexastack project at '{target_path}'")
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
@@ -111,12 +184,36 @@ def create_new_app() -> typer.Typer:
             "-d",
             help="Project description.",
         ),
+        qual: bool = typer.Option(
+            True,
+            "--qual/--no-qual",
+            help="Include hexastack-qual quality governance and scorecard adapter.",
+        ),
+        agents: bool = typer.Option(
+            True,
+            "--agents/--no-agents",
+            help="Materialize turnkey universal .agents/ AI guardrails hub.",
+        ),
+        mutation: bool = typer.Option(
+            True,
+            "--mutation/--no-mutation",
+            help="Configure pytest-gremlins mutation testing baseline.",
+        ),
+        sentry: bool = typer.Option(
+            False,
+            "--sentry/--no-sentry",
+            help="Configure Sentry error tracking & distributed tracing.",
+        ),
     ) -> None:
         target_path = scaffold_project(
             name=name,
             template="mcp-agent",
             description=description,
             include_mcp=True,
+            include_qual=qual,
+            include_agents=agents,
+            include_mutation=mutation,
+            include_sentry=sentry,
         )
         typer.echo(f"🎉 Created new MCP Agent Hexastack project at '{target_path}'")
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
@@ -138,6 +235,26 @@ def create_new_app() -> typer.Typer:
             "--db",
             help="Database driver: in-memory, sqlite, postgres.",
         ),
+        qual: bool = typer.Option(
+            True,
+            "--qual/--no-qual",
+            help="Include hexastack-qual quality governance and scorecard adapter.",
+        ),
+        agents: bool = typer.Option(
+            True,
+            "--agents/--no-agents",
+            help="Materialize turnkey universal .agents/ AI guardrails hub.",
+        ),
+        mutation: bool = typer.Option(
+            True,
+            "--mutation/--no-mutation",
+            help="Configure pytest-gremlins mutation testing baseline.",
+        ),
+        sentry: bool = typer.Option(
+            False,
+            "--sentry/--no-sentry",
+            help="Configure Sentry error tracking & distributed tracing.",
+        ),
     ) -> None:
         target_path = scaffold_project(
             name=name,
@@ -145,6 +262,10 @@ def create_new_app() -> typer.Typer:
             description=description,
             db_type=db,
             include_grpc=True,
+            include_qual=qual,
+            include_agents=agents,
+            include_mutation=mutation,
+            include_sentry=sentry,
         )
         typer.echo(f"🎉 Created new gRPC Hexastack project at '{target_path}'")
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
@@ -166,6 +287,26 @@ def create_new_app() -> typer.Typer:
             "--db",
             help="Database driver: in-memory, sqlite, postgres.",
         ),
+        qual: bool = typer.Option(
+            True,
+            "--qual/--no-qual",
+            help="Include hexastack-qual quality governance and scorecard adapter.",
+        ),
+        agents: bool = typer.Option(
+            True,
+            "--agents/--no-agents",
+            help="Materialize turnkey universal .agents/ AI guardrails hub.",
+        ),
+        mutation: bool = typer.Option(
+            True,
+            "--mutation/--no-mutation",
+            help="Configure pytest-gremlins mutation testing baseline.",
+        ),
+        sentry: bool = typer.Option(
+            False,
+            "--sentry/--no-sentry",
+            help="Configure Sentry error tracking & distributed tracing.",
+        ),
     ) -> None:
         target_path = scaffold_project(
             name=name,
@@ -173,6 +314,10 @@ def create_new_app() -> typer.Typer:
             description=description,
             db_type=db,
             include_graphql=True,
+            include_qual=qual,
+            include_agents=agents,
+            include_mutation=mutation,
+            include_sentry=sentry,
         )
         typer.echo(f"🎉 Created new GraphQL Hexastack project at '{target_path}'")
         typer.echo(f"   Next steps:\n     cd {name}\n     uv sync\n     uv run pytest")
@@ -194,6 +339,26 @@ def create_new_app() -> typer.Typer:
             "--db",
             help="Database driver: in-memory, sqlite, postgres.",
         ),
+        qual: bool = typer.Option(
+            True,
+            "--qual/--no-qual",
+            help="Include hexastack-qual quality governance and scorecard adapter.",
+        ),
+        agents: bool = typer.Option(
+            True,
+            "--agents/--no-agents",
+            help="Materialize turnkey universal .agents/ AI guardrails hub.",
+        ),
+        mutation: bool = typer.Option(
+            True,
+            "--mutation/--no-mutation",
+            help="Configure pytest-gremlins mutation testing baseline.",
+        ),
+        sentry: bool = typer.Option(
+            False,
+            "--sentry/--no-sentry",
+            help="Configure Sentry error tracking & distributed tracing.",
+        ),
     ) -> None:
         target_path = scaffold_project(
             name=name,
@@ -206,6 +371,10 @@ def create_new_app() -> typer.Typer:
             include_graphql=True,
             include_release=True,
             include_openssf=True,
+            include_qual=qual,
+            include_agents=agents,
+            include_mutation=mutation,
+            include_sentry=sentry,
         )
         typer.echo(
             f"🎉 Created new Full-Featured Enterprise Hexastack project at '{target_path}'"

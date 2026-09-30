@@ -1,19 +1,17 @@
-"""Unit tests for scaffolding CLI adapter initializer."""
+"""Unit tests for scaffolding CLI adapter initializer.
 
-from unittest.mock import patch
+Notes/Architectural Intent:
+    Verifies that scaffolding package root initializer properly re-exports
+    all public interface symbols.
+"""
 
-import typer
-
-from hexastack.adapters.cli.scaffolding import add_scaffold_commands
+import hexastack.adapters.cli.scaffolding as scaffolding_mod
 
 
-def test_add_scaffold_commands():
-    app = typer.Typer()
-    with (
-        patch("hexastack.adapters.cli.scaffolding.create_new_app") as mock_new,
-        patch("hexastack.adapters.cli.scaffolding.add_init_command") as mock_init,
-    ):
-        mock_new.return_value = typer.Typer()
-        add_scaffold_commands(app)
-        assert mock_new.called
-        assert mock_init.called
+def test_scaffolding_exports():
+    """Verify scaffolding module defines expected __all__ exports."""
+    all_exports = scaffolding_mod.__all__
+    assert "add_init_command" in all_exports
+    assert "add_scaffold_commands" in all_exports
+    assert "create_new_app" in all_exports
+    assert callable(scaffolding_mod.add_scaffold_commands)

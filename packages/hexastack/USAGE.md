@@ -461,19 +461,37 @@ Usage: hexastack init [OPTIONS]
  Initialize a new Hexastack microservice in the current working directory.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --name          -n      <str>  Project name (defaults to current directory   │
-│                                name).                                        │
-│ --template      -t      <str>  Project template: minimal, web-api,           │
-│                                event-driven, mcp-agent, enterprise.          │
-│ --db                    <str>  Database driver: in-memory, sqlite, postgres. │
-│ --interactive   -i             Prompt with interactive questionnaire wizard. │
-│ --with-release                 Include automated PyPI release & SBOM         │
-│                                workflow (.github/workflows/release.yml,      │
-│                                CHANGELOG.md).                                │
-│ --with-openssf                 Include OpenSSF security & governance starter │
-│                                (.github/workflows/scorecard.yml,             │
-│                                SECURITY.md, GOVERNANCE.md).                  │
-│ --help                         Show this message and exit.                   │
+│ --name          -n                   <str>  Project name (defaults to        │
+│                                             current directory name).         │
+│ --template      -t                   <str>  Project template: minimal,       │
+│                                             web-api, event-driven,           │
+│                                             mcp-agent, enterprise.           │
+│ --db                                 <str>  Database driver: in-memory,      │
+│                                             sqlite, postgres.                │
+│ --interactive   -i                          Prompt with interactive          │
+│                                             questionnaire wizard.            │
+│ --with-release                              Include automated PyPI release & │
+│                                             SBOM workflow                    │
+│                                             (.github/workflows/release.yml,  │
+│                                             CHANGELOG.md).                   │
+│ --with-openssf                              Include OpenSSF security &       │
+│                                             governance starter               │
+│                                             (.github/workflows/scorecard.ym… │
+│                                             SECURITY.md, GOVERNANCE.md).     │
+│ --qual              --no-qual               Include hexastack-qual quality   │
+│                                             governance and scorecard         │
+│                                             adapter.                         │
+│                                             [default: qual]                  │
+│ --agents            --no-agents             Materialize turnkey universal    │
+│                                             .agents/ AI guardrails hub.      │
+│                                             [default: agents]                │
+│ --mutation          --no-mutation           Configure pytest-gremlins        │
+│                                             mutation testing baseline.       │
+│                                             [default: mutation]              │
+│ --sentry            --no-sentry             Configure Sentry error tracking  │
+│                                             & distributed tracing.           │
+│                                             [default: no-sentry]             │
+│ --help                                      Show this message and exit.      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -702,12 +720,26 @@ Usage: hexastack new enterprise [OPTIONS] {name}
 │ *    name      <str>  Name of the new microservice project. [required]       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --description  -d      <str>  Project description.                           │
-│                               [default: A full-featured enterprise Hexastack │
-│                               microservice.]                                 │
-│ --db                   <str>  Database driver: in-memory, sqlite, postgres.  │
-│                               [default: sqlite]                              │
-│ --help                        Show this message and exit.                    │
+│ --description  -d                   <str>  Project description.              │
+│                                            [default: A full-featured         │
+│                                            enterprise Hexastack              │
+│                                            microservice.]                    │
+│ --db                                <str>  Database driver: in-memory,       │
+│                                            sqlite, postgres.                 │
+│                                            [default: sqlite]                 │
+│ --qual             --no-qual               Include hexastack-qual quality    │
+│                                            governance and scorecard adapter. │
+│                                            [default: qual]                   │
+│ --agents           --no-agents             Materialize turnkey universal     │
+│                                            .agents/ AI guardrails hub.       │
+│                                            [default: agents]                 │
+│ --mutation         --no-mutation           Configure pytest-gremlins         │
+│                                            mutation testing baseline.        │
+│                                            [default: mutation]               │
+│ --sentry           --no-sentry             Configure Sentry error tracking & │
+│                                            distributed tracing.              │
+│                                            [default: no-sentry]              │
+│ --help                                     Show this message and exit.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -722,9 +754,22 @@ Usage: hexastack new event-driven [OPTIONS] {name}
 │ *    name      <str>  Name of the new microservice project. [required]       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --description  -d      <str>  Project description.                           │
-│                               [default: An event-driven Hexastack service.]  │
-│ --help                        Show this message and exit.                    │
+│ --description  -d                   <str>  Project description.              │
+│                                            [default: An event-driven         │
+│                                            Hexastack service.]               │
+│ --qual             --no-qual               Include hexastack-qual quality    │
+│                                            governance and scorecard adapter. │
+│                                            [default: qual]                   │
+│ --agents           --no-agents             Materialize turnkey universal     │
+│                                            .agents/ AI guardrails hub.       │
+│                                            [default: agents]                 │
+│ --mutation         --no-mutation           Configure pytest-gremlins         │
+│                                            mutation testing baseline.        │
+│                                            [default: mutation]               │
+│ --sentry           --no-sentry             Configure Sentry error tracking & │
+│                                            distributed tracing.              │
+│                                            [default: no-sentry]              │
+│ --help                                     Show this message and exit.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -739,12 +784,26 @@ Usage: hexastack new graphql-service [OPTIONS] {name}
 │ *    name      <str>  Name of the new microservice project. [required]       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --description  -d      <str>  Project description.                           │
-│                               [default: A modern GraphQL microservice        │
-│                               powered by Hexastack.]                         │
-│ --db                   <str>  Database driver: in-memory, sqlite, postgres.  │
-│                               [default: in-memory]                           │
-│ --help                        Show this message and exit.                    │
+│ --description  -d                   <str>  Project description.              │
+│                                            [default: A modern GraphQL        │
+│                                            microservice powered by           │
+│                                            Hexastack.]                       │
+│ --db                                <str>  Database driver: in-memory,       │
+│                                            sqlite, postgres.                 │
+│                                            [default: in-memory]              │
+│ --qual             --no-qual               Include hexastack-qual quality    │
+│                                            governance and scorecard adapter. │
+│                                            [default: qual]                   │
+│ --agents           --no-agents             Materialize turnkey universal     │
+│                                            .agents/ AI guardrails hub.       │
+│                                            [default: agents]                 │
+│ --mutation         --no-mutation           Configure pytest-gremlins         │
+│                                            mutation testing baseline.        │
+│                                            [default: mutation]               │
+│ --sentry           --no-sentry             Configure Sentry error tracking & │
+│                                            distributed tracing.              │
+│                                            [default: no-sentry]              │
+│ --help                                     Show this message and exit.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -759,12 +818,26 @@ Usage: hexastack new grpc-service [OPTIONS] {name}
 │ *    name      <str>  Name of the new microservice project. [required]       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --description  -d      <str>  Project description.                           │
-│                               [default: A high-performance gRPC microservice │
-│                               powered by Hexastack.]                         │
-│ --db                   <str>  Database driver: in-memory, sqlite, postgres.  │
-│                               [default: in-memory]                           │
-│ --help                        Show this message and exit.                    │
+│ --description  -d                   <str>  Project description.              │
+│                                            [default: A high-performance gRPC │
+│                                            microservice powered by           │
+│                                            Hexastack.]                       │
+│ --db                                <str>  Database driver: in-memory,       │
+│                                            sqlite, postgres.                 │
+│                                            [default: in-memory]              │
+│ --qual             --no-qual               Include hexastack-qual quality    │
+│                                            governance and scorecard adapter. │
+│                                            [default: qual]                   │
+│ --agents           --no-agents             Materialize turnkey universal     │
+│                                            .agents/ AI guardrails hub.       │
+│                                            [default: agents]                 │
+│ --mutation         --no-mutation           Configure pytest-gremlins         │
+│                                            mutation testing baseline.        │
+│                                            [default: mutation]               │
+│ --sentry           --no-sentry             Configure Sentry error tracking & │
+│                                            distributed tracing.              │
+│                                            [default: no-sentry]              │
+│ --help                                     Show this message and exit.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -779,10 +852,22 @@ Usage: hexastack new mcp-agent [OPTIONS] {name}
 │ *    name      <str>  Name of the new microservice project. [required]       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --description  -d      <str>  Project description.                           │
-│                               [default: An MCP AI agent tools service        │
-│                               powered by Hexastack.]                         │
-│ --help                        Show this message and exit.                    │
+│ --description  -d                   <str>  Project description.              │
+│                                            [default: An MCP AI agent tools   │
+│                                            service powered by Hexastack.]    │
+│ --qual             --no-qual               Include hexastack-qual quality    │
+│                                            governance and scorecard adapter. │
+│                                            [default: qual]                   │
+│ --agents           --no-agents             Materialize turnkey universal     │
+│                                            .agents/ AI guardrails hub.       │
+│                                            [default: agents]                 │
+│ --mutation         --no-mutation           Configure pytest-gremlins         │
+│                                            mutation testing baseline.        │
+│                                            [default: mutation]               │
+│ --sentry           --no-sentry             Configure Sentry error tracking & │
+│                                            distributed tracing.              │
+│                                            [default: no-sentry]              │
+│ --help                                     Show this message and exit.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -797,9 +882,22 @@ Usage: hexastack new minimal [OPTIONS] {name}
 │ *    name      <str>  Name of the new microservice project. [required]       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --description  -d      <str>  Project description.                           │
-│                               [default: A lightweight Hexastack service.]    │
-│ --help                        Show this message and exit.                    │
+│ --description  -d                   <str>  Project description.              │
+│                                            [default: A lightweight Hexastack │
+│                                            service.]                         │
+│ --qual             --no-qual               Include hexastack-qual quality    │
+│                                            governance and scorecard adapter. │
+│                                            [default: qual]                   │
+│ --agents           --no-agents             Materialize turnkey universal     │
+│                                            .agents/ AI guardrails hub.       │
+│                                            [default: agents]                 │
+│ --mutation         --no-mutation           Configure pytest-gremlins         │
+│                                            mutation testing baseline.        │
+│                                            [default: mutation]               │
+│ --sentry           --no-sentry             Configure Sentry error tracking & │
+│                                            distributed tracing.              │
+│                                            [default: no-sentry]              │
+│ --help                                     Show this message and exit.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -834,12 +932,26 @@ Usage: hexastack new web-api [OPTIONS] {name}
 │ *    name      <str>  Name of the new microservice project. [required]       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --description  -d      <str>  Project description.                           │
-│                               [default: A modern RESTful microservice        │
-│                               powered by Hexastack.]                         │
-│ --db                   <str>  Database driver: in-memory, sqlite, postgres.  │
-│                               [default: in-memory]                           │
-│ --help                        Show this message and exit.                    │
+│ --description  -d                   <str>  Project description.              │
+│                                            [default: A modern RESTful        │
+│                                            microservice powered by           │
+│                                            Hexastack.]                       │
+│ --db                                <str>  Database driver: in-memory,       │
+│                                            sqlite, postgres.                 │
+│                                            [default: in-memory]              │
+│ --qual             --no-qual               Include hexastack-qual quality    │
+│                                            governance and scorecard adapter. │
+│                                            [default: qual]                   │
+│ --agents           --no-agents             Materialize turnkey universal     │
+│                                            .agents/ AI guardrails hub.       │
+│                                            [default: agents]                 │
+│ --mutation         --no-mutation           Configure pytest-gremlins         │
+│                                            mutation testing baseline.        │
+│                                            [default: mutation]               │
+│ --sentry           --no-sentry             Configure Sentry error tracking & │
+│                                            distributed tracing.              │
+│                                            [default: no-sentry]              │
+│ --help                                     Show this message and exit.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 

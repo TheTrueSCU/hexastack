@@ -85,6 +85,13 @@ class ProjectScaffolder:
         )
         self._write_file("Dockerfile", templates.render_dockerfile(self.config))
         self._write_file(".dockerignore", templates.render_dockerignore())
+        self._write_file(".gitignore", templates.render_gitignore())
+
+        if self.config.include_sentry:
+            self._write_file(
+                ".env.example",
+                "# Sentry Error Tracking & Distributed Tracing\nSENTRY_DSN=\nSENTRY_ENVIRONMENT=development\n",
+            )
 
         if self.config.include_release:
             self._write_file(
@@ -104,6 +111,61 @@ class ProjectScaffolder:
             self._write_file(
                 "CODE_OF_CONDUCT.md", templates.render_code_of_conduct_md()
             )
+
+        if self.config.include_agents:
+            self._write_agents_hub()
+
+    def _write_agents_hub(self) -> None:
+        rules_content = f"""---
+trigger: always_on
+description: Architectural invariants and hexagonal boundary rules for {self.config.name}.
+---
+
+## Architectural Invariants for {self.config.name}
+
+1. **Hexagonal Architecture Layer Isolation**:
+   - `domain/` contains 100% pure entities, value objects, and business logic with ZERO framework imports.
+   - `ports/` defines abstract ABC interfaces (`@abstractmethod`).
+   - `adapters/` contains driving (HTTP, CLI, gRPC) and driven (database, cache, buses) implementations. Adapters must NEVER import from `infra/`.
+   - `infra/` contains assembly, dependency injection (rodi), bootstrapper, and environment configuration.
+   - Enforced by `import-linter` via `uv run lint-imports` or `hexaqual sanity`.
+
+2. **Docstrings & Public APIs**:
+   - Every public module, class, and function must have Google-style docstrings with `Args:`, `Returns:`, `Raises:`, and a `Notes/Architectural Intent:` section.
+
+3. **1:1 Test Symmetry & Side-Effect Free Assertions**:
+   - Every `src/{self.package_name}/<path>.py` file requires a matching `tests/unit/<path>/test_<name>.py` and `__init__.py`.
+   - In test assertions, assign method return values to variables first before evaluating `assert` to avoid CodeQL side-effect alerts.
+   - Cognitive complexity must remain <= 25 per function (enforced by `complexipy`).
+"""
+        agents_content = f"""# AI Agent Workspace Guardrails
+
+> This repository adheres to strict Hexagonal Architecture and quality governance enforced by [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual).
+
+## Active Invariants
+
+- Domain purity: `domain/` has no external dependencies.
+- Hexagonal boundaries: `adapters/` communicates exclusively via `ports/` and never imports `infra/`.
+- 1:1 Test Parity: Every source module has a corresponding unit test.
+- Side-effect free assertions in all test suites.
+- Rule definitions live in `.agents/rules/{self.project_slug}-invariants.md`.
+"""
+        gemini_content = f"""# AI Coding Assistant Protocol & Architectural Guardrails
+
+> Primary local memory context for AI coding assistants (Antigravity CLI, Gemini, Claude, Cursor).
+
+## Invariants & Rules
+See [AGENTS.md](AGENTS.md) and [.agents/rules/{self.project_slug}-invariants.md](.agents/rules/{self.project_slug}-invariants.md).
+
+## Commands
+- `uv run hexaqual sanity`: Full pre-commit quality check (Ruff, Ty, complexipy, test parity, __all__).
+- `uv run pytest`: Run unit and architecture test suites with coverage.
+"""
+        self._write_file(
+            f".agents/rules/{self.project_slug}-invariants.md", rules_content
+        )
+        self._write_file("AGENTS.md", agents_content)
+        self._write_file("GEMINI.md", gemini_content)
 
     # ----------------------------------------------------------------------
     # Domain Layer (Pure Python)
@@ -231,7 +293,7 @@ class ProjectScaffolder:
         )
 
     # ----------------------------------------------------------------------
-    # Test Suite
+    # Test Suite (1:1 Symmetry, Parity & Boundaries)
     # ----------------------------------------------------------------------
 
     def _write_test_suite(self) -> None:
@@ -239,12 +301,134 @@ class ProjectScaffolder:
         self._write_file(
             "tests/conftest.py", templates.render_test_conftest(self.package_name)
         )
+        self._write_file("tests/architecture/__init__.py", "")
         self._write_file(
-            "tests/unit/test_domain.py", templates.render_test_domain(self.package_name)
+            "tests/architecture/test_hexagonal_boundaries.py",
+            templates.render_test_architecture(self.package_name),
         )
+        self._write_file("tests/hypothesis/__init__.py", "")
         self._write_file(
             "tests/hypothesis/test_domain_fuzz.py",
             templates.render_test_domain_fuzz(self.package_name),
+        )
+
+        # 1:1 Unit test parity
+        self._write_file("tests/unit/__init__.py", "")
+        self._write_file(
+            "tests/unit/test___init__.py",
+            templates.render_test_root_init(self.package_name),
+        )
+
+        # Domain unit tests
+        self._write_file("tests/unit/domain/__init__.py", "")
+        self._write_file(
+            "tests/unit/domain/test___init__.py",
+            templates.render_test_subpackage_init(self.package_name, "domain"),
+        )
+        self._write_file(
+            "tests/unit/domain/test_models.py",
+            templates.render_test_domain_models(self.package_name),
+        )
+        self._write_file(
+            "tests/unit/domain/test_commands.py",
+            templates.render_test_domain_commands(self.package_name),
+        )
+
+        # Ports unit tests
+        self._write_file("tests/unit/ports/__init__.py", "")
+        self._write_file(
+            "tests/unit/ports/test___init__.py",
+            templates.render_test_subpackage_init(self.package_name, "ports"),
+        )
+        self._write_file(
+            "tests/unit/ports/test_repositories.py",
+            templates.render_test_ports_repositories(self.package_name),
+        )
+
+        # Adapters unit tests
+        self._write_file("tests/unit/adapters/__init__.py", "")
+        self._write_file(
+            "tests/unit/adapters/test___init__.py",
+            templates.render_test_subpackage_init(self.package_name, "adapters"),
+        )
+
+        # Adapters driven
+        self._write_file("tests/unit/adapters/driven/__init__.py", "")
+        self._write_file(
+            "tests/unit/adapters/driven/test___init__.py",
+            templates.render_test_subpackage_init(self.package_name, "adapters.driven"),
+        )
+        self._write_file(
+            "tests/unit/adapters/driven/test_database.py",
+            templates.render_test_adapters_database(self.package_name),
+        )
+
+        # Adapters driving
+        self._write_file("tests/unit/adapters/driving/__init__.py", "")
+        self._write_file(
+            "tests/unit/adapters/driving/test___init__.py",
+            templates.render_test_subpackage_init(
+                self.package_name, "adapters.driving"
+            ),
+        )
+        self._write_file(
+            "tests/unit/adapters/driving/test_cli.py",
+            templates.render_test_adapters_cli(self.package_name),
+        )
+
+        if (
+            self.config.template in ("web-api", "enterprise", "graphql-service")
+            or self.config.include_graphql
+        ):
+            self._write_file(
+                "tests/unit/adapters/driving/test_http.py",
+                templates.render_test_adapters_http(self.package_name),
+            )
+
+        if (
+            self.config.template in ("grpc-service", "enterprise")
+            or self.config.include_grpc
+        ):
+            self._write_file(
+                "tests/unit/adapters/driving/test_grpc.py",
+                templates.render_test_adapters_grpc(self.package_name),
+            )
+
+        if (
+            self.config.template in ("graphql-service", "enterprise")
+            or self.config.include_graphql
+        ):
+            self._write_file(
+                "tests/unit/adapters/driving/test_graphql.py",
+                templates.render_test_adapters_graphql(self.package_name),
+            )
+
+        if (
+            self.config.template in ("mcp-agent", "enterprise")
+            or self.config.include_mcp
+        ):
+            self._write_file(
+                "tests/unit/adapters/driving/test_mcp.py",
+                templates.render_test_adapters_mcp(self.package_name),
+            )
+
+        # Infra unit tests
+        self._write_file("tests/unit/infra/__init__.py", "")
+        self._write_file(
+            "tests/unit/infra/test___init__.py",
+            templates.render_test_subpackage_init(self.package_name, "infra"),
+        )
+        self._write_file(
+            "tests/unit/infra/test_config.py",
+            templates.render_test_infra_config(self.package_name),
+        )
+        self._write_file(
+            "tests/unit/infra/test_handlers.py",
+            templates.render_test_infra_handlers(self.package_name),
+        )
+        self._write_file(
+            "tests/unit/infra/test_bootstrap.py",
+            templates.render_test_infra_bootstrap(self.package_name),
         )
 
 
@@ -259,6 +443,10 @@ def scaffold_project(
     include_graphql: bool = False,
     include_release: bool = False,
     include_openssf: bool = False,
+    include_qual: bool = True,
+    include_agents: bool = True,
+    include_mutation: bool = True,
+    include_sentry: bool = False,
     output_dir: Path | None = None,
 ) -> Path:
     """Convenience helper to scaffold a new Hexastack project."""
@@ -273,6 +461,16 @@ def scaffold_project(
         include_graphql=include_graphql,
         include_release=include_release,
         include_openssf=include_openssf,
+        include_qual=include_qual,
+        include_agents=include_agents,
+        include_mutation=include_mutation,
+        include_sentry=include_sentry,
     )
     scaffolder = ProjectScaffolder(config, output_dir=output_dir)
     return scaffolder.generate()
+
+
+__all__ = [
+    "ProjectScaffolder",
+    "scaffold_project",
+]

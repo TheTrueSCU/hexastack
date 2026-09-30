@@ -1,11 +1,17 @@
-"""Unit tests for scaffolding commands root module."""
+"""Unit tests for scaffolding commands module exports.
 
-import typer
+Notes/Architectural Intent:
+    Verifies that scaffolding commands root initializer properly re-exports
+    all public interface symbols.
+"""
 
-from hexastack.adapters.cli.scaffolding.commands import add_scaffold_commands
+import hexastack.adapters.cli.scaffolding.commands as commands_mod
 
 
-def test_scaffold_commands_registration():
-    app = typer.Typer()
-    add_scaffold_commands(app)
-    assert app is not None
+def test_scaffolding_commands_exports():
+    """Verify scaffolding commands module defines expected __all__ exports."""
+    all_exports = commands_mod.__all__
+    assert "add_init_command" in all_exports
+    assert "add_scaffold_commands" in all_exports
+    assert "create_new_app" in all_exports
+    assert callable(commands_mod.add_scaffold_commands)

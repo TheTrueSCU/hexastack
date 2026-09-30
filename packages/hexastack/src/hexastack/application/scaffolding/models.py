@@ -37,6 +37,10 @@ class ScaffoldConfig:
     include_graphql: bool = False
     include_release: bool = False
     include_openssf: bool = False
+    include_qual: bool = True
+    include_agents: bool = True
+    include_mutation: bool = True
+    include_sentry: bool = False
 
 
 __all__ = [

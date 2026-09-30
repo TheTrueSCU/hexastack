@@ -26,6 +26,7 @@ auth = [
 ]
 cli = [
     "hexastack-cli",
+    "questionary>=2.1.0",
 ]
 db = [
     "hexastack-db",

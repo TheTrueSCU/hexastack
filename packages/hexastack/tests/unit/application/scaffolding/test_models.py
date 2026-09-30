@@ -19,6 +19,10 @@ def test_scaffold_config_defaults():
     assert config.include_graphql is False
     assert config.include_release is False
     assert config.include_openssf is False
+    assert config.include_qual is True
+    assert config.include_agents is True
+    assert config.include_mutation is True
+    assert config.include_sentry is False
 
 
 def test_scaffold_config_custom_values():
@@ -35,6 +39,10 @@ def test_scaffold_config_custom_values():
         include_graphql=True,
         include_release=True,
         include_openssf=True,
+        include_qual=False,
+        include_agents=False,
+        include_mutation=False,
+        include_sentry=True,
     )
     assert config.name == "ai-agent"
     assert config.template == "mcp-agent"
@@ -47,3 +55,7 @@ def test_scaffold_config_custom_values():
     assert config.include_graphql is True
     assert config.include_release is True
     assert config.include_openssf is True
+    assert config.include_qual is False
+    assert config.include_agents is False
+    assert config.include_mutation is False
+    assert config.include_sentry is True
