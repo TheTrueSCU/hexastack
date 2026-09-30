@@ -27,6 +27,9 @@ from hexastack.application.scaffolding.templates.config import (
     render_pyproject_toml,
     render_readme,
 )
+from hexastack.application.scaffolding.templates.devcontainer import (
+    render_devcontainer_json,
+)
 from hexastack.application.scaffolding.templates.domain import (
     render_domain_commands,
     render_domain_init,
@@ -72,6 +75,7 @@ __all__ = [
     "render_buf_yaml",
     "render_changelog",
     "render_code_of_conduct_md",
+    "render_devcontainer_json",
     "render_dockerfile",
     "render_dockerignore",
     "render_domain_commands",

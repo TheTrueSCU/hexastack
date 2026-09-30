@@ -29,6 +29,7 @@ def test_scaffold_project_generates_all_files():
         assert (proj_dir / ".pre-commit-config.yaml").exists()
         assert (proj_dir / ".github" / "workflows" / "ci.yml").exists()
         assert (proj_dir / "README.md").exists()
+        assert (proj_dir / ".devcontainer" / "devcontainer.json").exists()
 
         # Check source layout
         src_dir = proj_dir / "src" / "order_service"

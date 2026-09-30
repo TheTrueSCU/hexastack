@@ -86,6 +86,10 @@ class ProjectScaffolder:
         self._write_file("Dockerfile", templates.render_dockerfile(self.config))
         self._write_file(".dockerignore", templates.render_dockerignore())
         self._write_file(".gitignore", templates.render_gitignore())
+        self._write_file(
+            ".devcontainer/devcontainer.json",
+            templates.render_devcontainer_json(self.config),
+        )
 
         if self.config.include_sentry:
             self._write_file(
