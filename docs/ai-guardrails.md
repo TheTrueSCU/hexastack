@@ -147,7 +147,7 @@ gh run list --branch <branch-name>
 
 ## 5. Active Packages in Workspace
 
-All 17 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.6.0`**):
+All 18 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.7.0`**):
 
 - `hexastack-core`: Primitives, ports, events, domain models, caching, rate limiting, and in-memory adapters.
 - `hexastack-cqrs`: Command and Query execution pipelines, registries, buses, and middleware.
@@ -163,6 +163,7 @@ All 17 packages in the workspace are maintained in lockstep version synchronizat
 - `hexastack-logging`: Structured JSON logging and Logfire tracing.
 - `hexastack-mcp`: Model Context Protocol (MCP) server adapter, tool registries, and Claude/Gemini bridges.
 - `hexastack-otel`: OpenTelemetry metrics and distributed tracing instrumentation.
+- `hexastack-qual`: Hexagonal quality, governance, and release engineering adapter integrating `hexaqual`.
 - `hexastack-ui`: Interactive NiceGUI DevTools console, command dispatcher, and telemetry visualizer.
 - `hexastack-cli`: CLI scaffolding engine and Typer driving adapters.
 - `hexastack`: Umbrella package aggregating all subpackages and CLI entrypoints.

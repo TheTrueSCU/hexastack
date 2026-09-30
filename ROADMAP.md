@@ -61,8 +61,16 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Quality Toolchain Upgrade**: Upgraded workspace dev toolchain to `hexaqual[all]>=0.4.0`.
 - [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 17 subpackages to `v0.6.0`.
 
+### v0.7.0 (GitHub Template, Zero-Install Codespaces & Scaffolding Modernization) ✅
+- [x] **Official GitHub Template Repository**: Standalone reference starter repository (`TheTrueSCU/hexastack-template`) with 1-click instantiation and automated OpenSSF security controls.
+- [x] **Zero-Install Codespaces & DevContainer**: Scaffolding engine generates `.devcontainer/devcontainer.json` for instant cloud-native development with Python 3.13, NiceGUI DevTools, and FastAPI.
+- [x] **Scaffolding Modernization & Wizard**: Interactive CLI wizard (`hexastack init`) and elimination of operational execution logic from all `__init__.py` files across the monorepo.
+- [x] **Universal Agent Guardrails Synchronization**: Integrated `hexaqual>=0.5.1` with synchronized universal AI guardrails, test authoring rules, and pre-commit governance.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 18 subpackages to `v0.7.0`.
+
 ---
 
-## 🚀 Active Milestone: v0.7.0 (Edge, WASM & Multimodal Consoles)
+## 🚀 Active Milestone: v0.8.0 (Deep Sentry Ecosystem & Edge Profiles)
+- [ ] **Sentry Ecosystem Runtime Adapters**: Native Sentry SDK integration across hexastack-fastapi, hexastack-cqrs, and hexastack-events.
 - [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
 - [ ] **Voice & WebRTC Audio Pipeline**: Real-time conversational audio bridge (`hexastack-ui[voice]`).

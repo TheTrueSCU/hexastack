@@ -14,7 +14,7 @@ graph TD
     classDef hqual fill:#d97706,stroke:#b45309,stroke-width:2px,color:#ffffff;
 
     HQ["⚡ hexaqueue (v0.3.0)<br/>Distributed HPC Batch Scheduler"]:::hq
-    HS["🏛️ hexastack (v0.6.0)<br/>Hexagonal Monorepo (17 Packages)<br/>CQRS • gRPC • DB • Auth"]:::hs
+    HS["🏛️ hexastack (v0.7.0)<br/>Hexagonal Monorepo (18 Packages)<br/>CQRS • gRPC • DB • Auth"]:::hs
     HF["📦 hexaflow (v0.3.0)<br/>Resumable In-Process DAG Engine"]:::hf
     HQUAL["🛠️ hexaqual (v0.5.1)<br/>Unified Quality, Governance & CI Plane"]:::hqual
 
@@ -28,7 +28,7 @@ graph TD
 
 | Pillar | Focus & Invariants | Key Capabilities |
 |---|---|---|
-| [**`hexastack`**](https://dopplereffect.us/hexastack/) | Enterprise Application Framework | 17 subpackages implementing pure Hexagonal Architecture (Ports & Adapters), CQRS dispatching, database repositories, transactional outbox with NATS JetStream, multi-protocol transports (FastAPI, gRPC, GraphQL, CLI), and NiceGUI/Textual DevTools. |
+| [**`hexastack`**](https://dopplereffect.us/hexastack/) | Enterprise Application Framework | 18 subpackages implementing pure Hexagonal Architecture (Ports & Adapters), CQRS dispatching, database repositories, transactional outbox with NATS JetStream, multi-protocol transports (FastAPI, gRPC, GraphQL, CLI), and NiceGUI/Textual DevTools. |
 | [**`hexaqueue`**](https://dopplereffect.us/hexaqueue/) | Distributed Batch Scheduler | High-throughput, distributed execution and scheduling plane for HPC batch workloads, runners (GitHub, GitLab, Kueue), and multi-step workflows with split/join barrier resolution. |
 | [**`hexaflow`**](https://dopplereffect.us/hexaflow/) | In-Process Workflow DAG Engine | Zero-external-dependency (stdlib + Pydantic) DAG executor with dynamic collection fan-out (`@wf.map_step`), automatic dependency inference, cycle detection, and SQLite state checkpointing. |
 | [**`hexaqual`**](https://dopplereffect.us/hexaqual/) | Unified Quality & Governance Plane | Standalone developer toolsuite providing turnkey pre-commit hooks, CI composite actions, cognitive complexity enforcement, test parity checks, mutation testing triage, and architectural boundary verification. |

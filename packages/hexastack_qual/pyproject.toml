@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-qual"
-version = "0.6.0"
+version = "0.7.0"
 description = "Hexagonal quality, governance, and release adapter integrating hexaqual with CQRS, MCP, UI, and Events"
 readme = "README.md"
 license = "Apache-2.0"

@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.7.0 (2026-09-30)
+
+### Highlights & Features
+* **Official GitHub Template Repository (`hexastack-template`)**: Launched official turnkey reference template repository ([`TheTrueSCU/hexastack-template`](https://github.com/TheTrueSCU/hexastack-template)) with 1-click GitHub template instantiation, zero-install GitHub Codespaces environment pre-configured with Python 3.13, NiceGUI DevTools, and FastAPI.
+* **Scaffolding Modernization & Interactive Wizard**: Added interactive CLI wizard (`hexastack init`), automated `.devcontainer/devcontainer.json` scaffolding for zero-friction cloud development, and eliminated all operational functions and execution logic from package `__init__.py` files across the monorepo in favor of pure declarative exports.
+* **Universal Agent Guardrails Synchronization**: Integrated `hexaqual>=0.5.1` with synchronized universal AI guardrails, test authoring rules, and pre-commit governance.
+* **Unified Workspace Lockstep Versioning (v0.7.0)**: Synchronized version bump across root workspace and all 18 subpackages (`hexastack`, `hexastack_ai`, `hexastack_auth`, `hexastack_cli`, `hexastack_core`, `hexastack_cqrs`, `hexastack_db`, `hexastack_events`, `hexastack_fastapi`, `hexastack_flags`, `hexastack_flow`, `hexastack_graphql`, `hexastack_grpc`, `hexastack_logging`, `hexastack_mcp`, `hexastack_otel`, `hexastack_qual`, `hexastack_ui`).
+
 ## v0.6.0 (2026-09-16)
 
 ### Highlights & Features
