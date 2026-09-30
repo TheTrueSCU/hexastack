@@ -1,4 +1,4 @@
-"""Concrete adapter implementing quality, mutation, and diagnostic ports via Hexaqual.
+"""Concrete adapter implementing quality, mutation, diagnostic, and OpenSSF ports via Hexaqual.
 
 Notes/Architectural Intent:
     Delegates to hexaqual engines, complexipy, and workspace inspection adapters.
@@ -22,10 +22,26 @@ from hexaqual.adapters.workspace import (
     resolve_affected_packages,
     resolve_target_python_files,
 )
+from hexaqual.domain.openssf import (
+    CriterionProposal,
+    OpenSsfProject,
+    OpenSsfTier,
+)
+from hexaqual.infra.openssf import (
+    audit_project_posture,
+    evaluate_local_heuristics,
+    format_checklist_markdown,
+    generate_checklist,
+    resolve_local_repo_url,
+    verify_openssf_compliance,
+)
 
 from hexastack_qual.domain.models import (
     ComplexityMetric,
     MutantReport,
+    OpenSsfAuditSummary,
+    OpenSsfComplianceResult,
+    OpenSsfCriterionResult,
     ParityFinding,
     PrHealthSummary,
     QualityCheckResult,
@@ -35,16 +51,18 @@ from hexastack_qual.domain.models import (
 from hexastack_qual.ports.auditor import QualityAuditorPort
 from hexastack_qual.ports.diagnostics import PrDiagnosticPort
 from hexastack_qual.ports.mutator import MutationInspectorPort
+from hexastack_qual.ports.openssf import OpenSsfAuditorPort
 
 
 class HexaqualRunnerAdapter(
-    QualityAuditorPort, MutationInspectorPort, PrDiagnosticPort
+    QualityAuditorPort, MutationInspectorPort, PrDiagnosticPort, OpenSsfAuditorPort
 ):
     """Unified adapter bridging Hexaqual analysis engines into Hexastack ports.
 
     Notes/Architectural Intent:
-        Implements QualityAuditorPort, MutationInspectorPort, and PrDiagnosticPort
-        by delegating directly to Hexaqual AST analysis routines and subprocesses.
+        Implements QualityAuditorPort, MutationInspectorPort, PrDiagnosticPort,
+        and OpenSsfAuditorPort by delegating directly to Hexaqual AST analysis
+        routines, OpenSSF infra functions, and subprocess-based tooling.
     """
 
     def __init__(self, repo_root: Path | None = None) -> None:
@@ -414,6 +432,195 @@ class HexaqualRunnerAdapter(
             return sorted(affected_pkgs)
         except Exception:
             return []
+
+    # ------------------------------------------------------------------
+    # OpenSsfAuditorPort implementation
+    # ------------------------------------------------------------------
+
+    def _build_local_project(
+        self,
+        tier: OpenSsfTier,
+        repo_url: str,
+    ) -> tuple[OpenSsfProject, list[CriterionProposal]]:
+        """Build a minimal OpenSsfProject stub from local heuristic inspection.
+
+        Args:
+            tier: OpenSSF tier to evaluate.
+            repo_url: Repository URL string for project metadata.
+
+        Returns:
+            Tuple of (stub OpenSsfProject, list of local CriterionProposals).
+
+        Notes/Architectural Intent:
+            Since evaluate_local_heuristics() returns CriterionProposal objects
+            (not a remote project), we construct a stub OpenSsfProject with
+            criteria_statuses inferred from the proposals. This enables all
+            downstream infra functions (audit_project_posture, verify, checklist)
+            to work without a network call to bestpractices.coreinfrastructure.org.
+        """
+        proposals = evaluate_local_heuristics(tier=tier, root_dir=self._repo_root)
+        criteria_statuses: dict[str, str] = {
+            p.criterion_id: str(getattr(p.status, "value", p.status)) for p in proposals
+        }
+        stub_project = OpenSsfProject(
+            project_id=0,
+            name=repo_url.rstrip("/").split("/")[-1] or "hexastack",
+            repo_url=repo_url,
+            badge_level="",
+            tiered_percentage=0,
+            criteria_statuses=criteria_statuses,
+        )
+        return stub_project, proposals
+
+    def audit_openssf(
+        self,
+        project_url: str | None = None,
+    ) -> OpenSsfAuditSummary:
+        """Evaluate local OpenSSF Best Practices posture via heuristic analysis.
+
+        Args:
+            project_url: Optional repository URL. Resolved from git remote if None.
+
+        Returns:
+            OpenSsfAuditSummary with per-tier scores and list of unmet criteria.
+
+        Raises:
+            QualityError: If heuristic evaluation fails.
+
+        Notes/Architectural Intent:
+            Runs evaluate_local_heuristics() for each tier and delegates to
+            audit_project_posture() using a stub OpenSsfProject built from local
+            evidence. No network call to bestpractices.coreinfrastructure.org is made.
+            Per-tier scores are derived from the CriterionProposal met/unmet ratio.
+        """
+        url = project_url or resolve_local_repo_url(self._repo_root) or ""
+
+        all_unmet: list[OpenSsfCriterionResult] = []
+        tier_scores: dict[str, float] = {}
+
+        for tier in (OpenSsfTier.PASSING, OpenSsfTier.SILVER, OpenSsfTier.GOLD):
+            stub_project, proposals = self._build_local_project(tier=tier, repo_url=url)
+            posture = audit_project_posture(
+                project=stub_project,
+                tier=tier,
+                local_proposals=proposals,
+            )
+            pct = float(posture.percentage)
+            tier_scores[tier.value] = pct
+
+            for prop in posture.proposals:
+                # proposals in posture are the *pending/unmet* ones
+                all_unmet.append(
+                    OpenSsfCriterionResult(
+                        criterion_id=prop.criterion_id,
+                        title=prop.criterion_id.replace("_", " ").title(),
+                        tier=prop.tier.value
+                        if hasattr(prop.tier, "value")
+                        else str(prop.tier),
+                        met=False,
+                        notes=str(prop.justification or ""),
+                    )
+                )
+
+        # Use passing-tier totals for aggregate met/total counts
+        stub_passing, proposals_passing = self._build_local_project(
+            tier=OpenSsfTier.PASSING, repo_url=url
+        )
+        posture_passing = audit_project_posture(
+            project=stub_passing,
+            tier=OpenSsfTier.PASSING,
+            local_proposals=proposals_passing,
+        )
+
+        return OpenSsfAuditSummary(
+            project_url=url,
+            passing_score=tier_scores.get("passing", 0.0),
+            silver_score=tier_scores.get("silver", 0.0),
+            gold_score=tier_scores.get("gold", 0.0),
+            met_count=posture_passing.met_count,
+            total_count=posture_passing.total_count,
+            unmet_criteria=all_unmet,
+        )
+
+    def check_openssf_compliance(
+        self,
+        tier: str = "passing",
+        min_score: float | None = None,
+    ) -> OpenSsfComplianceResult:
+        """Verify that the project meets a required OpenSSF badge tier for CI gating.
+
+        Args:
+            tier: Required badge tier ('passing', 'silver', or 'gold').
+            min_score: Optional minimum percentage score override.
+
+        Returns:
+            OpenSsfComplianceResult with is_compliant flag and failure_reasons.
+
+        Raises:
+            QualityError: If compliance verification fails.
+
+        Notes/Architectural Intent:
+            Wraps hexaqual's verify_openssf_compliance() using a local heuristic
+            stub project — suitable for sub-3-second pre-push gate use without
+            network access.
+        """
+        threshold = int(min_score) if min_score is not None else 100
+        openssf_tier = OpenSsfTier(tier)
+        url = resolve_local_repo_url(self._repo_root) or ""
+        stub_project, _ = self._build_local_project(tier=openssf_tier, repo_url=url)
+
+        result = verify_openssf_compliance(
+            project=stub_project,
+            target_tier=openssf_tier,
+            min_score=threshold,
+        )
+        failure_ids = [item.get("criterion_id", "") for item in result.unmet_must]
+        return OpenSsfComplianceResult(
+            is_compliant=result.passed,
+            required_tier=tier,
+            achieved_score=float(result.score),
+            required_score=float(result.min_score),
+            failure_reasons=[fid for fid in failure_ids if fid],
+        )
+
+    def generate_openssf_checklist(
+        self,
+        tier: str = "passing",
+        project_url: str | None = None,
+    ) -> str:
+        """Generate a Markdown checklist of OpenSSF criteria for a target tier.
+
+        Args:
+            tier: Target badge tier ('passing', 'silver', or 'gold').
+            project_url: Optional repository URL for badge link context.
+
+        Returns:
+            Markdown-formatted checklist string with checkbox status per criterion.
+
+        Raises:
+            QualityError: If checklist generation fails.
+
+        Notes/Architectural Intent:
+            Delegates to hexaqual's generate_checklist() + format_checklist_markdown()
+            using a local heuristic stub project. Output is suitable for GitHub issue
+            body insertion or NiceGUI DevTools OpenSSF panel display.
+        """
+        url = project_url or resolve_local_repo_url(self._repo_root) or ""
+        openssf_tier = OpenSsfTier(tier)
+        stub_project, proposals = self._build_local_project(
+            tier=openssf_tier, repo_url=url
+        )
+        items = generate_checklist(
+            project=stub_project,
+            tier=openssf_tier,
+            local_proposals=proposals,
+        )
+        return format_checklist_markdown(
+            items=items,
+            project_name=stub_project.name,
+            project_id=stub_project.project_id,
+            tier=openssf_tier,
+        )
 
 
 __all__ = [

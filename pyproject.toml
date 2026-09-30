@@ -9,6 +9,9 @@ dependencies = [
 
 [tool.uv]
 package = false
+override-dependencies = [
+    "pyjwt>=2.14.0",
+]
 
 [tool.uv.workspace]
 members = [

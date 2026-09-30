@@ -12,7 +12,7 @@ dependencies = [
     "hexastack-core",
     "hexastack-cqrs",
     "pydantic>=2.10.0",
-    "pyjwt>=2.8.0",
+    "pyjwt>=2.14.0",
 ]
 
 [project.optional-dependencies]

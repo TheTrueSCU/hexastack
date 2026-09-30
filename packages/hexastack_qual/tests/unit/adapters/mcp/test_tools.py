@@ -15,7 +15,11 @@ from hexastack_qual.adapters.mcp.tools import (
     prompt_triage_mutants,
     register_quality_mcp_tools,
     resource_workspace_scorecard,
+    tool_audit_openssf,
+    tool_check_openssf_compliance,
     tool_format_statements,
+    tool_generate_openssf_checklist,
+    tool_get_openssf_scorecard,
     tool_get_pr_health,
     tool_inspect_surviving_mutants,
     tool_query_impacted_tests,
@@ -23,6 +27,9 @@ from hexastack_qual.adapters.mcp.tools import (
 )
 from hexastack_qual.domain.models import (
     MutantReport,
+    OpenSsfAuditSummary,
+    OpenSsfComplianceResult,
+    OpenSsfCriterionResult,
     PrHealthSummary,
     QualityScorecard,
 )
@@ -127,7 +134,98 @@ def test_register_quality_mcp_tools() -> None:
 
 
 def test_get_quality_tools() -> None:
-    """Ensure get_quality_tools returns all 5 tool functions."""
+    """Ensure get_quality_tools returns all 9 tool functions including OpenSSF."""
     tools = get_quality_tools()
-    assert len(tools) == 5
+    assert len(tools) == 9
     assert tool_run_sanity_check in tools
+    assert tool_audit_openssf in tools
+    assert tool_check_openssf_compliance in tools
+    assert tool_generate_openssf_checklist in tools
+    assert tool_get_openssf_scorecard in tools
+
+
+def test_tool_audit_openssf_returns_dict() -> None:
+    """Ensure tool_audit_openssf returns a JSON-serializable dict."""
+    mock_summary = OpenSsfAuditSummary(
+        project_url="https://github.com/test/repo",
+        passing_score=90.0,
+        silver_score=70.0,
+        gold_score=50.0,
+        met_count=9,
+        total_count=10,
+        unmet_criteria=[],
+    )
+    with patch("hexastack_qual.adapters.mcp.tools._runner") as mock_runner:
+        mock_runner.audit_openssf.return_value = mock_summary
+        result = tool_audit_openssf(project_url="https://github.com/test/repo")
+
+    assert isinstance(result, dict)
+    assert result["passing_score"] == 90.0
+    assert result["met_count"] == 9
+
+
+def test_tool_check_openssf_compliance_returns_dict() -> None:
+    """Ensure tool_check_openssf_compliance returns compliance dict with is_compliant."""
+    mock_compliance = OpenSsfComplianceResult(
+        is_compliant=True,
+        required_tier="passing",
+        achieved_score=100.0,
+        required_score=100.0,
+        failure_reasons=[],
+    )
+    with patch("hexastack_qual.adapters.mcp.tools._runner") as mock_runner:
+        mock_runner.check_openssf_compliance.return_value = mock_compliance
+        result = tool_check_openssf_compliance(tier="passing")
+
+    assert isinstance(result, dict)
+    assert result["is_compliant"] is True
+    assert result["required_tier"] == "passing"
+
+
+def test_tool_generate_openssf_checklist_returns_string() -> None:
+    """Ensure tool_generate_openssf_checklist returns a Markdown string."""
+    expected = "## OpenSSF Passing Checklist\n- [x] DCO\n"
+    with patch("hexastack_qual.adapters.mcp.tools._runner") as mock_runner:
+        mock_runner.generate_openssf_checklist.return_value = expected
+        result = tool_generate_openssf_checklist(tier="passing")
+
+    assert result == expected
+
+
+def test_tool_get_openssf_scorecard_returns_compact_dict() -> None:
+    """Ensure tool_get_openssf_scorecard returns compact scorecard with unmet IDs."""
+    mock_criterion = OpenSsfCriterionResult(
+        criterion_id="sha-pinning",
+        title="Pin Action SHAs",
+        tier="passing",
+        met=False,
+    )
+    mock_summary = OpenSsfAuditSummary(
+        project_url="https://github.com/test/repo",
+        passing_score=80.0,
+        silver_score=60.0,
+        gold_score=40.0,
+        met_count=8,
+        total_count=10,
+        unmet_criteria=[mock_criterion],
+    )
+    with patch("hexastack_qual.adapters.mcp.tools._runner") as mock_runner:
+        mock_runner.audit_openssf.return_value = mock_summary
+        result = tool_get_openssf_scorecard()
+
+    assert isinstance(result, dict)
+    assert result["passing_score"] == 80.0
+    assert "sha-pinning" in result["unmet_criterion_ids"]
+    assert "unmet_criteria" not in result  # compact — no full criterion objects
+
+
+def test_register_quality_mcp_tools_includes_openssf() -> None:
+    """Ensure register_quality_mcp_tools registers all 9 tools including OpenSSF."""
+    registry = McpServerRegistry()
+    res_reg = register_quality_mcp_tools(registry)
+    tool_names = [t.name for t in res_reg.tools]
+    assert "audit_openssf" in tool_names
+    assert "check_openssf_compliance" in tool_names
+    assert "generate_openssf_checklist" in tool_names
+    assert "get_openssf_scorecard" in tool_names
+    assert len(tool_names) == 9

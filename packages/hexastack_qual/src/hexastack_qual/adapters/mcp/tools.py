@@ -119,6 +119,83 @@ def tool_get_pr_health(pr_number: int) -> dict[str, Any]:
     return summary.model_dump()
 
 
+def tool_audit_openssf(project_url: str | None = None) -> dict[str, Any]:
+    """Evaluate local OpenSSF Best Practices posture via heuristic analysis.
+
+    Args:
+        project_url: Optional repository URL. Resolved from git remote if None.
+
+    Returns:
+        JSON-serializable OpenSsfAuditSummary dictionary with per-tier scores
+        and a list of unmet criteria.
+
+    Notes/Architectural Intent:
+        Delegates to HexaqualRunnerAdapter.audit_openssf(). No network call
+        to bestpractices.coreinfrastructure.org is made; analysis is local.
+    """
+    summary = _runner.audit_openssf(project_url=project_url)
+    return summary.model_dump()
+
+
+def tool_check_openssf_compliance(
+    tier: str = "passing",
+    min_score: float | None = None,
+) -> dict[str, Any]:
+    """Verify that the project meets a required OpenSSF badge tier for CI gating.
+
+    Args:
+        tier: Required badge tier — 'passing', 'silver', or 'gold'.
+        min_score: Optional minimum percentage score override (0–100).
+
+    Returns:
+        JSON-serializable OpenSsfComplianceResult with is_compliant flag
+        and failure_reasons list.
+    """
+    result = _runner.check_openssf_compliance(tier=tier, min_score=min_score)
+    return result.model_dump()
+
+
+def tool_generate_openssf_checklist(
+    tier: str = "passing",
+    project_url: str | None = None,
+) -> str:
+    """Generate a Markdown checklist of OpenSSF criteria for a target tier.
+
+    Args:
+        tier: Target badge tier — 'passing', 'silver', or 'gold'.
+        project_url: Optional repository URL for badge link context.
+
+    Returns:
+        Markdown-formatted checklist string suitable for GitHub issue or PR body.
+    """
+    return _runner.generate_openssf_checklist(tier=tier, project_url=project_url)
+
+
+def tool_get_openssf_scorecard(project_url: str | None = None) -> dict[str, Any]:
+    """Return a compact OpenSSF posture scorecard for the project.
+
+    Args:
+        project_url: Optional repository URL. Resolved from git remote if None.
+
+    Returns:
+        Dictionary with tier scores, met/total criterion counts, and unmet IDs.
+
+    Notes/Architectural Intent:
+        Convenience wrapper over tool_audit_openssf() that returns a compact
+        summary suitable for NiceGUI DevTools dashboard display.
+    """
+    summary = _runner.audit_openssf(project_url=project_url)
+    return {
+        "project_url": summary.project_url,
+        "passing_score": summary.passing_score,
+        "silver_score": summary.silver_score,
+        "gold_score": summary.gold_score,
+        "met_count": summary.met_count,
+        "total_count": summary.total_count,
+        "unmet_criterion_ids": [c.criterion_id for c in summary.unmet_criteria],
+    }
+
+
 def resource_workspace_scorecard() -> str:
     """Read live JSON quality scorecard for entire workspace."""
     scorecard = _runner.run_sanity(package=None, skip_tests=True)
@@ -186,6 +263,34 @@ def register_quality_mcp_tools(registry: McpServerRegistry) -> McpServerRegistry
             target=tool_get_pr_health,
             read_only=True,
         ),
+        McpToolMetadata(
+            name="audit_openssf",
+            description="Evaluate local OpenSSF Best Practices posture via heuristic analysis (no network).",
+            kind="function",
+            target=tool_audit_openssf,
+            read_only=True,
+        ),
+        McpToolMetadata(
+            name="check_openssf_compliance",
+            description="Verify project meets required OpenSSF badge tier for CI gating.",
+            kind="function",
+            target=tool_check_openssf_compliance,
+            read_only=True,
+        ),
+        McpToolMetadata(
+            name="generate_openssf_checklist",
+            description="Generate Markdown checklist of OpenSSF criteria for a target tier.",
+            kind="function",
+            target=tool_generate_openssf_checklist,
+            read_only=True,
+        ),
+        McpToolMetadata(
+            name="get_openssf_scorecard",
+            description="Return compact OpenSSF posture scorecard with tier scores and unmet criterion IDs.",
+            kind="function",
+            target=tool_get_openssf_scorecard,
+            read_only=True,
+        ),
     ]
 
     for tool in tools:
@@ -222,6 +327,10 @@ def get_quality_tools() -> list[Any]:
         tool_inspect_surviving_mutants,
         tool_query_impacted_tests,
         tool_get_pr_health,
+        tool_audit_openssf,
+        tool_check_openssf_compliance,
+        tool_generate_openssf_checklist,
+        tool_get_openssf_scorecard,
     ]
 
 
@@ -230,7 +339,11 @@ __all__ = [
     "prompt_triage_mutants",
     "register_quality_mcp_tools",
     "resource_workspace_scorecard",
+    "tool_audit_openssf",
+    "tool_check_openssf_compliance",
     "tool_format_statements",
+    "tool_generate_openssf_checklist",
+    "tool_get_openssf_scorecard",
     "tool_get_pr_health",
     "tool_inspect_surviving_mutants",
     "tool_query_impacted_tests",

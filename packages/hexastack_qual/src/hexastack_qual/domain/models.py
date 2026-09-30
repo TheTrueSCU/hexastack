@@ -200,10 +200,94 @@ class PrHealthSummary(BaseModel):
     )
 
 
+class OpenSsfTierLevel(str):
+    """OpenSSF Best Practices badge tier level identifier.
+
+    Notes/Architectural Intent:
+        String subclass rather than Enum to allow forward-compatible
+        comparison with raw strings from hexaqual's domain layer.
+    """
+
+    PASSING = "passing"
+    SILVER = "silver"
+    GOLD = "gold"
+
+
+class OpenSsfCriterionResult(BaseModel):
+    """Result for a single OpenSSF Best Practices criterion.
+
+    Notes/Architectural Intent:
+        Bridges hexaqual's OpenSsfCriterion domain model into hexastack's
+        Pydantic layer for CQRS handlers and MCP tool responses.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    criterion_id: str = Field(description="Unique criterion identifier.")
+    title: str = Field(description="Human-readable criterion title.")
+    tier: str = Field(description="Badge tier: 'passing', 'silver', or 'gold'.")
+    met: bool = Field(description="Whether the criterion is satisfied.")
+    notes: str = Field(default="", description="Additional diagnostic notes.")
+
+
+class OpenSsfAuditSummary(BaseModel):
+    """Aggregate OpenSSF Best Practices audit result for a project.
+
+    Notes/Architectural Intent:
+        Returned by audit_openssf() on the OpenSsfAuditorPort. Surfaces
+        per-tier completion percentages and unmet criteria for actionable
+        remediation by the developer or AI assistant.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    project_url: str = Field(description="Repository URL used for the audit.")
+    passing_score: float = Field(
+        description="Passing tier completion percentage (0-100)."
+    )
+    silver_score: float = Field(
+        description="Silver tier completion percentage (0-100)."
+    )
+    gold_score: float = Field(description="Gold tier completion percentage (0-100).")
+    met_count: int = Field(description="Number of criteria met across all tiers.")
+    total_count: int = Field(description="Total criteria evaluated across all tiers.")
+    unmet_criteria: list[OpenSsfCriterionResult] = Field(
+        default_factory=list,
+        description="List of unmet criteria sorted by tier and severity.",
+    )
+
+
+class OpenSsfComplianceResult(BaseModel):
+    """Result of an OpenSSF CI gate compliance check.
+
+    Notes/Architectural Intent:
+        Returned by check_openssf_compliance() on the OpenSsfAuditorPort.
+        is_compliant=False should fail the build when enforcing supply chain
+        security standards as a blocking CI gate.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    is_compliant: bool = Field(
+        description="Whether the project meets the required tier."
+    )
+    required_tier: str = Field(description="The badge tier being enforced.")
+    achieved_score: float = Field(description="Actual tier completion score (0-100).")
+    required_score: float = Field(description="Minimum score required to pass.")
+    failure_reasons: list[str] = Field(
+        default_factory=list,
+        description="List of unmet criteria IDs contributing to non-compliance.",
+    )
+
+
 __all__ = [
     "ComplexityMetric",
     "MutantFinding",
     "MutantReport",
+    "OpenSsfAuditSummary",
+    "OpenSsfComplianceResult",
+    "OpenSsfCriterionResult",
+    "OpenSsfTierLevel",
     "ParityFinding",
     "PrHealthSummary",
     "QualityCheckResult",

@@ -114,3 +114,112 @@ def test_get_test_impact(tmp_path: Path) -> None:
     ):
         impact = adapter.get_test_impact("origin/main")
         assert impact == ["core", "cqrs"]
+
+
+def test_audit_openssf_returns_summary(tmp_path: Path) -> None:
+    """Ensure audit_openssf delegates to hexaqual infra and returns OpenSsfAuditSummary."""
+    from hexaqual.domain.openssf import CriterionProposal, CriterionStatus, OpenSsfTier
+    from hexastack_qual.domain.models import OpenSsfAuditSummary
+
+    adapter = HexaqualRunnerAdapter(repo_root=tmp_path)
+
+    mock_proposal = CriterionProposal(
+        criterion_id="dco",
+        status=CriterionStatus.UNMET,
+        justification="No DCO enforcement found",
+        tier=OpenSsfTier.PASSING,
+    )
+
+    mock_posture = MagicMock()
+    mock_posture.percentage = 75
+    mock_posture.met_count = 3
+    mock_posture.total_count = 4
+    mock_posture.proposals = [mock_proposal]
+
+    with (
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.resolve_local_repo_url",
+            return_value="https://github.com/test/repo",
+        ),
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.evaluate_local_heuristics",
+            return_value=[mock_proposal],
+        ),
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.audit_project_posture",
+            return_value=mock_posture,
+        ),
+    ):
+        result = adapter.audit_openssf()
+
+    assert isinstance(result, OpenSsfAuditSummary)
+    assert result.project_url == "https://github.com/test/repo"
+    assert result.passing_score == 75.0
+    assert result.met_count == 3
+    assert len(result.unmet_criteria) >= 1
+    assert result.unmet_criteria[0].criterion_id == "dco"
+
+
+def test_check_openssf_compliance_returns_result(tmp_path: Path) -> None:
+    """Ensure check_openssf_compliance delegates to hexaqual and returns OpenSsfComplianceResult."""
+    from hexaqual.domain.openssf import OpenSsfCheckResult, OpenSsfTier
+    from hexastack_qual.domain.models import OpenSsfComplianceResult
+
+    adapter = HexaqualRunnerAdapter(repo_root=tmp_path)
+
+    mock_result = OpenSsfCheckResult(
+        passed=False,
+        tier=OpenSsfTier.PASSING,
+        badge_level="",
+        score=80,
+        min_score=100,
+        unmet_must=[{"criterion_id": "dco"}, {"criterion_id": "sha-pinning"}],
+        errors=[],
+    )
+
+    with (
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.evaluate_local_heuristics",
+            return_value=[],
+        ),
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.verify_openssf_compliance",
+            return_value=mock_result,
+        ),
+    ):
+        result = adapter.check_openssf_compliance(tier="passing", min_score=100.0)
+
+    assert isinstance(result, OpenSsfComplianceResult)
+    assert result.is_compliant is False
+    assert result.required_tier == "passing"
+    assert result.required_score == 100.0
+    assert "dco" in result.failure_reasons
+
+
+def test_generate_openssf_checklist_returns_markdown(tmp_path: Path) -> None:
+    """Ensure generate_openssf_checklist delegates to hexaqual and returns Markdown string."""
+    adapter = HexaqualRunnerAdapter(repo_root=tmp_path)
+    expected_md = "## OpenSSF Passing Checklist\n- [ ] DCO sign-off\n"
+
+    with (
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.resolve_local_repo_url",
+            return_value="https://github.com/test/repo",
+        ),
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.evaluate_local_heuristics",
+            return_value=[],
+        ),
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.generate_checklist",
+            return_value=[],
+        ),
+        patch(
+            "hexastack_qual.adapters.hexaqual.runner.format_checklist_markdown",
+            return_value=expected_md,
+        ),
+    ):
+        checklist = adapter.generate_openssf_checklist(tier="passing")
+
+    assert isinstance(checklist, str)
+    assert checklist == expected_md
