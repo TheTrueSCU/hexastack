@@ -4,7 +4,8 @@
 
 > High-performance, modular Hexagonal Architecture & CQRS Framework for Python 3.13+.
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack)
+[![Use this template](https://img.shields.io/badge/GitHub-Use%20this%20template-2ea44f?logo=github)](https://github.com/TheTrueSCU/hexastack-template/generate)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack-template)
 [![CI](https://github.com/TheTrueSCU/hexastack/actions/workflows/ci.yml/badge.svg)](https://github.com/TheTrueSCU/hexastack/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![PyPI: hexastack](https://img.shields.io/pypi/v/hexastack.svg)](https://pypi.org/project/hexastack/)
@@ -255,10 +256,28 @@ pip install "hexastack[flow]"
 pip install "hexastack[all]"
 ```
 
----
+## 5. Quickstart: Build in 60 Seconds
 
-## 5. Quickstart Example
+### Option A: 1-Click GitHub Template (Zero Install)
+The fastest path to evaluate Hexastack with zero local prerequisites:
+- Click [**Use this template**](https://github.com/TheTrueSCU/hexastack-template/generate) on GitHub, or
+- Create directly via GitHub CLI:
+  ```bash
+  gh repo create my-service --template TheTrueSCU/hexastack-template --public --clone
+  ```
+- Or launch immediately in your browser via [**GitHub Codespaces**](https://codespaces.new/TheTrueSCU/hexastack-template) with pre-wired Python 3.13, NiceGUI DevTools, and FastAPI.
 
+### Option B: Interactive CLI Scaffolding
+Scaffold customized microservices with your choice of transports, databases, and governance adapters:
+```bash
+# Interactive wizard
+uvx hexastack init
+
+# Or direct single-command golden path
+uvx hexastack new web-api order-service --db sqlite --qual --agents --mutation
+```
+
+### Option C: Inline CQRS Example
 Create a complete application in just a few lines using CQRS and the unified bootstrap engine:
 
 ```python
