@@ -1,6 +1,7 @@
 import time
 from typing import NamedTuple
 
+from hexastack_core.ports.clock import ClockPort
 from hexastack_core.ports.ratelimit import RateLimiterPort
 
 
@@ -60,13 +61,22 @@ class InMemoryRateLimiter(RateLimiterPort):
 
     Notes/Architectural Intent:
         Provides lightweight, zero-dependency rate limiting for unit tests, local development,
-        and single-node deployments using sliding timestamp logs.
+        and single-node deployments using sliding timestamp logs. Accepts an optional ClockPort
+        for deterministic time testing and oracle fuzzing.
     """
 
-    def __init__(self) -> None:
-        """Initialize empty in-memory rate limiter."""
+    def __init__(self, clock: ClockPort | None = None) -> None:
+        """Initialize empty in-memory rate limiter.
+
+        Args:
+            clock: Optional ClockPort instance for time measurement.
+        """
+        self._clock = clock
         # Key -> list of hit timestamps
         self._hits: dict[str, list[float]] = {}
+
+    def _now(self) -> float:
+        return self._clock.timestamp() if self._clock else time.time()
 
     def hit(self, key: str, limit: str) -> bool:
         """Record a hit against a rate limit window and return whether it is allowed.
@@ -79,7 +89,7 @@ class InMemoryRateLimiter(RateLimiterPort):
             True if hit is within quota, False if exceeded.
         """
         spec = _parse_rate_limit(limit)
-        now = time.time()
+        now = self._now()
         window_start = now - spec.window_seconds
 
         timestamps = self._hits.setdefault(key, [])
@@ -102,7 +112,7 @@ class InMemoryRateLimiter(RateLimiterPort):
             Remaining seconds until reset (minimum 1 second).
         """
         spec = _parse_rate_limit(limit)
-        now = time.time()
+        now = self._now()
         window_start = now - spec.window_seconds
 
         timestamps = self._hits.get(key, [])
