@@ -105,6 +105,24 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 | `graphify update .` | Incrementally synchronizes `graphify-out/graph.json` after code changes (AST-only, 0 token cost). |
 | `graphify export html` | Re-exports the interactive community visualization to `graphify-out/graph.html`. |
 
+### Semantic Call Graph & Blast Radius (CodeGraph)
+| Tool Command | Purpose |
+|---|---|
+| `codegraph impact <Symbol>` | Computes the transitive blast-radius of modifying a symbol across all packages. |
+| `codegraph callers <Symbol>` | Lists all exact call sites referencing a symbol (functions, methods). |
+| `codegraph callees <Symbol>` | Lists all downstream dependencies and functions called by a symbol. |
+| `codegraph explore "<query>"` | Returns source snippets and call paths in a single targeted response. |
+| `codegraph affected [files]` | Identifies reverse-dependent test files impacted by source modifications. |
+
+### Multi-Repository Virtual Monorepo Federation (ivar)
+| Tool Command | Purpose |
+|---|---|
+| `ivar status` | Reports operational health across the 5 federated repositories in `thetruescu-hall`. |
+| `ivar feature create <name>` | Creates a multi-repo feature slice branch across bare git worktrees. |
+| `ivar feature promote <feat> <repo>` | Mounts target repo into feature; unpromoted repos receive kernel write guards (`mode & ~0o222`). |
+| `ivar graph index` | Indexes cross-repo symbol imports, HTTP API routes, and contracts into `.ivar/memory.db`. |
+| `ivar feature deliver` | Simultaneously pushes worktrees and opens cross-linked PRs across all affected repositories. |
+
 ---
 
 ## 3. Turnkey Workspace Agent Hub (`.agents/`)
