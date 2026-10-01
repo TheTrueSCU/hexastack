@@ -18,6 +18,10 @@ from hexastack_core.infra.decorators import (
     config_section,
     exception_handler,
 )
+from hexastack_core.infra.fs import (
+    atomic_write_bytes,
+    atomic_write_text,
+)
 from hexastack_core.infra.registries import (
     ConfigRegistry,
     ConfigRegistryError,
@@ -30,6 +34,8 @@ from hexastack_core.infra.registries import (
 )
 
 __all__ = [
+    "atomic_write_bytes",
+    "atomic_write_text",
     "bootstrap",
     "BootstrapContext",
     "BootstrapResult",

@@ -85,6 +85,19 @@ def test_devtools_ui_wcag_accessibility(devtools_server: str, page: Page) -> Non
     critical_violations_di = [
         v for v in violations_di if v.get("impact") in ("critical", "serious")
     ]
-    assert len(critical_violations_di) == 0, (
+    crit_count_di = len(critical_violations_di)
+    assert crit_count_di == 0, (
         f"Accessibility violations on DI tab: {critical_violations_di}"
+    )
+
+    # 4. Audit Resource Topology Tab
+    smart_click(page, page.get_by_text("Resource Topology"))
+    expect(page.get_by_text("Resource Interconnect Topology")).to_be_visible()
+    violations_topology = run_axe_scan(page)
+    critical_violations_topology = [
+        v for v in violations_topology if v.get("impact") in ("critical", "serious")
+    ]
+    crit_count_topology = len(critical_violations_topology)
+    assert crit_count_topology == 0, (
+        f"Accessibility violations on Topology tab: {critical_violations_topology}"
     )

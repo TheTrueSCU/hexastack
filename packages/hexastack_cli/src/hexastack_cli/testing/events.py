@@ -7,7 +7,7 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class TerminalEvent:
     """A discrete timestamped event within a CLI demo recording session."""
 

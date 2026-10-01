@@ -64,3 +64,14 @@ def test_in_memory_metrics_histogram_and_gauge() -> None:
     assert len(metrics.counters) == 0
     assert len(metrics.histograms) == 0
     assert len(metrics.gauges) == 0
+
+
+def test_metric_record_memory_slots() -> None:
+    """Verify MetricRecord leverages __slots__ to eliminate __dict__ overhead."""
+    from hexastack_core.adapters.metrics.in_memory import MetricRecord
+
+    record = MetricRecord(metric_type="counter", name="test_metric", value=1.0)
+    has_dict = hasattr(record, "__dict__")
+    assert has_dict is False
+    has_slots = hasattr(record, "__slots__")
+    assert has_slots is True

@@ -7,9 +7,11 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+from functools import singledispatch
 from typing import Any
 
 import msgspec
+from pydantic import BaseModel
 
 from hexastack_events.domain.models import CloudEventEnvelope
 
@@ -18,6 +20,7 @@ __all__ = [
     "decode_cloudevent_msgpack",
     "encode_cloudevent_bytes",
     "encode_cloudevent_msgpack",
+    "format_event_payload",
     "MsgspecEnvelopeSerializer",
 ]
 
@@ -28,11 +31,43 @@ _CLOUDEVENT_JSON_DECODER = msgspec.json.Decoder(type=dict[str, Any])
 _CLOUDEVENT_MSGPACK_DECODER = msgspec.msgpack.Decoder(type=dict[str, Any])
 
 
-def encode_cloudevent_bytes(envelope: CloudEventEnvelope | dict[str, Any]) -> bytes:
-    """Encode a CloudEvent envelope to optimized UTF-8 JSON bytes using msgspec.
+@singledispatch
+def format_event_payload(event: Any) -> dict[str, Any]:
+    """Standardize domain events, models, or envelopes into a normalized dictionary payload.
 
     Args:
-        envelope: CloudEventEnvelope instance or raw dictionary.
+        event: Event instance, dictionary, or data model to format.
+
+    Returns:
+        Standardized dictionary payload ready for wire encoding.
+
+    Raises:
+        TypeError: If the object type has no registered single-dispatch adapter.
+
+    Notes/Architectural Intent:
+        Employs functools.singledispatch to allow domain packages and third-party modules
+        to register specialized event serializers without monkey-patching or subclassing.
+    """
+    raise TypeError(
+        f"Unsupported event payload type for serialization: {type(event).__name__}"
+    )
+
+
+@format_event_payload.register(dict)
+def _format_dict(event: dict[str, Any]) -> dict[str, Any]:
+    return event
+
+
+@format_event_payload.register(BaseModel)
+def _format_basemodel(event: BaseModel) -> dict[str, Any]:
+    return event.model_dump()
+
+
+def encode_cloudevent_bytes(envelope: Any) -> bytes:
+    """Encode a CloudEvent envelope or domain event to optimized UTF-8 JSON bytes using msgspec.
+
+    Args:
+        envelope: CloudEventEnvelope instance, domain event, or raw dictionary.
 
     Returns:
         UTF-8 encoded JSON bytes.
@@ -40,9 +75,8 @@ def encode_cloudevent_bytes(envelope: CloudEventEnvelope | dict[str, Any]) -> by
     Raises:
         msgspec.EncodeError: If payload contains non-serializable objects.
     """
-    if isinstance(envelope, CloudEventEnvelope):
-        return _JSON_ENCODER.encode(envelope.model_dump())
-    return _JSON_ENCODER.encode(envelope)
+    payload = format_event_payload(envelope)
+    return _JSON_ENCODER.encode(payload)
 
 
 def decode_cloudevent_bytes(data: bytes | bytearray) -> dict[str, Any]:
@@ -60,11 +94,11 @@ def decode_cloudevent_bytes(data: bytes | bytearray) -> dict[str, Any]:
     return _CLOUDEVENT_JSON_DECODER.decode(data)
 
 
-def encode_cloudevent_msgpack(envelope: CloudEventEnvelope | dict[str, Any]) -> bytes:
-    """Encode a CloudEvent envelope to binary MessagePack format using msgspec.
+def encode_cloudevent_msgpack(envelope: Any) -> bytes:
+    """Encode a CloudEvent envelope or domain event to binary MessagePack format using msgspec.
 
     Args:
-        envelope: CloudEventEnvelope instance or raw dictionary.
+        envelope: CloudEventEnvelope instance, domain event, or raw dictionary.
 
     Returns:
         Binary MessagePack bytes.
@@ -72,9 +106,8 @@ def encode_cloudevent_msgpack(envelope: CloudEventEnvelope | dict[str, Any]) -> 
     Raises:
         msgspec.EncodeError: If payload cannot be encoded to MessagePack.
     """
-    if isinstance(envelope, CloudEventEnvelope):
-        return _MSGPACK_ENCODER.encode(envelope.model_dump())
-    return _MSGPACK_ENCODER.encode(envelope)
+    payload = format_event_payload(envelope)
+    return _MSGPACK_ENCODER.encode(payload)
 
 
 def decode_cloudevent_msgpack(data: bytes | bytearray) -> dict[str, Any]:

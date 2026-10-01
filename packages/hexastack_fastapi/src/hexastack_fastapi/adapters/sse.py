@@ -12,7 +12,7 @@ from starlette.background import BackgroundTask
 from starlette.types import Receive, Scope, Send
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ServerSentEvent:
     """Represents an individual Server-Sent Event frame.
 

@@ -74,3 +74,12 @@ def test_flag_evaluation_details():
     assert FlagEvaluationReason.CACHED == "CACHED"
     assert FlagEvaluationReason.DISABLED == "DISABLED"
     assert FlagEvaluationReason.ERROR == "ERROR"
+
+
+def test_flag_evaluation_details_memory_slots():
+    """Verify FlagEvaluationDetails leverages __slots__ to eliminate __dict__ overhead."""
+    details = FlagEvaluationDetails[bool](flag_key="mem_test", value=True)
+    has_dict = hasattr(details, "__dict__")
+    assert has_dict is False
+    has_slots = hasattr(details, "__slots__")
+    assert has_slots is True

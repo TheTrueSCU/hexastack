@@ -21,7 +21,7 @@ TemplateType = Literal[
 ]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ScaffoldConfig:
     """Configuration parameters for scaffolding a new Hexastack project."""
 

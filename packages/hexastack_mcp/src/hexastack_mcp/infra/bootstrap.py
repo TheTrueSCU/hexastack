@@ -18,7 +18,7 @@ from hexastack_mcp.infra.decorators import get_mcp_registry
 from hexastack_mcp.infra.registries.server import McpServerRegistry
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class McpBootstrapResult:
     """Dataclass holding initialized MCP server and configuration."""
 

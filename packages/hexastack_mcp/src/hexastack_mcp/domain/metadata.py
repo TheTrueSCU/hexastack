@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class McpToolMetadata:
     """Metadata for exposing a Command, Query, or function as an MCP Tool.
 
@@ -20,7 +20,7 @@ class McpToolMetadata:
     required_roles: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class McpResourceMetadata:
     """Metadata for exposing data or endpoints as an MCP Resource."""
 
@@ -31,7 +31,7 @@ class McpResourceMetadata:
     handler: Callable[..., Any] | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class McpPromptMetadata:
     """Metadata for exposing prompt templates to AI agents."""
 

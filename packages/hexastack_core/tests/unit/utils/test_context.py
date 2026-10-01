@@ -60,3 +60,12 @@ def test_correlation_scope():
 
     assert get_correlation_id() == "initial-id"
     correlation_id_ctx.reset(token)
+
+
+def test_user_context_memory_slots():
+    """Verify UserContext leverages __slots__ to eliminate __dict__ overhead."""
+    user = UserContext(user_id="u-slots", roles=["admin"])
+    has_dict = hasattr(user, "__dict__")
+    assert has_dict is False
+    has_slots = hasattr(user, "__slots__")
+    assert has_slots is True

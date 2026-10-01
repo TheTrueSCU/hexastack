@@ -19,6 +19,7 @@ def test_devtools_page_rendering_and_tabs(devtools_server: str, page: Page) -> N
     expect(page.get_by_text("CQRS Registry")).to_be_visible()
     expect(page.get_by_text("Feature Flags")).to_be_visible()
     expect(page.get_by_text("DI Container")).to_be_visible()
+    expect(page.get_by_text("Resource Topology")).to_be_visible()
 
     # 3. Check middleware pipeline visualizer chips
     expect(page.get_by_text("CorrelationMiddleware")).to_be_visible()
@@ -33,6 +34,10 @@ def test_devtools_page_rendering_and_tabs(devtools_server: str, page: Page) -> N
     # 5. Click DI Container tab
     smart_click(page, page.get_by_text("DI Container"))
     expect(page.get_by_text("Dependency Injection Services")).to_be_visible()
+
+    # 6. Click Resource Topology tab
+    smart_click(page, page.get_by_text("Resource Topology"))
+    expect(page.get_by_text("Resource Interconnect Topology")).to_be_visible()
 
 
 @pytest.mark.e2e

@@ -1,6 +1,7 @@
 """Unit tests for NiceGUI DevTools dashboard."""
 
 from dataclasses import dataclass
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -8,7 +9,7 @@ from fastapi import FastAPI
 from rodi import Container
 from starlette.routing import Mount
 
-from hexastack_core.domain import Command
+from hexastack_core.domain import Command, Query
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_ui.adapters.nicegui.devtools import mount_devtools_dashboard
 
@@ -49,6 +50,7 @@ def test_render_internal_tabs():
         _render_flags_tab,
         _render_live_runner,
         _render_middleware_chain,
+        _render_topology_tab,
     )
 
     client = Client(page("/test-render-tabs"))
@@ -60,6 +62,7 @@ def test_render_internal_tabs():
         _render_cqrs_tab(empty_container, None)
         _render_flags_tab(empty_container)
         _render_container_tab(empty_container)
+        _render_topology_tab(empty_container, None)
 
         container = Container()
         cmd_reg = CommandRegistry()
@@ -99,6 +102,7 @@ def test_render_internal_tabs():
         _render_cqrs_tab(container, pipeline=pipeline_mock)
         _render_flags_tab(container)
         _render_container_tab(container)
+        _render_topology_tab(container, pipeline=pipeline_mock)
 
 
 def _find_button_and_click(element):
@@ -411,3 +415,144 @@ async def test_dispatch_ping_validation_error():
         "❌ [ERROR] Execution failed:" in call[0][0]
         for call in log_output.push.call_args_list
     )
+
+
+def test_generate_topology_mermaid_empty():
+    """Verify generate_topology_mermaid handles empty container cleanly."""
+    from hexastack_ui.adapters.nicegui.devtools import generate_topology_mermaid
+
+    empty_container = Container()
+    mermaid_code = generate_topology_mermaid(empty_container)
+
+    has_graph = "graph LR" in mermaid_code
+    assert has_graph is True
+    has_client = 'Client["Client / Entrypoint"]' in mermaid_code
+    assert has_client is True
+    has_pipeline = 'Pipeline["Execution Pipeline"]' in mermaid_code
+    assert has_pipeline is True
+    has_empty = (
+        'Pipeline --> EmptyServices["DI Container (No services registered)"]'
+        in mermaid_code
+    )
+    assert has_empty is True
+
+
+def test_generate_topology_mermaid_populated():
+    """Verify generate_topology_mermaid links middlewares, messages, and ports."""
+    from hexastack_cqrs.infra.registries.command import CommandRegistry
+    from hexastack_cqrs.infra.registries.query import QueryRegistry
+    from hexastack_cqrs.ports.buses import CommandBusPort
+    from hexastack_ui.adapters.nicegui.devtools import generate_topology_mermaid
+
+    container = Container()
+    cmd_reg = CommandRegistry()
+    qry_reg = QueryRegistry()
+
+    @dataclass(frozen=True)
+    class CreateOrderCommand(Command):
+        order_id: str
+
+    @dataclass(frozen=True)
+    class GetOrderQuery(Query[dict[str, Any]]):
+        order_id: str
+
+    cmd_reg.register(CreateOrderCommand)
+    qry_reg.register(GetOrderQuery)
+    container.add_instance(cmd_reg, declared_class=CommandRegistry)
+    container.add_instance(qry_reg, declared_class=QueryRegistry)
+
+    # Middleware chain
+    class TraceMiddleware:
+        pass
+
+    class MetricsMiddleware:
+        pass
+
+    cmd_bus = MagicMock()
+    cmd_bus._middleware = [TraceMiddleware(), MetricsMiddleware()]
+    container.add_instance(cmd_bus, declared_class=CommandBusPort)
+
+    # Ports
+    class FakeEventBusPort:
+        pass
+
+    class FakeFeatureFlagPort:
+        pass
+
+    class FakeOrderRepository:
+        pass
+
+    class FakeCachePort:
+        pass
+
+    container.add_instance(FakeEventBusPort(), declared_class=FakeEventBusPort)
+    container.add_instance(FakeFeatureFlagPort(), declared_class=FakeFeatureFlagPort)
+    container.add_instance(FakeOrderRepository(), declared_class=FakeOrderRepository)
+    container.add_instance(FakeCachePort(), declared_class=FakeCachePort)
+
+    mermaid_code = generate_topology_mermaid(container)
+
+    has_mw1 = "MW1" in mermaid_code
+    assert has_mw1 is True
+    has_mw2 = "MW2" in mermaid_code
+    assert has_mw2 is True
+    has_cmds = "Commands (CreateOrderCommand)" in mermaid_code
+    assert has_cmds is True
+    has_qrys = "Queries (GetOrderQuery)" in mermaid_code
+    assert has_qrys is True
+    has_flags = 'Flags["Feature Flag Port"]' in mermaid_code
+    assert has_flags is True
+    has_bus = 'EventBus["Distributed Event Bus"]' in mermaid_code
+    assert has_bus is True
+    has_storage = 'Storage["Persistence / Repositories"]' in mermaid_code
+    assert has_storage is True
+    has_cache = 'Cache["Cache & Lock Ports"]' in mermaid_code
+    assert has_cache is True
+
+
+def test_generate_topology_mermaid_thresholds():
+    """Verify generate_topology_mermaid handles large registries and port fallbacks."""
+    from hexastack_cqrs.infra.registries.command import CommandRegistry
+    from hexastack_cqrs.infra.registries.query import QueryRegistry
+    from hexastack_ui.adapters.nicegui.devtools import generate_topology_mermaid
+
+    container = Container()
+    cmd_reg = CommandRegistry()
+    qry_reg = QueryRegistry()
+
+    for idx in range(5):
+        cmd_type = type(f"Command{idx}", (Command,), {})
+        qry_type = type(f"Query{idx}", (Query,), {})
+        cmd_reg.register(cmd_type)  # type: ignore[arg-type]
+        qry_reg.register(qry_type)  # type: ignore[arg-type]
+
+    container.add_instance(cmd_reg, declared_class=CommandRegistry)
+    container.add_instance(qry_reg, declared_class=QueryRegistry)
+
+    mermaid_code = generate_topology_mermaid(container)
+    has_cmd_count = "Commands (5 registered)" in mermaid_code
+    assert has_cmd_count is True
+    has_qry_count = "Queries (5 registered)" in mermaid_code
+    assert has_qry_count is True
+
+    # Test container with EventBus and Storage without CQRS
+    empty_cqrs_container = Container()
+
+    class FakeEventBusAdapter:
+        pass
+
+    class FakeDatabaseUnitOfWork:
+        pass
+
+    empty_cqrs_container.add_instance(
+        FakeEventBusAdapter(), declared_class=FakeEventBusAdapter
+    )
+    empty_cqrs_container.add_instance(
+        FakeDatabaseUnitOfWork(), declared_class=FakeDatabaseUnitOfWork
+    )
+
+    mermaid_code_fallback = generate_topology_mermaid(empty_cqrs_container)
+    has_bus_link = "Pipeline -.-> EventBus" in mermaid_code_fallback
+    assert has_bus_link is True
+    has_storage_link = "Pipeline --> Storage" in mermaid_code_fallback
+    assert has_storage_link is True

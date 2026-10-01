@@ -13,6 +13,7 @@ from pathlib import Path
 import typer
 
 from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.infra.fs import atomic_write_text
 
 __all__ = [
     "add_load_command",
@@ -176,7 +177,7 @@ class HexastackUser(HttpUser):
     def get_info(self):
         self.client.get("/info")
 '''
-            target_locust_path.write_text(default_content, encoding="utf-8")
+            atomic_write_text(target_locust_path, default_content, encoding="utf-8")
             typer.echo(f"📝 Generated default '{locustfile}' scenario.")
 
         typer.echo(

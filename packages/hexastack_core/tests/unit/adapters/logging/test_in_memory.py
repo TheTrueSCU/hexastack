@@ -78,3 +78,14 @@ def test_in_memory_logger_capture_and_filter():
     # Clear
     logger.clear()
     assert len(logger.all()) == 0
+
+
+def test_log_entry_memory_slots():
+    """Verify LogEntry leverages __slots__ to eliminate __dict__ overhead."""
+    from hexastack_core.adapters.logging.in_memory import LogEntry
+
+    entry = LogEntry(level="info", message="test message")
+    has_dict = hasattr(entry, "__dict__")
+    assert has_dict is False
+    has_slots = hasattr(entry, "__slots__")
+    assert has_slots is True

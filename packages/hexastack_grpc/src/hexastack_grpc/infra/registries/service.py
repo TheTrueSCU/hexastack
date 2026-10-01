@@ -10,7 +10,7 @@ from hexastack_grpc.domain.exceptions import ServiceRegistrationError
 from hexastack_grpc.infra.config import HexastackGrpcConfig
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class GrpcServiceRegistration:
     """Dataclass holding registered gRPC servicer and its protobuf attachment hook."""
 

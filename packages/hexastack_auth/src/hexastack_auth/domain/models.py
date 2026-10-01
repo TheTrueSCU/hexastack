@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Identity:
     """Immutable domain representation of an authenticated security principal.
 
@@ -87,7 +87,7 @@ class Identity:
         return role in self.roles
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class AnonymousIdentity(Identity):
     """Domain representation of an unauthenticated or anonymous caller.
 
@@ -104,7 +104,7 @@ class AnonymousIdentity(Identity):
     is_authenticated: bool = False
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class TokenPayload:
     """Parsed token payload representation.
 

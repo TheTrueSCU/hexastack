@@ -1,4 +1,4 @@
-"""Unit tests for msgspec-powered CloudEvent and Outbox serialization."""
+from typing import Any
 
 from hexastack_events.domain.models import CloudEventEnvelope
 from hexastack_events.domain.serialization import (
@@ -84,3 +84,44 @@ def test_msgspec_envelope_serializer_adapter():
     restored_mp = msgpack_serializer.deserialize_envelope(mp_bytes)
     assert restored_mp.id == envelope.id
     assert restored_mp.data == envelope.data
+
+
+def test_singledispatch_event_formatting():
+    """Verify functools.singledispatch allows custom event type formatting and serialization."""
+    from dataclasses import dataclass
+
+    import pytest
+
+    from hexastack_events.domain.serialization import format_event_payload
+
+    @dataclass(frozen=True, slots=True)
+    class CustomPaymentEvent:
+        payment_ref: str
+        total_cents: int
+
+    # Register custom formatter on singledispatch
+    @format_event_payload.register(CustomPaymentEvent)
+    def _format_payment(event: CustomPaymentEvent) -> dict[str, Any]:
+        return {
+            "type": "payment.custom",
+            "ref": event.payment_ref,
+            "amount": event.total_cents,
+        }
+
+    evt = CustomPaymentEvent(payment_ref="PAY-999", total_cents=5000)
+    formatted = format_event_payload(evt)
+    ref_val = formatted["ref"]
+    assert ref_val == "PAY-999"
+
+    # Encode directly using msgspec encoder via singledispatch
+    raw = encode_cloudevent_bytes(evt)
+    decoded = decode_cloudevent_bytes(raw)
+    assert decoded["ref"] == "PAY-999"
+    assert decoded["amount"] == 5000
+
+    # Non-supported object raises TypeError
+    class UnregisteredType:
+        pass
+
+    with pytest.raises(TypeError, match="Unsupported event payload type"):
+        format_event_payload(UnregisteredType())

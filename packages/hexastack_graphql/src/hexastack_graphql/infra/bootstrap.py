@@ -16,7 +16,7 @@ from hexastack_graphql.infra.decorators import get_schema_registry
 from hexastack_graphql.infra.extensions import CorrelationExtension
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class GraphQLBootstrapResult:
     """Dataclass holding compiled GraphQL schema and configuration."""
 

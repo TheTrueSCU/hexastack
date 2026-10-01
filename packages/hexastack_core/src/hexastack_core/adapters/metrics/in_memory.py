@@ -10,7 +10,7 @@ from typing import Any
 from hexastack_core.ports.metrics import MetricsPort
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MetricRecord:
     """Immutable record capturing a single metric measurement.
 

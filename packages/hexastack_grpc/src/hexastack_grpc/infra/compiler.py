@@ -12,6 +12,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.infra.fs import atomic_write_text
 from hexastack_grpc.domain.exceptions import ProtoCompilationError
 from hexastack_grpc.domain.models import ProtoSchemaMetadata
 
@@ -85,7 +86,9 @@ class ProtoCompiler:
         # Ensure __init__.py exists in output directory
         init_file = out_path / "__init__.py"
         if not init_file.exists():
-            init_file.write_text('"""Generated gRPC stubs and protobuf messages."""\n')
+            atomic_write_text(
+                init_file, '"""Generated gRPC stubs and protobuf messages."""\n'
+            )
 
         return sorted(out_path.glob("*_pb2*"))
 

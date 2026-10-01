@@ -11,6 +11,7 @@ from pathlib import Path
 
 from hexastack_cli.testing.events import TerminalEvent
 from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.infra.fs import atomic_write_text
 
 TERMINAL_HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -275,7 +276,7 @@ def _render_in_clean_thread(
         vtt_lines.append("")
 
     vtt_path = output_path.with_suffix(".vtt")
-    vtt_path.write_text("\n".join(vtt_lines), encoding="utf-8")
+    atomic_write_text(vtt_path, "\n".join(vtt_lines), encoding="utf-8")
 
     return output_path, vtt_path
 

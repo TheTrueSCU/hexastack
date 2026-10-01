@@ -199,7 +199,7 @@
 <!-- hexastack_grpc_infra_compiler -->
 <g id="node18" class="node">
 <title>hexastack_grpc_infra_compiler</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#343479" stroke="black" cx="1249" cy="-616.22" rx="67.76" ry="28.98"/>
+<ellipse fill="#2e2e6b" stroke="black" cx="1249" cy="-616.22" rx="67.76" ry="28.98"/>
 <text text-anchor="middle" x="1249" y="-624.72" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">hexastack_grpc.</text>
 <text text-anchor="middle" x="1249" y="-613.72" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">infra.</text>
 <text text-anchor="middle" x="1249" y="-602.72" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">compiler</text>

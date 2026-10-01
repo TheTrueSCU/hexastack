@@ -35,3 +35,12 @@ def test_event_context_fields():
     assert ctx.correlation_id == "corr-abc"
     assert ctx.tenant_id == "tenant-42"
     assert ctx.extensions["partition_key"] == "user_99"
+
+
+def test_event_context_memory_slots():
+    """Verify EventContext leverages __slots__ to eliminate __dict__ overhead."""
+    ctx = EventContext(event_id="evt-slots", event_type="UserEvent", source="test")
+    has_dict = hasattr(ctx, "__dict__")
+    assert has_dict is False
+    has_slots = hasattr(ctx, "__slots__")
+    assert has_slots is True

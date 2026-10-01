@@ -24,7 +24,7 @@ from hexastack_grpc.infra.interceptors.logging import (
 from hexastack_grpc.infra.registries.service import GrpcServiceRegistry
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class GrpcBootstrapResult:
     """Dataclass holding initialized gRPC server and configuration."""
 

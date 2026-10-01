@@ -7,7 +7,7 @@ from pydantic import BaseModel
 _HANDLER_META_ATTR = "__hexastack_handler__"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ConfigMetadata:
     """Metadata tag attached to configuration classes for autodiscovery.
 
@@ -18,7 +18,7 @@ class ConfigMetadata:
     section_name: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ExceptionMetadata:
     """Metadata tag attached to exception handlers for autodiscovery.
 

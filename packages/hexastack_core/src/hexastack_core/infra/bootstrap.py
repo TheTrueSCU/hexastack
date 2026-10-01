@@ -75,7 +75,7 @@ class BootstrapContext:
         self.visitors.append(visitor)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class BootstrapResult:
     """Dataclass holding all initialized registries, container, and extension state.
 

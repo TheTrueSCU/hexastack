@@ -12,7 +12,7 @@ from hexastack_core.ports.notification import (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class NotificationRecord:
     """Immutable record of a dispatched notification."""
 

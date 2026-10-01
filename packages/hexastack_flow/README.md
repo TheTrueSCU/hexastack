@@ -52,6 +52,7 @@ from my_domain.commands import (
     ChargePaymentCommand,
 )
 
+
 def build_trip_booking_workflow(bus: CommandBusPort, customer_id: str) -> Workflow:
     """Construct a durable distributed saga as a hexaflow Workflow."""
     workflow = (
@@ -60,7 +61,9 @@ def build_trip_booking_workflow(bus: CommandBusPort, customer_id: str) -> Workfl
         .stage(
             "flight",
             as_command_step(
-                lambda ctx: BookFlightCommand(customer_id=customer_id, destination="JFK"),
+                lambda ctx: BookFlightCommand(
+                    customer_id=customer_id, destination="JFK"
+                ),
                 bus,
                 name="book_flight",
             ),
@@ -69,7 +72,9 @@ def build_trip_booking_workflow(bus: CommandBusPort, customer_id: str) -> Workfl
         .stage(
             "hotel",
             as_command_step(
-                lambda ctx: BookHotelCommand(customer_id=customer_id, room_type="deluxe"),
+                lambda ctx: BookHotelCommand(
+                    customer_id=customer_id, room_type="deluxe"
+                ),
                 bus,
                 name="book_hotel",
             ),
@@ -79,7 +84,9 @@ def build_trip_booking_workflow(bus: CommandBusPort, customer_id: str) -> Workfl
         .stage(
             "payment",
             as_command_step(
-                lambda ctx: ChargePaymentCommand(customer_id=customer_id, amount_cents=50000),
+                lambda ctx: ChargePaymentCommand(
+                    customer_id=customer_id, amount_cents=50000
+                ),
                 bus,
                 name="charge_payment",
             ),
@@ -87,6 +94,7 @@ def build_trip_booking_workflow(bus: CommandBusPort, customer_id: str) -> Workfl
         )
     )
     return workflow
+
 
 # 2. Execute via CqrsWorkflowRunner (with durable DB checkpoints)
 runner = CqrsWorkflowRunner(engine=engine)

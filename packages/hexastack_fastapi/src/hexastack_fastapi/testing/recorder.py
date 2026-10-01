@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.infra.fs import atomic_write_text
 from hexastack_fastapi.testing.cursor import VIRTUAL_CURSOR_SCRIPT
 
 CAPTION_BANNER_SCRIPT = """
@@ -220,7 +221,7 @@ class DemoNarrator:
         out_dir = Path("docs/assets/demos")
         out_dir.mkdir(parents=True, exist_ok=True)
         vtt_path = out_dir / f"{self.output_name or 'demo'}.vtt"
-        vtt_path.write_text("\n".join(vtt_lines), encoding="utf-8")
+        atomic_write_text(vtt_path, "\n".join(vtt_lines), encoding="utf-8")
         return vtt_path
 
     @staticmethod

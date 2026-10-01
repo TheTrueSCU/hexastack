@@ -42,10 +42,21 @@ def test_profiling_commands():
             assert res_mem_missing.exit_code == 1
 
         with (
-            patch("pathlib.Path.write_text"),
+            patch(
+                "hexastack.adapters.cli.devtools.commands.profiling.atomic_write_text"
+            ),
             patch("pathlib.Path.exists", return_value=False),
         ):
             res_load_exec = runner.invoke(
                 app, ["load", "--users", "10", "--run-time", "5s"]
             )
             assert res_load_exec.exit_code == 0
+
+    # Test MissingDependencyError when memray is not available
+    with patch("importlib.util.find_spec", return_value=None):
+        import pytest
+
+        from hexastack_core.domain.exceptions import MissingDependencyError
+
+        with pytest.raises(MissingDependencyError, match="memray is required"):
+            runner.invoke(app, ["profile", "memory"], catch_exceptions=False)

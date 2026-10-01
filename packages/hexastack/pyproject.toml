@@ -120,6 +120,11 @@ pgvector = [
 postgresql = [
     "hexastack-db[postgresql]",
 ]
+profiling = [
+    "locust>=2.46.6",
+    "memray>=1.20.0",
+    "py-spy>=0.4.2",
+]
 qdrant = [
     "hexastack-ai[qdrant]",
 ]

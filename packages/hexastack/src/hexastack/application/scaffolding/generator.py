@@ -13,6 +13,7 @@ from hexastack.application.scaffolding import templates
 from hexastack.application.scaffolding.models import (
     ScaffoldConfig,
 )
+from hexastack_core.infra.fs import atomic_write_text
 
 
 class ProjectScaffolder:
@@ -63,8 +64,7 @@ class ProjectScaffolder:
 
     def _write_file(self, rel_path: str, content: str) -> None:
         file_path = self.target_dir / rel_path
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content.strip() + "\n", encoding="utf-8")
+        atomic_write_text(file_path, content.strip() + "\n", encoding="utf-8")
 
     # ----------------------------------------------------------------------
     # Configuration & Tooling Files

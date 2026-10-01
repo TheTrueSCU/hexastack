@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.infra.fs import atomic_write_text
 from hexastack_db.infra.config import HexastackDatabaseConfig
 
 if TYPE_CHECKING:
@@ -182,10 +183,12 @@ def init_migrations(
     # a config_file_name to emit alembic.ini).
     migrations_dir.mkdir(parents=True)
     (migrations_dir / "versions").mkdir()
-    (migrations_dir / "README").write_text(
-        "Hexastack DB Migrations — managed by hexastack-db[migrations]\n"
+    atomic_write_text(
+        migrations_dir / "README",
+        "Hexastack DB Migrations — managed by hexastack-db[migrations]\n",
     )
-    (migrations_dir / "script.py.mako").write_text(
+    atomic_write_text(
+        migrations_dir / "script.py.mako",
         '"""${message}\n\nRevision ID: ${up_revision}\nRevises: ${down_revision | comma,n}\n'
         'Create Date: ${create_date}\n\n"""\n\nfrom typing import Sequence, Union\n\n'
         'from alembic import op\nimport sqlalchemy as sa\n${imports if imports else ""}\n\n'
@@ -193,12 +196,12 @@ def init_migrations(
         "branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}\n"
         "depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}\n\n\n"
         "def upgrade() -> None:\n    ${upgrades if upgrades else 'pass'}\n\n\n"
-        "def downgrade() -> None:\n    ${downgrades if downgrades else 'pass'}\n"
+        "def downgrade() -> None:\n    ${downgrades if downgrades else 'pass'}\n",
     )
 
     # Overwrite env.py with hexastack-aware version
     url = db_config.url if db_config else "sqlite:///hexastack.db"
-    (migrations_dir / "env.py").write_text(_env_py_template(url))
+    atomic_write_text(migrations_dir / "env.py", _env_py_template(url))
 
 
 def run_check(config: AlembicConfig) -> None:

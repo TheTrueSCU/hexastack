@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ProtoSchemaMetadata:
     """Metadata describing an inline or file-referenced protobuf schema."""
 

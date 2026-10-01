@@ -13,7 +13,7 @@ from hexastack_core.infra.decorators import (
 _HANDLER_META_ATTR = "__hexastack_handler__"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class HandlerMetadata:
     """Metadata tag attached to handler functions for autodiscovery.
 
@@ -26,7 +26,7 @@ class HandlerMetadata:
     target_cls: type[Any]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PresenterMetadata:
     """Metadata tag attached to presenter classes or callables for autodiscovery.
 
@@ -39,7 +39,7 @@ class PresenterMetadata:
     output_format: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class FeatureFlagMetadata:
     """Metadata tag attached to handlers or pipeline targets for feature flag gating.
 
@@ -236,7 +236,7 @@ _QUERY_CACHE_META_ATTR = "__hexastack_query_cache__"
 _COMMAND_INVALIDATION_META_ATTR = "__hexastack_cache_invalidation__"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class QueryCacheMetadata:
     """Metadata tag attached to Query models for declarative result caching.
 
@@ -251,7 +251,7 @@ class QueryCacheMetadata:
     key_builder: Callable[[Any], str] | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CommandInvalidationMetadata:
     """Metadata tag attached to Command models for declarative cache purging.
 
@@ -337,7 +337,7 @@ def invalidates_cache(
 _CIRCUIT_BREAKER_META_ATTR = "__hexastack_circuit_breaker__"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CircuitBreakerMetadata:
     """Metadata tag attached to command or query classes for declarative circuit breaker protection.
 

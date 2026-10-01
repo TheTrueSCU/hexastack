@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from hexastack_core.ports.logging import Extras, LoggingPort
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class LogEntry:
     """Immutable record representing a captured log message entry.
 

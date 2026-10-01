@@ -10,6 +10,7 @@ from typing import Any
 from typer.testing import CliRunner, Result
 
 from hexastack_cli.testing.events import TerminalEvent
+from hexastack_core.infra.fs import atomic_write_text
 
 
 class CliNarrator:
@@ -155,7 +156,7 @@ class CliNarrator:
             vtt_lines.append("")
 
         vtt_path = out_dir / f"{base_name}.vtt"
-        vtt_path.write_text("\n".join(vtt_lines), encoding="utf-8")
+        atomic_write_text(vtt_path, "\n".join(vtt_lines), encoding="utf-8")
         artifacts["vtt"] = vtt_path
 
         # 2. Render directly to .webm video via Playwright Rich Terminal

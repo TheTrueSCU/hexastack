@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 import importlib.resources
 
 __all__ = [
+    "generate_topology_mermaid",
     "mount_devtools_dashboard",
 ]
 
@@ -331,6 +332,176 @@ def _render_container_tab(container: Container) -> None:
         )
 
 
+def _build_mermaid_middlewares(container: Container, lines: list[str]) -> None:
+    """Append middleware chain nodes and links to Mermaid lines."""
+    from hexastack_cqrs.ports.buses import CommandBusPort
+
+    cmd_bus = container.resolve(CommandBusPort) if CommandBusPort in container else None
+    middlewares = getattr(cmd_bus, "_middleware", []) if cmd_bus else []
+    if not middlewares:
+        lines.append('    Client --> Pipeline["Execution Pipeline"]')
+        return
+
+    mw_nodes: list[str] = []
+    for idx, mw in enumerate(middlewares, 1):
+        mw_name = type(mw).__name__
+        mw_id = f"MW{idx}"
+        lines.append(f'    {mw_id}["{idx}. {mw_name}"]')
+        mw_nodes.append(mw_id)
+
+    lines.append(f"    Client --> {mw_nodes[0]}")
+    for i in range(len(mw_nodes) - 1):
+        lines.append(f"    {mw_nodes[i]} --> {mw_nodes[i + 1]}")
+    lines.append(f'    {mw_nodes[-1]} --> Pipeline["Execution Pipeline"]')
+
+
+def _build_mermaid_cqrs(
+    container: Container, lines: list[str]
+) -> tuple[bool, list[str], list[str]]:
+    """Append CQRS message nodes and links to Mermaid lines.
+
+    Returns:
+        Tuple of (has_cqrs, cmd_names, qry_names).
+    """
+    from hexastack_cqrs.infra.registries.command import CommandRegistry
+    from hexastack_cqrs.infra.registries.query import QueryRegistry
+
+    cmd_reg = (
+        container.resolve(CommandRegistry) if CommandRegistry in container else None
+    )
+    qry_reg = container.resolve(QueryRegistry) if QueryRegistry in container else None
+
+    cmd_names = (
+        [getattr(k, "__name__", str(k)) for k in cmd_reg.all.values()]
+        if cmd_reg
+        else []
+    )
+    qry_names = (
+        [getattr(k, "__name__", str(k)) for k in qry_reg.all.values()]
+        if qry_reg
+        else []
+    )
+
+    has_cqrs = False
+    if cmd_names:
+        has_cqrs = True
+        cmd_label = (
+            f"Commands ({', '.join(cmd_names)})"
+            if len(cmd_names) <= 3
+            else f"Commands ({len(cmd_names)} registered)"
+        )
+        lines.append(f'    Pipeline --> Commands["{cmd_label}"]')
+
+    if qry_names:
+        has_cqrs = True
+        qry_label = (
+            f"Queries ({', '.join(qry_names)})"
+            if len(qry_names) <= 3
+            else f"Queries ({len(qry_names)} registered)"
+        )
+        lines.append(f'    Pipeline --> Queries["{qry_label}"]')
+
+    return has_cqrs, cmd_names, qry_names
+
+
+def _build_mermaid_ports(
+    container: Container,
+    lines: list[str],
+    cmd_names: list[str],
+    qry_names: list[str],
+) -> bool:
+    """Append external port nodes and linkages to Mermaid lines.
+
+    Returns:
+        True if any external ports were added, False otherwise.
+    """
+    service_map = getattr(container, "_map", {})
+    service_names = [getattr(cls, "__name__", str(cls)) for cls in service_map]
+
+    has_event_bus = any("EventBus" in s for s in service_names)
+    has_flags = any("FeatureFlag" in s or "Flag" in s for s in service_names)
+    has_storage = any(
+        "Repository" in s or "UnitOfWork" in s or "Database" in s for s in service_names
+    )
+    has_cache = any("Cache" in s or "Lock" in s for s in service_names)
+
+    if has_flags:
+        lines.append('    Pipeline -.-> Flags["Feature Flag Port"]')
+
+    if has_event_bus:
+        lines.append('    EventBus["Distributed Event Bus"]')
+        target = "Commands" if cmd_names else "Pipeline"
+        lines.append(f"    {target} -.-> EventBus")
+
+    if has_storage:
+        lines.append('    Storage["Persistence / Repositories"]')
+        if cmd_names:
+            lines.append("    Commands --> Storage")
+        if qry_names:
+            lines.append("    Queries --> Storage")
+        if not cmd_names and not qry_names:
+            lines.append("    Pipeline --> Storage")
+
+    if has_cache:
+        lines.append('    Pipeline -.-> Cache["Cache & Lock Ports"]')
+
+    return has_event_bus or has_flags or has_storage or has_cache
+
+
+def generate_topology_mermaid(
+    container: Container,
+    pipeline: ExecutionPipeline | None = None,
+) -> str:
+    """Generate a Mermaid diagram representing runtime resource interconnects.
+
+    Inspects registered CQRS messages, middleware chains, event buses,
+    repositories, and feature flag adapters in the DI container.
+
+    Args:
+        container: Application dependency injection container.
+        pipeline: Optional CQRS execution pipeline instance.
+
+    Returns:
+        Mermaid syntax string (graph LR).
+
+    Raises:
+        None.
+
+    Notes/Architectural Intent:
+        Constructs an architectural topology graph for real-time visualization
+        in Hexastack DevTools, exposing data flow relationships between
+        entrypoint clients, middlewares, command/query dispatchers, and external ports.
+    """
+    lines = ["graph LR", '    Client["Client / Entrypoint"]']
+    _build_mermaid_middlewares(container, lines)
+    has_cqrs, cmd_names, qry_names = _build_mermaid_cqrs(container, lines)
+    has_ports = _build_mermaid_ports(container, lines, cmd_names, qry_names)
+
+    if not has_cqrs and not has_ports:
+        lines.append(
+            '    Pipeline --> EmptyServices["DI Container (No services registered)"]'
+        )
+
+    return "\n".join(lines)
+
+
+def _render_topology_tab(
+    container: Container, pipeline: ExecutionPipeline | None = None
+) -> None:
+    """Render resource interconnect topology graph tab using Mermaid."""
+    from nicegui import ui
+
+    ui.label("Resource Interconnect Topology").classes("hx-section-heading")
+    ui.label(
+        "Interactive architectural interconnect graph across entrypoints, "
+        "CQRS pipelines, event buses, and storage ports."
+    ).classes("hx-subtext")
+
+    mermaid_code = generate_topology_mermaid(container, pipeline)
+    with ui.card().classes("hx-card w-full items-center justify-center p-4"):
+        ui.mermaid(mermaid_code).classes("w-full")
+
+
 def _render_devtools_content(
     container: Container,
     pipeline: ExecutionPipeline | None,
@@ -353,6 +524,7 @@ def _render_devtools_content(
         tab_cqrs = ui.tab("CQRS Registry", icon="bolt")
         tab_flags = ui.tab("Feature Flags", icon="toggle_on")
         tab_container = ui.tab("DI Container", icon="hub")
+        tab_topology = ui.tab("Resource Topology", icon="account_tree")
 
     with ui.tab_panels(tabs, value=tab_cqrs).classes("w-full p-6"):
         with ui.tab_panel(tab_cqrs):
@@ -363,6 +535,9 @@ def _render_devtools_content(
 
         with ui.tab_panel(tab_container):
             _render_container_tab(container)
+
+        with ui.tab_panel(tab_topology):
+            _render_topology_tab(container, pipeline=pipeline)
 
 
 def mount_devtools_dashboard(

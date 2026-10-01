@@ -31,7 +31,7 @@ from hexastack_db.infra.engine import (
 from hexastack_db.infra.registries.metadata import get_registered_metadata
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class DatabaseBootstrapResult:
     """Dataclass holding initialized database engines, sessionmakers, and Unit of Work."""
 

@@ -57,7 +57,7 @@ class EvaluationContext(Generic):
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class FlagEvaluationDetails[T]:
     """Detailed result of a feature flag evaluation.
 

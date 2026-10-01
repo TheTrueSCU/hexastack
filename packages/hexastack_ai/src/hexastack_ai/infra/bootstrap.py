@@ -8,7 +8,7 @@ from hexastack_core.ports.ai import LlmProviderPort
 from hexastack_core.ports.bootstrap import BootstrapperPort
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class AiBootstrapResult:
     """Dataclass holding initialized AI provider and configuration."""
 

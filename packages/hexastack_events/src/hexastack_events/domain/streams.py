@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class StreamMessage:
     """Represents an immutable, sequenced message in a distributed partition stream.
 
@@ -33,7 +33,7 @@ class StreamMessage:
     headers: dict[str, str] = field(default_factory=dict)
 
 
-@dataclass
+@dataclass(slots=True)
 class StreamPartitionOffset:
     """Tracks consumer group progress and acked offsets on a stream partition."""
 

@@ -56,7 +56,7 @@ from hexastack_cqrs.ports.buses import (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CqrsBootstrapResult:
     """Dataclass holding initialized CQRS registries, container, and execution pipeline.
 

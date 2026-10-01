@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class EventContext:
     """Contextual metadata accompanying an in-flight or received domain event.
 

@@ -106,3 +106,24 @@ def test_token_payload():
     assert payload.custom_claims["email"] == "test@example.com"
     assert payload.expires_at == 1700000000
     assert payload.issued_at == 1699996400
+
+
+def test_auth_models_memory_slots():
+    """Verify Identity, AnonymousIdentity, and TokenPayload leverage __slots__."""
+    ident = Identity(user_id="u1")
+    has_ident_dict = hasattr(ident, "__dict__")
+    assert has_ident_dict is False
+    has_ident_slots = hasattr(ident, "__slots__")
+    assert has_ident_slots is True
+
+    anon = AnonymousIdentity()
+    has_anon_dict = hasattr(anon, "__dict__")
+    assert has_anon_dict is False
+    has_anon_slots = hasattr(anon, "__slots__")
+    assert has_anon_slots is True
+
+    payload = TokenPayload(subject="u1")
+    has_payload_dict = hasattr(payload, "__dict__")
+    assert has_payload_dict is False
+    has_payload_slots = hasattr(payload, "__slots__")
+    assert has_payload_slots is True

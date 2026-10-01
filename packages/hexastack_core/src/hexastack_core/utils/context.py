@@ -5,7 +5,7 @@ from contextvars import ContextVar, Token
 from dataclasses import dataclass, field
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class UserContext:
     """Dataclass encapsulating authenticated user and multi-tenancy context.
 

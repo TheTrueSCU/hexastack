@@ -179,6 +179,7 @@ agent = create_cqrs_agent(
 from mcp.client.session import ClientSession
 from hexastack_ai.adapters.mcp import attach_external_mcp_tools
 
+
 # Connect external MCP tools dynamically to any PydanticAI agent:
 async def setup_agent_with_mcp(agent, session: ClientSession):
     registered_tools = await attach_external_mcp_tools(agent, session)
