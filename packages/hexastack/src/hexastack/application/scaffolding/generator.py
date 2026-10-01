@@ -79,6 +79,7 @@ class ProjectScaffolder:
             ".importlinter", templates.render_importlinter(self.package_name)
         )
         self._write_file(".pre-commit-config.yaml", templates.render_precommit())
+        self._write_file(".secrets.baseline", templates.render_secrets_baseline())
         self._write_file(".github/workflows/ci.yml", templates.render_github_ci())
         self._write_file(
             "README.md", templates.render_readme(self.config, self.package_name)

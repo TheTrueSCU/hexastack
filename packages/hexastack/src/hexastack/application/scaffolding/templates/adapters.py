@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 def render_driven_database(package_name: str) -> str:
     return f'''"""In-memory and persistent database adapters."""
 
-from typing import Optional
 from {package_name}.domain.models import Item
 from {package_name}.ports.repositories import ItemRepositoryPort
 
@@ -20,12 +19,15 @@ class InMemoryItemRepository(ItemRepositoryPort):
     """In-memory repository adapter for local development and unit tests."""
 
     def __init__(self) -> None:
+        """Initialize in-memory storage dictionary."""
         self._storage: dict[str, Item] = {{}}
 
     def save(self, item: Item) -> None:
+        """Persist item into memory storage."""
         self._storage[item.id] = item
 
-    def get_by_id(self, item_id: str) -> Optional[Item]:
+    def get_by_id(self, item_id: str) -> Item | None:
+        """Retrieve item by identifier."""
         return self._storage.get(item_id)
 '''
 
@@ -48,7 +50,7 @@ def main() -> None:
     if cli_app is not None:
         cli_app()
     else:
-        sys.stderr.write("CLI application failed to bootstrap.\n")
+        sys.stderr.write("CLI application failed to bootstrap.\\n")
         sys.exit(1)
 '''
 

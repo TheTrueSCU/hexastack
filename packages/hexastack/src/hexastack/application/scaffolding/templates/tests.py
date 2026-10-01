@@ -153,14 +153,13 @@ def render_test_ports_repositories(package_name: str) -> str:
     """
     return f'''"""Unit tests verifying ItemRepositoryPort interface."""
 
-import pytest
 from {package_name}.ports.repositories import ItemRepositoryPort
 
 
 def test_item_repository_port_abstract():
-    """Verify ItemRepositoryPort cannot be instantiated directly."""
-    with pytest.raises(TypeError):
-        ItemRepositoryPort()  # type: ignore[abstract]
+    """Verify ItemRepositoryPort declares abstract methods."""
+    abstract_methods = ItemRepositoryPort.__abstractmethods__
+    assert abstract_methods == frozenset({{"get_by_id", "save"}})
 '''
 
 
@@ -208,6 +207,8 @@ def render_test_adapters_cli(package_name: str) -> str:
     """
     return f'''"""Unit tests for CLI driving adapter."""
 
+from unittest.mock import MagicMock, patch
+import pytest
 from {package_name}.adapters.driving.cli import main
 
 
@@ -215,6 +216,27 @@ def test_cli_module_loaded():
     """Verify CLI main entrypoint is callable."""
     is_callable = callable(main)
     assert is_callable is True
+
+
+def test_cli_main_success():
+    """Verify CLI main invokes cli_app when available."""
+    mock_cli = MagicMock()
+    with patch(
+        "{package_name}.infra.bootstrap.create_app",
+        return_value={{"cli_app": mock_cli}},
+    ):
+        main()
+        called = mock_cli.called
+        assert called is True
+
+
+def test_cli_main_failure():
+    """Verify CLI main exits when cli_app is missing."""
+    with patch("{package_name}.infra.bootstrap.create_app", return_value={{}}):
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        code = exc_info.value.code
+        assert code == 1
 '''
 
 

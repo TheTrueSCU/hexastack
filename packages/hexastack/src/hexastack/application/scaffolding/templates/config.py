@@ -71,7 +71,7 @@ __pycache__
 def render_pyproject_toml(config: ScaffoldConfig, package_name: str) -> str:
     extras_list: list[str] = []
     if config.template in ("web-api", "enterprise"):
-        extras_list.extend(["fastapi", "db", "ui"])
+        extras_list.extend(["fastapi", "db", "ui", "cli"])
     elif config.template == "grpc-service" or config.include_grpc:
         extras_list.extend(["grpc", "db", "cli"])
     elif config.template == "graphql-service" or config.include_graphql:
@@ -109,6 +109,7 @@ readme = "README.md"
 requires-python = "{config.python_version}"
 dependencies = [
     "hexastack{extras_str}>=0.7.0",
+    "pydantic-settings>=2.0.0",
 ]
 
 [project.scripts]
@@ -121,6 +122,11 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "hexaqual[all]>=0.9.0",
+    "hypothesis>=6.168.3",
+    "pre-commit>=4.6.2",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.9",
+    "ty>=0.0.84",
 ]
 
 [tool.complexipy]
@@ -143,6 +149,9 @@ ignore = ["D100", "D104", "D107", "E501"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
 {mutation_config}"""
 
 
@@ -211,23 +220,192 @@ def render_precommit() -> str:
 
 
 def render_gitignore() -> str:
-    return """.git
-.gitignore
-.venv
-.pytest_cache
-.coverage
-.mutmut-cache
-.secrets.baseline
-htmlcov
-dist
-build
-__pycache__
-*.pyc
+    return """# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Hexaqual managed agent assets
+# Caches and Environments
+.venv/
+env/
+venv/
+.cache/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ty_cache/
+.hypothesis/
+.complexipy_cache/
+.hexaflow/
+.import_linter_cache/
+.ropeproject/
+
+# Test & Coverage
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+junit.xml
+*.xml
+*.cover
+
+# Build & Packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Database files & Local State
+*.db*
+*.sqlite
+*.sqlite3
+logs/
+*.log
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Hexaqual managed agent assets (materialized via hexaqual agents sync)
 .agents/rules/hexaqual-*
 .agents/workflows/hexaqual-*
 .agents/skills/hexaqual_*
+"""
+
+
+def render_secrets_baseline() -> str:
+    return """{
+  "version": "1.5.0",
+  "plugins_used": [
+    {
+      "name": "ArtifactoryDetector"
+    },
+    {
+      "name": "AWSKeyDetector"
+    },
+    {
+      "name": "AzureStorageKeyDetector"
+    },
+    {
+      "name": "Base64HighEntropyString",
+      "limit": 4.5
+    },
+    {
+      "name": "BasicAuthDetector"
+    },
+    {
+      "name": "CloudantDetector"
+    },
+    {
+      "name": "DiscordBotTokenDetector"
+    },
+    {
+      "name": "GitHubTokenDetector"
+    },
+    {
+      "name": "GitLabTokenDetector"
+    },
+    {
+      "name": "HexHighEntropyString",
+      "limit": 3.0
+    },
+    {
+      "name": "IbmCloudIamDetector"
+    },
+    {
+      "name": "IbmCosHmacDetector"
+    },
+    {
+      "name": "IPPublicDetector"
+    },
+    {
+      "name": "JwtTokenDetector"
+    },
+    {
+      "name": "KeywordDetector",
+      "keyword_exclude": ""
+    },
+    {
+      "name": "MailchimpDetector"
+    },
+    {
+      "name": "NpmDetector"
+    },
+    {
+      "name": "OpenAIDetector"
+    },
+    {
+      "name": "PrivateKeyDetector"
+    },
+    {
+      "name": "PypiTokenDetector"
+    },
+    {
+      "name": "SendGridDetector"
+    },
+    {
+      "name": "SlackDetector"
+    },
+    {
+      "name": "SoftlayerDetector"
+    },
+    {
+      "name": "SquareOAuthDetector"
+    },
+    {
+      "name": "StripeDetector"
+    },
+    {
+      "name": "TelegramBotTokenDetector"
+    },
+    {
+      "name": "TwilioKeyDetector"
+    }
+  ],
+  "filters_used": [
+    {
+      "path": "detect_secrets.filters.allowlist.is_line_allowlisted"
+    },
+    {
+      "path": "detect_secrets.filters.common.is_baseline_file",
+      "filename": ".secrets.baseline"
+    },
+    {
+      "path": "detect_secrets.filters.common.is_ignored_due_to_verification_policies",
+      "min_level": 2
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_indirect_reference"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_likely_id_string"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_lock_file"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_not_alphanumeric_string"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_potential_uuid"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_prefixed_with_dollar_sign"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_sequential_string"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_swagger_file"
+    },
+    {
+      "path": "detect_secrets.filters.heuristic.is_templated_secret"
+    }
+  ],
+  "results": {}
+}
 """
 
 

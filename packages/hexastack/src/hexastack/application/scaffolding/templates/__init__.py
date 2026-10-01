@@ -26,6 +26,7 @@ from hexastack.application.scaffolding.templates.config import (
     render_precommit,
     render_pyproject_toml,
     render_readme,
+    render_secrets_baseline,
 )
 from hexastack.application.scaffolding.templates.devcontainer import (
     render_devcontainer_json,
@@ -103,6 +104,7 @@ __all__ = [
     "render_proto_file",
     "render_pyproject_toml",
     "render_readme",
+    "render_secrets_baseline",
     "render_security_md",
     "render_test_adapters_cli",
     "render_test_adapters_database",

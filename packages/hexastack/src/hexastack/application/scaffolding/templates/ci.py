@@ -33,6 +33,7 @@ jobs:
         uses: TheTrueSCU/hexaqual@v0.9.0
         with:
           skip-hooks: hexaqual-agents
+          sync-args: "--all-groups"
 
   test-suite:
     name: Unit & Architecture Tests
@@ -53,7 +54,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install Dependencies
-        run: uv sync
+        run: uv sync --all-groups
 
       - name: Run Test Suite
         run: uv run pytest

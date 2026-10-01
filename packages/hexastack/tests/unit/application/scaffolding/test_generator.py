@@ -27,6 +27,7 @@ def test_scaffold_project_generates_all_files():
         assert (proj_dir / "pyproject.toml").exists()
         assert (proj_dir / ".importlinter").exists()
         assert (proj_dir / ".pre-commit-config.yaml").exists()
+        assert (proj_dir / ".secrets.baseline").exists()
         assert (proj_dir / ".github" / "workflows" / "ci.yml").exists()
         assert (proj_dir / "README.md").exists()
         assert (proj_dir / ".devcontainer" / "devcontainer.json").exists()
