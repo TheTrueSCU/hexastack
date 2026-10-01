@@ -34,6 +34,8 @@ class SentryErrorAdapter(LoggingPort):
         """
         self.inner_logger = inner_logger
         self.dsn = dsn
+        self.environment = environment
+        self.release = release
         self._sentry_initialized = False
 
         if dsn:
@@ -51,6 +53,38 @@ class SentryErrorAdapter(LoggingPort):
                 logging.getLogger("hexastack.sentry").warning(
                     "sentry-sdk not installed; error reporting disabled."
                 )
+            except Exception as exc:
+                logging.getLogger("hexastack.sentry").warning(
+                    "Failed to initialize sentry-sdk: %s", exc
+                )
+
+    @property
+    def is_connected(self) -> bool:
+        """Indicate whether Sentry SDK was successfully initialized.
+
+        Returns:
+            True if sentry_sdk initialized successfully with a valid DSN, False otherwise.
+
+        Notes/Architectural Intent:
+            Used by runtime health checks and DevTools dashboards to verify telemetry connectivity.
+        """
+        return self._sentry_initialized
+
+    @property
+    def masked_dsn(self) -> str | None:
+        """Provide a masked DSN string safe for logging and UI presentation.
+
+        Returns:
+            Partially masked DSN string if configured, or None.
+
+        Notes/Architectural Intent:
+            Prevents leaking sensitive secret keys in logs and diagnostic interfaces.
+        """
+        if not self.dsn:
+            return None
+        if len(self.dsn) <= 18:
+            return "***"
+        return f"{self.dsn[:14]}...{self.dsn[-6:]}"
 
     def debug(self, message: str, extra: Extras | None = None) -> None:
         """Log debug message to inner logger."""

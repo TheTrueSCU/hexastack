@@ -63,6 +63,22 @@ class LogSanitizerConfig(BaseModel):
     regex_patterns: list[str] = Field(default_factory=lambda: list(_DEFAULT_PATTERNS))
 
 
+class SentryLoggingConfig(BaseModel):
+    """Configuration schema for Sentry error tracking and exception forwarding.
+
+    Notes/Architectural Intent:
+        Controls Sentry DSN endpoint, deployment environment tags, release versions,
+        error sampling rates, and default PII forwarding preferences.
+    """
+
+    enable: bool = Field(default=False)
+    dsn: str | None = Field(default=None)
+    environment: str = Field(default="development")
+    release: str | None = Field(default=None)
+    traces_sample_rate: float = Field(default=1.0)
+    send_default_pii: bool = Field(default=False)
+
+
 class HexastackLoggingConfig(BaseModel):
     """Configuration schema for application-wide logging.
 
@@ -79,6 +95,7 @@ class HexastackLoggingConfig(BaseModel):
     sanitizer: LogSanitizerConfig = Field(default_factory=LogSanitizerConfig)
     file: FileLoggingConfig = Field(default_factory=FileLoggingConfig)
     queue: AsyncQueueConfig = Field(default_factory=AsyncQueueConfig)
+    sentry: SentryLoggingConfig = Field(default_factory=SentryLoggingConfig)
     loggers: dict[str, str] = Field(default_factory=dict)
 
 
@@ -87,4 +104,5 @@ __all__ = [
     "FileLoggingConfig",
     "HexastackLoggingConfig",
     "LogSanitizerConfig",
+    "SentryLoggingConfig",
 ]

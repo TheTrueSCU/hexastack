@@ -227,3 +227,53 @@ def test_exception_handler_security_aliases():
     res_cred = client.get("/bad_cred")
     assert res_cred.status_code == 401
     assert res_cred.json()["error_type"] == "InvalidCredentialSecurityError"
+
+
+def test_unhandled_exception_handler_returns_500():
+    """Verify that unhandled Exception types return a standardized 500 JSON response."""
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    register_exception_handlers(app)
+
+    @app.get("/crash")
+    async def crash_endpoint():
+        raise RuntimeError("database connection crashed")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    res = client.get("/crash")
+    status = res.status_code
+    assert status == 500
+    body = res.json()
+    err_msg = body["error"]
+    assert err_msg == "Internal server error"
+    err_type = body["error_type"]
+    assert err_type == "RuntimeError"
+    corr_id = body.get("correlation_id")
+    assert corr_id is not None
+
+
+def test_unhandled_exception_handler_sentry_capture(monkeypatch):
+    """Verify that unhandled exceptions push tags and capture to sentry_sdk when installed."""
+    import sys
+    from unittest.mock import MagicMock
+
+    mock_sentry = MagicMock()
+    mock_scope = MagicMock()
+    mock_sentry.push_scope.return_value.__enter__.return_value = mock_scope
+    monkeypatch.setitem(sys.modules, "sentry_sdk", mock_sentry)
+
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    register_exception_handlers(app)
+
+    @app.get("/sentry-crash")
+    async def sentry_crash():
+        raise ValueError("unexpected value")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    res = client.get("/sentry-crash")
+    status = res.status_code
+    assert status == 500
+    mock_scope.set_tag.assert_any_call("path", "/sentry-crash")
+    mock_scope.set_tag.assert_any_call("method", "GET")
+    assert mock_sentry.capture_exception.called

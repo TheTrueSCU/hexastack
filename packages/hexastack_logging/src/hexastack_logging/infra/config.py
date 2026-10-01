@@ -15,6 +15,7 @@ from hexastack_logging.domain.config import (
     FileLoggingConfig,
     HexastackLoggingConfig,
     LogSanitizerConfig,
+    SentryLoggingConfig,
 )
 from hexastack_logging.infra.filters import (
     CorrelationIdFilter,
@@ -35,6 +36,7 @@ __all__ = [
     "HexastackLoggingConfig",
     "LogSanitizerConfig",
     "register_logging_config",
+    "SentryLoggingConfig",
 ]
 
 

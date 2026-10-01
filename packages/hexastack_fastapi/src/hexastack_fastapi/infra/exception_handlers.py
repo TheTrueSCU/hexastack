@@ -18,6 +18,11 @@ def register_exception_handlers(
 ) -> None:
     """Register unified exception handlers translating domain errors into HTTP responses.
 
+    Notes/Architectural Intent:
+        Intercepts HexastackError domain exceptions and unhandled system errors.
+        Maps domain errors to standardized HTTP status codes (400, 401, 403, 404, 409, 422)
+        and forwards unhandled 500 exceptions with correlation ID and request tags to Sentry if active.
+
     Args:
         app: Target FastAPI application instance.
         exception_registry: Optional ExceptionRegistry for custom exception mappings.
@@ -68,3 +73,28 @@ def register_exception_handlers(
             "correlation_id": get_correlation_id(),
         }
         return JSONResponse(status_code=status_code, content=content)
+
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
+        """Handle unhandled server exceptions, push context to Sentry if available, and return 500."""
+        correlation_id = get_correlation_id()
+        try:
+            import sentry_sdk
+
+            with sentry_sdk.push_scope() as scope:
+                scope.set_tag("path", request.url.path)
+                scope.set_tag("method", request.method)
+                if correlation_id:
+                    scope.set_tag("correlation_id", correlation_id)
+                sentry_sdk.capture_exception(exc)
+        except Exception:
+            pass
+
+        content: dict[str, Any] = {
+            "error": "Internal server error",
+            "error_type": exc.__class__.__name__,
+            "correlation_id": correlation_id,
+        }
+        return JSONResponse(status_code=500, content=content)

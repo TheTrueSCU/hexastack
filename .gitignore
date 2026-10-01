@@ -47,6 +47,10 @@ dist/
 logs/
 *.log
 locustfile.py
+.env
+.env.*
+!.env.example
+
 
 
 # OS Specific

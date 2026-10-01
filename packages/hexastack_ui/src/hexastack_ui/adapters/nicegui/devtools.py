@@ -332,6 +332,83 @@ def _render_container_tab(container: Container) -> None:
         )
 
 
+def _render_observability_tab(container: Container) -> None:
+    """Render telemetry, structured logging, and Sentry observability status."""
+    import os
+
+    from nicegui import ui
+
+    from hexastack_core.ports.logging import LoggingPort
+
+    ui.label("Telemetry & Observability").classes("hx-section-heading")
+    ui.label(
+        "Real-time diagnostic health and remote error reporting configuration."
+    ).classes("hx-subtext")
+
+    logger = container.resolve(LoggingPort) if LoggingPort in container else None
+    is_sentry = hasattr(logger, "is_connected") or (
+        logger is not None and "Sentry" in type(logger).__name__
+    )
+    is_connected = bool(getattr(logger, "is_connected", False)) if is_sentry else False
+    masked_dsn = getattr(logger, "masked_dsn", None)
+    if not masked_dsn and os.getenv("SENTRY_DSN"):
+        raw_dsn = os.getenv("SENTRY_DSN", "")
+        masked_dsn = f"{raw_dsn[:16]}...{raw_dsn[-8:]}" if len(raw_dsn) > 24 else "***"
+        is_connected = True
+
+    environment = getattr(
+        logger, "environment", os.getenv("SENTRY_ENVIRONMENT", "development")
+    )
+    release = getattr(
+        logger, "release", os.getenv("SENTRY_RELEASE", "hexastack@v0.7.0")
+    )
+
+    with ui.row().classes("w-full gap-4 flex-wrap mb-6"):
+        with ui.card().classes("hx-card flex-1 min-w-[280px] p-4"):
+            with ui.row().classes("items-center justify-between w-full mb-2"):
+                ui.label("Sentry Error Tracking").classes(
+                    "text-base font-bold text-slate-900 dark:text-white"
+                )
+                if is_connected:
+                    ui.chip(
+                        "Connected",
+                        icon="check_circle",
+                        color="green-9",
+                        text_color="white",
+                    )
+                else:
+                    ui.chip(
+                        "Not Configured",
+                        icon="error_outline",
+                        color="amber-9",
+                        text_color="white",
+                    )
+
+            ui.label(f"Active Environment: {environment}").classes(
+                "text-sm text-slate-700 dark:text-slate-300"
+            )
+            ui.label(f"Release Tag: {release}").classes(
+                "text-sm text-slate-700 dark:text-slate-300"
+            )
+            ui.label(f"DSN: {masked_dsn or 'None (set SENTRY_DSN in .env)'}").classes(
+                "text-xs text-slate-500 font-mono mt-2"
+            )
+
+        with ui.card().classes("hx-card flex-1 min-w-[280px] p-4"):
+            ui.label("Active Logging Engine").classes(
+                "text-base font-bold text-slate-900 dark:text-white mb-2"
+            )
+            logger_name = type(logger).__name__ if logger else "Not Bound"
+            ui.label(f"Adapter: {logger_name}").classes(
+                "text-sm text-slate-700 dark:text-slate-300"
+            )
+            inner = getattr(logger, "_inner", None)
+            if inner:
+                ui.label(f"Wrapped Logger: {type(inner).__name__}").classes(
+                    "text-sm text-slate-500"
+                )
+
+
 def _build_mermaid_middlewares(container: Container, lines: list[str]) -> None:
     """Append middleware chain nodes and links to Mermaid lines."""
     from hexastack_cqrs.ports.buses import CommandBusPort
@@ -404,6 +481,37 @@ def _build_mermaid_cqrs(
     return has_cqrs, cmd_names, qry_names
 
 
+def _detect_sentry_presence(container: Container, service_names: list[str]) -> bool:
+    """Check if Sentry adapter or logging integration is present in container."""
+    if any("Sentry" in s for s in service_names):
+        return True
+    from hexastack_core.ports.logging import LoggingPort
+
+    if LoggingPort in container:
+        try:
+            resolved_logger = container.resolve(LoggingPort)
+            name = type(resolved_logger).__name__
+            return "Sentry" in name or bool(
+                getattr(resolved_logger, "is_connected", False)
+            )
+        except Exception:
+            return False
+    return False
+
+
+def _append_storage_mermaid(
+    lines: list[str], cmd_names: list[str], qry_names: list[str]
+) -> None:
+    """Append persistence links connecting commands or queries to Storage."""
+    lines.append('    Storage["Persistence / Repositories"]')
+    if cmd_names:
+        lines.append("    Commands --> Storage")
+    if qry_names:
+        lines.append("    Queries --> Storage")
+    if not cmd_names and not qry_names:
+        lines.append("    Pipeline --> Storage")
+
+
 def _build_mermaid_ports(
     container: Container,
     lines: list[str],
@@ -424,6 +532,7 @@ def _build_mermaid_ports(
         "Repository" in s or "UnitOfWork" in s or "Database" in s for s in service_names
     )
     has_cache = any("Cache" in s or "Lock" in s for s in service_names)
+    has_sentry = _detect_sentry_presence(container, service_names)
 
     if has_flags:
         lines.append('    Pipeline -.-> Flags["Feature Flag Port"]')
@@ -434,18 +543,15 @@ def _build_mermaid_ports(
         lines.append(f"    {target} -.-> EventBus")
 
     if has_storage:
-        lines.append('    Storage["Persistence / Repositories"]')
-        if cmd_names:
-            lines.append("    Commands --> Storage")
-        if qry_names:
-            lines.append("    Queries --> Storage")
-        if not cmd_names and not qry_names:
-            lines.append("    Pipeline --> Storage")
+        _append_storage_mermaid(lines, cmd_names, qry_names)
 
     if has_cache:
         lines.append('    Pipeline -.-> Cache["Cache & Lock Ports"]')
 
-    return has_event_bus or has_flags or has_storage or has_cache
+    if has_sentry:
+        lines.append('    Pipeline -.-> Sentry["Sentry Error Reporting"]')
+
+    return bool(has_event_bus or has_flags or has_storage or has_cache or has_sentry)
 
 
 def generate_topology_mermaid(
@@ -524,6 +630,7 @@ def _render_devtools_content(
         tab_cqrs = ui.tab("CQRS Registry", icon="bolt")
         tab_flags = ui.tab("Feature Flags", icon="toggle_on")
         tab_container = ui.tab("DI Container", icon="hub")
+        tab_observability = ui.tab("Observability", icon="monitor_heart")
         tab_topology = ui.tab("Resource Topology", icon="account_tree")
 
     with ui.tab_panels(tabs, value=tab_cqrs).classes("w-full p-6"):
@@ -535,6 +642,9 @@ def _render_devtools_content(
 
         with ui.tab_panel(tab_container):
             _render_container_tab(container)
+
+        with ui.tab_panel(tab_observability):
+            _render_observability_tab(container)
 
         with ui.tab_panel(tab_topology):
             _render_topology_tab(container, pipeline=pipeline)

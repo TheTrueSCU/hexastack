@@ -556,3 +556,64 @@ def test_generate_topology_mermaid_thresholds():
     assert has_bus_link is True
     has_storage_link = "Pipeline --> Storage" in mermaid_code_fallback
     assert has_storage_link is True
+
+
+def test_observability_tab_and_sentry_topology():
+    """Verify observability tab renders Sentry health card and topology links Sentry."""
+    from nicegui import Client
+    from nicegui.page import page
+
+    from hexastack_core.ports.logging import LoggingPort
+    from hexastack_ui.adapters.nicegui.devtools import (
+        _render_observability_tab,
+        generate_topology_mermaid,
+    )
+
+    client = Client(page("/test-render-obs"))
+    with client.layout.default_slot:
+        empty_c = Container()
+        _render_observability_tab(empty_c)
+
+        sentry_c = Container()
+
+        class MockSentryAdapter(LoggingPort):
+            is_connected = True
+            masked_dsn = "https://dummyk...123456"
+            environment = "production"
+
+            release = "hexastack@v0.7.0"
+
+            def debug(self, message: str, extra: Any = None) -> None:
+                pass
+
+            def info(self, message: str, extra: Any = None) -> None:
+                pass
+
+            def warning(self, message: str, extra: Any = None) -> None:
+                pass
+
+            def error(
+                self,
+                message: str,
+                extra: Any = None,
+                exc: Exception | None = None,
+            ) -> None:
+                pass
+
+            def critical(
+                self,
+                message: str,
+                extra: Any = None,
+                exc: Exception | None = None,
+            ) -> None:
+                pass
+
+        mock_sentry = MockSentryAdapter()
+        sentry_c.add_instance(mock_sentry, declared_class=LoggingPort)
+        _render_observability_tab(sentry_c)
+
+        mermaid_code = generate_topology_mermaid(sentry_c)
+        has_sentry_link = (
+            'Pipeline -.-> Sentry["Sentry Error Reporting"]' in mermaid_code
+        )
+        assert has_sentry_link is True

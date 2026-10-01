@@ -34,13 +34,28 @@ class LoggingBootstrapper(BootstrapperPort):
         """
         if LoggingPort not in context.container:
             import logging
+            import os
 
+            from hexastack_logging.adapters.sentry import SentryErrorAdapter
             from hexastack_logging.infra.config import configure_logging
 
             cfg = context.get_config("logging", HexastackLoggingConfig)
             raw_logger = logging.getLogger("hexastack")
             listener = configure_logging(config=cfg, target_logger=raw_logger)
-            logger = StructuredLogger(logger=raw_logger, listener=listener)
+            base_logger = StructuredLogger(logger=raw_logger, listener=listener)
+
+            sentry_dsn = cfg.sentry.dsn or os.getenv("SENTRY_DSN")
+            if (cfg.sentry.enable or sentry_dsn) and sentry_dsn:
+                logger: LoggingPort = SentryErrorAdapter(
+                    dsn=sentry_dsn,
+                    environment=cfg.sentry.environment,
+                    release=cfg.sentry.release,
+                    sample_rate=cfg.sentry.traces_sample_rate,
+                    inner_logger=base_logger,
+                )
+            else:
+                logger = base_logger
+
             context.container.add_instance(logger, declared_class=LoggingPort)
             context.properties["logger"] = logger
         else:
