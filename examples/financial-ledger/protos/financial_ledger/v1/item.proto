@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package financial_ledger.v1;
+
+message CreateItemRequest {
+  string title = 1;
+  string description = 2;
+}
+
+message CreateItemResponse {
+  string id = 1;
+  string title = 2;
+}
+
+service ItemService {
+  rpc CreateItem(CreateItemRequest) returns (CreateItemResponse);
+}

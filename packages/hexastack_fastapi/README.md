@@ -1,0 +1,165 @@
+![hexastack-fastapi](../../docs/assets/static/logos/packages/hexastack_fastapi.png)
+
+# hexastack-fastapi
+
+> FastAPI presentation adapter for Hexastack: automatic CQRS routing, database session middleware, exception mapping, and health check endpoints.
+
+[![PyPI: hexastack-fastapi](https://img.shields.io/pypi/v/hexastack-fastapi.svg)](https://pypi.org/project/hexastack-fastapi/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_fastapi)](https://codecov.io/github/TheTrueSCU/hexastack)
+[![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
+[![Accessibility: WCAG 2.1 AA](https://img.shields.io/badge/accessibility-WCAG%202.1%20AA-brightgreen.svg)](https://www.w3.org/WAI/WCAG21/quickref/?levels=aa)
+[![Tested with: axe--core](https://img.shields.io/badge/tested%20with-axe--core-4353ff.svg?logo=deque)](https://github.com/dequelabs/axe-core)
+[![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](../../LICENSE)
+
+> Part of the [**Hexastack Framework**](https://dopplereffect.us/hexastack/) · Governed by [**Hexaqual**](https://dopplereffect.us/hexaqual/).
+---
+
+## 1. Overview & Capabilities
+
+- **Automatic CQRS Routing & Feature Gating**: Map HTTP endpoints directly to `CommandBusPort` or `QueryBusPort` using `@api_command` and `@api_query`, with native feature flag route guards (`@feature_flag_route` and `require_feature(...)`).
+- **Server-Sent Events (SSE) Real-Time Streaming**: Native `ServerSentEvent` formatting and `EventSourceResponse` supporting chunked transfer encoding, keep-alive heartbeat pings, and direct streaming queries on `CqrsRouter.add_streaming_query`.
+- **WebSockets Real-Time Channel Manager & CQRS Bridge**: `WebSocketConnectionManager` managing connection pools, room/channel groupings, and broadcasts, alongside `WebSocketCqrsBridge` mapping incoming socket JSON actions into CQRS Commands and Queries.
+- **Decoupled Database Session Middleware**: `DbSessionMiddleware` (sync) and `AsyncDbSessionMiddleware` (async) manage session-per-request lifecycles by consuming sessionmakers from DI without a hard dependency on `hexastack-db`.
+- **Standardized Exception Handlers**: Automatically translates domain exceptions (`EntityNotFoundError`, `UniqueConstraintViolationError`, `HexastackError`) into appropriate HTTP status codes (404, 409, 500) and structured JSON error envelopes.
+- **Observability & Correlation Middleware**: Injects `X-Correlation-ID` headers, logs HTTP request lifecycles, and captures HTTP RED metrics (`HttpMetricsMiddleware`) exposing a standard `/metrics` endpoint.
+- **Built-in Health Checks**: Configurable `/health` and `/ready` endpoints verifying container and subsystem readiness.
+- **NiceGUI Reactive UI & DevTools Dashboard**: Optional `[ui]` presentation adapter providing `ui_page`, `dispatch_command`, `dispatch_query`, and a zero-config interactive developer console (`mount_devtools_dashboard`) for inspecting CQRS buses, feature flags, and DI services.
+
+
+---
+
+## 2. Package Anatomy & Key Components
+
+```
+hexastack_fastapi/
+├── domain/          # HealthStatus, HTTP error envelope models, HexastackFastApiConfig
+├── adapters/        # routing decorators, SSE streaming, WebSockets, health endpoints, db_session middleware, dependencies, NiceGUI UI adapter
+└── infra/           # create_fastapi_app, FastApiBootstrapper (order=30), exception handlers, correlation/logging middlewares
+```
+
+
+### Key Exports
+
+| Category | Exports |
+|---|---|
+| **Application Factory** | `create_fastapi_app`, `FastApiBootstrapper` (order=30) |
+| **Decorators** | `@api_command`, `@api_query`, `@feature_flag_route`, `@rate_limit`, `RouteMetadata` |
+| **Dependencies** | `get_container`, `get_pipeline`, `get_feature_flags`, `require_feature`, `get_rate_limiter`, `require_rate_limit` |
+| **Documentation Mounting** | `mount_zensical_docs`, `DocumentationNotFoundError`, `ZensicalDocsConfig` |
+| **Exception Handlers** | `register_exception_handlers`, `domain_exception_handler` |
+| **Middlewares** | `DbSessionMiddleware`, `AsyncDbSessionMiddleware`, `add_db_session_middleware`, `CorrelationMiddleware`, `HttpLoggingMiddleware` |
+| **Rate Limiting** | `SlowapiRateLimiterAdapter`, `get_remote_address`, `get_user_or_ip_key`, `RateLimitConfig` |
+| **Reactive UI (NiceGUI)** | `dispatch_command`, `dispatch_query`, `mount_devtools_dashboard`, `mount_ui_app`, `ui_page` |
+| **Real-Time Streaming (SSE & WebSockets)** | `EventSourceResponse`, `ServerSentEvent`, `WebSocketConnectionManager`, `WebSocketCqrsBridge` |
+| **Routing** | `CqrsRouter`, `autodiscover_routes` |
+| **Testing, E2E & Demo Narration** | `create_test_client`, `check_openapi_conformance`, `EphemeralServer`, `ephemeral_server`, `find_free_port`, `smart_click`, `DemoNarrator`, `VIRTUAL_CURSOR_SCRIPT` |
+
+---
+
+
+## 3. Monorepo & Sibling Relationships
+
+```mermaid
+graph TD
+    subgraph ClientRequests ["Client HTTP Inbound"]
+        HTTP["HTTP Client Requests"]
+    end
+
+    subgraph FastApiLayer ["hexastack-fastapi"]
+        APP["FastAPI Application"]
+        MW["Middleware (Correlation, HTTP Logging, DB Session)"]
+        ROUTER["CQRS Route Dispatcher"]
+    end
+
+    subgraph CQRSExecution ["hexastack-cqrs"]
+        CBUS["CommandBusPort"]
+        QBUS["QueryBusPort"]
+    end
+
+    subgraph DecoupledProviders ["Decoupled Providers (via DI)"]
+        DB_FACTORY["sessionmaker / async_sessionmaker (from hexastack-db)"]
+        LOG_PORT["LoggerPort (from hexastack-logging)"]
+    end
+
+    HTTP --> APP
+    APP --> MW
+    MW --> ROUTER
+    ROUTER -->|dispatches to| CBUS
+    ROUTER -->|dispatches to| QBUS
+
+    MW -. consumes session factory from DI .-> DB_FACTORY
+    MW -. consumes LoggerPort from DI .-> LOG_PORT
+```
+
+### Explicit Dependencies (Direct)
+- `hexastack-core`: DI container, core ports, exception registry, and context propagation.
+- `hexastack-cqrs`: `CommandBusPort` and `QueryBusPort` for message dispatching.
+- `fastapi>=0.141.1`: Web framework and ASGI routing.
+
+### Implied / Behavioral Relationships (DI-Mediated)
+- **Zero-Dependency DB Session Management**: `DbSessionMiddleware` dynamically resolves SQLAlchemy `sessionmaker` from DI without directly importing `hexastack-db`.
+- **Telemetry Integration**: `HttpLoggingMiddleware` outputs structured request telemetry through `LoggerPort`.
+- **Exception Mapping**: Registers global exception handlers translating core domain errors into standard HTTP error responses.
+
+---
+
+## 4. Installation
+
+```bash
+# Standalone install
+pip install hexastack-fastapi
+
+# With Uvicorn development server
+pip install "hexastack-fastapi[web]"  # or: pip install "hexastack[web]"
+
+# Via umbrella package
+pip install "hexastack[fastapi]"
+```
+
+---
+
+## 5. Configuration Reference
+
+```toml
+[hexastack.fastapi]
+title = "Hexastack API"
+version = "1.0.0"
+docs_url = "/docs"
+openapi_url = "/openapi.json"
+cors_origins = ["*"]
+enable_correlation_header = true
+```
+
+---
+
+## 6. Quickstart Example
+
+```python
+from dataclasses import dataclass
+from fastapi.testclient import TestClient
+from hexastack_core.infra.bootstrap import bootstrap
+from hexastack_cqrs.domain.query import Query
+from hexastack_cqrs.infra.decorators import query_handler
+from hexastack_fastapi.adapters.app import create_app
+
+
+@dataclass(frozen=True)
+class GetGreetingQuery(Query):
+    name: str
+
+
+@query_handler(GetGreetingQuery)
+class GetGreetingHandler:
+    def __call__(self, qry: GetGreetingQuery) -> dict:
+        return {"message": f"Hello, {qry.name}!"}
+
+
+runtime = bootstrap(packages_to_scan=[__name__])
+app = create_app(runtime)
+
+client = TestClient(app)
+response = client.get("/health")
+print(response.json())  # {"status": "healthy"}
+```

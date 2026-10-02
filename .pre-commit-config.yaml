@@ -1,0 +1,107 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+        exclude: uv\.lock$
+
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: name-tests-test
+        args: [--pytest-test-first]
+        exclude: ^tests/.*/helpers/
+      - id: pretty-format-json
+        args: [--autofix, --indent=4, --no-sort-keys]
+      - id: trailing-whitespace
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: ^(\.venv|docs|_build|\.mutmut-cache)/
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.2
+    hooks:
+      - id: ruff
+        args: [--fix]
+        exclude: ^examples/
+      - id: ruff-format
+        exclude: ^examples/
+
+
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.23
+    hooks:
+      - id: validate-pyproject
+
+  - repo: https://github.com/bufbuild/buf
+    rev: v1.34.0
+    hooks:
+      - id: buf-lint
+        files: ^.*\.proto$
+
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v2.5.12
+    hooks:
+      - id: biome-check
+        additional_dependencies: ["@biomejs/biome@1.9.4"]
+        files: ^packages/.*\.css$
+
+  - repo: https://github.com/TheTrueSCU/hexaqual
+    rev: v0.9.0
+    hooks:
+      - id: hexaqual-sanity
+      - id: hexaqual-architecture
+      - id: hexaqual-agents
+      - id: hexaqual-linter
+      - id: hexaqual-extras
+      - id: hexaqual-usage-docs
+      - id: hexaqual-commit-msg
+        stages: [commit-msg]
+      - id: hexaqual-pre-push
+        stages: [pre-push]
+      - id: hexaqual-agents-sync
+        stages: [post-merge, post-checkout]
+
+  - repo: local
+    hooks:
+      - id: cpd
+        name: cpd (copy-paste detector)
+        entry: cpd packages/ --threshold 5 --min-tokens 50 --ignore "**/tests/**,**/testing/**,**/*.md,**/*.toml" --no-tips
+        language: system
+        pass_filenames: false
+      - id: docs-build
+        name: zensical docs build validation
+        entry: uv run zensical build
+        language: system
+        files: ^(docs/|zensical\.toml|mkdocs\.yml)
+        pass_filenames: false
+      - id: import-linter-root
+        name: import-linter (package boundaries)
+        entry: uv run lint-imports
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: pip-audit
+        name: pip-audit (dependency vulnerability scan)
+        entry: uv run pip-audit --local --vulnerability-service pypi --ignore-vuln PYSEC-2026-2447 --timeout 30
+        language: system
+        pass_filenames: false
+      - id: vulture
+        name: vulture (dead code detector)
+        entry: uv run vulture
+        language: system
+        files: ^packages/.*\.py$
+        pass_filenames: false

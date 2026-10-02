@@ -1,0 +1,240 @@
+[project]
+name = "hexastack-workspace"
+version = "0.7.0"
+requires-python = ">=3.13"
+dependencies = [
+    "hexastack[all]",
+    "openfeature-provider-flagd>=0.5.2",
+]
+
+[tool.uv]
+package = false
+override-dependencies = [
+    "pyjwt>=2.14.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "packages/*",
+]
+
+[tool.uv.sources]
+hexastack = { workspace = true }
+hexastack-ai = { workspace = true }
+hexastack-auth = { workspace = true }
+hexastack-cli = { workspace = true }
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }
+hexastack-db = { workspace = true }
+hexastack-events = { workspace = true }
+hexastack-fastapi = { workspace = true }
+hexastack-flags = { workspace = true }
+hexastack-flow = { workspace = true }
+hexastack-graphql = { workspace = true }
+hexastack-grpc = { workspace = true }
+hexastack-logging = { workspace = true }
+hexastack-mcp = { workspace = true }
+hexastack-otel = { workspace = true }
+hexastack-qual = { workspace = true }
+hexastack-ui = { workspace = true }
+
+
+[dependency-groups]
+dev = [
+    "aiokafka>=0.12.0",
+    "alembic>=1.19.1",
+    "atheris>=3.1.0; sys_platform == 'linux' or sys_platform == 'darwin'",
+    "complexipy>=7.0.1",
+    "deptry>=0.23.0",
+    "detect-secrets>=1.5.0",
+    "dirty-equals>=0.11",
+    "dlt>=1.30.0",
+    "duckdb>=1.0.0",
+    "faker>=33.0.0",
+    "fakeredis>=2.26.0",
+    "filelock>=4.0.3",
+    "fsspec>=2024.1.0",
+    "grpcio-reflection>=1.83.0",
+    "grpcio-tools>=1.84.0",
+    "hexaqual[all]>=0.9.0",
+    "httpx>=0.28.1",
+    "huey>=3.3.4",
+    "hypothesis>=6.168.1",
+    "import-linter>=2.13",
+    "inline-snapshot>=0.35.4",
+    "janus>=2.0.0",
+    "libcst>=1.9.0",
+    "limits>=5.8.0",
+    "locust>=2.46.6",
+    "memray>=1.20.0",
+    "mutmut<3",
+    "nats-py>=2.16.0",
+    "nicegui>=3.16.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.44.0",
+    "pip-audit>=2.10.1",
+    "playwright>=1.63.0",
+    "pre-commit>=4.6.2",
+    "py-spy>=0.4.2",
+    "pyarrow>=14.0.0",
+    "pydeps>=3.0.8",
+    "pytest>=9.1.1",
+    "pytest-archon>=0.0.7",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "pytest-gremlins>=1.9.0",
+    "pytest-playwright>=0.9.0",
+    "pytest-randomly>=5.0.0",
+    "pytest-xdist>=3.8.0",
+    "rope>=1.14.0",
+    "ruff>=0.16.6",
+    "schemathesis>=4.28.0",
+    "slowapi>=0.1.10",
+    "ty>=0.0.75",
+    "vulture>=2.16",
+    "zensical>=0.0.65",
+]
+
+[tool.ty.environment]
+extra-paths = [
+    "examples/todo-app/src",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["packages/"]
+omit = [
+    "*/__pycache__/*",
+    "*/testing/*",
+    "*/tests/*",
+]
+
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+exclude_lines = [
+    "@abstractmethod",
+    "if TYPE_CHECKING:",
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "return NotImplemented",
+]
+
+[tool.inline-snapshot]
+format-command = "uv run ruff format --stdin-filename {filename} -"
+
+[tool.pytest.ini_options]
+addopts = "-n auto --import-mode=importlib --ignore=examples --ignore=tests/e2e --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
+markers = [
+    "e2e: End-to-end browser and UI tests (run with uv run pytest tests/e2e)",
+    "demo: Feature demo recording test (run with RECORD_DEMO=1 uv run pytest tests/e2e -m demo)",
+    "ch01: Tutorial Chapter 1 tests",
+    "ch02: Tutorial Chapter 2 tests",
+    "ch03: Tutorial Chapter 3 tests",
+    "ch04: Tutorial Chapter 4 tests",
+    "ch05: Tutorial Chapter 5 tests",
+    "ch06: Tutorial Chapter 6 tests",
+    "ch07: Tutorial Chapter 7 tests",
+]
+asyncio_mode = "auto"
+
+[tool.ruff.lint]
+
+select = [
+    "ARG",  # flake8-unused-arguments
+    "B",    # flake8-bugbear (catches uninitialized closures, loop variable rebinds, mutable defaults)
+    "C4",   # flake8-comprehensions
+    "D",    # pydocstyle
+    "E",    # pycodestyle errors
+    "F",    # pyflakes (uninitialized variables, undefined names, unused imports)
+    "FAST", # FastAPI lint
+    "I",    # isort
+    "LOG",  # flake8-logging
+    "PIE",  # flake8-pie (redundant expressions, duplicates)
+    "PTH",  # flake8-use-pathlib
+    "RET",  # flake8-return (missing return statements, dead fallthroughs)
+    "RSE",  # flake8-raise (unnecessary raise parens)
+    "S",    # flake8-bandit (Security-specific SAST linting)
+    "SIM",  # flake8-simplify (redundant comparisons, unnecessary nested blocks)
+    "T20",  # flake8-print
+    "TCH",  # flake8-type-checking
+    "TID",  # flake8-tidy-imports
+    "UP",   # pyupgrade
+    "W",    # pycodestyle warnings
+
+]
+ignore = [
+    "ARG001", # Unused function argument (framework interfaces, visitors, listeners)
+    "ARG002", # Unused method argument (framework interfaces and resolvers)
+    "B008",   # Do not perform function call in argument defaults (standard for FastAPI Depends / Typer Option)
+    "D100",   # Missing docstring in public module
+    "D102",   # Missing docstring in public method
+    "D103",   # Missing docstring in public function
+    "D104",   # Missing docstring in public package (__init__.py)
+    "D105",   # Missing docstring in magic method
+    "D107",   # Missing docstring in __init__ (documented at class level in Google style)
+    "E501",   # Line too long (handled automatically by ruff-format)
+    "E731",   # Do not assign a lambda expression (standard in middleware pipeline chaining)
+    "S104",   # Possible binding to all interfaces (standard for containerized servers)
+    "S106",   # Possible hardcoded password argument (mock/dev defaults)
+    "S108",   # Probable insecure usage of temp directory (fine in tests/mock settings)
+    "S110",   # try-except-pass detected (intentional silent fallback blocks)
+    "S603",   # Subprocess call with dynamic inputs (already verified safe with shell=False)
+    "S607",   # Starting process with partial path (required for portable git CLI execution)
+    "UP040",  # Type alias uses TypeAlias instead of type keyword (required for mutmut/parso parser compatibility)
+    "TC001",  # Move application import into type-checking block (breaks Pydantic runtime introspection)
+    "TC002",  # Move third-party import into type-checking block (breaks FastAPI/Strawberry reflection)
+    "TC003",  # Move standard library import into type-checking block (breaks runtime reflection)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Alphabetized per-file ignore mappings
+"**/hexastack_cli/**/*.py" = ["T201"]
+"**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
+
+"examples/**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
+"examples/**/*.py" = ["ARG", "D", "E501", "F401", "S101", "S105", "T201", "UP042"]
+"fuzz/**/*.py" = ["ARG", "D", "E501", "S101", "S105", "T201"]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "hexastack",
+    "hexastack_ai",
+    "hexastack_auth",
+    "hexastack_cli",
+    "hexastack_core",
+    "hexastack_cqrs",
+    "hexastack_db",
+    "hexastack_events",
+    "hexastack_fastapi",
+    "hexastack_flags",
+    "hexastack_flow",
+    "hexastack_graphql",
+    "hexastack_grpc",
+    "hexastack_logging",
+    "hexastack_mcp",
+    "hexastack_otel",
+    "hexastack_ui",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mutmut]
+runner = "pytest --import-mode=importlib -n 0 -x -q --no-cov --ignore=examples --ignore=tests/e2e -o addopts=\"\" packages"
+
+[tool.vulture]
+min_confidence = 80
+paths = ["packages"]
+exclude = ["tests/", "*/tests/*", "docs/", ".venv/"]
+ignore_names = [
+    "module",
+    "connection_record",
+    "message_path",
+    "model_config",
+    "visit_*",
+    "leave_*",
+    "on_connect",
+    "original_node",
+    "Huey",
+]

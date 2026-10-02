@@ -1,0 +1,96 @@
+[project]
+name = "hexastack-fastapi"
+version = "0.7.0"
+description = "FastAPI presentation adapter for Hexastack"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.141.1",
+    "hexastack-core",
+    "hexastack-cqrs",
+]
+
+[project.optional-dependencies]
+auth = [
+    "hexastack-auth",
+]
+docs = [
+    "zensical>=0.0.56",
+]
+ratelimit = [
+    "limits>=5.8.0",
+    "slowapi>=0.1.10",
+]
+testing = [
+    "playwright>=1.49.0",
+    "schemathesis>=3.39.0",
+]
+ziti = [
+    "openziti>=1.0.0",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+fastapi = "hexastack_fastapi.infra.bootstrap:FastApiBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-auth = { workspace = true }
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_fastapi"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_fastapi"]
+layers = [
+    "infra",
+    "adapters",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for domain"
+type = "forbidden"
+source_modules = ["hexastack_fastapi.domain"]
+forbidden_modules = [
+    "hexastack_fastapi.adapters",
+    "hexastack_fastapi.infra",
+    "hexastack_fastapi.testing",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for adapters"
+type = "forbidden"
+source_modules = ["hexastack_fastapi.adapters"]
+forbidden_modules = [
+    "hexastack_fastapi.testing",
+]
+
+[[tool.importlinter.contracts]]
+name = "Forbidden imports for infra"
+type = "forbidden"
+source_modules = ["hexastack_fastapi.infra"]
+forbidden_modules = [
+    "hexastack_fastapi.testing",
+]
+
+[tool.mutmut]
+runner = "pytest -x --assert=plain -o addopts=\"\""
+paths_to_mutate = "src"
+
+[tool.pytest-gremlins]
+paths = ["src"]
+operators = ["arithmetic", "boolean", "boundary", "comparison", "return"]
+workers = "auto"
+batch_size = 10
+cache = true

@@ -1,0 +1,189 @@
+# AI Guardrails & Agent Pair Programming Context
+
+> **Architectural Guardrails in Practice**: This document serves as the primary local protocol handbook and memory context for AI coding assistants (such as Antigravity / Gemini / Claude). It defines the active constraints, hexagonal invariants, and developer tooling that prevent AI drift.  This can serve as the basis of `GEMINI.md` or the equivalent for a given AI coding assistant.
+
+---
+
+## 1. Project Standards & Invariants
+
+1. **Architecture & Hexagonal Boundaries**:
+   - `domain/` contains models, entities, and pure business logic (no external dependencies).
+   - `ports/` defines abstract ABC interfaces (`@abstractmethod`).
+   - `adapters/` contains concrete implementations (e.g. database, HTTP, Redis, buses). Adapters must **never** import from `infra/`.
+   - `infra/` contains pipeline orchestrators, registries, middlewares, and bootstrap logic.
+   - Enforced by `import-linter` via `uv run hexaqual imports check` or pre-commit.
+
+2. **Docstrings & Public APIs**:
+   - Every public module, class, method, and function must have **Google-style docstrings**.
+   - Must include `Args:`, `Returns:`, `Raises:`, and a **`Notes/Architectural Intent:`** section documenting design decisions and invariants.
+
+3. **`__all__` Integrity**:
+   - Every `__all__` list must be strictly sorted alphabetically (casefold ordering).
+   - Enforced by `hexaqual statements check` (or `hexaqual sanity`). Auto-fix with `uv run hexaqual statements fix -p <package>` or `uv run hexaqual statements fix`.
+
+4. **Testing Rigor & Parity**:
+   - Every `src/<pkg>/<path>.py` file requires a matching `tests/unit/<path>/test_<name>.py` and `__init__.py`.
+   - Pre-commit quality gate checks test symmetry via `hexaqual parity test` (or `hexaqual sanity`) and fails if parity is broken.
+   - Every package maintaining internal hexagonal layers requires a dedicated `tests/architecture/test_hexagonal_boundaries.py` suite, verified by `hexaqual parity architecture`.
+   - Coverage-guided and adversarial fuzz harnesses are colocated in `packages/<pkg>/tests/fuzz/` (and root `tests/properties/`) and dynamically executed via `hexaqual test fuzz`.
+   - Target test coverage is $\ge 90\%$.
+   - When writing assertions in tests, assign method return values to variables first (e.g., `res = cache.delete("key"); assert res is True`) to prevent CodeQL *"assert statement with side-effect"* warnings.
+   - **Dual-Implementation Oracle Testing**: Production adapters (`SqlAlchemyRepository`, `DiskCacheAdapter`, `InMemoryRateLimiter`, `SqlAlchemyOutboxStorage`, `AsyncioWorkflowEngine`) are cross-evaluated against naive reference oracles via Hypothesis state machines to mathematically prove equivalence ($f_{\text{prod}}(x) \equiv f_{\text{oracle}}(x)$). See [Testing & Dual-Implementation Oracle Rigor](developer-guide/testing.md).
+
+---
+
+## 2. Developer Tools & Workspace Commands (Hexaqual Suite)
+
+Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual[all]>=0.3.0`) as its unified quality, governance, and release engineering toolsuite.
+
+### GitHub & PR Diagnostic Tools
+| Tool Command | Purpose |
+|---|---|
+| `uv run hexaqual gh pr <pr-number>` | Single-step PR dashboard inspecting CI check runs, review threads, and conclusion. |
+| `uv run hexaqual gh pr <pr-number> -d` | Expands review threads and full comment body snippets (`--details`). |
+| `uv run hexaqual gh pr <pr-number> -w` | Continuously polls CI check status until completion (`--watch`). |
+| `uv run hexaqual gh checks <pr-number>` | Lists detailed GitHub Actions status checks and run conclusions. |
+| `uv run hexaqual gh repo [owner/repo]` | Inspects GitHub repository settings, Actions permissions, and environments. |
+| `uv run hexaqual gh code-scanning` | Queries CodeQL alerts and scanning status. |
+| `uv run hexaqual gh security` | Summarizes GitHub security advisories and Dependabot alerts. |
+
+### Mutation Testing & Coverage Fortification Tools
+| Tool Command | Purpose |
+|---|---|
+| `uv run hexaqual mutate run -p <pkg>` | Runs mutation testing scoped to a specific package (defaults to pytest-gremlins). |
+| `uv run hexaqual mutate run -p <pkg> -e gremlins -w auto --batch-size 10 -n auto` | Runs pytest-gremlins with decoupled xdist baseline (`-n`) and mutation worker crunching (`-w`). |
+| `uv run hexaqual mutate run -A -e gremlins -w auto` | Selectively runs mutation testing only on packages affected by git diff (`--affected`). |
+| `uv run hexaqual mutate run -p <pkg> -e mutmut` | Runs mutmut engine for deep literal constant and token mutation audits. |
+| `uv run hexaqual mutate run -p <pkg> -r` | Clears package cache and re-runs mutation tests from scratch (`--reset`). |
+| `uv run hexaqual mutate run -a` | Sequentially executes mutation testing across all workspace packages (`--all`). |
+| `uv run hexaqual mutate inspect -s` | High-level triage summary of surviving mutants (Critical, Equivalent, Ignorable) (`--summary`). |
+| `uv run hexaqual mutate inspect -p <pkg> -act` | Displays actionable critical surviving mutants for a package (`--actionable`). |
+| `uv run hexaqual mutate inspect -p <pkg> -act -c` | Correlates surviving mutants with `.coverage` to show covering test functions (`--correlated`). |
+| `uv run hexaqual test run -p <pkg>` | Runs pytest for a specific package with dynamic xdist and coverage. |
+| `uv run hexaqual test run -e <example>` | Runs pytest for an example project (e.g. `financial-ledger`), configuring `PYTHONPATH` automatically. |
+| `uv run hexaqual test run -U` | Restricts test execution to unit tests (`--unit`). |
+| `uv run hexaqual test run -P` | Restricts test execution to property-based / Hypothesis tests (`--properties`). |
+| `uv run hexaqual test run -A` | Selectively runs only packages affected by the current git diff (`--affected`). |
+| `uv run hexaqual test run --with-context` | Runs tests capturing per-test execution contexts into `.coverage`. |
+| `uv run hexaqual test boundary` | Audits test suites for branch boundary and edge-case assertions. |
+| `uv run hexaqual test redundancy` | Analyzes test execution overlap and flags duplicate test paths. |
+| `uv run hexaqual test impact` | Selectively runs tests impacted by current git diff changes. |
+| `uv run hexaqual test snapshot` | Updates or reviews inline snapshots across workspace test suites. |
+| `uv run hexaqual test fuzz` | Executes Atheris coverage-guided and OWASP security fuzz harnesses across packages. |
+
+### Governance, Architecture & Packaging Tools
+| Tool Command | Purpose |
+|---|---|
+| `uv run hexaqual sanity [-p <pkg>] [-e <example>]` | Fast scoped validator (Ruff, Ty, complexipy, `__all__`, test parity, pytest) with Rich dashboard (`check` or `sanity`). |
+| `uv run hexaqual sanity -a --skip-tests` | Full workspace pre-commit quality check across all 17 packages in ~11s. |
+| `uv run hexaqual hooks install` | Installs all 5 Git lifecycle hooks (pre-commit, commit-msg, pre-push, post-merge, post-checkout). |
+| `uv run hexaqual hooks check` | Inspects installation status and manager type across all 5 Git hook stages. |
+| `uv run hexaqual agents sync` | Synchronizes universal agent guardrails and root AGENTS.md index. |
+| `uv run hexaqual statements check` | Validates that `__all__` is sorted and deduplicated across all packages. |
+| `uv run hexaqual statements fix -p <pkg>` | Auto-formats and alphabetizes `__all__` in a specific package. |
+| `uv run hexaqual statements fix` | Auto-formats and alphabetizes `__all__` across all files. |
+| `uv run hexaqual parity test` | Validates 1:1 symmetry between `src/` modules and `tests/unit/` files. |
+| `uv run hexaqual parity architecture` | Validates that all packages maintain dedicated `test_hexagonal_boundaries.py` architectural test suites. |
+| `uv run hexaqual parity extras` | Audits subpackage optional extras forwarding into umbrella packaging. |
+| `uv run hexaqual parity extras --diagram` | Regenerates Mermaid extras dependency graph. |
+| `uv run hexaqual docs usage --check` | Verifies whether USAGE.md files are up to date with CLI entrypoints. |
+| `uv run hexaqual docs usage --fix` | Regenerates and formats USAGE.md files for tools and umbrella CLI. |
+| `uv run hexaqual release build` | Builds sdist and wheel packages for distribution. |
+| `uv run hexaqual release check` | Validates package build distributions and PyPI release version status. |
+| `uv run hexaqual release publish` | Smart PyPI publisher skipping existing releases and handling rate limits. |
+| `uv run hexaqual release reproducible` | Verifies byte-for-byte reproducible wheel package builds across clean environments. |
+| `uv run hexaqual imports check` | Validates root package import boundaries via `.importlinter`. |
+| `uv run ruff check packages/<pkg>` | Runs Ruff linter on target package. |
+| `uv run ty check packages/<pkg>/src` | Fast static type analysis with Ty. |
+
+### Knowledge Graph & Architecture Navigation (Graphify)
+| Tool Command | Purpose |
+|---|---|
+| `graphify query "<question>"` | Performs BFS traversal across the codebase knowledge graph for conceptual or architectural questions. |
+| `graphify query "<question>" --dfs` | Performs DFS traversal to trace deep execution paths through layers. |
+| `graphify path "<SymbolA>" "<SymbolB>"` | Finds the shortest dependency / invocation path between two components across packages. |
+| `graphify explain "<Symbol>"` | Retrieves a structured architectural summary of a node and its neighborhood. |
+| `graphify update .` | Incrementally synchronizes `graphify-out/graph.json` after code changes (AST-only, 0 token cost). |
+| `graphify export html` | Re-exports the interactive community visualization to `graphify-out/graph.html`. |
+
+### Semantic Call Graph & Blast Radius (CodeGraph)
+| Tool Command | Purpose |
+|---|---|
+| `codegraph impact <Symbol>` | Computes the transitive blast-radius of modifying a symbol across all packages. |
+| `codegraph callers <Symbol>` | Lists all exact call sites referencing a symbol (functions, methods). |
+| `codegraph callees <Symbol>` | Lists all downstream dependencies and functions called by a symbol. |
+| `codegraph explore "<query>"` | Returns source snippets and call paths in a single targeted response. |
+| `codegraph affected [files]` | Identifies reverse-dependent test files impacted by source modifications. |
+
+### Multi-Repository Virtual Monorepo Federation (ivar)
+| Tool Command | Purpose |
+|---|---|
+| `ivar status` | Reports operational health across the 5 federated repositories in `thetruescu-hall`. |
+| `ivar feature create <name>` | Creates a multi-repo feature slice branch across bare git worktrees. |
+| `ivar feature promote <feat> <repo>` | Mounts target repo into feature; unpromoted repos receive kernel write guards (`mode & ~0o222`). |
+| `ivar graph index` | Indexes cross-repo symbol imports, HTTP API routes, and contracts into `.ivar/memory.db`. |
+| `ivar feature deliver` | Simultaneously pushes worktrees and opens cross-linked PRs across all affected repositories. |
+
+---
+
+## 3. Turnkey Workspace Agent Hub (`.agents/`)
+
+Hexastack provides a structured workspace agent hub located in [`.agents/`](file:///home/rjdw/Projects/hexastack/.agents/) designed to configure any modern AI pair programming assistant (Antigravity CLI, Cursor, Windsurf, Claude Code, GitHub Copilot) with zero architectural drift:
+
+- **Agent Rules (`.agents/rules/`)**:
+  - [`.agents/rules/hexaqual.md`](file:///home/rjdw/Projects/hexastack/.agents/rules/hexaqual.md): Enforces hexagonal boundary isolation, test symmetry parity, `__all__` sorting, cognitive complexity $\le 25$, and side-effect free test assertions.
+  - [`.agents/rules/graphify.md`](file:///home/rjdw/Projects/hexastack/.agents/rules/graphify.md): Mandates knowledge graph querying (`graphify query`, `graphify path`, `graphify explain`) prior to answering architectural questions, and incremental synchronization (`graphify update .`) following code modifications.
+
+- **Agent Workflows (`.agents/workflows/`)**:
+  - [`.agents/workflows/sanity.md`](file:///home/rjdw/Projects/hexastack/.agents/workflows/sanity.md): Standardized pre-commit quality check pipeline (`uv run hexaqual sanity -a --skip-tests`) run before committing code.
+  - [`.agents/workflows/graphify.md`](file:///home/rjdw/Projects/hexastack/.agents/workflows/graphify.md): Step-by-step workflow for updating the AST knowledge graph, verifying graph health, and re-exporting visualization artifacts.
+
+- **Local Memory Integration (`GEMINI.md`)**:
+  - `GEMINI.md` is symlinked directly to this document (`docs/ai-guardrails.md`) and added to `.git/info/exclude` to provide deep contextual anchoring without repo clutter.
+
+---
+
+## 4. GitHub PR & CI Inspection Shortcuts
+
+When diagnosing GitHub Actions CI runs or review threads:
+
+```bash
+# 1. View overall PR status & checks via Hexaqual
+uv run hexaqual gh pr <pr-number>
+uv run hexaqual gh checks <pr-number>
+
+# 2. View failed logs for a specific GitHub workflow run
+gh run view <run-id> --log-failed
+
+# 3. View inline review comments and CodeQL scanning alerts on a PR
+gh api repos/TheTrueSCU/hexastack/pulls/<pr-number>/comments
+
+# 4. List recent workflow runs for a specific branch
+gh run list --branch <branch-name>
+```
+
+---
+
+## 5. Active Packages in Workspace
+
+All 18 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.7.0`**):
+
+- `hexastack-core`: Primitives, ports, events, domain models, caching, rate limiting, and in-memory adapters.
+- `hexastack-cqrs`: Command and Query execution pipelines, registries, buses, and middleware.
+- `hexastack-fastapi`: FastAPI presentation layer, CQRS routing, rate limiting (`slowapi`/`limits`), auth, and UI.
+- `hexastack-db`: Sync/Async SQLAlchemy and SQLModel repositories and UnitOfWork adapters.
+- `hexastack-events`: Distributed events, CloudEvent envelopes, NATS JetStream, Huey, Apprise, and Janus bridge.
+- `hexastack-flags`: Dynamic feature flagging adapters (OpenFeature, Redis, YAML, env).
+- `hexastack-flow`: Orchestration and workflow engine components integrating `hexaflow>=0.3.0`.
+- `hexastack-graphql`: Strawberry GraphQL schema registration, queries, and mutations.
+- `hexastack-grpc`: Protobuf and gRPC service adapters, interceptors, and decorators.
+- `hexastack-ai`: LLM agents, memory adapters, and tool executors.
+- `hexastack-auth`: Authentication, JWT/OAuth2 token validation, and RBAC policies.
+- `hexastack-logging`: Structured JSON logging and Logfire tracing.
+- `hexastack-mcp`: Model Context Protocol (MCP) server adapter, tool registries, and Claude/Gemini bridges.
+- `hexastack-otel`: OpenTelemetry metrics and distributed tracing instrumentation.
+- `hexastack-qual`: Hexagonal quality, governance, and release engineering adapter integrating `hexaqual`.
+- `hexastack-ui`: Interactive NiceGUI DevTools console, command dispatcher, and telemetry visualizer.
+- `hexastack-cli`: CLI scaffolding engine and Typer driving adapters.
+- `hexastack`: Umbrella package aggregating all subpackages and CLI entrypoints.
+*(Note: Quality, testing, and release engineering are powered by the standalone `hexaqual` dev dependency).*

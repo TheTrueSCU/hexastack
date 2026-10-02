@@ -1,0 +1,42 @@
+[project]
+site_name = "Hexastack"
+site_description = "The Enterprise Hexagonal Architecture Monorepo Framework for Python"
+site_url = "https://dopplereffect.us/hexastack/"
+
+nav = [
+    { "Overview" = "index.md" },
+    { "Quickstart & Demos" = "demos.md" },
+    { "Tutorials" = [
+        { "Overview" = "tutorials/index.md" },
+        { "To-Do App (7-Part Series)" = [
+            { "Overview" = "tutorials/todo-app/index.md" },
+            { "Chapter 1: Building a To-Do Service" = "tutorials/todo-app/01-building-a-todo-service.md" },
+            { "Chapter 2: SQLite & Migrations" = "tutorials/todo-app/02-sqlite-persistence-and-migrations.md" },
+            { "Chapter 3: Authentication & RBAC" = "tutorials/todo-app/03-jwt-authentication-and-rbac.md" },
+            { "Chapter 4: Events & Outbox" = "tutorials/todo-app/04-events-outbox-and-notifications.md" },
+            { "Chapter 5: AI Assistant & MCP" = "tutorials/todo-app/05-experimental-ai-and-mcp.md" },
+            { "Chapter 6: Observability & Tracing" = "tutorials/todo-app/06-production-observability-and-tracing.md" },
+            { "Chapter 7: High-Performance gRPC" = "tutorials/todo-app/07-high-performance-grpc-and-microservices.md" }
+        ]},
+        { "Financial Ledger & Invariants" = "tutorials/financial-ledger.md" }
+    ]},
+    { "Architecture" = "architecture.md" },
+    { "Testing & Oracle Rigor" = "developer-guide/testing.md" },
+    { "Ecosystem Architecture" = "ecosystem.md" },
+    { "AI Guardrails & Agent Context" = "ai-guardrails.md" },
+    { "Developer Tools" = "tools.md" },
+    { "Packages" = "packages.md" },
+    { "Blog" = "blog/index.md" },
+    { "Compliance & Regulatory" = "compliance.md" }
+]
+
+[project.markdown_extensions]
+admonition = {}
+tables = {}
+toc = { permalink = true }
+"pymdownx.highlight" = { anchor_linenums = true, line_spans = "__span", pygments_lang_class = true }
+"pymdownx.inlinehilite" = {}
+"pymdownx.snippets" = {}
+"pymdownx.superfences" = { custom_fences = [
+    { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" }
+] }

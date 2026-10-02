@@ -1,0 +1,34 @@
+[importlinter]
+root_package = todo_app
+include_type_checking = False
+
+# 1. Strict Dependency Inversion: Infra -> Adapters -> Ports -> Domain
+[importlinter:contract:hexagonal-layers]
+name = Hexagonal Architecture Layers
+type = layers
+containers =
+    todo_app
+layers =
+    infra
+    adapters
+    ports
+    domain
+
+# 2. Pure Python Core: Domain cannot import outer framework layers
+[importlinter:contract:domain-purity]
+name = Domain Purity Guarantee
+type = forbidden
+source_modules =
+    todo_app.domain
+forbidden_modules =
+    todo_app.adapters
+    todo_app.infra
+    todo_app.ports
+
+# 3. Adapter Independence: Driving and Driven adapters communicate exclusively via Ports
+[importlinter:contract:adapter-independence]
+name = Adapter Independence
+type = independence
+modules =
+    todo_app.adapters.driving
+    todo_app.adapters.driven

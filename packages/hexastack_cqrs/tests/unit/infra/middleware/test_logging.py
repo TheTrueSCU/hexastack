@@ -1,0 +1,163 @@
+import pytest
+from inline_snapshot import snapshot
+
+from hexastack_core.adapters.logging import InMemoryLogger
+from hexastack_core.domain import Command
+from hexastack_cqrs.infra.config import LoggingMiddlewareConfig
+from hexastack_cqrs.infra.middleware.logging import LoggingMiddleware
+
+
+class _DummyCommand(Command):
+    name: str
+
+
+@pytest.mark.anyio
+async def test_logging_middleware_async_coroutine_error():
+    logger = InMemoryLogger()
+    middleware = LoggingMiddleware(logger=logger)
+
+    async def async_failing_handler(cmd: _DummyCommand) -> str:
+        raise RuntimeError("async failure")
+
+    cmd = _DummyCommand(name="async-error-cmd")
+    with pytest.raises(RuntimeError, match="async failure"):
+        await middleware(cmd, async_failing_handler)
+
+    assert len(logger.entries) == 2
+    assert logger.entries[0].level == "info"
+    assert logger.entries[1].level == "error"
+    assert "Failed processing _DummyCommand" in logger.entries[1].message
+
+
+@pytest.mark.anyio
+async def test_logging_middleware_async_coroutine_success():
+    logger = InMemoryLogger()
+    middleware = LoggingMiddleware(logger=logger)
+
+    async def async_handler(cmd: _DummyCommand) -> str:
+        return f"async {cmd.name}"
+
+    cmd = _DummyCommand(name="async-cmd")
+    coro = middleware(cmd, async_handler)
+    result = await coro
+
+    assert result == "async async-cmd"
+    assert len(logger.entries) == 2
+    assert logger.entries[0].level == "info"
+    assert logger.entries[1].level == "debug"
+
+
+def test_logging_middleware_disabled():
+    logger = InMemoryLogger()
+    config = LoggingMiddlewareConfig(enable=False)
+    middleware = LoggingMiddleware(logger=logger, config=config)
+
+    cmd = _DummyCommand(name="disabled-cmd")
+    result = middleware(cmd, lambda c: "ok")
+
+    assert result == "ok"
+    assert len(logger.entries) == 0
+
+
+def test_logging_middleware_dynamic_feature_flag():
+    from hexastack_core.adapters.feature_flags.in_memory import (
+        InMemoryFeatureFlagAdapter,
+    )
+
+    flags = InMemoryFeatureFlagAdapter({"features.cqrs.logging": False})
+    logger = InMemoryLogger()
+    middleware = LoggingMiddleware(logger=logger, flags=flags)
+
+    cmd = _DummyCommand(name="dynamic-flag-cmd")
+    res = middleware(cmd, lambda c: "bypassed")
+    assert res == "bypassed"
+    assert len(logger.entries) == 0
+
+    flags.set_flag("features.cqrs.logging", True)
+    res_active = middleware(cmd, lambda c: "active")
+    assert res_active == "active"
+    assert len(logger.entries) == 2
+
+
+@pytest.mark.snapshot
+def test_logging_middleware_error_execution():
+    logger = InMemoryLogger()
+    middleware = LoggingMiddleware(logger=logger)
+
+    def failing_handler(cmd: _DummyCommand) -> str:
+        raise ValueError("handling failed")
+
+    cmd = _DummyCommand(name="error-cmd")
+    with pytest.raises(ValueError, match="handling failed"):
+        middleware(cmd, failing_handler)
+
+    assert [
+        {"level": e.level, "message": e.message} for e in logger.entries
+    ] == snapshot(
+        [
+            {"level": "info", "message": "Processing _DummyCommand"},
+            {
+                "level": "error",
+                "message": "Failed processing _DummyCommand: handling failed",
+            },
+        ]
+    )
+
+
+@pytest.mark.snapshot
+def test_logging_middleware_successful_execution():
+    logger = InMemoryLogger()
+    config = LoggingMiddlewareConfig(enable=True, log_payload=True)
+    middleware = LoggingMiddleware(logger=logger, config=config)
+
+    def handler(cmd: _DummyCommand) -> str:
+        return f"processed {cmd.name}"
+
+    cmd = _DummyCommand(name="test-command")
+    result = middleware(cmd, handler)
+
+    assert result == "processed test-command"
+    assert [
+        {"level": e.level, "message": e.message, "extra": e.extra}
+        for e in logger.entries
+    ] == snapshot(
+        [
+            {
+                "level": "info",
+                "message": "Processing _DummyCommand",
+                "extra": {
+                    "message_type": "_DummyCommand",
+                    "payload": {"name": "test-command"},
+                },
+            },
+            {
+                "level": "debug",
+                "message": "Successfully completed _DummyCommand",
+                "extra": {"message_type": "_DummyCommand"},
+            },
+        ]
+    )
+
+
+def test_logging_middleware_without_log_payload_and_inactive_context():
+    logger = InMemoryLogger()
+    config = LoggingMiddlewareConfig(enable=True, log_payload=False)
+    middleware = LoggingMiddleware(logger=logger, config=config)
+
+    cmd = _DummyCommand(name="no-payload-cmd")
+    result = middleware(cmd, lambda c: "ok")
+
+    assert result == "ok"
+    assert len(logger.entries) == 2
+    extra = logger.entries[0].extra
+    assert extra is not None
+    assert "payload" not in extra
+    assert extra == {"message_type": "_DummyCommand"}
+
+    # Test after and on_error with inactive context
+    logger.clear()
+    middleware.after(cmd, "res", context={"active": False})
+    middleware.after(cmd, "res", context=None)
+    middleware.on_error(cmd, ValueError("error"), context={"active": False})
+    middleware.on_error(cmd, ValueError("error"), context=None)
+    assert len(logger.entries) == 0

@@ -1,0 +1,279 @@
+from typing import Any
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from inline_snapshot import snapshot
+
+from hexastack_core.domain import HexastackError
+from hexastack_core.infra.registries.exception import ExceptionRegistry
+from hexastack_fastapi.infra.exception_handlers import (
+    register_exception_handlers,
+)
+from hexastack_fastapi.infra.middleware.correlation import (
+    CorrelationHttpMiddleware,
+)
+
+# ---------------------------------------------------------------------------
+# Domain exception classes — one per status code branch
+# ---------------------------------------------------------------------------
+
+
+class UserNotFoundError(HexastackError):
+    pass
+
+
+class DuplicateEmailConflictError(HexastackError):
+    pass
+
+
+class UnauthorizedAccessError(HexastackError):
+    pass
+
+
+class ForbiddenActionError(HexastackError):
+    pass
+
+
+class PayloadValidationError(HexastackError):
+    pass
+
+
+class GenericDomainError(HexastackError):
+    pass
+
+
+class CustomMappedError(HexastackError):
+    pass
+
+
+def _build_app(*error_routes: tuple) -> tuple[FastAPI, TestClient]:
+    """Build a FastAPI test app with all exception routes registered."""
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    register_exception_handlers(app)
+    for path, exc_cls, msg in error_routes:
+        exc_cls_local = exc_cls
+        msg_local = msg
+        path_local = path
+
+        @app.get(path_local)
+        async def _route(
+            _exc=exc_cls_local,
+            _msg=msg_local,
+        ):  # pragma: no cover
+            raise _exc(_msg)
+
+    return app, TestClient(app, raise_server_exceptions=False)
+
+
+# ---------------------------------------------------------------------------
+# All 5 domain → HTTP status code branches
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("exc_cls", "path", "message", "expected_status", "expected_type"),
+    [
+        (UserNotFoundError, "/nf", "User 42 not found", 404, "UserNotFoundError"),
+        (
+            DuplicateEmailConflictError,
+            "/conflict",
+            "Email taken",
+            409,
+            "DuplicateEmailConflictError",
+        ),
+        (
+            UnauthorizedAccessError,
+            "/unauth",
+            "Token invalid",
+            401,
+            "UnauthorizedAccessError",
+        ),
+        (ForbiddenActionError, "/forbidden", "No access", 403, "ForbiddenActionError"),
+        (PayloadValidationError, "/val", "Bad payload", 422, "PayloadValidationError"),
+        (GenericDomainError, "/generic", "Something broke", 400, "GenericDomainError"),
+    ],
+    ids=[
+        "not_found",
+        "conflict",
+        "unauthorized",
+        "forbidden",
+        "validation",
+        "generic_400",
+    ],
+)
+def test_exception_handler_all_branches(
+    exc_cls, path, message, expected_status, expected_type
+):
+    """Kills all 20 mutants in exception_handlers.py — one per status code branch
+    plus error_type and error message field assignments."""
+    _, client = _build_app((path, exc_cls, message))
+    res = client.get(path)
+
+    assert res.status_code == expected_status
+    body = res.json()
+    assert body["error"] == message
+    assert body["error_type"] == expected_type
+    assert body["correlation_id"]  # dynamic — assert truthy
+
+
+@pytest.mark.snapshot
+def test_exception_handler_status_codes():
+    """Snapshot the response bodies for 404 and 409 (excluding dynamic correlation_id)."""
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    register_exception_handlers(app)
+
+    @app.get("/not-found")
+    async def raise_not_found():
+        raise UserNotFoundError("User 123 does not exist")
+
+    @app.get("/conflict")
+    async def raise_conflict():
+        raise DuplicateEmailConflictError("Email already in use")
+
+    client = TestClient(app, raise_server_exceptions=False)
+
+    res404 = client.get("/not-found")
+    assert res404.status_code == 404
+    body404 = res404.json()
+    assert body404["correlation_id"]
+    assert {k: v for k, v in body404.items() if k != "correlation_id"} == snapshot(
+        {"error": "User 123 does not exist", "error_type": "UserNotFoundError"}
+    )
+
+    res409 = client.get("/conflict")
+    assert res409.status_code == 409
+    body409 = res409.json()
+    assert body409["correlation_id"]
+    assert {k: v for k, v in body409.items() if k != "correlation_id"} == snapshot(
+        {"error": "Email already in use", "error_type": "DuplicateEmailConflictError"}
+    )
+
+
+@pytest.mark.snapshot
+def test_exception_handler_with_registry():
+    """Kills registry-branch mutants — custom status_code popped from mapped dict."""
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    registry = ExceptionRegistry()
+    registry.register(
+        CustomMappedError,
+        lambda exc: {"status_code": 418, "custom_reason": "I am a teapot"},
+    )
+    register_exception_handlers(app, exception_registry=registry)
+
+    @app.get("/custom")
+    async def raise_custom():
+        raise CustomMappedError("Custom error message")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    res = client.get("/custom")
+    assert res.status_code == 418
+    assert res.json() == snapshot({"custom_reason": "I am a teapot"})
+
+
+def test_exception_handler_with_registry_non_dict_fallback():
+    """Verify non-dict returned by registry handler defaults to HTTP 400."""
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    registry = ExceptionRegistry()
+    raw_fn: Any = lambda exc: ["raw_error_list", str(exc)]
+    registry.register(
+        CustomMappedError,
+        raw_fn,
+    )
+    register_exception_handlers(app, exception_registry=registry)
+
+    @app.get("/custom-list")
+    async def raise_custom_list():
+        raise CustomMappedError("List payload")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    res = client.get("/custom-list")
+    assert res.status_code == 400
+    assert res.json() == ["raw_error_list", "List payload"]
+
+
+class AccessDeniedSecurityError(HexastackError):
+    pass
+
+
+class UnauthenticatedSecurityError(HexastackError):
+    pass
+
+
+class InvalidCredentialSecurityError(HexastackError):
+    pass
+
+
+def test_exception_handler_security_aliases():
+    """Verify security keywords (accessdenied, unauthenticated, invalidcredential) map to 403 / 401."""
+    app, client = _build_app(
+        ("/denied", AccessDeniedSecurityError, "Forbidden context"),
+        ("/unauth_sec", UnauthenticatedSecurityError, "Missing auth context"),
+        ("/bad_cred", InvalidCredentialSecurityError, "Invalid secret"),
+    )
+
+    res_denied = client.get("/denied")
+    assert res_denied.status_code == 403
+    assert res_denied.json()["error_type"] == "AccessDeniedSecurityError"
+
+    res_unauth = client.get("/unauth_sec")
+    assert res_unauth.status_code == 401
+    assert res_unauth.json()["error_type"] == "UnauthenticatedSecurityError"
+
+    res_cred = client.get("/bad_cred")
+    assert res_cred.status_code == 401
+    assert res_cred.json()["error_type"] == "InvalidCredentialSecurityError"
+
+
+def test_unhandled_exception_handler_returns_500():
+    """Verify that unhandled Exception types return a standardized 500 JSON response."""
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    register_exception_handlers(app)
+
+    @app.get("/crash")
+    async def crash_endpoint():
+        raise RuntimeError("database connection crashed")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    res = client.get("/crash")
+    status = res.status_code
+    assert status == 500
+    body = res.json()
+    err_msg = body["error"]
+    assert err_msg == "Internal server error"
+    err_type = body["error_type"]
+    assert err_type == "RuntimeError"
+    corr_id = body.get("correlation_id")
+    assert corr_id is not None
+
+
+def test_unhandled_exception_handler_sentry_capture(monkeypatch):
+    """Verify that unhandled exceptions push tags and capture to sentry_sdk when installed."""
+    import sys
+    from unittest.mock import MagicMock
+
+    mock_sentry = MagicMock()
+    mock_scope = MagicMock()
+    mock_sentry.push_scope.return_value.__enter__.return_value = mock_scope
+    monkeypatch.setitem(sys.modules, "sentry_sdk", mock_sentry)
+
+    app = FastAPI()
+    app.add_middleware(CorrelationHttpMiddleware)
+    register_exception_handlers(app)
+
+    @app.get("/sentry-crash")
+    async def sentry_crash():
+        raise ValueError("unexpected value")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    res = client.get("/sentry-crash")
+    status = res.status_code
+    assert status == 500
+    mock_scope.set_tag.assert_any_call("path", "/sentry-crash")
+    mock_scope.set_tag.assert_any_call("method", "GET")
+    assert mock_sentry.capture_exception.called

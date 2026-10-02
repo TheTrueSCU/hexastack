@@ -1,0 +1,9 @@
+version: v2
+modules:
+  - path: packages/hexastack_grpc/protos
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE

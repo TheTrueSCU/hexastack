@@ -1,0 +1,67 @@
+[project]
+name = "hexastack-ai"
+version = "0.7.0"
+description = "AI engine, LLM provider integration (LiteLLM, Instructor, PydanticAI), and CQRS agent reflection for Hexastack"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "hexastack-core",
+    "hexastack-cqrs",
+    "instructor>=1.7.0",
+    "litellm>=1.50.0",
+    "mcp>=1.3.0",
+    "pydantic>=2.10.0",
+    "pydantic-ai>=0.0.24",
+]
+
+[project.optional-dependencies]
+mcp = [
+    "hexastack-mcp",
+]
+qdrant = [
+    "qdrant-client>=1.12.0",
+]
+all = [
+    "hexastack-ai[mcp,qdrant]",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+ai = "hexastack_ai.infra.bootstrap:AiBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }
+hexastack-mcp = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_ai"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_ai"]
+layers = [
+    "infra",
+    "adapters",
+    "ports",
+    "domain",
+]
+
+[tool.mutmut]
+runner = "pytest -x --assert=plain -o addopts=\"\""
+paths_to_mutate = "src"
+
+[tool.pytest-gremlins]
+paths = ["src"]
+operators = ["arithmetic", "boolean", "boundary", "comparison", "return"]
+workers = "auto"
+batch_size = 10
+cache = true
