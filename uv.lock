@@ -2183,6 +2183,9 @@ web = [
     { name = "hexastack-fastapi" },
     { name = "uvicorn", extra = ["standard"] },
 ]
+ziti = [
+    { name = "hexastack-fastapi", extra = ["ziti"] },
+]
 
 [package.metadata]
 requires-dist = [
@@ -2230,6 +2233,7 @@ requires-dist = [
     { name = "hexastack-fastapi", marker = "extra == 'web'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["docs"], marker = "extra == 'docs'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["ratelimit"], marker = "extra == 'ratelimit'", editable = "packages/hexastack_fastapi" },
+    { name = "hexastack-fastapi", extras = ["ziti"], marker = "extra == 'ziti'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-flags", marker = "extra == 'all'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", marker = "extra == 'flags'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", extras = ["flagd"], marker = "extra == 'flagd'", editable = "packages/hexastack_flags" },
@@ -2275,7 +2279,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2615,6 +2619,9 @@ testing = [
     { name = "playwright" },
     { name = "schemathesis" },
 ]
+ziti = [
+    { name = "openziti" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -2623,12 +2630,13 @@ requires-dist = [
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "limits", marker = "extra == 'ratelimit'", specifier = ">=5.8.0" },
+    { name = "openziti", marker = "extra == 'ziti'", specifier = ">=1.0.0" },
     { name = "playwright", marker = "extra == 'testing'", specifier = ">=1.49.0" },
     { name = "schemathesis", marker = "extra == 'testing'", specifier = ">=3.39.0" },
     { name = "slowapi", marker = "extra == 'ratelimit'", specifier = ">=0.1.10" },
     { name = "zensical", marker = "extra == 'docs'", specifier = ">=0.0.56" },
 ]
-provides-extras = ["auth", "docs", "ratelimit", "testing"]
+provides-extras = ["auth", "docs", "ratelimit", "testing", "ziti"]
 
 [[package]]
 name = "hexastack-flags"
@@ -4728,6 +4736,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/32/a9/d7525a59fdd240e69
 wheels = [
     { url = "https://files.pythonhosted.org/packages/23/3f/ab8d29df207ce5f470a07fa96ebb48af4e95b7fab7e7635311b9a32f2fab/opentelemetry_util_http-0.65b0-py3-none-any.whl", hash = "sha256:7553b606f963097cb190536dc30556cce85090692e471a422fff30ca29b04348", size = 8245, upload-time = "2026-07-16T15:25:46.482Z" },
 ]
+
+[[package]]
+name = "openziti"
+version = "1.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/46/6f1c133453270e46db20966b501b83f8c5c5706aabce8500d5b0693d21c9/openziti-1.7.1.tar.gz", hash = "sha256:1c403a4391f41d91a84d5c7ae6d415d0c3403d0c18636d46786ce2fc910fd96f", size = 39059, upload-time = "2026-07-30T14:21:38.415Z" }
 
 [[package]]
 name = "orjson"

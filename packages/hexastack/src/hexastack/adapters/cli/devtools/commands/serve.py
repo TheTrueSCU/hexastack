@@ -37,6 +37,17 @@ def add_serve_command(app: typer.Typer) -> None:
         reload: bool = typer.Option(
             True, "--reload/--no-reload", help="Enable live reloading."
         ),
+        ziti_identity: str | None = typer.Option(
+            None,
+            "--ziti-identity",
+            "-z",
+            help="Path to enrolled OpenZiti identity JSON to host as zero-trust dark microservice.",
+        ),
+        ziti_service: str | None = typer.Option(
+            None,
+            "--ziti-service",
+            help="OpenZiti service name to bind on overlay fabric (defaults to 'hexastack-demo').",
+        ),
     ) -> None:
         if importlib.util.find_spec("uvicorn") is None:
             raise MissingDependencyError(
@@ -50,9 +61,33 @@ def add_serve_command(app: typer.Typer) -> None:
                 "Install via 'pip install hexastack[fastapi]'."
             )
 
-        import uvicorn
-
         from hexastack.adapters.fastapi import create_demo_app
 
         demo_app = create_demo_app()
+
+        if ziti_identity is not None:
+            from rich.console import Console
+
+            from hexastack_fastapi.adapters.openziti import (
+                OpenZitiASGIAdapter,
+                OpenZitiConfig,
+            )
+
+            svc_name = ziti_service or "hexastack-demo"
+            console = Console()
+            console.print(
+                f"[bold cyan]Zero-Trust Dark Service:[/] Hosting '{svc_name}' over OpenZiti overlay (0 open ports on host)."
+            )
+            ziti_config = OpenZitiConfig(
+                identity_path=ziti_identity,
+                service_name=svc_name,
+                bind_host=host,
+                bind_port=port,
+            )
+            adapter = OpenZitiASGIAdapter(ziti_config)
+            adapter.run_uvicorn(demo_app, reload=reload)
+            return
+
+        import uvicorn
+
         uvicorn.run(demo_app, host=host, port=port, reload=reload)

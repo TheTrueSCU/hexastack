@@ -192,6 +192,9 @@ web = [
     "hexastack-fastapi",
     "uvicorn[standard]>=0.30.0",
 ]
+ziti = [
+    "hexastack-fastapi[ziti]",
+]
 
 all = [
     "hexastack-ai[all]",

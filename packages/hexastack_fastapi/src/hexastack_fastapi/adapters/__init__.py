@@ -14,6 +14,11 @@ from hexastack_fastapi.adapters.docs import (
 )
 from hexastack_fastapi.adapters.health import create_health_router
 from hexastack_fastapi.adapters.metrics import create_metrics_router
+from hexastack_fastapi.adapters.openziti import (
+    OpenZitiASGIAdapter,
+    OpenZitiConfig,
+    openziti_bind,
+)
 from hexastack_fastapi.adapters.ratelimit import (
     SlowapiRateLimiterAdapter,
     get_remote_address,
@@ -45,6 +50,9 @@ __all__ = [
     "get_remote_address",
     "get_user_or_ip_key",
     "mount_zensical_docs",
+    "openziti_bind",
+    "OpenZitiASGIAdapter",
+    "OpenZitiConfig",
     "rate_limit",
     "require_feature",
     "require_rate_limit",

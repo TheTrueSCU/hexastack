@@ -29,6 +29,9 @@ testing = [
     "playwright>=1.49.0",
     "schemathesis>=3.39.0",
 ]
+ziti = [
+    "openziti>=1.0.0",
+]
 
 [project.entry-points."hexastack.bootstrappers"]
 fastapi = "hexastack_fastapi.infra.bootstrap:FastApiBootstrapper"

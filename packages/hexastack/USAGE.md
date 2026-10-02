@@ -1046,10 +1046,18 @@ Usage: hexastack serve [OPTIONS]
  Launch the Hexastack local development server (requires hexastack).
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --host    -h                 <str>  Bind host address. [default: 127.0.0.1]  │
-│ --port    -p                 <int>  Bind port number. [default: 8000]        │
-│ --reload      --no-reload           Enable live reloading. [default: reload] │
-│ --help                              Show this message and exit.              │
+│ --host           -h                 <str>  Bind host address.                │
+│                                            [default: 127.0.0.1]              │
+│ --port           -p                 <int>  Bind port number. [default: 8000] │
+│ --reload             --no-reload           Enable live reloading.            │
+│                                            [default: reload]                 │
+│ --ziti-identity  -z                 <str>  Path to enrolled OpenZiti         │
+│                                            identity JSON to host as          │
+│                                            zero-trust dark microservice.     │
+│ --ziti-service                      <str>  OpenZiti service name to bind on  │
+│                                            overlay fabric (defaults to       │
+│                                            'hexastack-demo').                │
+│ --help                                     Show this message and exit.       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
