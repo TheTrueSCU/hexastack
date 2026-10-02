@@ -28,6 +28,7 @@
    - Coverage-guided and adversarial fuzz harnesses are colocated in `packages/<pkg>/tests/fuzz/` (and root `tests/properties/`) and dynamically executed via `hexaqual test fuzz`.
    - Target test coverage is $\ge 90\%$.
    - When writing assertions in tests, assign method return values to variables first (e.g., `res = cache.delete("key"); assert res is True`) to prevent CodeQL *"assert statement with side-effect"* warnings.
+   - **Dual-Implementation Oracle Testing**: Production adapters (`SqlAlchemyRepository`, `DiskCacheAdapter`, `InMemoryRateLimiter`, `SqlAlchemyOutboxStorage`, `AsyncioWorkflowEngine`) are cross-evaluated against naive reference oracles via Hypothesis state machines to mathematically prove equivalence ($f_{\text{prod}}(x) \equiv f_{\text{oracle}}(x)$). See [Testing & Dual-Implementation Oracle Rigor](developer-guide/testing.md).
 
 ---
 

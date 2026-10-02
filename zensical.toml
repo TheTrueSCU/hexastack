@@ -21,6 +21,7 @@ nav = [
         { "Financial Ledger & Invariants" = "tutorials/financial-ledger.md" }
     ]},
     { "Architecture" = "architecture.md" },
+    { "Testing & Oracle Rigor" = "developer-guide/testing.md" },
     { "Ecosystem Architecture" = "ecosystem.md" },
     { "AI Guardrails & Agent Context" = "ai-guardrails.md" },
     { "Developer Tools" = "tools.md" },
