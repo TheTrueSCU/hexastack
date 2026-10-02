@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from hexastack_core.ports.cache import AsyncCachePort, CachePort
+from hexastack_core.ports.clock import ClockPort
 
 
 class DiskCacheAdapter(CachePort):
@@ -15,21 +16,25 @@ class DiskCacheAdapter(CachePort):
         Implements CachePort using Python standard library `sqlite3` on local filesystem storage.
         Eliminates external dependencies and unsafe deserialization vulnerabilities (such as CVE-2025-69872).
         Enables multi-process safe cache sharing, persistent caching across service restarts,
-        and offline CLI response caching without Redis or network dependencies.
+        and offline CLI response caching without Redis or network dependencies. Accepts an
+        optional ClockPort for deterministic simulation and property-based oracle testing.
     """
 
     def __init__(
         self,
         directory: str | Path | None = None,
         size_limit: int = 1_073_741_824,  # 1GB default
+        clock: ClockPort | None = None,
     ) -> None:
         """Initialize DiskCacheAdapter.
 
         Args:
             directory: Filesystem path to cache database directory or db file. If None, creates a tempdir.
             size_limit: Maximum cache size in bytes (retained for API compatibility).
+            clock: Optional ClockPort instance for deterministic time measurement.
         """
         self._size_limit = size_limit
+        self._clock = clock
         if directory is None:
             self._directory = Path(tempfile.mkdtemp(prefix="hexastack_cache_"))
             self._db_path = self._directory / "cache.db"
@@ -68,6 +73,9 @@ class DiskCacheAdapter(CachePort):
                 "CREATE INDEX IF NOT EXISTS idx_expires_at ON cache_entries(expires_at)"
             )
 
+    def _now(self) -> float:
+        return self._clock.timestamp() if self._clock else time.time()
+
     def clear(self) -> None:
         """Clear all entries from the disk cache."""
         with self._conn:
@@ -98,7 +106,7 @@ class DiskCacheAdapter(CachePort):
         Returns:
             Cached value or default.
         """
-        now = time.time()
+        now = self._now()
         cursor = self._conn.execute(
             "SELECT value, expires_at FROM cache_entries WHERE key = ?", (key,)
         )
@@ -107,7 +115,7 @@ class DiskCacheAdapter(CachePort):
             return default
 
         raw_val, expires_at = row
-        if expires_at is not None and expires_at <= now:
+        if expires_at is not None and now > expires_at:
             self.delete(key)
             return default
 
@@ -135,7 +143,7 @@ class DiskCacheAdapter(CachePort):
             value: Value object to persist (JSON serializable).
             ttl_seconds: Time to live in seconds.
         """
-        now = time.time()
+        now = self._now()
         expires_at = (now + ttl_seconds) if ttl_seconds is not None else None
         serialized = json.dumps(value)
         with self._conn:
@@ -167,15 +175,17 @@ class AsyncDiskCacheAdapter(AsyncCachePort):
         self,
         directory: str | Path | None = None,
         size_limit: int = 1_073_741_824,
+        clock: ClockPort | None = None,
     ) -> None:
         """Initialize AsyncDiskCacheAdapter.
 
         Args:
             directory: Directory path for diskcache.
             size_limit: Maximum cache size in bytes.
+            clock: Optional ClockPort instance for deterministic time measurement.
         """
         self._sync_adapter = DiskCacheAdapter(
-            directory=directory, size_limit=size_limit
+            directory=directory, size_limit=size_limit, clock=clock
         )
 
     async def clear_async(self) -> None:
