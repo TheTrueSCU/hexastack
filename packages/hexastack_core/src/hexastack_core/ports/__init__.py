@@ -24,6 +24,10 @@ from hexastack_core.ports.notification import (
 )
 from hexastack_core.ports.presenter import PresenterPort
 from hexastack_core.ports.ratelimit import RateLimiterPort
+from hexastack_core.ports.remote_exec import (
+    RemoteExecResult,
+    RemoteExecutionPort,
+)
 from hexastack_core.ports.repository import (
     AsyncRepositoryPort,
     RepositoryPort,
@@ -58,6 +62,8 @@ __all__ = [
     "NotificationPriority",
     "PresenterPort",
     "RateLimiterPort",
+    "RemoteExecResult",
+    "RemoteExecutionPort",
     "RepositoryPort",
     "StoragePort",
     "UnitOfWorkPort",

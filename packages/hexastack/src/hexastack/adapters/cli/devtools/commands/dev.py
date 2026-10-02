@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import multiprocessing
+import shutil
+import subprocess
 import time
 
 import typer
@@ -31,6 +34,14 @@ def add_dev_command(app: typer.Typer) -> None:
         ),
         with_outbox: bool = typer.Option(
             True, "--outbox/--no-outbox", help="Launch Outbox relay daemon."
+        ),
+        share: bool = typer.Option(
+            False,
+            "--share/--no-share",
+            help="Expose ephemeral peer-to-peer zero-trust tunnel via zrok.",
+        ),
+        share_mode: str = typer.Option(
+            "public", "--share-mode", help="zrok tunnel mode ('public' or 'private')."
         ),
     ) -> None:
         typer.echo(
@@ -73,6 +84,11 @@ def add_dev_command(app: typer.Typer) -> None:
             )
             processes.append(p_outbox)
 
+        # 4. Optional zrok Zero-Trust Share
+        p_share = None
+        if share:
+            p_share = _start_zrok_share(host, http_port, share_mode)
+
         typer.echo(
             "\n✨ All transports launched. Press Ctrl+C to terminate all servers.\n"
         )
@@ -85,10 +101,54 @@ def add_dev_command(app: typer.Typer) -> None:
                 time.sleep(1.0)
         except KeyboardInterrupt:
             typer.echo("\n🛑 Shutting down development servers...")
+            if p_share is not None:
+                p_share.terminate()
+                with contextlib.suppress(Exception):
+                    p_share.wait(timeout=2.0)
             for p in processes:
                 p.terminate()
                 p.join(timeout=2.0)
             typer.echo("✅ All services stopped.")
+
+
+def _start_zrok_share(
+    host: str,
+    port: int,
+    mode: str = "public",
+) -> subprocess.Popen[str] | None:
+    """Launch an ephemeral zrok peer-to-peer tunnel if the zrok CLI is available.
+
+    Args:
+        host: Host where the local service is bound.
+        port: Local port number to tunnel.
+        mode: Sharing mode ('public' or 'private').
+
+    Returns:
+        Popen process handle if launched, or None if zrok is not installed or errors.
+    """
+    zrok_bin = shutil.which("zrok")
+    if not zrok_bin:
+        typer.echo(
+            "   • ⚠️  [yellow]zrok not found on PATH. Install zrok (https://zrok.io) to enable zero-trust tunnels.[/yellow]"
+        )
+        return None
+
+    target_url = f"http://{host}:{port}"
+    cmd = [zrok_bin, "share", mode, target_url, "--headless"]
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        typer.echo(
+            f"   • ⚡ [bold green]zrok {mode} share initiating on {target_url}...[/bold green]"
+        )
+        return proc
+    except Exception as err:
+        typer.echo(f"   • ⚠️  [yellow]Failed to start zrok share: {err}[/yellow]")
+        return None
 
 
 def _start_fastapi_server(host: str, port: int) -> None:

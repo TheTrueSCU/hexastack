@@ -158,6 +158,9 @@ sentry = [
 spiffe = [
     "hexastack-auth[spiffe]",
 ]
+ssh = [
+    "hexastack-core[ssh]",
+]
 sql = [
     "hexastack-db",
     "hexastack-events[sql]",

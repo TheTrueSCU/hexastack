@@ -329,6 +329,19 @@ wheels = [
 ]
 
 [[package]]
+name = "asyncssh"
+version = "2.24.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/dd/7f/2d79247bacc562104f312d27efe541673aa177feac89de291bd61bca52be/asyncssh-2.24.0.tar.gz", hash = "sha256:4064c590e59ce2e8d82a2f66d35f3120d765828b4df5e3dbfb07b4a8c24686c9", size = 550148, upload-time = "2026-06-27T20:34:44.755Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/29/908ce0ca5e8cae76662e354a0f08df552d6d221844748b9e5ca06051cc44/asyncssh-2.24.0-py3-none-any.whl", hash = "sha256:9abd46300adcb6d4b73269b34c53cd0d17a138b9a22b5b38008ce7d5808734b7", size = 381237, upload-time = "2026-06-27T20:34:43.198Z" },
+]
+
+[[package]]
 name = "atheris"
 version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2143,6 +2156,9 @@ sql = [
 sqlite = [
     { name = "hexastack-db", extra = ["sqlite"] },
 ]
+ssh = [
+    { name = "hexastack-core", extra = ["ssh"] },
+]
 structlog = [
     { name = "hexastack-logging", extra = ["structlog"] },
 ]
@@ -2186,6 +2202,7 @@ requires-dist = [
     { name = "hexastack-core", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["fsspec"], marker = "extra == 'fsspec'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["redis"], marker = "extra == 'redis'", editable = "packages/hexastack_core" },
+    { name = "hexastack-core", extras = ["ssh"], marker = "extra == 'ssh'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["valkey"], marker = "extra == 'valkey'", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-cqrs", extras = ["huey"], marker = "extra == 'huey'", editable = "packages/hexastack_cqrs" },
@@ -2258,7 +2275,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2394,6 +2411,9 @@ fsspec = [
 redis = [
     { name = "redis", extra = ["hiredis"] },
 ]
+ssh = [
+    { name = "asyncssh" },
+]
 testing = [
     { name = "faker" },
     { name = "hypothesis" },
@@ -2406,6 +2426,7 @@ valkey = [
 
 [package.metadata]
 requires-dist = [
+    { name = "asyncssh", marker = "extra == 'ssh'", specifier = ">=2.17.0" },
     { name = "faker", marker = "extra == 'testing'", specifier = ">=33.0.0" },
     { name = "filelock", marker = "extra == 'filelock'", specifier = ">=3.16.0" },
     { name = "fsspec", marker = "extra == 'fsspec'", specifier = ">=2024.1.0" },
@@ -2417,7 +2438,7 @@ requires-dist = [
     { name = "rodi", specifier = ">=2.1.0" },
     { name = "valkey", extras = ["libvalkey"], marker = "extra == 'valkey'", specifier = ">=6.0.0" },
 ]
-provides-extras = ["filelock", "fsspec", "redis", "testing", "valkey"]
+provides-extras = ["filelock", "fsspec", "redis", "ssh", "testing", "valkey"]
 
 [[package]]
 name = "hexastack-cqrs"

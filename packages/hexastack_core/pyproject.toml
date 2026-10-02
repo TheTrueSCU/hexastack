@@ -23,6 +23,9 @@ fsspec = [
 redis = [
     "redis[hiredis]>=5.0.0",
 ]
+ssh = [
+    "asyncssh>=2.17.0",
+]
 testing = [
     "faker>=33.0.0",
     "hypothesis>=6.100.0",

@@ -254,14 +254,20 @@ Usage: hexastack dev [OPTIONS]
  50051, Outbox relay).
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --host       -h                 <str>  Bind host address.                    │
-│                                        [default: 127.0.0.1]                  │
-│ --port       -p                 <int>  REST HTTP port. [default: 8000]       │
-│ --grpc-port                     <int>  gRPC port. [default: 50051]           │
-│ --grpc           --no-grpc             Launch gRPC server. [default: grpc]   │
-│ --outbox         --no-outbox           Launch Outbox relay daemon.           │
-│                                        [default: outbox]                     │
-│ --help                                 Show this message and exit.           │
+│ --host        -h                 <str>  Bind host address.                   │
+│                                         [default: 127.0.0.1]                 │
+│ --port        -p                 <int>  REST HTTP port. [default: 8000]      │
+│ --grpc-port                      <int>  gRPC port. [default: 50051]          │
+│ --grpc            --no-grpc             Launch gRPC server. [default: grpc]  │
+│ --outbox          --no-outbox           Launch Outbox relay daemon.          │
+│                                         [default: outbox]                    │
+│ --share           --no-share            Expose ephemeral peer-to-peer        │
+│                                         zero-trust tunnel via zrok.          │
+│                                         [default: no-share]                  │
+│ --share-mode                     <str>  zrok tunnel mode ('public' or        │
+│                                         'private').                          │
+│                                         [default: public]                    │
+│ --help                                  Show this message and exit.          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
