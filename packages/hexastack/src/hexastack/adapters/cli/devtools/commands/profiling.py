@@ -13,7 +13,7 @@ from pathlib import Path
 import typer
 
 from hexastack_core.domain.exceptions import MissingDependencyError
-from hexastack_core.infra.fs import atomic_write_text
+from hexastack_core.utils.fs import atomic_write_text
 
 __all__ = [
     "add_load_command",

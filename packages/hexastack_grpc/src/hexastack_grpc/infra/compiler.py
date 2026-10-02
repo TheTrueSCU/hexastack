@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from hexastack_core.domain.exceptions import MissingDependencyError
-from hexastack_core.infra.fs import atomic_write_text
+from hexastack_core.utils.fs import atomic_write_text
 from hexastack_grpc.domain.exceptions import ProtoCompilationError
 from hexastack_grpc.domain.models import ProtoSchemaMetadata
 

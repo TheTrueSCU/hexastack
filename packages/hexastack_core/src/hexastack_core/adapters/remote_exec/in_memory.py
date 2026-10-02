@@ -9,6 +9,7 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 
 from hexastack_core.ports.remote_exec import RemoteExecResult, RemoteExecutionPort
+from hexastack_core.utils.fs import atomic_write_bytes
 
 
 class InMemoryRemoteExecutionAdapter(RemoteExecutionPort):
@@ -175,9 +176,7 @@ class InMemoryRemoteExecutionAdapter(RemoteExecutionPort):
         if remote_path not in self._virtual_files:
             raise FileNotFoundError(f"Remote virtual file not found: {remote_path}")
         content = self._virtual_files[remote_path]
-        target = Path(local_path)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(content)
+        atomic_write_bytes(local_path, content)
 
 
 __all__ = [

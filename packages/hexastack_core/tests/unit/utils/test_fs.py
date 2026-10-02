@@ -1,4 +1,4 @@
-"""Unit tests for atomic filesystem operations in hexastack_core.infra.fs.
+"""Unit tests for atomic filesystem operations in hexastack_core.utils.fs.
 
 Notes/Architectural Intent:
     Ensures atomic file writing utilities preserve crash-consistency invariants,
@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from hexastack_core.infra.fs import atomic_write_bytes, atomic_write_text
+from hexastack_core.utils.fs import atomic_write_bytes, atomic_write_text
 
 
 def test_atomic_write_text_success(tmp_path: Path) -> None:

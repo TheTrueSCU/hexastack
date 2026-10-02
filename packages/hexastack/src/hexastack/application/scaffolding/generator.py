@@ -13,7 +13,7 @@ from hexastack.application.scaffolding import templates
 from hexastack.application.scaffolding.models import (
     ScaffoldConfig,
 )
-from hexastack_core.infra.fs import atomic_write_text
+from hexastack_core.utils.fs import atomic_write_text
 
 
 class ProjectScaffolder:
