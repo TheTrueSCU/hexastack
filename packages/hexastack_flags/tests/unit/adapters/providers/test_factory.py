@@ -12,6 +12,16 @@ from hexastack_flags.domain.models import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _reset_openfeature_provider():
+    """Ensure OpenFeature default provider is reset to in-memory after each test."""
+    yield
+    from openfeature import api
+    from openfeature.provider.in_memory_provider import InMemoryProvider
+
+    api.set_provider(InMemoryProvider({}))
+
+
 def test_initialize_in_memory_provider():
     """Verify in-memory provider initialization with custom flag dictionary."""
     from hexastack_flags.adapters.openfeature import OpenFeatureFlagAdapter

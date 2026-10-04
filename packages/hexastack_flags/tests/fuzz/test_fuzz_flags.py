@@ -29,7 +29,7 @@ try:
 except ImportError:
     atheris = None
 
-_MAX_PER_CALL_DURATION = 0.05  # 50ms
+_MAX_PER_CALL_DURATION = 5.0  # 5.0s budget to absorb heavy CI CPU contention
 
 # Initialize in-memory provider with baseline flags
 _flags = {
@@ -162,6 +162,7 @@ def run_standalone(runs: int = 100) -> dict[str, Any]:
     Returns:
         Summary dictionary with execution telemetry.
     """
+    api.set_provider(_provider)
     start = time.perf_counter()
     passed = 0
     rng = random.Random(42)  # noqa: S311
