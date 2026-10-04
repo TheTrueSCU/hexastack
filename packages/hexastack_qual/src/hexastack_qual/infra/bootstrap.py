@@ -7,9 +7,11 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.ports.buses import EventBusPort
 from hexastack_qual.adapters.cqrs.handlers import (
     FormatStatementsHandler,
@@ -29,6 +31,8 @@ from hexastack_qual.ports.mutator import MutationInspectorPort
 if TYPE_CHECKING:
     from hexastack_core.infra.bootstrap import BootstrapContext
     from hexastack_core.infra.registries.config import ConfigRegistry
+
+_fallback_logger = logging.getLogger(__name__)
 
 
 class QualBootstrapper(BootstrapperPort):
@@ -50,11 +54,15 @@ class QualBootstrapper(BootstrapperPort):
         """
         di = context.container
 
+        logger: LoggingPort | None = None
+        if LoggingPort in di:
+            logger = di.resolve(LoggingPort)
+
         event_bus: EventBusPort | None = None
         if EventBusPort in di:
             event_bus = di.resolve(EventBusPort)
 
-        runner = HexaqualRunnerAdapter()
+        runner = HexaqualRunnerAdapter(logger=logger)
         di.add_instance(runner, declared_class=QualityAuditorPort)
         di.add_instance(runner, declared_class=MutationInspectorPort)
         di.add_instance(runner, declared_class=PrDiagnosticPort)
@@ -101,8 +109,12 @@ class QualBootstrapper(BootstrapperPort):
             from hexastack_qual.adapters.mcp.tools import register_quality_mcp_tools
 
             register_quality_mcp_tools(get_mcp_registry())
-        except ImportError:
-            pass
+        except ImportError as exc:
+            msg = f"hexastack-mcp not installed; skipping MCP quality tools: {exc}"
+            if logger is not None:
+                logger.debug(msg)
+            else:
+                _fallback_logger.debug(msg)
 
     def register_config(self, registry: ConfigRegistry) -> None:
         """Phase 1: Register quality configuration schemas.

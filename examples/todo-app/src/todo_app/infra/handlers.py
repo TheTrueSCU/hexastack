@@ -62,6 +62,13 @@ class CompleteTodoHandler:
         item = self.repo.get_by_id(cmd.todo_id)
         if item is None:
             raise TodoNotFoundError(cmd.todo_id)
+
+        # Domain ownership check
+        if not cmd.is_admin and item.owner_id != cmd.requester_id:
+            raise PermissionDeniedError(
+                f"Forbidden: '{cmd.requester_id}' cannot complete task owned by '{item.owner_id}'."
+            )
+
         item.mark_completed()
         self.repo.save(item)
         return _to_dto(item)

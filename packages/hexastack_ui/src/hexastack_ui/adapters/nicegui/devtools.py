@@ -7,6 +7,8 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import importlib.resources
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -18,7 +20,7 @@ from hexastack_ui.adapters.nicegui.page import check_nicegui_installed, mount_ui
 if TYPE_CHECKING:
     from fastapi import FastAPI
 
-import importlib.resources
+_fallback_logger = logging.getLogger(__name__)
 
 __all__ = [
     "generate_topology_mermaid",
@@ -42,8 +44,10 @@ def _resolve_static_dir() -> Path | None:
             candidate = Path(str(traversable))
             if candidate.is_dir():
                 return candidate
-    except (TypeError, FileNotFoundError, ModuleNotFoundError):
-        pass
+    except (TypeError, FileNotFoundError, ModuleNotFoundError) as exc:
+        _fallback_logger.debug(
+            "Could not resolve static dir via importlib.resources: %s", exc
+        )
     fallback = Path(__file__).parent / "static"
     return fallback if fallback.is_dir() else None
 

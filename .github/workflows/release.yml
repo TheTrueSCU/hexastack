@@ -56,6 +56,8 @@ jobs:
     needs: [release]
     if: needs.release.outputs.released == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -66,7 +68,7 @@ jobs:
         run: cargo install jscpd --locked
 
       - name: Run Quality Gate via Hexaqual
-        uses: TheTrueSCU/hexaqual@v0.8.0
+        uses: TheTrueSCU/hexaqual@1a37ad125f86dacd57616e1c1b3fab56185e50c3 # v0.9.1
         with:
           sync-args: "--all-packages --all-extras --all-groups"
 
@@ -77,6 +79,8 @@ jobs:
     name: Unit & Integration Tests
     needs: [release, quality-gate]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -214,11 +218,15 @@ jobs:
     needs: [release, publish]
     if: needs.release.outputs.released == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Check for Template Sync Token
         id: check-token
+        env:
+          TEMPLATE_SYNC_TOKEN: ${{ secrets.TEMPLATE_SYNC_TOKEN }}
         run: |
-          if [ -n "${{ secrets.TEMPLATE_SYNC_TOKEN }}" ]; then
+          if [ -n "$TEMPLATE_SYNC_TOKEN" ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
@@ -241,8 +249,13 @@ jobs:
 
       - name: Bump Hexastack Version in Template
         if: steps.check-token.outputs.enabled == 'true'
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
         run: |
-          VERSION="${{ needs.release.outputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Invalid release version string: $VERSION"
+            exit 1
+          fi
           sed -i -E "s/hexastack\[(.*)\]>=[0-9]+\.[0-9]+\.[0-9]+/hexastack[\1]>=${VERSION}/g" pyproject.toml
           uv lock --refresh
 

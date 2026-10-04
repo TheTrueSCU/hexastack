@@ -25,6 +25,12 @@ class CompleteTodoCommand(Command):
     """Command to mark an existing To-Do task as finished."""
 
     todo_id: str = Field(..., description="Unique identifier of the task.")
+    requester_id: str = Field(
+        "alice", description="Caller identifier performing the completion."
+    )
+    is_admin: bool = Field(
+        False, description="Whether the caller has admin override privileges."
+    )
 
 
 class DeleteTodoCommand(Command):

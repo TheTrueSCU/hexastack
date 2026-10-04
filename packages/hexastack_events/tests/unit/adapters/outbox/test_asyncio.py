@@ -181,3 +181,70 @@ def test_asyncio_outbox_relay_with_lock_concurrency():
         count_skipped = relay.publish_pending_batch(limit=10)
         assert count_skipped == 0
         external_lock.release()
+
+
+@pytest.mark.anyio
+async def test_asyncio_outbox_relay_with_async_lock() -> None:
+    """Verify AsyncioOutboxRelay respects AsyncLockPort and rejects sync acquisition."""
+    from hexastack_core.ports.lock import AsyncLockPort
+
+    class MockAsyncLock(AsyncLockPort):
+        def __init__(self) -> None:
+            self._is_locked = False
+
+        async def acquire(self, blocking: bool = True, timeout: float = -1.0) -> bool:
+            _ = (blocking, timeout)
+            if self._is_locked:
+                return False
+            self._is_locked = True
+            return True
+
+        async def release(self) -> None:
+            self._is_locked = False
+
+        async def locked(self) -> bool:
+            return self._is_locked
+
+    async_lock = MockAsyncLock()
+    storage = InMemoryOutboxStorage()
+    bus = InMemoryDistributedEventBus()
+
+    storage.save(
+        OutboxRecord(
+            id="rec-async-lock-1",
+            event_type="AsyncLockedTestEvent",
+            payload={"ok": True},
+        )
+    )
+
+    relay = AsyncioOutboxRelay(
+        storage=storage,
+        bus=bus,
+        lock=async_lock,
+    )
+
+    # 1. Calling synchronous publish_pending_batch raises TypeError
+    with pytest.raises(
+        TypeError, match="AsyncLockPort cannot be acquired synchronously"
+    ):
+        relay.publish_pending_batch()
+
+    # 2. Asynchronous publish_pending_batch_async succeeds
+    count = await relay.publish_pending_batch_async(limit=10)
+    assert count == 1
+    is_locked = await async_lock.locked()
+    assert is_locked is False
+
+    # 3. When async lock is held, skips publishing without blocking
+    storage.save(
+        OutboxRecord(
+            id="rec-async-lock-2",
+            event_type="AsyncLockedTestEvent2",
+            payload={"ok": True},
+        )
+    )
+    acq_held = await async_lock.acquire()
+    assert acq_held is True
+    skipped_count = await relay.publish_pending_batch_async(limit=10)
+    assert skipped_count == 0
+    await async_lock.release()

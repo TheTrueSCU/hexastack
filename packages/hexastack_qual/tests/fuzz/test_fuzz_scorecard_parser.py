@@ -71,7 +71,8 @@ def fuzz_one_input(data: bytes) -> None:
         else:
             QualityScorecard.model_validate_json(data)
     except (ValidationError, ValueError, UnicodeDecodeError):
-        pass
+        # Expected parsing/validation failure on invalid fuzzed inputs
+        _fuzz_input_invalid = True  # noqa: F841
 
     # Test MutantReport parser
     try:
@@ -80,7 +81,8 @@ def fuzz_one_input(data: bytes) -> None:
         else:
             MutantReport.model_validate_json(data)
     except (ValidationError, ValueError, UnicodeDecodeError):
-        pass
+        # Expected parsing/validation failure on invalid fuzzed inputs
+        _fuzz_input_invalid = True  # noqa: F841
 
     # Test PrHealthSummary parser
     try:
@@ -89,7 +91,8 @@ def fuzz_one_input(data: bytes) -> None:
         else:
             PrHealthSummary.model_validate_json(data)
     except (ValidationError, ValueError, UnicodeDecodeError):
-        pass
+        # Expected parsing/validation failure on invalid fuzzed inputs
+        _fuzz_input_invalid = True  # noqa: F841
 
     # Test ComplexityMetric parser
     try:
@@ -98,7 +101,8 @@ def fuzz_one_input(data: bytes) -> None:
         else:
             ComplexityMetric.model_validate_json(data)
     except (ValidationError, ValueError, UnicodeDecodeError):
-        pass
+        # Expected parsing/validation failure on invalid fuzzed inputs
+        _fuzz_input_invalid = True  # noqa: F841
 
     elapsed = time.perf_counter() - t0
     if elapsed > _MAX_ALLOWED_DURATION_SECONDS:

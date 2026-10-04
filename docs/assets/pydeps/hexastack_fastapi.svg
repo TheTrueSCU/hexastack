@@ -193,7 +193,7 @@
 <!-- hexastack_fastapi_infra_exception_handlers -->
 <g id="node24" class="node">
 <title>hexastack_fastapi_infra_exception_handlers</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#6f8320" stroke="black" cx="388.66" cy="-403.99" rx="79.39" ry="28.98"/>
+<ellipse fill="#687a1e" stroke="black" cx="388.66" cy="-403.99" rx="79.39" ry="28.98"/>
 <text text-anchor="middle" x="388.66" y="-412.49" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">hexastack_fastapi.</text>
 <text text-anchor="middle" x="388.66" y="-401.49" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">infra.</text>
 <text text-anchor="middle" x="388.66" y="-390.49" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">exception_handlers</text>
@@ -713,7 +713,7 @@
 <g id="edge79" class="edge">
 <title>hexastack_fastapi_infra_exception_handlers&#45;&gt;hexastack_fastapi_infra_app</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M393.4,-374.73C394.78,-366.48 396.3,-357.44 397.7,-349.11"/>
-<polygon fill="#6f8320" stroke="black" points="401.18,-349.49 399.38,-339.05 394.28,-348.33 401.18,-349.49"/>
+<polygon fill="#687a1e" stroke="black" points="401.18,-349.49 399.38,-339.05 394.28,-348.33 401.18,-349.49"/>
 </g>
 <!-- hexastack_fastapi_infra_middleware -->
 <g id="node25" class="node">

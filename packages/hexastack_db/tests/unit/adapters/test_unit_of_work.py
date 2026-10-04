@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy import create_engine, select
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -310,7 +310,7 @@ async def test_async_uow_multi_repository_partial_failure_atomic_rollback():
         await s.commit()
 
     async_uow = AsyncSqlAlchemyUnitOfWork(session_factory=async_factory)
-    try:
+    with pytest.raises(IntegrityError):
         async with async_uow:
             async_uow.session.add(TaskRecord(title="Async Task under transaction"))
             await async_uow.session.flush()
@@ -319,12 +319,13 @@ async def test_async_uow_multi_repository_partial_failure_atomic_rollback():
             async_uow.session.add(ProjectRecord(name="beta"))
             await async_uow.session.flush()
             await async_uow.commit_async()
-    except Exception:
-        pass
 
     async with async_factory() as s:
         tasks = (await s.execute(select(TaskRecord))).scalars().all()
         projects = (await s.execute(select(ProjectRecord))).scalars().all()
-        assert len(tasks) == 0
-        assert len(projects) == 1
-        assert projects[0].name == "beta"
+        tasks_count = len(tasks)
+        assert tasks_count == 0
+        projects_count = len(projects)
+        assert projects_count == 1
+        project_name = projects[0].name
+        assert project_name == "beta"

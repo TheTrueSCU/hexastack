@@ -6,7 +6,8 @@ on:
   pull_request:
     branches: [main]
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   # =========================================================================
@@ -15,6 +16,8 @@ jobs:
   quality-gate:
     name: Pre-Commit Quality Gate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -24,13 +27,15 @@ jobs:
         run: cargo install jscpd --locked
 
       - name: Run Quality Gate via Hexaqual
-        uses: TheTrueSCU/hexaqual@v0.8.0
+        uses: TheTrueSCU/hexaqual@1a37ad125f86dacd57616e1c1b3fab56185e50c3 # v0.9.1
         with:
           sync-args: "--all-packages --all-extras --all-groups"
 
   buf-governance:
     name: Protobuf Governance (Buf Lint & Breaking)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -59,6 +64,8 @@ jobs:
     name: Unit & Integration Tests
     needs: [quality-gate]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -103,6 +110,8 @@ jobs:
     name: Architecture Diagram Verification
     needs: [quality-gate]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -137,6 +146,8 @@ jobs:
     needs: [test-suite]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -169,6 +180,8 @@ jobs:
     name: E2E Browser & A11y Verification
     needs: [test-suite]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -204,6 +217,8 @@ jobs:
     needs: [test-suite]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -241,6 +256,8 @@ jobs:
       - mutation-verification
     if: ${{ always() }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Verify All Upstream Jobs Succeeded or Skipped
         run: |

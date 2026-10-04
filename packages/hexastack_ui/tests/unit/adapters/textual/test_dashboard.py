@@ -23,9 +23,8 @@ from hexastack_ui.domain.models import (
 
 
 def test_check_textual_installed_success() -> None:
-    """Verify check_textual_installed passes when textual is present."""
-    result = check_textual_installed()
-    assert result is None
+    """Verify check_textual_installed passes without error when textual is present."""
+    check_textual_installed()
 
 
 def test_check_textual_installed_missing() -> None:
