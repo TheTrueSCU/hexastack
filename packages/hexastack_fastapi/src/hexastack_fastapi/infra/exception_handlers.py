@@ -142,6 +142,10 @@ def register_exception_handlers(
         """Handle unhandled server exceptions, push context to Sentry if available, and return 500."""
         correlation_id = get_correlation_id()
         active_logger = _resolve_logger(app, logger)
+        if active_logger is not None:
+            active_logger.error(f"Unhandled server exception: {exc}", exc=exc)
+        else:
+            _fallback_logger.error("Unhandled server exception: %s", exc, exc_info=exc)
         _forward_to_sentry(request, exc, correlation_id, active_logger)
 
         content: dict[str, Any] = {
