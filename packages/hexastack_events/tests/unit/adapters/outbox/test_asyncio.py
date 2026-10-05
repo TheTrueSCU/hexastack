@@ -1,0 +1,250 @@
+from unittest.mock import MagicMock
+
+import anyio
+import pytest
+
+from hexastack_cqrs.ports.buses import EventBusPort
+from hexastack_events.adapters.buses.in_memory import (
+    InMemoryDistributedEventBus,
+)
+from hexastack_events.adapters.outbox.asyncio import AsyncioOutboxRelay
+from hexastack_events.adapters.outbox.in_memory import InMemoryOutboxStorage
+from hexastack_events.domain.models import OutboxRecord, OutboxStatus
+
+
+def test_asyncio_outbox_relay_batch_distributed_and_standard_bus():
+    storage = InMemoryOutboxStorage()
+    dist_bus = InMemoryDistributedEventBus()
+
+    rec1 = OutboxRecord(
+        id="rec-async-1",
+        event_type="OrderShippedEvent",
+        source="shipping-service",
+        payload={"order_id": "ord-100", "tracking": "TRK999"},
+        correlation_id="corr-ship-1",
+        tenant_id="tenant-1",
+    )
+    storage.save(rec1)
+
+    relay = AsyncioOutboxRelay(
+        storage=storage,
+        bus=dist_bus,
+        poll_interval_seconds=0.05,
+        batch_size=10,
+    )
+
+    count = relay.publish_pending_batch(limit=10)
+    assert count == 1
+    assert len(dist_bus.published_envelopes) == 1
+    assert dist_bus.published_envelopes[0].type == "OrderShippedEvent"
+    assert dist_bus.published_envelopes[0].data["tracking"] == "TRK999"
+    assert dist_bus.published_envelopes[0].correlationid == "corr-ship-1"
+    assert dist_bus.published_envelopes[0].tenantid == "tenant-1"
+    assert dist_bus.published_envelopes[0].datacontenttype == "application/json"
+
+    # Record should now be marked PUBLISHED
+    records = storage.get_all()
+    assert records[0].status == OutboxStatus.PUBLISHED
+
+    # Test with standard EventBusPort (non-distributed)
+    mock_std_bus = MagicMock(spec=EventBusPort)
+    rec2 = OutboxRecord(
+        id="rec-async-2",
+        event_type="InventoryDeductedEvent",
+        payload={"sku": "SKU-1"},
+    )
+    storage.save(rec2)
+    std_relay = AsyncioOutboxRelay(storage=storage, bus=mock_std_bus)
+    count2 = std_relay.publish_pending_batch(limit=10)
+    assert count2 == 1
+    assert mock_std_bus.publish.called
+
+
+def test_asyncio_outbox_relay_defaults():
+    storage = InMemoryOutboxStorage()
+    bus = InMemoryDistributedEventBus()
+
+    relay = AsyncioOutboxRelay(storage=storage, bus=bus)
+    assert relay._poll_interval == 1.0
+    assert relay._batch_size == 50
+    assert relay._running is False
+
+    # Stop when not running is a no-op
+    relay.stop()
+    assert relay._running is False
+
+
+def test_asyncio_outbox_relay_failure_handling():
+    storage = InMemoryOutboxStorage()
+    mock_bus = MagicMock(spec=InMemoryDistributedEventBus)
+    mock_bus.publish_envelope.side_effect = RuntimeError("Broker connection timeout")
+
+    rec = OutboxRecord(
+        id="rec-fail-1",
+        event_type="PaymentFailedEvent",
+        source="billing",
+        payload={"amount": 50},
+    )
+    storage.save(rec)
+
+    relay = AsyncioOutboxRelay(storage=storage, bus=mock_bus)
+    count = relay.publish_pending_batch(limit=10)
+    assert count == 0
+
+    failed_recs = [r for r in storage.get_all() if r.id == "rec-fail-1"]
+    assert len(failed_recs) == 1
+    failed_rec = failed_recs[0]
+    assert failed_rec.status == OutboxStatus.FAILED
+    assert failed_rec.retry_count == 1
+    assert "Broker connection timeout" in str(failed_rec.last_error)
+
+
+@pytest.mark.anyio
+async def test_asyncio_outbox_relay_start_stop_lifecycle():
+    storage = InMemoryOutboxStorage()
+    bus = InMemoryDistributedEventBus()
+
+    rec = OutboxRecord(
+        id="rec-loop-1",
+        event_type="PingEvent",
+        payload={"ping": True},
+    )
+    storage.save(rec)
+
+    relay = AsyncioOutboxRelay(
+        storage=storage,
+        bus=bus,
+        poll_interval_seconds=0.01,
+        batch_size=5,
+    )
+
+    relay.start()
+    assert relay._running is True
+
+    # Idempotent start
+    relay.start()
+    assert relay._running is True
+
+    # Wait for at least one poll loop iteration
+    await anyio.sleep(0.05)
+
+    assert len(bus.published_envelopes) >= 1
+
+    relay.stop()
+    assert relay._running is False
+
+
+def test_asyncio_outbox_relay_with_lock_concurrency():
+    import tempfile
+    from pathlib import Path
+
+    from hexastack_core.adapters.lock.file import FileLockAdapter
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        lock_path = Path(tmpdir) / "outbox.lock"
+        relay_lock = FileLockAdapter(lock_path)
+        external_lock = FileLockAdapter(lock_path)
+
+        storage = InMemoryOutboxStorage()
+        bus = InMemoryDistributedEventBus()
+
+        storage.save(
+            OutboxRecord(
+                id="rec-lock-1",
+                event_type="LockedTestEvent",
+                payload={"locked": True},
+            )
+        )
+
+        relay = AsyncioOutboxRelay(
+            storage=storage,
+            bus=bus,
+            lock=relay_lock,
+        )
+
+        # 1. When lock is available, publishing succeeds
+        count = relay.publish_pending_batch(limit=10)
+        assert count == 1
+        assert relay_lock.locked() is False
+
+        # 2. When lock is held by external worker process, relay skips without blocking
+        storage.save(
+            OutboxRecord(
+                id="rec-lock-2",
+                event_type="LockedTestEvent2",
+                payload={"locked": True},
+            )
+        )
+        # External process acquires lock
+        ext_acq = external_lock.acquire()
+        assert ext_acq is True
+        count_skipped = relay.publish_pending_batch(limit=10)
+        assert count_skipped == 0
+        external_lock.release()
+
+
+@pytest.mark.anyio
+async def test_asyncio_outbox_relay_with_async_lock() -> None:
+    """Verify AsyncioOutboxRelay respects AsyncLockPort and rejects sync acquisition."""
+    from hexastack_core.ports.lock import AsyncLockPort
+
+    class MockAsyncLock(AsyncLockPort):
+        def __init__(self) -> None:
+            self._is_locked = False
+
+        async def acquire(self, blocking: bool = True, timeout: float = -1.0) -> bool:
+            _ = (blocking, timeout)
+            if self._is_locked:
+                return False
+            self._is_locked = True
+            return True
+
+        async def release(self) -> None:
+            self._is_locked = False
+
+        async def locked(self) -> bool:
+            return self._is_locked
+
+    async_lock = MockAsyncLock()
+    storage = InMemoryOutboxStorage()
+    bus = InMemoryDistributedEventBus()
+
+    storage.save(
+        OutboxRecord(
+            id="rec-async-lock-1",
+            event_type="AsyncLockedTestEvent",
+            payload={"ok": True},
+        )
+    )
+
+    relay = AsyncioOutboxRelay(
+        storage=storage,
+        bus=bus,
+        lock=async_lock,
+    )
+
+    # 1. Calling synchronous publish_pending_batch raises TypeError
+    with pytest.raises(
+        TypeError, match="AsyncLockPort cannot be acquired synchronously"
+    ):
+        relay.publish_pending_batch()
+
+    # 2. Asynchronous publish_pending_batch_async succeeds
+    count = await relay.publish_pending_batch_async(limit=10)
+    assert count == 1
+    is_locked = await async_lock.locked()
+    assert is_locked is False
+
+    # 3. When async lock is held, skips publishing without blocking
+    storage.save(
+        OutboxRecord(
+            id="rec-async-lock-2",
+            event_type="AsyncLockedTestEvent2",
+            payload={"ok": True},
+        )
+    )
+    acq_held = await async_lock.acquire()
+    assert acq_held is True
+    skipped_count = await relay.publish_pending_batch_async(limit=10)
+    assert skipped_count == 0
+    await async_lock.release()

@@ -1,0 +1,55 @@
+[project]
+name = "hexastack-flags"
+version = "0.7.0"
+description = "CNCF OpenFeature provider adapters and enterprise feature flagging for Hexastack"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "hexastack-core",
+    "openfeature-sdk>=0.7.1",
+    "pydantic>=2.10.0",
+]
+
+[project.optional-dependencies]
+flagd = [
+    "openfeature-provider-flagd>=0.2.0",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+flags = "hexastack_flags.infra.bootstrap:FeatureFlagBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_flags"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_flags"]
+layers = [
+    "infra",
+    "adapters",
+    "ports",
+    "domain",
+]
+
+[tool.mutmut]
+runner = "pytest -x --assert=plain -o addopts=\"\""
+paths_to_mutate = "src"
+
+[tool.pytest-gremlins]
+paths = ["src"]
+operators = ["arithmetic", "boolean", "boundary", "comparison", "return"]
+workers = "auto"
+batch_size = 10
+cache = true

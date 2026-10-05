@@ -1,0 +1,71 @@
+[project]
+name = "hexastack-auth"
+version = "0.7.0"
+description = "Authentication, authorization, RBAC, JWT token services, and @authorize CQRS pipeline security for Hexastack"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "hexastack-core",
+    "hexastack-cqrs",
+    "pydantic>=2.10.0",
+    "pyjwt>=2.14.0",
+]
+
+[project.optional-dependencies]
+fastapi = [
+    "fastapi>=0.115.0",
+]
+grpc = [
+    "grpcio>=1.62.0",
+]
+opa = [
+    "httpx>=0.27.0",
+]
+openfga = [
+    "httpx>=0.27.0",
+    "openfga-sdk>=0.6.0",
+]
+spiffe = [
+    "cryptography>=43.0.0",
+    "spiffe>=0.3.0",
+]
+
+[project.entry-points."hexastack.bootstrappers"]
+auth = "hexastack_auth.infra.bootstrap:AuthBootstrapper"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+hexastack-core = { workspace = true }
+hexastack-cqrs = { workspace = true }
+
+[tool.importlinter]
+root_packages = ["hexastack_auth"]
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal architecture layer hierarchy"
+type = "layers"
+containers = ["hexastack_auth"]
+layers = [
+    "infra",
+    "adapters",
+    "ports",
+    "domain",
+]
+
+[tool.mutmut]
+runner = "pytest -x --assert=plain -o addopts=\"\""
+paths_to_mutate = "src"
+
+[tool.pytest-gremlins]
+paths = ["src"]
+operators = ["arithmetic", "boolean", "boundary", "comparison", "return"]
+workers = "auto"
+batch_size = 10
+cache = true
