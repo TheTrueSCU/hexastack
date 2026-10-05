@@ -144,6 +144,7 @@ class AsyncFileLockAdapter(AsyncLockPort):
                         if fut.result():
                             self._sync_adapter.release()
                     except Exception:
+                        # Best-effort lock cleanup in callback: suppress transient release exceptions
                         pass
 
             future.add_done_callback(_cleanup_orphaned_lock)

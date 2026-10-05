@@ -94,10 +94,12 @@ def _parse_env_flag_value(val: str) -> Any:
     try:
         return int(val)
     except ValueError:
+        # Value is not an integer literal, attempt floating point parsing next
         pass
     try:
         return float(val)
     except ValueError:
+        # Value is not a float literal, attempt structured JSON parsing next
         pass
     import json
 
@@ -105,7 +107,8 @@ def _parse_env_flag_value(val: str) -> Any:
         parsed = json.loads(val)
         if isinstance(parsed, (dict, list)):
             return parsed
-    except Exception:
+    except (json.JSONDecodeError, TypeError, ValueError):
+        # Value is neither valid JSON nor a collection, fallback to original string
         pass
     return val
 
