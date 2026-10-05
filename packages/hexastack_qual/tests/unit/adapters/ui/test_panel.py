@@ -10,13 +10,14 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import hexastack_qual.adapters.ui.panel as panel_module
 import pytest
-from hexastack_qual.adapters.ui.panel import render_quality_panel
+from hexastack_qual.adapters.ui import panel as panel_module
 from hexastack_qual.domain.exceptions import AdapterNotAvailableError
 from hexastack_qual.domain.models import QualityCheckResult, QualityScorecard
 from nicegui import Client
 from nicegui.page import page
+
+render_quality_panel = panel_module.render_quality_panel
 
 
 def test_render_quality_panel_raises_when_nicegui_missing():

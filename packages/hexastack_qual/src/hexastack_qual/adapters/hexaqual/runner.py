@@ -8,6 +8,7 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import subprocess
 from pathlib import Path
@@ -36,6 +37,7 @@ from hexaqual.infra.openssf import (
     verify_openssf_compliance,
 )
 
+from hexastack_core.ports.logging import LoggingPort
 from hexastack_qual.domain.models import (
     ComplexityMetric,
     MutantReport,
@@ -53,6 +55,8 @@ from hexastack_qual.ports.diagnostics import PrDiagnosticPort
 from hexastack_qual.ports.mutator import MutationInspectorPort
 from hexastack_qual.ports.openssf import OpenSsfAuditorPort
 
+_fallback_logger = logging.getLogger(__name__)
+
 
 class HexaqualRunnerAdapter(
     QualityAuditorPort, MutationInspectorPort, PrDiagnosticPort, OpenSsfAuditorPort
@@ -65,14 +69,27 @@ class HexaqualRunnerAdapter(
         routines, OpenSSF infra functions, and subprocess-based tooling.
     """
 
-    def __init__(self, repo_root: Path | None = None) -> None:
+    def __init__(
+        self,
+        repo_root: Path | None = None,
+        logger: LoggingPort | None = None,
+    ) -> None:
         """Initialize adapter with workspace root.
 
         Args:
             repo_root: Optional repository root path. Discovered if None.
+            logger: Optional LoggingPort instance for diagnostic telemetry.
         """
         self._repo_root = repo_root or get_repo_root()
         self._workspace = LocalWorkspaceAdapter()
+        self._logger = logger
+
+    def _log_debug(self, message: str) -> None:
+        """Emit debug message to LoggingPort or fallback logger."""
+        if self._logger is not None:
+            self._logger.debug(message)
+        else:
+            _fallback_logger.debug(message)
 
     def audit_complexity(
         self,
@@ -109,8 +126,10 @@ class HexaqualRunnerAdapter(
                                 is_violation=True,
                             )
                         )
-            except Exception:
-                pass
+            except Exception as exc:
+                self._log_debug(
+                    f"Failed to calculate complexity for file {file_path}: {exc}"
+                )
 
         return metrics
 
@@ -218,6 +237,7 @@ class HexaqualRunnerAdapter(
         Returns:
             QualityScorecard aggregate summarizing check outcomes.
         """
+        is_healthy: bool = False
         complexity_violations = self.audit_complexity(
             package=package, max_complexity=25
         )
@@ -254,7 +274,7 @@ class HexaqualRunnerAdapter(
             ),
         ]
 
-        is_healthy = not (
+        is_healthy = not bool(
             complexity_violations or parity_findings or statement_findings
         )
         return QualityScorecard(
@@ -383,8 +403,10 @@ class HexaqualRunnerAdapter(
                     codeql_alerts_count=0,
                     unresolved_threads_count=0,
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            self._log_debug(
+                f"Failed to query PR health via GitHub CLI for PR #{pr_number}: {exc}"
+            )
 
         return PrHealthSummary(
             pr_number=pr_number,

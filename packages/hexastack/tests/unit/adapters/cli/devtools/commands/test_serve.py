@@ -1,5 +1,6 @@
 """Unit tests for devtools serve commands."""
 
+import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -17,9 +18,10 @@ def test_serve_commands(tmp_path: Path):
     runner = CliRunner()
 
     res = runner.invoke(app, ["--help"])
+    clean_output = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", res.output)
     assert res.exit_code == 0
-    assert "host" in res.output
-    assert "ziti-identity" in res.output
+    assert "host" in clean_output
+    assert "ziti-identity" in clean_output
 
     with patch("uvicorn.run") as mock_uvicorn:
         res_run = runner.invoke(app, ["--no-reload"])

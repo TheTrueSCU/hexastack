@@ -1,4 +1,5 @@
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import Any
 
@@ -87,100 +88,120 @@ class SqlAlchemyOutboxStorage(OutboxStoragePort):
         self._session_or_factory = session_factory
         self._model_cls = model_cls
 
+    @contextmanager
+    def _session_scope(self) -> Generator[Session]:
+        """Provide a transactional scope around database operations.
+
+        Notes/Architectural Intent:
+            When initialized with an active Session instance, operations flush into that session
+            deferring commit to the surrounding UnitOfWork / transaction manager.
+            When initialized with a session factory callable, each operation executes in its own
+            session that commits on success, rolls back on error, and closes cleanly.
+        """
+        if isinstance(self._session_or_factory, Session):
+            yield self._session_or_factory
+            self._session_or_factory.flush()
+        else:
+            session = self._session_or_factory()
+            try:
+                yield session
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
+
     def _get_session(self) -> Session:
-        """Helper to get or create an active Session."""
+        """Helper to get or create an active Session (deprecated; prefer _session_scope)."""
         if isinstance(self._session_or_factory, Session):
             return self._session_or_factory
         return self._session_or_factory()
 
     def fetch_pending(self, limit: int = 50) -> list[OutboxRecord]:
         """Fetch pending outbox records ready for relaying."""
-        session = self._get_session()
-        stmt = (
-            select(self._model_cls)
-            .where(
-                self._model_cls.status.in_(
-                    [OutboxStatus.PENDING.value, OutboxStatus.FAILED.value]
+        with self._session_scope() as session:
+            stmt = (
+                select(self._model_cls)
+                .where(
+                    self._model_cls.status.in_(
+                        [OutboxStatus.PENDING.value, OutboxStatus.FAILED.value]
+                    )
                 )
+                .where(self._model_cls.retry_count < 5)
+                .order_by(self._model_cls.created_at.asc())
+                .limit(limit)
             )
-            .where(self._model_cls.retry_count < 5)
-            .order_by(self._model_cls.created_at.asc())
-            .limit(limit)
-        )
-        results = session.scalars(stmt).all()
-        return [row.to_domain() for row in results]
+            results = session.scalars(stmt).all()
+            return [row.to_domain() for row in results]
 
     def mark_failed(self, record_id: str, error_message: str) -> None:
         """Increment retry count and mark as FAILED."""
-        session = self._get_session()
-        stmt = (
-            update(self._model_cls)
-            .where(self._model_cls.id == record_id)
-            .values(
-                status=OutboxStatus.FAILED.value,
-                retry_count=self._model_cls.retry_count + 1,
-                last_error=error_message,
+        with self._session_scope() as session:
+            stmt = (
+                update(self._model_cls)
+                .where(self._model_cls.id == record_id)
+                .values(
+                    status=OutboxStatus.FAILED.value,
+                    retry_count=self._model_cls.retry_count + 1,
+                    last_error=error_message,
+                )
             )
-        )
-        session.execute(stmt)
-        session.flush()
+            session.execute(stmt)
 
     def mark_published(self, record_id: str) -> None:
         """Mark record as PUBLISHED."""
-        session = self._get_session()
-        now = datetime.now(UTC)
-        stmt = (
-            update(self._model_cls)
-            .where(self._model_cls.id == record_id)
-            .values(
-                status=OutboxStatus.PUBLISHED.value,
-                published_at=now,
-                last_error=None,
+        with self._session_scope() as session:
+            now = datetime.now(UTC)
+            stmt = (
+                update(self._model_cls)
+                .where(self._model_cls.id == record_id)
+                .values(
+                    status=OutboxStatus.PUBLISHED.value,
+                    published_at=now,
+                    last_error=None,
+                )
             )
-        )
-        session.execute(stmt)
-        session.flush()
+            session.execute(stmt)
 
     def save(self, record: OutboxRecord) -> None:
         """Persist a single outbox record in the database."""
-        session = self._get_session()
-        row = self._model_cls(
-            id=record.id,
-            event_type=record.event_type,
-            source=record.source,
-            payload=record.payload,
-            status=record.status.value,
-            retry_count=record.retry_count,
-            correlation_id=record.correlation_id,
-            tenant_id=record.tenant_id,
-            created_at=record.created_at,
-            published_at=record.published_at,
-            last_error=record.last_error,
-        )
-        session.add(row)
-        session.flush()
+        with self._session_scope() as session:
+            row = self._model_cls(
+                id=record.id,
+                event_type=record.event_type,
+                source=record.source,
+                payload=record.payload,
+                status=record.status.value,
+                retry_count=record.retry_count,
+                correlation_id=record.correlation_id,
+                tenant_id=record.tenant_id,
+                created_at=record.created_at,
+                published_at=record.published_at,
+                last_error=record.last_error,
+            )
+            session.add(row)
 
     def save_all(self, records: list[OutboxRecord]) -> None:
         """Persist multiple outbox records in a batch."""
-        session = self._get_session()
-        rows = [
-            self._model_cls(
-                id=r.id,
-                event_type=r.event_type,
-                source=r.source,
-                payload=r.payload,
-                status=r.status.value,
-                retry_count=r.retry_count,
-                correlation_id=r.correlation_id,
-                tenant_id=r.tenant_id,
-                created_at=r.created_at,
-                published_at=r.published_at,
-                last_error=r.last_error,
-            )
-            for r in records
-        ]
-        session.add_all(rows)
-        session.flush()
+        with self._session_scope() as session:
+            rows = [
+                self._model_cls(
+                    id=r.id,
+                    event_type=r.event_type,
+                    source=r.source,
+                    payload=r.payload,
+                    status=r.status.value,
+                    retry_count=r.retry_count,
+                    correlation_id=r.correlation_id,
+                    tenant_id=r.tenant_id,
+                    created_at=r.created_at,
+                    published_at=r.published_at,
+                    last_error=r.last_error,
+                )
+                for r in records
+            ]
+            session.add_all(rows)
 
 
 __all__ = [

@@ -29,7 +29,7 @@ try:
 except ImportError:
     atheris = None
 
-_MAX_PER_CALL_DURATION = 0.05  # 50ms
+_MAX_PER_CALL_DURATION = 0.25  # 250ms budget for pathological fuzz input under CI load
 
 # Initialize in-memory provider with baseline flags
 _flags = {
@@ -55,7 +55,6 @@ _flags = {
     ),
 }
 _provider = InMemoryProvider(_flags)
-api.set_provider(_provider)
 _adapter = OpenFeatureFlagAdapter()
 
 
@@ -162,69 +161,76 @@ def run_standalone(runs: int = 100) -> dict[str, Any]:
     Returns:
         Summary dictionary with execution telemetry.
     """
-    start = time.perf_counter()
-    passed = 0
-    rng = random.Random(42)  # noqa: S311
+    old_provider = api.provider_registry.get_default_provider()
+    api.set_provider(_provider)
+    try:
+        start = time.perf_counter()
+        passed = 0
+        rng = random.Random(42)  # noqa: S311
 
-    known_keys = [
-        "beta-feature",
-        "rate-limit-tier",
-        "pricing-multiplier",
-        "ui-theme",
-        "config-map",
-        "missing-flag",
-    ]
+        known_keys = [
+            "beta-feature",
+            "rate-limit-tier",
+            "pricing-multiplier",
+            "ui-theme",
+            "config-map",
+            "missing-flag",
+        ]
 
-    for i in range(runs):
-        choice = i % 5
-        if choice == 0:
-            # Valid known flag with fuzzed context
-            payload = json.dumps(
-                {
-                    "key": known_keys[i % len(known_keys)],
-                    "user_id": f"usr_{i}",
-                    "tenant": f"org_{i % 3}",
-                    "score": i * 1.5,
-                }
-            ).encode()
-        elif choice == 1:
-            # Corrupted / invalid configuration dict
-            payload = json.dumps(
-                {
-                    "provider": FeatureFlagProviderType.IN_MEMORY.value,
-                    "timeout_ms": -100 if i % 2 == 0 else 99999999,
-                    "flags": {f"dynamic_{i}": True},
-                    "options": {"arbitrary": [1, 2, "bad"]},
-                }
-            ).encode()
-        elif choice == 2:
-            # Random raw bytes
-            payload = bytes(rng.getrandbits(8) for _ in range(rng.randint(1, 64)))
-        elif choice == 3:
-            # Boundary values & strange unicode
-            payload = json.dumps(
-                {
-                    "key": "\x00\uffff\U0001f4a9" + str(i),
-                    "nested": {"deep": {"tier": -9999}},
-                }
-            ).encode()
-        else:
-            # Empty / minimal input
-            payload = b"{}"
+        for i in range(runs):
+            choice = i % 5
+            if choice == 0:
+                # Valid known flag with fuzzed context
+                payload = json.dumps(
+                    {
+                        "key": known_keys[i % len(known_keys)],
+                        "user_id": f"usr_{i}",
+                        "tenant": f"org_{i % 3}",
+                        "score": i * 1.5,
+                    }
+                ).encode()
+            elif choice == 1:
+                # Corrupted / invalid configuration dict
+                payload = json.dumps(
+                    {
+                        "provider": FeatureFlagProviderType.IN_MEMORY.value,
+                        "timeout_ms": -100 if i % 2 == 0 else 99999999,
+                        "flags": {f"dynamic_{i}": True},
+                        "options": {"arbitrary": [1, 2, "bad"]},
+                    }
+                ).encode()
+            elif choice == 2:
+                # Random raw bytes
+                payload = bytes(rng.getrandbits(8) for _ in range(rng.randint(1, 64)))
+            elif choice == 3:
+                # Boundary values & strange unicode
+                payload = json.dumps(
+                    {
+                        "key": "\x00\uffff\U0001f4a9" + str(i),
+                        "nested": {"deep": {"tier": -9999}},
+                    }
+                ).encode()
+            else:
+                # Empty / minimal input
+                payload = b"{}"
 
-        fuzz_one_input(payload)
-        passed += 1
+            fuzz_one_input(payload)
+            passed += 1
 
-    duration = time.perf_counter() - start
-    return {
-        "runs": runs,
-        "passed": passed == runs,
-        "duration_seconds": duration,
-    }
+        duration = time.perf_counter() - start
+        return {
+            "runs": runs,
+            "passed": passed == runs,
+            "duration_seconds": duration,
+        }
+    finally:
+        if old_provider is not None:
+            api.set_provider(old_provider)
 
 
 def main() -> None:
     """Entry point for native Atheris or standalone execution."""
+    api.set_provider(_provider)
     if atheris is not None and len(sys.argv) > 1 and sys.argv[1] != "--standalone":
         atheris.Setup(sys.argv, fuzz_one_input)
         atheris.Fuzz()

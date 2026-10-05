@@ -32,7 +32,17 @@ def get_current_user(
         # or "admin:superadmin" -> UserContext(user_id="superadmin", roles=["admin"])
         if ":" in token:
             role, user_id = token.split(":", 1)
-            ctx = UserContext(user_id=user_id, roles=[role])
+            if role == "admin":
+                # Verify caller identity is authorized for admin privileges
+                if user_id != "superadmin":
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Invalid admin credentials: caller cannot claim admin role.",
+                    )
+                roles = ["admin"]
+            else:
+                roles = ["user"]
+            ctx = UserContext(user_id=user_id, roles=roles)
             set_user_context(ctx)
             return ctx
         ctx = UserContext(user_id=token, roles=["user"])
@@ -97,7 +107,12 @@ def complete_todo(
     pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
     user: Annotated[UserContext, Depends(get_current_user)],
 ) -> TodoItemDTO:
-    cmd = CompleteTodoCommand(todo_id=todo_id)
+    is_admin = "admin" in user.roles
+    cmd = CompleteTodoCommand(
+        todo_id=todo_id,
+        requester_id=user.user_id,
+        is_admin=is_admin,
+    )
     return pipeline.execute(cmd)
 
 

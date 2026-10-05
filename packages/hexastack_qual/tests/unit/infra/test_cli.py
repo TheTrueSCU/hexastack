@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import hexastack_qual.infra.cli as cli_module
 from hexastack_qual.domain.models import QualityCheckResult, QualityScorecard
-from hexastack_qual.infra.cli import app
+from hexastack_qual.infra import cli as cli_module
 from typer.testing import CliRunner
 
+app = cli_module.app
 runner = CliRunner()
 
 
