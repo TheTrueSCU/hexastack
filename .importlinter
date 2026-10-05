@@ -1,0 +1,119 @@
+[importlinter]
+root_packages =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_core
+    hexastack_cqrs
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_flags
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_logging
+    hexastack_mcp
+    hexastack_otel
+    hexastack_ui
+
+# ----------------------------------------------------------------------
+# 1. Core Isolation (hexastack_core must be completely independent)
+# ----------------------------------------------------------------------
+[importlinter:contract:core-isolation]
+name = hexastack_core must not import any other hexastack package
+type = forbidden
+source_modules =
+    hexastack_core
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_cqrs
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_flags
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_logging
+    hexastack_mcp
+    hexastack_otel
+    hexastack_ui
+
+# ----------------------------------------------------------------------
+# 2. CQRS Isolation (hexastack_cqrs only depends on core)
+# ----------------------------------------------------------------------
+[importlinter:contract:cqrs-isolation]
+name = hexastack_cqrs may only import hexastack_core
+type = forbidden
+source_modules =
+    hexastack_cqrs
+forbidden_modules =
+    hexastack
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_flags
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_logging
+    hexastack_mcp
+    hexastack_otel
+    hexastack_ui
+
+# ----------------------------------------------------------------------
+# 3. Sibling Independence (Feature packages cannot import each other)
+# ----------------------------------------------------------------------
+[importlinter:contract:sibling-independence]
+name = Feature packages must not import from peer packages
+type = independence
+unmatched_ignore_imports_alerting = none
+modules =
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_flags
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_logging
+    hexastack_mcp
+    hexastack_otel
+    hexastack_ui
+# Whitelist packages that have explicit/optional cross-dependencies
+ignore_imports =
+    hexastack_ai -> hexastack_mcp
+    hexastack_auth -> hexastack_fastapi
+    hexastack_graphql -> hexastack_fastapi
+
+# ----------------------------------------------------------------------
+# 4. Umbrella Package Protection (No package imports from the umbrella)
+# ----------------------------------------------------------------------
+[importlinter:contract:umbrella-isolation]
+name = No subpackage should import from the umbrella hexastack package
+type = forbidden
+source_modules =
+    hexastack_ai
+    hexastack_auth
+    hexastack_cli
+    hexastack_core
+    hexastack_cqrs
+    hexastack_db
+    hexastack_events
+    hexastack_fastapi
+    hexastack_flags
+    hexastack_graphql
+    hexastack_grpc
+    hexastack_logging
+    hexastack_mcp
+    hexastack_otel
+    hexastack_ui
+forbidden_modules =
+    hexastack
