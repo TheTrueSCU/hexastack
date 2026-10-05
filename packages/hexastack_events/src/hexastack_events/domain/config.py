@@ -31,6 +31,10 @@ class HexastackEventsConfig(BaseModel):
         default=5,
         description="Maximum failed attempts before an outbox record is abandoned.",
     )
+    auto_start_relay: bool = Field(
+        default=False,
+        description="Whether to automatically start the outbox relay worker during bootstrap.",
+    )
     enabled: bool = Field(
         default=True,
         description="Master switch to activate event streaming subsystem.",

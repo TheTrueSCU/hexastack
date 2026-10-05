@@ -6,6 +6,7 @@ Notes/Architectural Intent:
     enterprise database transactions alongside domain entities.
 """
 
+import contextlib
 import importlib.util
 import json
 from datetime import UTC
@@ -107,6 +108,44 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         elif hasattr(self._target, "bind") and self._target.bind is not None:
             self._metadata.create_all(self._target.bind)
 
+    @contextlib.contextmanager
+    def _connection(self) -> Any:
+        """Yield a live connection or session ensuring transactions commit cleanly."""
+        from sqlalchemy import Engine
+        from sqlalchemy.orm import Session
+
+        if isinstance(self._target, Session):
+            yield self._target
+            self._target.flush()
+        elif isinstance(self._target, Engine):
+            with self._target.begin() as conn:
+                yield conn
+        else:
+            yield self._target
+
+    def _fetch_scalar(
+        self, statement: Any, parameters: dict[str, Any] | None = None
+    ) -> Any:
+        """Execute a query and fetch a single scalar value while connection is open."""
+        with self._connection() as conn:
+            return conn.execute(statement, parameters or {}).scalar_one_or_none()
+
+    def _fetch_one_mapping(
+        self, statement: Any, parameters: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
+        """Execute a query and fetch a single row mapping as a dict while connection is open."""
+        with self._connection() as conn:
+            row = conn.execute(statement, parameters or {}).mappings().one_or_none()
+            return dict(row) if row is not None else None
+
+    def _fetch_all_mappings(
+        self, statement: Any, parameters: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
+        """Execute a query and fetch all row mappings as dicts while connection is open."""
+        with self._connection() as conn:
+            rows = conn.execute(statement, parameters or {}).mappings().all()
+            return [dict(r) for r in rows]
+
     def _execute(self, statement: Any, parameters: dict[str, Any] | None = None) -> Any:
         """Execute a SQL statement against the underlying engine or session.
 
@@ -117,18 +156,8 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         Returns:
             Execution cursor or result proxy.
         """
-        from sqlalchemy import Engine
-        from sqlalchemy.orm import Session
-
-        if isinstance(self._target, Session):
-            result = self._target.execute(statement, parameters or {})
-            self._target.flush()
-            return result
-        if isinstance(self._target, Engine):
-            with self._target.begin() as conn:
-                return conn.execute(statement, parameters or {})
-        else:
-            return self._target.execute(statement, parameters or {})
+        with self._connection() as conn:
+            return conn.execute(statement, parameters or {})
 
     def save_run(self, state: WorkflowExecutionState) -> None:
         """Persist or update aggregate workflow execution run state.
@@ -136,12 +165,7 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         Args:
             state: The current WorkflowExecutionState to persist.
         """
-        from sqlalchemy import select
-
-        check_stmt = select(self._workflow_runs.c.run_id).where(
-            self._workflow_runs.c.run_id == state.run_id
-        )
-        existing = self._execute(check_stmt).scalar_one_or_none()
+        from sqlalchemy.exc import IntegrityError
 
         values = {
             "workflow_name": state.workflow_name,
@@ -152,17 +176,29 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
             "error_summary": state.error_summary,
         }
 
-        if existing is not None:
-            update_stmt = (
-                self._workflow_runs.update()
-                .where(self._workflow_runs.c.run_id == state.run_id)
-                .values(**values)
-            )
-            self._execute(update_stmt)
-        else:
-            values["run_id"] = state.run_id
-            insert_stmt = self._workflow_runs.insert().values(**values)
-            self._execute(insert_stmt)
+        update_stmt = (
+            self._workflow_runs.update()
+            .where(self._workflow_runs.c.run_id == state.run_id)
+            .values(**values)
+        )
+        with self._connection() as conn:
+            res = conn.execute(update_stmt)
+            if res.rowcount and res.rowcount > 0:
+                return
+
+        insert_values = dict(values)
+        insert_values["run_id"] = state.run_id
+        insert_stmt = self._workflow_runs.insert().values(**insert_values)
+        try:
+            with self._connection() as conn:
+                conn.execute(insert_stmt)
+        except IntegrityError:
+            if hasattr(self._target, "rollback"):
+                self._target.rollback()
+            with self._connection() as conn:
+                res = conn.execute(update_stmt)
+                if not res.rowcount or res.rowcount == 0:
+                    raise
 
     def get_run(self, run_id: str) -> WorkflowExecutionState | None:
         """Retrieve aggregate workflow run state by unique execution ID.
@@ -176,7 +212,7 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         from sqlalchemy import select
 
         stmt = select(self._workflow_runs).where(self._workflow_runs.c.run_id == run_id)
-        row = self._execute(stmt).mappings().one_or_none()
+        row = self._fetch_one_mapping(stmt)
         if row is None:
             return None
 
@@ -221,7 +257,7 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
             .limit(limit)
             .offset(offset)
         )
-        rows = self._execute(stmt).mappings().all()
+        rows = self._fetch_all_mappings(stmt)
 
         results: list[WorkflowExecutionState] = []
         for row in rows:
@@ -255,7 +291,7 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         Args:
             checkpoint: The CheckpointRecord snapshot to store.
         """
-        from sqlalchemy import select
+        from sqlalchemy.exc import IntegrityError
 
         in_json = (
             json.dumps(checkpoint.input_payload)
@@ -268,12 +304,6 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
             else None
         )
 
-        check_stmt = select(self._step_checkpoints.c.checkpoint_id).where(
-            self._step_checkpoints.c.run_id == checkpoint.run_id,
-            self._step_checkpoints.c.step_name == checkpoint.step_name,
-        )
-        existing = self._execute(check_stmt).scalar_one_or_none()
-
         values = {
             "stage_name": checkpoint.stage_name,
             "status": checkpoint.status.value,
@@ -285,19 +315,34 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
             "completed_at": checkpoint.completed_at,
         }
 
-        if existing is not None:
-            update_stmt = (
-                self._step_checkpoints.update()
-                .where(self._step_checkpoints.c.checkpoint_id == existing)
-                .values(**values)
+        update_stmt = (
+            self._step_checkpoints.update()
+            .where(
+                self._step_checkpoints.c.run_id == checkpoint.run_id,
+                self._step_checkpoints.c.step_name == checkpoint.step_name,
             )
-            self._execute(update_stmt)
-        else:
-            values["checkpoint_id"] = checkpoint.checkpoint_id
-            values["run_id"] = checkpoint.run_id
-            values["step_name"] = checkpoint.step_name
-            insert_stmt = self._step_checkpoints.insert().values(**values)
-            self._execute(insert_stmt)
+            .values(**values)
+        )
+        with self._connection() as conn:
+            res = conn.execute(update_stmt)
+            if res.rowcount and res.rowcount > 0:
+                return
+
+        insert_values = dict(values)
+        insert_values["checkpoint_id"] = checkpoint.checkpoint_id
+        insert_values["run_id"] = checkpoint.run_id
+        insert_values["step_name"] = checkpoint.step_name
+        insert_stmt = self._step_checkpoints.insert().values(**insert_values)
+        try:
+            with self._connection() as conn:
+                conn.execute(insert_stmt)
+        except IntegrityError:
+            if hasattr(self._target, "rollback"):
+                self._target.rollback()
+            with self._connection() as conn:
+                res = conn.execute(update_stmt)
+                if not res.rowcount or res.rowcount == 0:
+                    raise
 
     def get_checkpoint(self, run_id: str, step_name: str) -> CheckpointRecord | None:
         """Retrieve the checkpoint for a specific step in a run.
@@ -315,7 +360,7 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
             self._step_checkpoints.c.run_id == run_id,
             self._step_checkpoints.c.step_name == step_name,
         )
-        row = self._execute(stmt).mappings().one_or_none()
+        row = self._fetch_one_mapping(stmt)
         if row is None:
             return None
         return self._map_checkpoint_row(row)
@@ -336,7 +381,7 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
             .where(self._step_checkpoints.c.run_id == run_id)
             .order_by(self._step_checkpoints.c.started_at.asc())
         )
-        rows = self._execute(stmt).mappings().all()
+        rows = self._fetch_all_mappings(stmt)
         return [self._map_checkpoint_row(r) for r in rows]
 
     def delete_checkpoints(self, run_id: str) -> None:
@@ -348,7 +393,8 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         stmt = self._step_checkpoints.delete().where(
             self._step_checkpoints.c.run_id == run_id
         )
-        self._execute(stmt)
+        with self._connection() as conn:
+            conn.execute(stmt)
 
     @staticmethod
     def _map_checkpoint_row(row: Any) -> CheckpointRecord:

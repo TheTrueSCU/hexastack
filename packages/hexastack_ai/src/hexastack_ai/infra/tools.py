@@ -6,6 +6,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models import Model
 from pydantic_core import PydanticUndefined
 
+from hexastack_ai.domain.config import HexastackAiConfig
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
@@ -63,10 +64,11 @@ def attach_mcp_registry(
 def create_cqrs_agent(
     pipeline: ExecutionPipeline,
     messages: Sequence[type[Command | Query[Any]]] = (),
-    model: str | Model = "test",
+    model: str | Model | None = None,
     system_prompt: str | None = None,
     registry: Any | None = None,
     read_only: bool = False,
+    config: HexastackAiConfig | None = None,
 ) -> Agent[Any, Any]:
     """Assemble a PydanticAI Agent with CQRS message handlers reflected as tools.
 
@@ -76,6 +78,9 @@ def create_cqrs_agent(
         through the standard Hexastack execution pipeline. Automatically binds
         tools from a local McpServerRegistry when provided.
 
+        Resolves model priority: explicit `model` argument > `config.model` >
+        fallback to `'test'` for testing convenience.
+
     Args:
         pipeline: Target ExecutionPipeline.
         messages: Optional sequence of Command/Query classes to expose as tools.
@@ -83,15 +88,23 @@ def create_cqrs_agent(
         system_prompt: Optional initial persona instructions.
         registry: Optional McpServerRegistry to auto-discover @mcp_tool definitions.
         read_only: When True, restricts auto-attached registry tools to queries only.
+        config: Optional HexastackAiConfig providing default model configuration.
 
     Returns:
         Configured PydanticAI Agent instance.
     """
+    if model is not None:
+        target_model = model
+    elif config is not None:
+        target_model = config.model
+    else:
+        target_model = "test"
+
     sys_prompt = system_prompt or (
         "You are an AI assistant capable of executing domain operations "
         "using the provided tools."
     )
-    agent: Agent[Any, Any] = Agent(model=model, system_prompt=sys_prompt)
+    agent: Agent[Any, Any] = Agent(model=target_model, system_prompt=sys_prompt)
 
     for msg_cls in messages:
         tool_fn = create_tool_for_message(msg_cls, pipeline)

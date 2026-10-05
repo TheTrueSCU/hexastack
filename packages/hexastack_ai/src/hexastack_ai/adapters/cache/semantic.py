@@ -64,24 +64,32 @@ class SemanticVectorCache(SemanticCachePort):
         )
         matches = self._memory.search(
             query_embedding=query_embedding,
-            limit=1,
+            limit=self._config.max_entries,
             min_score=cutoff,
         )
         if not matches:
             return None
 
-        best_match = matches[0]
-        meta = best_match.entry.metadata
-        expires_at = meta.get("expires_at")
-        if expires_at is not None and time.time() > expires_at:
-            self._memory.delete(best_match.entry.id)
-            return None
+        for match in matches:
+            meta = match.entry.metadata
+            if not meta.get("is_semantic_cache"):
+                continue
 
-        raw_val = best_match.entry.content
-        try:
-            return json.loads(raw_val)
-        except Exception:
-            return raw_val
+            expires_at = meta.get("expires_at")
+            if expires_at is not None and time.time() > expires_at:
+                self._memory.delete(match.entry.id)
+                continue
+
+            raw_val = match.entry.content
+            try:
+                data = json.loads(raw_val)
+                if isinstance(data, dict) and "__semantic_cache_value__" in data:
+                    return data["__semantic_cache_value__"]
+                return data
+            except Exception:
+                return raw_val
+
+        return None
 
     def set(
         self,
@@ -99,7 +107,7 @@ class SemanticVectorCache(SemanticCachePort):
         ttl = ttl_seconds if ttl_seconds is not None else self._config.ttl_seconds
         expires_at = (time.time() + ttl) if ttl > 0 else None
 
-        serialized = json.dumps(value) if not isinstance(value, str) else value
+        serialized = json.dumps({"__semantic_cache_value__": value})
         metadata: dict[str, Any] = {
             "is_semantic_cache": True,
             "created_at": time.time(),
@@ -115,7 +123,12 @@ class SemanticVectorCache(SemanticCachePort):
         self._memory.store(entry)
 
     def clear(self) -> None:
-        """Clear all entries from the semantic cache."""
+        """Clear all entries from the semantic cache.
+
+        Notes/Architectural Intent:
+            Clears all entries in the underlying memory store. For shared vector
+            stores, dedicated collections or cache namespaces are recommended.
+        """
         self._memory.clear()
 
 
@@ -160,24 +173,32 @@ class AsyncSemanticVectorCache(AsyncSemanticCachePort):
         )
         matches = await self._memory.search(
             query_embedding=query_embedding,
-            limit=1,
+            limit=self._config.max_entries,
             min_score=cutoff,
         )
         if not matches:
             return None
 
-        best_match = matches[0]
-        meta = best_match.entry.metadata
-        expires_at = meta.get("expires_at")
-        if expires_at is not None and time.time() > expires_at:
-            await self._memory.delete(best_match.entry.id)
-            return None
+        for match in matches:
+            meta = match.entry.metadata
+            if not meta.get("is_semantic_cache"):
+                continue
 
-        raw_val = best_match.entry.content
-        try:
-            return json.loads(raw_val)
-        except Exception:
-            return raw_val
+            expires_at = meta.get("expires_at")
+            if expires_at is not None and time.time() > expires_at:
+                await self._memory.delete(match.entry.id)
+                continue
+
+            raw_val = match.entry.content
+            try:
+                data = json.loads(raw_val)
+                if isinstance(data, dict) and "__semantic_cache_value__" in data:
+                    return data["__semantic_cache_value__"]
+                return data
+            except Exception:
+                return raw_val
+
+        return None
 
     async def set(
         self,
@@ -195,7 +216,7 @@ class AsyncSemanticVectorCache(AsyncSemanticCachePort):
         ttl = ttl_seconds if ttl_seconds is not None else self._config.ttl_seconds
         expires_at = (time.time() + ttl) if ttl > 0 else None
 
-        serialized = json.dumps(value) if not isinstance(value, str) else value
+        serialized = json.dumps({"__semantic_cache_value__": value})
         metadata: dict[str, Any] = {
             "is_semantic_cache": True,
             "created_at": time.time(),
@@ -211,7 +232,12 @@ class AsyncSemanticVectorCache(AsyncSemanticCachePort):
         await self._memory.store(entry)
 
     async def clear(self) -> None:
-        """Clear all entries asynchronously from the semantic cache."""
+        """Clear all entries asynchronously from the semantic cache.
+
+        Notes/Architectural Intent:
+            Clears all entries in the underlying memory store. For shared vector
+            stores, dedicated collections or cache namespaces are recommended.
+        """
         await self._memory.clear()
 
 

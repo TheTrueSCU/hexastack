@@ -57,20 +57,22 @@ class TaskQueuePort(ABC):
         """
 
     @abstractmethod
-    def complete(self, task_id: str) -> None:
+    def complete(self, task_id: str, worker_id: str | None = None) -> None:
         """Mark a leased task as successfully completed.
 
         Args:
             task_id: Task record ID.
+            worker_id: Optional worker identifier to verify lease ownership.
         """
 
     @abstractmethod
-    def fail(self, task_id: str, error: str) -> None:
+    def fail(self, task_id: str, error: str, worker_id: str | None = None) -> None:
         """Record a failure for a leased task, dead-lettering if attempts exceeded.
 
         Args:
             task_id: Task record ID.
             error: Error message/traceback string.
+            worker_id: Optional worker identifier to verify lease ownership.
         """
 
     @abstractmethod
@@ -116,11 +118,13 @@ class AsyncTaskQueuePort(ABC):
         """Acquire a lease asynchronously."""
 
     @abstractmethod
-    async def complete_async(self, task_id: str) -> None:
+    async def complete_async(self, task_id: str, worker_id: str | None = None) -> None:
         """Complete a task asynchronously."""
 
     @abstractmethod
-    async def fail_async(self, task_id: str, error: str) -> None:
+    async def fail_async(
+        self, task_id: str, error: str, worker_id: str | None = None
+    ) -> None:
         """Fail a task attempt asynchronously."""
 
     @abstractmethod

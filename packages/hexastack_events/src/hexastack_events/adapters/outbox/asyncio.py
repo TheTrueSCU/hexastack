@@ -168,15 +168,21 @@ class AsyncioOutboxRelay(OutboxRelayPort):
         return published_count
 
     def start(self) -> None:
-        """Start the background outbox polling task."""
-        if not self._running:
+        """Start the background outbox polling task.
+
+        Notes/Architectural Intent:
+            Idempotent: Only transitions _running to True when an active event loop
+            is present and the background polling task is successfully scheduled.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No running event loop in current thread; avoid marking as running
+            return
+
+        if not self._running or self._task is None or self._task.done():
             self._running = True
-            try:
-                loop = asyncio.get_running_loop()
-                self._task = loop.create_task(self._poll_loop())
-            except RuntimeError:
-                # If no running event loop in current thread, task will be started when loop runs
-                pass
+            self._task = loop.create_task(self._poll_loop())
 
     def stop(self) -> None:
         """Stop the background outbox polling task."""

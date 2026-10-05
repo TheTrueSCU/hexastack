@@ -127,3 +127,75 @@ async def test_async_semantic_cache() -> None:
     await cache.clear()
     cleared = await cache.get(emb)
     assert cleared is None
+
+
+def test_semantic_cache_type_preservation() -> None:
+    """Verify semantic cache preserves string, integer, boolean, and list types without mutation."""
+    memory = InMemoryVectorMemoryAdapter()
+    cache = SemanticVectorCache(memory)
+
+    cache.set([1.0, 0.0], "123")
+    val_str = cache.get([1.0, 0.0])
+    assert val_str == "123"
+    assert isinstance(val_str, str)
+
+    cache.set([0.0, 1.0], "true")
+    val_bool_str = cache.get([0.0, 1.0])
+    assert val_bool_str == "true"
+    assert isinstance(val_bool_str, str)
+
+    cache.set([1.0, 1.0], 42)
+    val_int = cache.get([1.0, 1.0])
+    assert val_int == 42
+    assert isinstance(val_int, int)
+
+    cache.set([-1.0, 0.0], True)
+    val_bool = cache.get([-1.0, 0.0])
+    assert val_bool is True
+    assert isinstance(val_bool, bool)
+
+
+def test_semantic_cache_isolation_from_non_cache_entries() -> None:
+    """Verify semantic cache skips memory entries not tagged as is_semantic_cache."""
+    from hexastack_ai.domain.memory import MemoryEntry
+
+    memory = InMemoryVectorMemoryAdapter()
+    cache = SemanticVectorCache(memory)
+
+    # Store a non-cache memory entry (e.g. episodic chat memory)
+    non_cache_entry = MemoryEntry(
+        content="User likes python",
+        embedding=[1.0, 0.0, 0.0],
+        metadata={"category": "episodic"},
+    )
+    memory.store(non_cache_entry)
+
+    # Cache get should ignore non-cache entries even on exact embedding match
+    hit = cache.get([1.0, 0.0, 0.0])
+    assert hit is None
+
+    # Storing actual cache entry works alongside it
+    cache.set([1.0, 0.0, 0.0], "cache-hit-payload")
+    cache_hit = cache.get([1.0, 0.0, 0.0])
+    assert cache_hit == "cache-hit-payload"
+
+
+def test_semantic_cache_search_beyond_five_non_cache_entries() -> None:
+    """Verify semantic cache finds entries even when >5 non-cache entries match first."""
+    from hexastack_ai.domain.memory import MemoryEntry
+
+    memory = InMemoryVectorMemoryAdapter()
+    cache = SemanticVectorCache(memory)
+
+    for i in range(7):
+        memory.store(
+            MemoryEntry(
+                content=f"Non-cache entry {i}",
+                embedding=[1.0, 0.0, 0.0],
+                metadata={"category": "chat"},
+            )
+        )
+
+    cache.set([1.0, 0.0, 0.0], "found-after-many-non-cache")
+    hit = cache.get([1.0, 0.0, 0.0])
+    assert hit == "found-after-many-non-cache"

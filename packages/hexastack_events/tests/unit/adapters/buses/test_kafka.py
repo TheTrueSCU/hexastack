@@ -437,3 +437,98 @@ async def test_kafka_adapter_subscribe_failure_raises_event_delivery_error(
             await adapter.subscribe_async("TestEvent", lambda _: None)
     finally:
         adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_kafka_consumer_does_not_commit_on_failed_dlq(mock_aiokafka_module):
+    """Verify offset is not committed if DLQ delivery fails after exhausted retries."""
+    adapter = KafkaDistributedEventBus(
+        bootstrap_servers="localhost:9092",
+        enable_dlq=True,
+        max_retries=1,
+    )
+    try:
+        await adapter.connect()
+        # DLQ producer send fails
+        mock_aiokafka_module.AIOKafkaProducer.return_value.send_and_wait.side_effect = (
+            RuntimeError("DLQ broker offline")
+        )
+
+        mock_msg = MagicMock()
+        mock_msg.value = encode_cloudevent_bytes(_make_envelope())
+        mock_msg.key = b"k"
+        mock_msg.headers = []
+
+        def failing_handler(_):
+            raise ValueError("Handler explosion")
+
+        processed = await adapter._process_consumer_message(
+            mock_msg,
+            "hexastack.events.OrderPlacedEvent",
+            "hexastack.events.dlq.OrderPlacedEvent",
+            failing_handler,
+        )
+        assert processed is False
+    finally:
+        adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_kafka_async_handler_awaited(mock_aiokafka_module):
+    """Verify async handler coroutines are awaited during consumption."""
+    adapter = KafkaDistributedEventBus(
+        bootstrap_servers="localhost:9092",
+    )
+    try:
+        await adapter.connect()
+        executed = False
+
+        async def async_handler(_):
+            nonlocal executed
+            executed = True
+
+        mock_msg = MagicMock()
+        mock_msg.value = encode_cloudevent_bytes(_make_envelope())
+
+        processed = await adapter._process_consumer_message(
+            mock_msg,
+            "hexastack.events.OrderPlacedEvent",
+            "hexastack.events.dlq.OrderPlacedEvent",
+            async_handler,
+        )
+        assert processed is True
+        assert executed is True
+    finally:
+        adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_kafka_consume_loop_halts_on_uncommitted_failure(mock_aiokafka_module):
+    """Verify consumer loop stops when a message cannot be processed or routed to DLQ."""
+    adapter = KafkaDistributedEventBus(
+        bootstrap_servers="localhost:9092",
+        enable_dlq=True,
+        max_retries=1,
+    )
+    try:
+        mock_msg1 = MagicMock(offset=1, value=b"invalid-payload", key=b"k", headers=[])
+        mock_msg2 = MagicMock(offset=2, value=b"invalid-payload", key=b"k", headers=[])
+
+        async def _iter_msgs():
+            yield mock_msg1
+            yield mock_msg2
+
+        mock_consumer = mock_aiokafka_module.AIOKafkaConsumer.return_value
+        mock_consumer.__aiter__.side_effect = lambda: _iter_msgs()
+
+        mock_aiokafka_module.AIOKafkaProducer.return_value.send_and_wait.side_effect = (
+            RuntimeError("DLQ unavailable")
+        )
+
+        await adapter.subscribe_async("OrderPlacedEvent", lambda _: None)
+        await asyncio.sleep(0.05)
+
+        commit_calls = mock_consumer.commit.call_count
+        assert commit_calls == 0
+    finally:
+        adapter.close()

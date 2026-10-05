@@ -66,7 +66,7 @@
 <!-- hexastack_flow_adapters_storage_sqlalchemy -->
 <g id="node12" class="node">
 <title>hexastack_flow_adapters_storage_sqlalchemy</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#208383" stroke="black" cx="98.34" cy="-443.77" rx="67.35" ry="36.54"/>
+<ellipse fill="#1e7a7a" stroke="black" cx="98.34" cy="-443.77" rx="67.35" ry="36.54"/>
 <text text-anchor="middle" x="98.34" y="-457.77" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">hexastack_flow.</text>
 <text text-anchor="middle" x="98.34" y="-446.77" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">adapters.</text>
 <text text-anchor="middle" x="98.34" y="-435.77" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">storage.</text>
@@ -318,7 +318,7 @@
 <g id="edge32" class="edge">
 <title>hexastack_flow_adapters_storage_sqlalchemy&#45;&gt;hexastack_flow_adapters_storage</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M145.52,-417.59C169.89,-404.58 199.5,-388.78 223.65,-375.89"/>
-<polygon fill="#208383" stroke="black" points="225.44,-378.9 232.61,-371.1 222.14,-372.72 225.44,-378.9"/>
+<polygon fill="#1e7a7a" stroke="black" points="225.44,-378.9 232.61,-371.1 222.14,-372.72 225.44,-378.9"/>
 </g>
 <!-- hexastack_flow_domain -->
 <g id="node13" class="node">
@@ -527,7 +527,7 @@
 <!-- sqlalchemy -->
 <g id="node21" class="node">
 <title>sqlalchemy</title><style>.edge>path:hover{stroke-width:8}</style>
-<polygon fill="#cc33cc" stroke="black" points="104.84,-701.04 101.84,-705.04 80.84,-705.04 77.84,-701.04 31.84,-701.04 31.84,-665.04 104.84,-665.04 104.84,-701.04"/>
+<polygon fill="#c431c4" stroke="black" points="104.84,-701.04 101.84,-705.04 80.84,-705.04 77.84,-701.04 31.84,-701.04 31.84,-665.04 104.84,-665.04 104.84,-701.04"/>
 <text text-anchor="middle" x="68.34" y="-680.54" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">sqlalchemy</text>
 </g>
 <!-- sqlalchemy&#45;&gt;hexastack_flow_adapters_storage_sqlalchemy -->
@@ -535,7 +535,7 @@
 <title>sqlalchemy&#45;&gt;hexastack_flow_adapters_storage_sqlalchemy</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M93.66,-664.86C109.79,-651.94 128.54,-632.54 133.34,-609.54"/>
 <path fill="none" stroke="black" d="M133.34,-607.54C141.69,-567.54 130.14,-522.08 118.13,-489.39"/>
-<polygon fill="#cc33cc" stroke="black" points="121.25,-487.76 114.41,-479.67 114.72,-490.26 121.25,-487.76"/>
+<polygon fill="#c431c4" stroke="black" points="121.25,-487.76 114.41,-479.67 114.72,-490.26 121.25,-487.76"/>
 </g>
 </g>
 </svg>
