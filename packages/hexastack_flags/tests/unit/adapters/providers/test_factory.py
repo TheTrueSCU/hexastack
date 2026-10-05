@@ -109,3 +109,25 @@ def test_initialize_unleash_and_flipt_mocked():
             FeatureFlagProviderType.FLIPT, options=opts_flipt
         )
         mock_flipt_cls.assert_called_once()
+
+
+def test_initialize_env_provider(monkeypatch: pytest.MonkeyPatch):
+    """Verify ENV provider parses environment variables with prefix."""
+    from hexastack_flags.adapters.openfeature import OpenFeatureFlagAdapter
+
+    monkeypatch.setenv("FEATURE_FLAG_BETA_MODE", "true")
+    monkeypatch.setenv("FEATURE_FLAG_MAX_RETRIES", "7")
+    monkeypatch.setenv("FEATURE_FLAG_PAYLOAD", '{"nested": "data"}')
+
+    initialize_openfeature_provider(
+        provider_type=FeatureFlagProviderType.ENV,
+    )
+    adapter = OpenFeatureFlagAdapter()
+    beta_enabled = adapter.is_enabled("beta_mode")
+    assert beta_enabled is True
+
+    retries = adapter.get_integer_value("max_retries")
+    assert retries == 7
+
+    payload = adapter.get_object_value("payload")
+    assert payload == {"nested": "data"}

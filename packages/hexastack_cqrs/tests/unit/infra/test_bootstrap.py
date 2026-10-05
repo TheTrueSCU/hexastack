@@ -247,4 +247,29 @@ def test_bootstrap_cqrs_with_custom_circuit_breaker_in_container():
     container.add_instance(custom_cb, declared_class=CircuitBreakerPort)
 
     result = bootstrap_cqrs(container=container)
-    assert result.container.resolve(CircuitBreakerPort) is custom_cb
+    resolved_cb = result.container.resolve(CircuitBreakerPort)
+    assert resolved_cb is custom_cb
+
+
+def test_bootstrap_cqrs_with_cache_middleware():
+    from hexastack_core.adapters.cache.in_memory import InMemoryCache
+    from hexastack_core.ports.cache import CachePort
+    from hexastack_cqrs.infra.middleware.caching import (
+        CommandCacheInvalidationMiddleware,
+        QueryCachingMiddleware,
+    )
+
+    cache = InMemoryCache()
+    container = Container()
+    container.add_instance(cache, declared_class=CachePort)
+
+    result = bootstrap_cqrs(container=container)
+    cmd_bus = result.container.resolve(CommandBusPort)
+    middlewares = getattr(cmd_bus, "_middleware", [])
+
+    has_query_cache = any(isinstance(mw, QueryCachingMiddleware) for mw in middlewares)
+    has_cmd_invalidation = any(
+        isinstance(mw, CommandCacheInvalidationMiddleware) for mw in middlewares
+    )
+    assert has_query_cache is True
+    assert has_cmd_invalidation is True

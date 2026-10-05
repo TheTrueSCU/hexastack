@@ -1,6 +1,17 @@
 from pydantic import BaseModel, Field
 
 
+class CachingMiddlewareConfig(BaseModel):
+    """Configuration schema for CQRS query caching and command invalidation middleware.
+
+    Notes/Architectural Intent:
+        Controls declarative query result caching and cache tag purging pipeline execution order.
+    """
+
+    enable: bool = Field(default=True)
+    order: int = Field(default=25)
+
+
 class CircuitBreakerMiddlewareConfig(BaseModel):
     """Configuration schema for CQRS circuit breaker resilience middleware.
 
@@ -42,11 +53,12 @@ class RetryMiddlewareConfig(BaseModel):
     """Configuration schema for CQRS retry middleware.
 
     Notes/Architectural Intent:
-        Controls attempt limits, circuit breaker, resilience parameters, and pipeline execution order.
+        Controls attempt limits, resilience parameters, and pipeline execution order.
+        Ordered before UnitOfWork (order 35 vs 40) so each retry executes in a fresh transaction.
     """
 
     enable: bool = Field(default=True)
-    order: int = Field(default=50)
+    order: int = Field(default=35)
     max_attempts: int = Field(default=3, ge=1)
     initial_backoff_seconds: float = Field(default=0.1, gt=0.0)
     max_backoff_seconds: float = Field(default=5.0, gt=0.0)
@@ -82,9 +94,10 @@ class CqrsMiddlewareConfig(BaseModel):
     """Container grouping configuration schemas for all CQRS middleware.
 
     Notes/Architectural Intent:
-        Groups middleware settings under .
+        Groups middleware settings under [cqrs.middleware].
     """
 
+    caching: CachingMiddlewareConfig = Field(default_factory=CachingMiddlewareConfig)
     circuit_breaker: CircuitBreakerMiddlewareConfig = Field(
         default_factory=CircuitBreakerMiddlewareConfig
     )
@@ -111,6 +124,7 @@ class HexastackCqrsConfig(BaseModel):
 
 
 __all__ = [
+    "CachingMiddlewareConfig",
     "CircuitBreakerMiddlewareConfig",
     "CorrelationMiddlewareConfig",
     "CqrsMiddlewareConfig",

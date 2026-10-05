@@ -1,6 +1,7 @@
 from hexastack_core.infra.decorators import config_section
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_cqrs.domain.config import (
+    CachingMiddlewareConfig,
     CircuitBreakerMiddlewareConfig,
     CorrelationMiddlewareConfig,
     CqrsMiddlewareConfig,
@@ -14,6 +15,7 @@ from hexastack_cqrs.domain.config import (
 config_section("cqrs")(HexastackCqrsConfig)
 
 __all__ = [
+    "CachingMiddlewareConfig",
     "CircuitBreakerMiddlewareConfig",
     "CorrelationMiddlewareConfig",
     "CqrsMiddlewareConfig",

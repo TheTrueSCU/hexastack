@@ -33,10 +33,21 @@ def test_prepare_command_with_env_and_cwd() -> None:
         env={"CLUSTER_NAME": "hpc-01", "FLAG": 'quoted "val"'},
         cwd="/var/app",
     )
-    assert 'export CLUSTER_NAME="hpc-01"' in cmd
-    assert 'export FLAG="quoted \\"val\\""' in cmd
+    assert "export CLUSTER_NAME=" in cmd
+    assert "export FLAG=" in cmd
     assert "cd /var/app" in cmd
     assert cmd.endswith("python script.py")
+
+    # Verify invalid environment variable key raises ValueError
+    with pytest.raises(ValueError, match="Invalid environment variable name"):
+        adapter._prepare_command("ls", env={"INVALID-KEY; rm -rf /": "val"})
+
+    # Verify malicious cwd is escaped safely
+    cmd_injection = adapter._prepare_command("ls", cwd="/var/app; whoami")
+    assert (
+        "cd '/var/app; whoami'" in cmd_injection
+        or 'cd "/var/app; whoami"' in cmd_injection
+    )
 
 
 @pytest.mark.asyncio

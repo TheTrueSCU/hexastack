@@ -34,12 +34,14 @@ class PgVectorStoreAdapter(VectorStorePort):
         config: PgVectorConfig | None = None,
         table_name: str | None = None,
         dimension: int | None = None,
+        distance_strategy: str | None = None,
     ) -> None:
         """Initialize PgVectorStoreAdapter with session factory and configuration."""
         self._session_factory = session_factory
         self._config = config or PgVectorConfig()
         self._table_name = table_name or self._config.table_name
         self._dimension = dimension or self._config.dimension
+        self._distance_strategy = distance_strategy or self._config.distance_strategy
         self._table = create_vector_table(self._table_name, self._dimension)
 
     def clear(self) -> None:
@@ -76,7 +78,7 @@ class PgVectorStoreAdapter(VectorStorePort):
             return emb, meta
 
     def search(self, query_embedding: list[float], limit: int = 5) -> list[Metadata]:
-        """Search for top similar vector records."""
+        """Search for top similar vector records based on configured distance strategy."""
         with self._session_factory() as session:
             stmt = select(
                 self._table.c.id,
@@ -89,39 +91,44 @@ class PgVectorStoreAdapter(VectorStorePort):
             for vid, emb_str, meta_str in rows:
                 emb = json.loads(emb_str)
                 meta = json.loads(meta_str)
-                score = _cosine_similarity(query_embedding, emb)
+                if self._distance_strategy == "l2":
+                    score = _euclidean_distance(query_embedding, emb)
+                elif self._distance_strategy == "inner_product":
+                    score = _inner_product(query_embedding, emb)
+                else:
+                    score = _cosine_similarity(query_embedding, emb)
                 meta_res = dict(meta)
                 meta_res["_id"] = vid
                 meta_res["_score"] = score
                 scored.append((score, meta_res))
 
-            scored.sort(key=lambda item: item[0], reverse=True)
+            reverse = self._distance_strategy != "l2"
+            scored.sort(key=lambda item: item[0], reverse=reverse)
             return [meta for _, meta in scored[:limit]]
 
     def upsert(
         self, vector_id: str, embedding: list[float], metadata: Metadata
     ) -> None:
-        """Upsert a vector embedding and metadata record into the database table."""
+        """Upsert a vector embedding and metadata record atomically into the table."""
         emb_json = json.dumps(list(embedding))
         meta_json = json.dumps(dict(metadata))
 
         with self._session_factory() as session:
-            # Check if record exists
-            stmt = select(self._table.c.id).where(self._table.c.id == vector_id)
-            exists = session.execute(stmt).first() is not None
-
-            if exists:
-                upd = (
-                    update(self._table)
-                    .where(self._table.c.id == vector_id)
-                    .values(embedding=emb_json, metadata=meta_json)
-                )
-                session.execute(upd)
-            else:
-                ins = insert(self._table).values(
-                    id=vector_id, embedding=emb_json, metadata=meta_json
-                )
-                session.execute(ins)
+            upd = (
+                update(self._table)
+                .where(self._table.c.id == vector_id)
+                .values(embedding=emb_json, metadata=meta_json)
+            )
+            result = session.execute(upd)
+            if getattr(result, "rowcount", 0) == 0:
+                try:
+                    ins = insert(self._table).values(
+                        id=vector_id, embedding=emb_json, metadata=meta_json
+                    )
+                    session.execute(ins)
+                except Exception:
+                    session.rollback()
+                    session.execute(upd)
             session.commit()
 
 
@@ -134,11 +141,13 @@ class AsyncPgVectorStoreAdapter:
         config: PgVectorConfig | None = None,
         table_name: str | None = None,
         dimension: int | None = None,
+        distance_strategy: str | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._config = config or PgVectorConfig()
         self._table_name = table_name or self._config.table_name
         self._dimension = dimension or self._config.dimension
+        self._distance_strategy = distance_strategy or self._config.distance_strategy
         self._table = create_vector_table(self._table_name, self._dimension)
 
     async def clear_async(self) -> None:
@@ -177,7 +186,7 @@ class AsyncPgVectorStoreAdapter:
     async def search_async(
         self, query_embedding: list[float], limit: int = 5
     ) -> list[Metadata]:
-        """Asynchronously search for top similar vectors."""
+        """Asynchronously search for top similar vectors based on distance strategy."""
         async with self._session_factory() as session:
             stmt = select(
                 self._table.c.id,
@@ -191,39 +200,44 @@ class AsyncPgVectorStoreAdapter:
             for vid, emb_str, meta_str in rows:
                 emb = json.loads(emb_str)
                 meta = json.loads(meta_str)
-                score = _cosine_similarity(query_embedding, emb)
+                if self._distance_strategy == "l2":
+                    score = _euclidean_distance(query_embedding, emb)
+                elif self._distance_strategy == "inner_product":
+                    score = _inner_product(query_embedding, emb)
+                else:
+                    score = _cosine_similarity(query_embedding, emb)
                 meta_res = dict(meta)
                 meta_res["_id"] = vid
                 meta_res["_score"] = score
                 scored.append((score, meta_res))
 
-            scored.sort(key=lambda item: item[0], reverse=True)
+            reverse = self._distance_strategy != "l2"
+            scored.sort(key=lambda item: item[0], reverse=reverse)
             return [meta for _, meta in scored[:limit]]
 
     async def upsert_async(
         self, vector_id: str, embedding: list[float], metadata: Metadata
     ) -> None:
-        """Asynchronously upsert a vector embedding and metadata."""
+        """Asynchronously upsert a vector embedding and metadata atomically."""
         emb_json = json.dumps(list(embedding))
         meta_json = json.dumps(dict(metadata))
 
         async with self._session_factory() as session:
-            stmt = select(self._table.c.id).where(self._table.c.id == vector_id)
-            res = await session.execute(stmt)
-            exists = res.first() is not None
-
-            if exists:
-                upd = (
-                    update(self._table)
-                    .where(self._table.c.id == vector_id)
-                    .values(embedding=emb_json, metadata=meta_json)
-                )
-                await session.execute(upd)
-            else:
-                ins = insert(self._table).values(
-                    id=vector_id, embedding=emb_json, metadata=meta_json
-                )
-                await session.execute(ins)
+            upd = (
+                update(self._table)
+                .where(self._table.c.id == vector_id)
+                .values(embedding=emb_json, metadata=meta_json)
+            )
+            result = await session.execute(upd)
+            if getattr(result, "rowcount", 0) == 0:
+                try:
+                    ins = insert(self._table).values(
+                        id=vector_id, embedding=emb_json, metadata=meta_json
+                    )
+                    await session.execute(ins)
+                except Exception:
+                    await session.rollback()
+                    await session.execute(upd)
             await session.commit()
 
 
@@ -241,6 +255,14 @@ def _cosine_similarity(v1: list[float], v2: list[float]) -> float:
     if norm1 == 0.0 or norm2 == 0.0:
         return 0.0
     return dot / (norm1 * norm2)
+
+
+def _inner_product(v1: list[float], v2: list[float]) -> float:
+    return sum(a * b for a, b in zip(v1, v2, strict=False))
+
+
+def _euclidean_distance(v1: list[float], v2: list[float]) -> float:
+    return math.sqrt(sum((a - b) ** 2 for a, b in zip(v1, v2, strict=False)))
 
 
 def create_vector_table(

@@ -17,6 +17,7 @@ from hexastack_core.infra.config import HexastackConfig
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_core.ports.cache import AsyncCachePort, CachePort
 from hexastack_core.ports.circuit_breaker import CircuitBreakerPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
@@ -135,6 +136,27 @@ class CqrsBootstrapper(BootstrapperPort):
         if mw_conf.correlation.enable:
             ordered_middlewares.append(
                 (mw_conf.correlation.order, CorrelationMiddleware())
+            )
+        if mw_conf.caching.enable and (CachePort in di or AsyncCachePort in di):
+            from hexastack_cqrs.infra.middleware.caching import (
+                CommandCacheInvalidationMiddleware,
+                QueryCachingMiddleware,
+            )
+
+            active_cache = (
+                di.resolve(CachePort) if CachePort in di else di.resolve(AsyncCachePort)
+            )
+            ordered_middlewares.append(
+                (
+                    mw_conf.caching.order,
+                    QueryCachingMiddleware(active_cache),
+                )
+            )
+            ordered_middlewares.append(
+                (
+                    mw_conf.caching.order,
+                    CommandCacheInvalidationMiddleware(active_cache),
+                )
             )
         if mw_conf.timing.enable_slow_warning:
             ordered_middlewares.append(

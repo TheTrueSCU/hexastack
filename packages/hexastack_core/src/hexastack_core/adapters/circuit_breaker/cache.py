@@ -31,6 +31,7 @@ class CacheCircuitBreaker(CircuitBreakerPort):
         failure_threshold: int = 5,
         recovery_timeout_seconds: float = 10.0,
         key_prefix: str = "hexastack:circuit_breaker:",
+        half_open_max_trials: int = 1,
     ) -> None:
         """Initialize cache-backed circuit breaker.
 
@@ -39,11 +40,13 @@ class CacheCircuitBreaker(CircuitBreakerPort):
             failure_threshold: Number of consecutive failures to trip open.
             recovery_timeout_seconds: Duration in seconds breaker remains open.
             key_prefix: String prefix prepended to cache keys.
+            half_open_max_trials: Maximum number of concurrent probes permitted in HALF_OPEN state.
         """
         self._cache = cache
         self._failure_threshold = max(1, failure_threshold)
         self._recovery_timeout = max(0.001, recovery_timeout_seconds)
         self._prefix = key_prefix
+        self._half_open_max_trials = max(1, half_open_max_trials)
 
     def _key(self, name: str) -> str:
         return f"{self._prefix}{name}"
@@ -56,6 +59,7 @@ class CacheCircuitBreaker(CircuitBreakerPort):
             "state": CircuitState.CLOSED.value,
             "failure_count": 0,
             "last_failure_time": 0.0,
+            "half_open_trials": 0,
         }
 
     def _save_data(self, name: str, data: dict[str, object]) -> None:
@@ -73,20 +77,44 @@ class CacheCircuitBreaker(CircuitBreakerPort):
             if now - last_failure_time >= self._recovery_timeout:
                 curr_state = CircuitState.HALF_OPEN
                 data["state"] = curr_state.value
+                data["half_open_trials"] = 0
                 self._save_data(name, data)
 
         return curr_state
 
     def allow_execution(self, name: str) -> bool:
         """Check if execution is permitted."""
-        st = self.state(name)
-        return st in (CircuitState.CLOSED, CircuitState.HALF_OPEN)
+        data = self._get_data(name)
+        curr_state = CircuitState(str(data.get("state", CircuitState.CLOSED.value)))
+        last_failure_time = float(str(data.get("last_failure_time", 0.0)))
+
+        if curr_state == CircuitState.OPEN:
+            now = time.monotonic()
+            if now - last_failure_time >= self._recovery_timeout:
+                curr_state = CircuitState.HALF_OPEN
+                data["state"] = curr_state.value
+                data["half_open_trials"] = 0
+                self._save_data(name, data)
+
+        if curr_state == CircuitState.CLOSED:
+            return True
+
+        if curr_state == CircuitState.HALF_OPEN:
+            trials = int(str(data.get("half_open_trials", 0)))
+            if trials < self._half_open_max_trials:
+                data["half_open_trials"] = trials + 1
+                self._save_data(name, data)
+                return True
+            return False
+
+        return False
 
     def record_success(self, name: str) -> None:
         """Record a successful execution."""
         data = self._get_data(name)
         data["state"] = CircuitState.CLOSED.value
         data["failure_count"] = 0
+        data["half_open_trials"] = 0
         self._save_data(name, data)
 
     def record_failure(self, name: str, exc: Exception | None = None) -> None:
@@ -97,6 +125,7 @@ class CacheCircuitBreaker(CircuitBreakerPort):
 
         data["failure_count"] = failures
         data["last_failure_time"] = time.monotonic()
+        data["half_open_trials"] = 0
 
         if curr_state == CircuitState.HALF_OPEN or failures >= self._failure_threshold:
             data["state"] = CircuitState.OPEN.value
@@ -133,12 +162,14 @@ class AsyncCacheCircuitBreaker(AsyncCircuitBreakerPort):
         failure_threshold: int = 5,
         recovery_timeout_seconds: float = 10.0,
         key_prefix: str = "hexastack:circuit_breaker:",
+        half_open_max_trials: int = 1,
     ) -> None:
         """Initialize async cache-backed circuit breaker."""
         self._cache = cache
         self._failure_threshold = max(1, failure_threshold)
         self._recovery_timeout = max(0.001, recovery_timeout_seconds)
         self._prefix = key_prefix
+        self._half_open_max_trials = max(1, half_open_max_trials)
 
     def _key(self, name: str) -> str:
         return f"{self._prefix}{name}"
@@ -151,6 +182,7 @@ class AsyncCacheCircuitBreaker(AsyncCircuitBreakerPort):
             "state": CircuitState.CLOSED.value,
             "failure_count": 0,
             "last_failure_time": 0.0,
+            "half_open_trials": 0,
         }
 
     async def _save_data(self, name: str, data: dict[str, object]) -> None:
@@ -168,20 +200,44 @@ class AsyncCacheCircuitBreaker(AsyncCircuitBreakerPort):
             if now - last_failure_time >= self._recovery_timeout:
                 curr_state = CircuitState.HALF_OPEN
                 data["state"] = curr_state.value
+                data["half_open_trials"] = 0
                 await self._save_data(name, data)
 
         return curr_state
 
     async def allow_execution_async(self, name: str) -> bool:
         """Check if execution is permitted asynchronously."""
-        st = await self.state_async(name)
-        return st in (CircuitState.CLOSED, CircuitState.HALF_OPEN)
+        data = await self._get_data(name)
+        curr_state = CircuitState(str(data.get("state", CircuitState.CLOSED.value)))
+        last_failure_time = float(str(data.get("last_failure_time", 0.0)))
+
+        if curr_state == CircuitState.OPEN:
+            now = time.monotonic()
+            if now - last_failure_time >= self._recovery_timeout:
+                curr_state = CircuitState.HALF_OPEN
+                data["state"] = curr_state.value
+                data["half_open_trials"] = 0
+                await self._save_data(name, data)
+
+        if curr_state == CircuitState.CLOSED:
+            return True
+
+        if curr_state == CircuitState.HALF_OPEN:
+            trials = int(str(data.get("half_open_trials", 0)))
+            if trials < self._half_open_max_trials:
+                data["half_open_trials"] = trials + 1
+                await self._save_data(name, data)
+                return True
+            return False
+
+        return False
 
     async def record_success_async(self, name: str) -> None:
         """Record successful execution asynchronously."""
         data = await self._get_data(name)
         data["state"] = CircuitState.CLOSED.value
         data["failure_count"] = 0
+        data["half_open_trials"] = 0
         await self._save_data(name, data)
 
     async def record_failure_async(
@@ -194,6 +250,7 @@ class AsyncCacheCircuitBreaker(AsyncCircuitBreakerPort):
 
         data["failure_count"] = failures
         data["last_failure_time"] = time.monotonic()
+        data["half_open_trials"] = 0
 
         if curr_state == CircuitState.HALF_OPEN or failures >= self._failure_threshold:
             data["state"] = CircuitState.OPEN.value

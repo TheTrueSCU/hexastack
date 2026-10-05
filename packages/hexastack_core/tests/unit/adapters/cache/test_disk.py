@@ -119,3 +119,19 @@ async def test_async_disk_cache_adapter_default_initialization():
     await cache.set_async("default:async_init", "test_val")
     assert await cache.get_async("default:async_init") == "test_val"
     await cache.close_async()
+
+
+def test_disk_cache_size_limit_enforcement():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # 16KB limit
+        cache = DiskCacheAdapter(directory=tmpdir, size_limit=16384)
+        large_payload = "x" * 2048
+        for i in range(30):
+            cache.set(f"key:{i}", large_payload)
+
+        # Confirm eviction occurred and older entries were purged
+        has_first = cache.has("key:0")
+        assert has_first is False
+        has_last = cache.has("key:29")
+        assert has_last is True
+        cache.close()

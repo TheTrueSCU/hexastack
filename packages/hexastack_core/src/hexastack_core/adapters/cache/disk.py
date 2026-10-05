@@ -157,6 +157,35 @@ class DiskCacheAdapter(CachePort):
                 """,
                 (key, serialized, expires_at),
             )
+        self._enforce_size_limit()
+
+    def _enforce_size_limit(self) -> None:
+        """Evict expired or oldest entries if cache payload size exceeds size_limit."""
+        if self._size_limit is None or self._size_limit <= 0:
+            return
+        now = self._now()
+        with self._conn:
+            self._conn.execute(
+                "DELETE FROM cache_entries WHERE expires_at IS NOT NULL AND expires_at < ?",
+                (now,),
+            )
+            cursor = self._conn.execute(
+                "SELECT COALESCE(SUM(LENGTH(key) + LENGTH(value)), 0) FROM cache_entries"
+            )
+            current_size = cursor.fetchone()[0]
+
+            while current_size > self._size_limit:
+                del_cursor = self._conn.execute(
+                    "DELETE FROM cache_entries WHERE key IN ("
+                    "SELECT key FROM cache_entries ORDER BY rowid ASC LIMIT 10"
+                    ")"
+                )
+                if del_cursor.rowcount == 0:
+                    break
+                cursor = self._conn.execute(
+                    "SELECT COALESCE(SUM(LENGTH(key) + LENGTH(value)), 0) FROM cache_entries"
+                )
+                current_size = cursor.fetchone()[0]
 
     def close(self) -> None:
         """Close underlying SQLite database handles."""

@@ -7,12 +7,16 @@ Notes/Architectural Intent:
     and password authentication without blocking thread pools.
 """
 
+import re
+import shlex
 import time
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
 from hexastack_core.ports.remote_exec import RemoteExecResult, RemoteExecutionPort
+
+_ENV_KEY_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 class AsyncSshAdapter(RemoteExecutionPort):
@@ -127,15 +131,19 @@ class AsyncSshAdapter(RemoteExecutionPort):
 
         Returns:
             Fully qualified shell command line string.
+
+        Raises:
+            ValueError: If an environment variable key is not a valid shell identifier.
         """
         parts: list[str] = []
         if env:
             for k, v in env.items():
-                # Escape double quotes in value
-                escaped_v = v.replace('"', '\\"')
-                parts.append(f'export {k}="{escaped_v}"')
+                if not _ENV_KEY_PATTERN.match(k):
+                    msg = f"Invalid environment variable name: {k!r}"
+                    raise ValueError(msg)
+                parts.append(f"export {k}={shlex.quote(v)}")
         if cwd:
-            parts.append(f"cd {cwd}")
+            parts.append(f"cd {shlex.quote(cwd)}")
         parts.append(command)
         return " && ".join(parts)
 

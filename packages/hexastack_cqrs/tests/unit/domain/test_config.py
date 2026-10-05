@@ -41,13 +41,18 @@ def test_hexastack_cqrs_config_defaults():
     retry = cfg.middleware.retry
     assert isinstance(retry, RetryMiddlewareConfig)
     assert retry.enable is True
-    assert retry.order == 50
+    assert retry.order == 35
     assert retry.max_attempts == 3
     assert retry.initial_backoff_seconds == 0.1
     assert retry.max_backoff_seconds == 5.0
     assert retry.jitter is True
     assert retry.circuit_breaker_threshold == 5
     assert retry.recovery_timeout_seconds == 10.0
+
+    # Caching
+    caching = cfg.middleware.caching
+    assert caching.enable is True
+    assert caching.order == 25
 
     # Timing
     timing = cfg.middleware.timing

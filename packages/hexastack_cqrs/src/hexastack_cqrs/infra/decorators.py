@@ -124,6 +124,9 @@ def event_listener(
     return decorator
 
 
+_FEATURE_FLAG_META_ATTR = "__hexastack_feature_flag__"
+
+
 def feature_flag(
     flag_key: str,
     *,
@@ -135,7 +138,8 @@ def feature_flag(
     Notes/Architectural Intent:
         Evaluates the specified feature flag via ambient UserContext / FeatureFlagPort.
         If enabled, executes the target function; if disabled, executes fallback (if supplied)
-        or raises FeatureFlagDisabledError.
+        or raises FeatureFlagDisabledError. Preserves any underlying HandlerMetadata to
+        prevent masking CQRS autodiscovery.
 
     Args:
         flag_key: Unique identifier of the feature flag to check.
@@ -147,12 +151,15 @@ def feature_flag(
     """
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        import functools
+
         from hexastack_core.domain.feature_flags import EvaluationContext
         from hexastack_core.ports.feature_flags import FeatureFlagPort
         from hexastack_cqrs.infra.middleware.feature_flag import (
             FeatureFlagDisabledError,
         )
 
+        @functools.wraps(fn)
         def wrapped(*args: Any, **kwargs: Any) -> Any:
             eval_ctx = EvaluationContext.from_current_context()
             flags: FeatureFlagPort | None = kwargs.pop("__feature_flags__", None)
@@ -174,10 +181,17 @@ def feature_flag(
                 f"Feature flag '{flag_key}' is disabled for current context."
             )
 
-        _tag_object(
-            wrapped,
-            FeatureFlagMetadata(flag_key=flag_key, fallback=fallback, default=default),
+        ff_meta = FeatureFlagMetadata(
+            flag_key=flag_key, fallback=fallback, default=default
         )
+        setattr(wrapped, _FEATURE_FLAG_META_ATTR, ff_meta)
+
+        existing_handler_meta = getattr(fn, _HANDLER_META_ATTR, None)
+        if existing_handler_meta is not None:
+            setattr(wrapped, _HANDLER_META_ATTR, existing_handler_meta)
+        else:
+            setattr(wrapped, _HANDLER_META_ATTR, ff_meta)
+
         return wrapped
 
     return decorator
