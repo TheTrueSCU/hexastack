@@ -103,3 +103,37 @@ def test_query_handler_decorator():
     assert meta.target_cls == SampleQuery
     res = handle_qry(SampleQuery(id="q1"))
     assert res == "q1"
+
+
+def test_feature_flag_preserves_handler_metadata():
+    from hexastack_cqrs.infra.decorators import (
+        _FEATURE_FLAG_META_ATTR,
+        FeatureFlagMetadata,
+        feature_flag,
+    )
+
+    # 1. @command_handler inner, @feature_flag outer
+    @feature_flag("feature.new_handler")
+    @command_handler(SampleCommand)
+    def handle_flagged_1(cmd: SampleCommand) -> str:
+        return cmd.id
+
+    handler_meta_1 = getattr(handle_flagged_1, "__hexastack_handler__", None)
+    assert isinstance(handler_meta_1, HandlerMetadata)
+    assert handler_meta_1.target_cls == SampleCommand
+    ff_meta_1 = getattr(handle_flagged_1, _FEATURE_FLAG_META_ATTR, None)
+    assert isinstance(ff_meta_1, FeatureFlagMetadata)
+    assert ff_meta_1.flag_key == "feature.new_handler"
+
+    # 2. @feature_flag inner, @command_handler outer
+    @command_handler(SampleCommand)
+    @feature_flag("feature.new_handler_2")
+    def handle_flagged_2(cmd: SampleCommand) -> str:
+        return cmd.id
+
+    handler_meta_2 = getattr(handle_flagged_2, "__hexastack_handler__", None)
+    assert isinstance(handler_meta_2, HandlerMetadata)
+    assert handler_meta_2.target_cls == SampleCommand
+    ff_meta_2 = getattr(handle_flagged_2, _FEATURE_FLAG_META_ATTR, None)
+    assert isinstance(ff_meta_2, FeatureFlagMetadata)
+    assert ff_meta_2.flag_key == "feature.new_handler_2"

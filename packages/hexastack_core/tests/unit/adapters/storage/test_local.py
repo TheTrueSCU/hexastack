@@ -129,3 +129,23 @@ async def test_async_local_storage_adapter_lifecycle() -> None:
         del_res = await storage.delete_async("async.txt")
         assert del_res is True
         assert await storage.exists_async("async.txt") is False
+
+
+def test_local_storage_path_traversal_prevention() -> None:
+    """Verify that path traversal attempts raise StorageError."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        storage = LocalStorageAdapter(root_dir=tmpdir)
+        traversal_paths = [
+            "../../etc/passwd",
+            "../outside.txt",
+            "/nested/../../escape.bin",
+        ]
+        for path in traversal_paths:
+            with pytest.raises(StorageError, match="Path traversal detected"):
+                storage.get(path)
+            with pytest.raises(StorageError, match="Path traversal detected"):
+                storage.put(path, b"malicious")
+            with pytest.raises(StorageError, match="Path traversal detected"):
+                storage.exists(path)
+            with pytest.raises(StorageError, match="Path traversal detected"):
+                storage.delete(path)

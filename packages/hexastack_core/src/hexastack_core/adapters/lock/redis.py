@@ -54,6 +54,11 @@ class RedisLockAdapter(LockPort):
         Returns:
             True if acquired, False otherwise.
         """
+        if self._token is not None:
+            raise LockError(
+                f"Lock on key '{self._key}' is already held by this adapter instance."
+            )
+
         token = str(uuid.uuid4())
         px_millis = max(1, int(self._ttl_seconds * 1000))
         deadline = (time.monotonic() + timeout) if timeout >= 0 else None
@@ -83,14 +88,14 @@ class RedisLockAdapter(LockPort):
             raise LockError("Cannot release an unacquired lock.")
 
         token = self._token
-        self._token = None
-
         try:
             res = self._client.eval(_RELEASE_LUA_SCRIPT, 1, self._key, token)
             if res != 1:
                 raise LockError("Lock was lost or expired before release.")
+            self._token = None
         except Exception as e:
             if isinstance(e, LockError):
+                self._token = None
                 raise
             raise LockError(f"Failed to release Redis lock: {e}") from e
 
@@ -147,6 +152,11 @@ class AsyncRedisLockAdapter(AsyncLockPort):
         """
         import asyncio
 
+        if self._token is not None:
+            raise LockError(
+                f"Lock on key '{self._key}' is already held by this adapter instance."
+            )
+
         token = str(uuid.uuid4())
         px_millis = max(1, int(self._ttl_seconds * 1000))
         deadline = (time.monotonic() + timeout) if timeout >= 0 else None
@@ -177,14 +187,14 @@ class AsyncRedisLockAdapter(AsyncLockPort):
             raise LockError("Cannot release an unacquired lock.")
 
         token = self._token
-        self._token = None
-
         try:
             res = await self._client.eval(_RELEASE_LUA_SCRIPT, 1, self._key, token)
             if res != 1:
                 raise LockError("Lock was lost or expired before release.")
+            self._token = None
         except Exception as e:
             if isinstance(e, LockError):
+                self._token = None
                 raise
             raise LockError(f"Failed to release Redis lock: {e}") from e
 

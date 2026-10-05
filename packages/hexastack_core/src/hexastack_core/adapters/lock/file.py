@@ -130,9 +130,26 @@ class AsyncFileLockAdapter(AsyncLockPort):
         """
         import asyncio
 
-        acquired = await asyncio.to_thread(
-            self._sync_adapter.acquire, blocking, timeout
+        loop = asyncio.get_running_loop()
+        future = loop.run_in_executor(
+            None, self._sync_adapter.acquire, blocking, timeout
         )
+        try:
+            acquired = await asyncio.shield(future)
+        except asyncio.CancelledError:
+
+            def _cleanup_orphaned_lock(fut: asyncio.Future[bool]) -> None:
+                if fut.done() and not fut.cancelled():
+                    try:
+                        if fut.result():
+                            self._sync_adapter.release()
+                    except Exception:
+                        # Best-effort lock cleanup in callback: suppress transient release exceptions
+                        pass
+
+            future.add_done_callback(_cleanup_orphaned_lock)
+            raise
+
         if acquired:
             self._is_locked = True
         return acquired

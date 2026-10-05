@@ -191,3 +191,55 @@ def test_pg_vector_store_adapter_sync():
     # Clear
     adapter.clear()
     assert len(adapter.search([0.0, 1.0])) == 0
+
+
+def test_distance_strategies_sync_and_async():
+    from hexastack_db.adapters.vector import _euclidean_distance, _inner_product
+
+    # Math checks
+    ip = _inner_product([1.0, 2.0], [3.0, 4.0])
+    assert ip == 11.0
+    ed = _euclidean_distance([0.0, 0.0], [3.0, 4.0])
+    assert ed == 5.0
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    factory = sessionmaker(bind=engine)
+
+    # L2 distance test (smallest distance ranked first)
+    l2_adapter = PgVectorStoreAdapter(
+        session_factory=factory,
+        table_name="l2_vectors",
+        dimension=2,
+        distance_strategy="l2",
+    )
+    l2_adapter.create_table()
+    l2_adapter.upsert("close", [1.0, 1.0], {"name": "close"})
+    l2_adapter.upsert("far", [10.0, 10.0], {"name": "far"})
+    l2_adapter.upsert("close", [1.1, 1.1], {"name": "close_updated"})
+
+    l2_results = l2_adapter.search([1.0, 1.0], limit=2)
+    assert len(l2_results) == 2
+    assert l2_results[0]["_id"] == "close"
+    assert l2_results[1]["_id"] == "far"
+    assert l2_results[0]["_score"] < l2_results[1]["_score"]
+
+    # Inner product test (largest dot product ranked first)
+    ip_adapter = PgVectorStoreAdapter(
+        session_factory=factory,
+        table_name="ip_vectors",
+        dimension=2,
+        distance_strategy="inner_product",
+    )
+    ip_adapter.create_table()
+    ip_adapter.upsert("small", [1.0, 1.0], {"name": "small"})
+    ip_adapter.upsert("big", [5.0, 5.0], {"name": "big"})
+
+    ip_results = ip_adapter.search([1.0, 1.0], limit=2)
+    assert len(ip_results) == 2
+    assert ip_results[0]["_id"] == "big"
+    assert ip_results[1]["_id"] == "small"
+    assert ip_results[0]["_score"] > ip_results[1]["_score"]

@@ -1,3 +1,4 @@
+import threading
 import time
 from typing import NamedTuple
 
@@ -74,6 +75,7 @@ class InMemoryRateLimiter(RateLimiterPort):
         self._clock = clock
         # Key -> list of hit timestamps
         self._hits: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
 
     def _now(self) -> float:
         return self._clock.timestamp() if self._clock else time.time()
@@ -88,18 +90,19 @@ class InMemoryRateLimiter(RateLimiterPort):
         Returns:
             True if hit is within quota, False if exceeded.
         """
-        spec = _parse_rate_limit(limit)
-        now = self._now()
-        window_start = now - spec.window_seconds
+        with self._lock:
+            spec = _parse_rate_limit(limit)
+            now = self._now()
+            window_start = now - spec.window_seconds
 
-        timestamps = self._hits.setdefault(key, [])
-        # Evict timestamps outside sliding window
-        self._hits[key] = [t for t in timestamps if t > window_start]
+            timestamps = self._hits.setdefault(key, [])
+            # Evict timestamps outside sliding window
+            self._hits[key] = [t for t in timestamps if t > window_start]
 
-        if len(self._hits[key]) < spec.count:
-            self._hits[key].append(now)
-            return True
-        return False
+            if len(self._hits[key]) < spec.count:
+                self._hits[key].append(now)
+                return True
+            return False
 
     def get_reset_window(self, key: str, limit: str) -> int:
         """Get the remaining seconds until the current rate limit window resets.
@@ -111,18 +114,19 @@ class InMemoryRateLimiter(RateLimiterPort):
         Returns:
             Remaining seconds until reset (minimum 1 second).
         """
-        spec = _parse_rate_limit(limit)
-        now = self._now()
-        window_start = now - spec.window_seconds
+        with self._lock:
+            spec = _parse_rate_limit(limit)
+            now = self._now()
+            window_start = now - spec.window_seconds
 
-        timestamps = self._hits.get(key, [])
-        valid_timestamps = [t for t in timestamps if t > window_start]
-        if not valid_timestamps or len(valid_timestamps) < spec.count:
-            return 0
+            timestamps = self._hits.get(key, [])
+            valid_timestamps = [t for t in timestamps if t > window_start]
+            if not valid_timestamps or len(valid_timestamps) < spec.count:
+                return 0
 
-        oldest_hit = valid_timestamps[0]
-        remaining = int((oldest_hit + spec.window_seconds) - now)
-        return max(1, remaining)
+            oldest_hit = valid_timestamps[0]
+            remaining = int((oldest_hit + spec.window_seconds) - now)
+            return max(1, remaining)
 
     def clear(self, key: str | None = None) -> None:
         """Clear rate limit counters for a specific key or all keys.
@@ -130,10 +134,11 @@ class InMemoryRateLimiter(RateLimiterPort):
         Args:
             key: Optional specific key to reset.
         """
-        if key is not None:
-            self._hits.pop(key, None)
-        else:
-            self._hits.clear()
+        with self._lock:
+            if key is not None:
+                self._hits.pop(key, None)
+            else:
+                self._hits.clear()
 
 
 __all__ = [

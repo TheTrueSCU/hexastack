@@ -35,9 +35,16 @@ class LocalStorageAdapter(StoragePort):
 
         Returns:
             Resolved Path object.
+
+        Raises:
+            StorageError: If path attempts to traverse outside root directory.
         """
         clean_path = path.lstrip("/")
-        return self._root / clean_path
+        resolved = (self._root / clean_path).resolve()
+        if not resolved.is_relative_to(self._root):
+            msg = f"Path traversal detected: '{path}' resolves outside storage root '{self._root}'"
+            raise StorageError(msg)
+        return resolved
 
     def get(self, path: str) -> bytes:
         """Retrieve binary contents of a local file.

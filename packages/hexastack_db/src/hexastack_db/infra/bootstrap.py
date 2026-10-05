@@ -66,15 +66,38 @@ class DatabaseBootstrapper(BootstrapperPort):
         if not registered:
             return
 
-        if async_mode:
-            sync_url = str(engine.url).replace("+aiosqlite", "").replace("+asyncpg", "")
-            from sqlalchemy import create_engine as _ce
-            from sqlalchemy.pool import NullPool
+        if async_mode and isinstance(engine, AsyncEngine):
 
-            _sync = _ce(sync_url, poolclass=NullPool)
-            for metadata in registered:
-                metadata.create_all(_sync)
-            _sync.dispose()
+            async def _create_all_async() -> None:
+                try:
+                    async with engine.begin() as conn:
+                        for metadata in registered:
+                            await conn.run_sync(metadata.create_all)
+                finally:
+                    sync_eng = getattr(engine, "sync_engine", engine)
+                    pool_cls = getattr(
+                        getattr(sync_eng, "pool", None), "__class__", type
+                    ).__name__
+                    is_in_memory = (
+                        ":memory:" in str(engine.url) or "StaticPool" in pool_cls
+                    )
+                    if not is_in_memory:
+                        await engine.dispose()
+
+            import asyncio
+
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop is not None and loop.is_running():
+                import concurrent.futures
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    executor.submit(asyncio.run, _create_all_async()).result()
+            else:
+                asyncio.run(_create_all_async())
         elif isinstance(engine, Engine):
             for metadata in registered:
                 metadata.create_all(engine)
@@ -104,7 +127,43 @@ class DatabaseBootstrapper(BootstrapperPort):
                 session_factory=async_factory,
                 table_name=db_config.vector.table_name,
                 dimension=db_config.vector.dimension,
+                distance_strategy=db_config.vector.distance_strategy,
             )
+            if db_config.auto_create_tables:
+                import asyncio
+
+                async def _create_vector_table_async() -> None:
+                    try:
+                        await async_vector_store.create_table_async()
+                    finally:
+                        sync_eng = getattr(async_engine, "sync_engine", async_engine)
+                        pool_cls = getattr(
+                            getattr(sync_eng, "pool", None), "__class__", type
+                        ).__name__
+                        is_in_memory = (
+                            ":memory:" in str(async_engine.url)
+                            or "StaticPool" in pool_cls
+                        )
+                        if not is_in_memory:
+                            await async_engine.dispose()
+
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    loop = None
+
+                if loop is not None and loop.is_running():
+                    import concurrent.futures
+
+                    with concurrent.futures.ThreadPoolExecutor(
+                        max_workers=1
+                    ) as executor:
+                        executor.submit(
+                            asyncio.run, _create_vector_table_async()
+                        ).result()
+                else:
+                    asyncio.run(_create_vector_table_async())
+
             if AsyncPgVectorStoreAdapter not in di:
                 di.add_instance(
                     async_vector_store, declared_class=AsyncPgVectorStoreAdapter
@@ -140,6 +199,7 @@ class DatabaseBootstrapper(BootstrapperPort):
                 session_factory=sync_factory,
                 table_name=db_config.vector.table_name,
                 dimension=db_config.vector.dimension,
+                distance_strategy=db_config.vector.distance_strategy,
             )
             if db_config.auto_create_tables:
                 sync_vector_store.create_table()

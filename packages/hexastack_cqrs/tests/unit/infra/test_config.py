@@ -16,10 +16,12 @@ def test_default_cqrs_config():
     assert config.middleware.logging.enable is True
     assert config.middleware.logging.order == 30
     assert config.middleware.logging.log_payload is True
+    assert config.middleware.caching.enable is True
+    assert config.middleware.caching.order == 25
     assert config.middleware.unit_of_work.enable is True
     assert config.middleware.unit_of_work.order == 40
     assert config.middleware.retry.enable is True
-    assert config.middleware.retry.order == 50
+    assert config.middleware.retry.order == 35
     assert config.middleware.retry.max_attempts == 3
     assert config.middleware.retry.circuit_breaker_threshold == 5
     assert config.middleware.retry.recovery_timeout_seconds == 10.0

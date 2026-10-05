@@ -84,6 +84,55 @@ def _build_flipt_provider(opts: FlagProviderOptions) -> AbstractProvider:
         ) from e
 
 
+def _parse_env_flag_value(val: str) -> Any:
+    """Parse string environment variable value into bool, int, float, or dict/list/string."""
+    lower = val.lower().strip()
+    if lower in ("true", "yes", "on"):
+        return True
+    if lower in ("false", "no", "off"):
+        return False
+    try:
+        return int(val)
+    except ValueError:
+        # Value is not an integer literal, attempt floating point parsing next
+        pass
+    try:
+        return float(val)
+    except ValueError:
+        # Value is not a float literal, attempt structured JSON parsing next
+        pass
+    import json
+
+    try:
+        parsed = json.loads(val)
+        if isinstance(parsed, (dict, list)):
+            return parsed
+    except (json.JSONDecodeError, TypeError, ValueError, RecursionError):
+        # Value is neither valid JSON nor a collection, fallback to original string
+        pass
+    return val
+
+
+def _build_env_provider(
+    opts: FlagProviderOptions,
+    in_memory_flags: dict[str, Any] | None = None,
+) -> AbstractProvider:
+    """Instantiate provider populated from environment variables with optional prefix."""
+    import os
+
+    flags_dict: dict[str, Any] = dict(in_memory_flags or {})
+    prefix = str(opts.extra.get("prefix", "FEATURE_FLAG_"))
+
+    for k, v in os.environ.items():
+        if prefix and k.startswith(prefix):
+            flag_key = k[len(prefix) :].lower()
+            flags_dict[flag_key] = _parse_env_flag_value(v)
+        elif not prefix:
+            flags_dict[k.lower()] = _parse_env_flag_value(v)
+
+    return _build_in_memory_provider(flags_dict)
+
+
 def _build_in_memory_provider(
     in_memory_flags: dict[str, Any] | None = None,
 ) -> AbstractProvider:
@@ -130,6 +179,8 @@ def initialize_openfeature_provider(
         provider = _build_unleash_provider(opts)
     elif p_type == FeatureFlagProviderType.FLIPT:
         provider = _build_flipt_provider(opts)
+    elif p_type == FeatureFlagProviderType.ENV:
+        provider = _build_env_provider(opts, in_memory_flags)
     else:
         provider = _build_in_memory_provider(in_memory_flags)
 
