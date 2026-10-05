@@ -74,7 +74,15 @@ class DatabaseBootstrapper(BootstrapperPort):
                         for metadata in registered:
                             await conn.run_sync(metadata.create_all)
                 finally:
-                    await engine.dispose()
+                    sync_eng = getattr(engine, "sync_engine", engine)
+                    pool_cls = getattr(
+                        getattr(sync_eng, "pool", None), "__class__", type
+                    ).__name__
+                    is_in_memory = (
+                        ":memory:" in str(engine.url) or "StaticPool" in pool_cls
+                    )
+                    if not is_in_memory:
+                        await engine.dispose()
 
             import asyncio
 
@@ -128,7 +136,16 @@ class DatabaseBootstrapper(BootstrapperPort):
                     try:
                         await async_vector_store.create_table_async()
                     finally:
-                        await async_engine.dispose()
+                        sync_eng = getattr(async_engine, "sync_engine", async_engine)
+                        pool_cls = getattr(
+                            getattr(sync_eng, "pool", None), "__class__", type
+                        ).__name__
+                        is_in_memory = (
+                            ":memory:" in str(async_engine.url)
+                            or "StaticPool" in pool_cls
+                        )
+                        if not is_in_memory:
+                            await async_engine.dispose()
 
                 try:
                     loop = asyncio.get_running_loop()

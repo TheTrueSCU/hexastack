@@ -144,7 +144,20 @@ def test_database_bootstrapper_auto_create_tables_and_metadata_registration():
     c_async = Container()
     c_async.add_instance(cfg_async, declared_class=HexastackDatabaseConfig)
     res_async = bootstrap(bootstrappers=[DatabaseBootstrapper()], container=c_async)
-    assert res_async.get("database_result") is not None
+    db_res_async = res_async.get("database_result")
+    assert db_res_async is not None
+
+    import asyncio
+
+    from sqlalchemy import text
+
+    async def _check_table():
+        async with db_res_async.engine.connect() as conn:
+            query_res = await conn.execute(text("SELECT count(*) FROM auto_test_items"))
+            return query_res.scalar()
+
+    count = asyncio.run(_check_table())
+    assert count == 0
 
 
 def test_database_bootstrapper_async_vector_mocked():
