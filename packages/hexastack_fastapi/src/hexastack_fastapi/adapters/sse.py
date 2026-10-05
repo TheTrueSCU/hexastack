@@ -60,6 +60,30 @@ class ServerSentEvent:
         return "".join(buffer).encode("utf-8")
 
 
+def _encode_sse_item(item: Any) -> bytes:
+    """Encode an SSE stream item to bytes."""
+    if isinstance(item, ServerSentEvent):
+        return item.encode()
+    if isinstance(item, bytes):
+        return item
+    if isinstance(item, str):
+        return ServerSentEvent(data=item).encode()
+    import json
+
+    return ServerSentEvent(data=json.dumps(item)).encode()
+
+
+async def _cleanup_producer(producer_task: asyncio.Task[None]) -> None:
+    """Safely cancel or check producer task on stream termination."""
+    if not producer_task.done():
+        producer_task.cancel()
+        _ = await asyncio.gather(producer_task, return_exceptions=True)
+    elif not producer_task.cancelled():
+        exc = producer_task.exception()
+        if exc is not None:
+            raise exc
+
+
 class EventSourceResponse(Response):
     """FastAPI/Starlette Response subclass streaming Server-Sent Events over HTTP.
 
@@ -106,24 +130,14 @@ class EventSourceResponse(Response):
 
     async def _stream_with_ping(self) -> AsyncIterator[bytes]:
         """Wrap body_iterator with periodic keep-alive pings."""
-        queue: asyncio.Queue[bytes | None] = asyncio.Queue()
+        queue: asyncio.Queue[bytes | Exception | None] = asyncio.Queue(maxsize=100)
 
         async def _producer() -> None:
             try:
                 async for item in self.body_iterator:
-                    if isinstance(item, ServerSentEvent):
-                        await queue.put(item.encode())
-                    elif isinstance(item, bytes):
-                        await queue.put(item)
-                    elif isinstance(item, str):
-                        await queue.put(ServerSentEvent(data=item).encode())
-                    else:
-                        import json
-
-                        await queue.put(ServerSentEvent(data=json.dumps(item)).encode())
-            except Exception:
-                await queue.put(None)
-                raise
+                    await queue.put(_encode_sse_item(item))
+            except Exception as exc:
+                await queue.put(exc)
             finally:
                 await queue.put(None)
 
@@ -136,20 +150,19 @@ class EventSourceResponse(Response):
                         chunk = await asyncio.wait_for(
                             queue.get(), timeout=self.ping_interval
                         )
-                        if chunk is None:
-                            break
-                        yield chunk
                     except TimeoutError:
                         yield ServerSentEvent(comment="ping").encode()
+                        continue
                 else:
                     chunk = await queue.get()
-                    if chunk is None:
-                        break
-                    yield chunk
+
+                if chunk is None:
+                    break
+                if isinstance(chunk, Exception):
+                    raise chunk
+                yield chunk
         finally:
-            if not producer_task.done():
-                producer_task.cancel()
-                _ = await asyncio.gather(producer_task, return_exceptions=True)
+            await _cleanup_producer(producer_task)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """ASGI response streaming callable."""

@@ -64,6 +64,10 @@ class RateLimitConfig(BaseModel):
         default="memory://",
         description="Backend storage URI: 'memory://' or 'redis://localhost:6379'.",
     )
+    trust_proxy_headers: bool = Field(
+        default=False,
+        description="Whether to trust X-Forwarded-For headers for client IP extraction.",
+    )
 
 
 class ZensicalDocsConfig(BaseModel):
@@ -96,6 +100,10 @@ class HexastackFastApiConfig(BaseModel):
     correlation_header: str = Field(default="X-Correlation-ID")
     user_header: str = Field(default="X-User-ID")
     tenant_header: str = Field(default="X-Tenant-ID")
+    trust_identity_headers: bool = Field(
+        default=False,
+        description="Whether to trust incoming user and tenant identity headers from upstream clients.",
+    )
     cors: CorsConfig = Field(default_factory=CorsConfig)
     health: HealthConfig = Field(default_factory=HealthConfig)
     logging: RequestLoggingConfig = Field(default_factory=RequestLoggingConfig)

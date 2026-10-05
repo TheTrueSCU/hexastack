@@ -100,8 +100,14 @@ class OpenZitiASGIAdapter:
                 "Install with 'pip install hexastack-fastapi[ziti]' or 'pip install openziti'."
             ) from exc
 
-    def get_bindings(self) -> dict[tuple[str, int], dict[str, Any]]:
+    def get_bindings(
+        self, host: str | None = None, port: int | None = None
+    ) -> dict[tuple[str, int], dict[str, Any]]:
         """Construct the OpenZiti socket binding mapping.
+
+        Args:
+            host: Optional host address override. Defaults to config.bind_host.
+            port: Optional port number override. Defaults to config.bind_port.
 
         Returns:
             Dictionary mapping (host, port) to OpenZiti context and service options.
@@ -110,16 +116,24 @@ class OpenZitiASGIAdapter:
             FileNotFoundError: If the identity credentials file does not exist.
         """
         identity_file = self.config.resolved_identity_path()
+        target_host = host or self.config.bind_host
+        target_port = port if port is not None else self.config.bind_port
         return {
-            (self.config.bind_host, self.config.bind_port): {
+            (target_host, target_port): {
                 "ztx": str(identity_file),
                 "service": self.config.service_name,
             }
         }
 
     @contextlib.contextmanager
-    def bind_context(self) -> Generator[None]:
+    def bind_context(
+        self, host: str | None = None, port: int | None = None
+    ) -> Generator[None]:
         """Context manager activating OpenZiti overlay socket interception.
+
+        Args:
+            host: Optional bind host override.
+            port: Optional bind port override.
 
         Yields:
             None when socket interception is active.
@@ -137,7 +151,7 @@ class OpenZitiASGIAdapter:
             return
 
         openziti = self._require_openziti()
-        bindings = self.get_bindings()
+        bindings = self.get_bindings(host=host, port=port)
         with openziti.monkeypatch(bindings=bindings):
             yield
 
@@ -192,7 +206,7 @@ class OpenZitiASGIAdapter:
         host = uvicorn_kwargs.pop("host", self.config.bind_host)
         port = uvicorn_kwargs.pop("port", self.config.bind_port)
 
-        with self.bind_context():
+        with self.bind_context(host=host, port=port):
             uvicorn.run(app, host=host, port=port, **uvicorn_kwargs)
 
 

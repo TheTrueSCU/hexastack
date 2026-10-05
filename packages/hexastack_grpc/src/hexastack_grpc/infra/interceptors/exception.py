@@ -75,6 +75,6 @@ def _map_exception_to_status_code(exc: Exception) -> tuple[grpc.StatusCode, str]
     if "conflict" in exc_name or "alreadyexists" in exc_name:
         return grpc.StatusCode.ALREADY_EXISTS, msg
     if isinstance(exc, HexastackError):
-        return grpc.StatusCode.INTERNAL, msg
+        return grpc.StatusCode.INTERNAL, "Internal server error."
 
-    return grpc.StatusCode.UNKNOWN, msg
+    return grpc.StatusCode.UNKNOWN, "Internal server error."

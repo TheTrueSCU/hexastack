@@ -66,11 +66,15 @@ class GraphQLSchemaRegistry:
         self,
         extensions: Sequence[type[SchemaExtension] | Callable[[], SchemaExtension]]
         | None = None,
+        allow_queries: bool = True,
+        allow_mutations: bool = True,
     ) -> strawberry.Schema:
         """Assemble all registered types and fields into a strawberry.Schema.
 
         Args:
             extensions: Optional list of strawberry SchemaExtension classes or instances.
+            allow_queries: Whether to enable queries in the schema.
+            allow_mutations: Whether to enable mutations in the schema.
 
         Returns:
             The compiled strawberry.Schema instance.
@@ -82,7 +86,7 @@ class GraphQLSchemaRegistry:
             return self._custom_schema
 
         query_cls = self._build_query_root()
-        mutation_cls = self._build_mutation_root()
+        mutation_cls = self._build_mutation_root() if allow_mutations else None
 
         try:
             return strawberry.Schema(

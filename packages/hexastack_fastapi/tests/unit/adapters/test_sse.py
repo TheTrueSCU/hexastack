@@ -97,8 +97,25 @@ async def test_event_source_response_keep_alive_ping() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.get("/slow-stream")
-        assert response.status_code == 200
+        status_code = response.status_code
+        assert status_code == 200
         body = response.text
         assert ": ping\n\n" in body
         assert "data: start\n\n" in body
         assert "data: end\n\n" in body
+
+
+@pytest.mark.anyio
+async def test_event_source_response_producer_error_propagated() -> None:
+    """Verify EventSourceResponse propagates producer exceptions."""
+
+    async def failing_gen():
+        yield ServerSentEvent(data="initial")
+        raise RuntimeError("SSE stream failed intentionally")
+
+    res = EventSourceResponse(failing_gen())
+    with pytest.raises(RuntimeError) as exc_info:
+        async for _ in res._stream_with_ping():
+            pass
+    err_str = str(exc_info.value)
+    assert "SSE stream failed intentionally" in err_str

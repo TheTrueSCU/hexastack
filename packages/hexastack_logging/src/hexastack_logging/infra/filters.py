@@ -113,12 +113,21 @@ class LogSanitizerFilter(logging.Filter):
             if isinstance(record.args, dict):
                 record.args = self._sanitizer.sanitize_dict(record.args)
             elif isinstance(record.args, tuple):
-                record.args = tuple(self._sanitizer.sanitize_list(list(record.args)))
+                record.args = tuple(
+                    self._sanitizer.sanitize_string(str(a))
+                    if isinstance(a, BaseException)
+                    else self._sanitizer.sanitize(a)
+                    for a in record.args
+                )
 
         # 3. Sanitize extra attributes on record.__dict__
         self._sanitize_extra_attributes(record)
 
         # 4. Sanitize exc_text if present
+        if record.exc_info and not record.exc_text:
+            import logging
+
+            record.exc_text = logging.Formatter().formatException(record.exc_info)
         if record.exc_text:
             record.exc_text = self._sanitizer.sanitize_traceback(record.exc_text)
 

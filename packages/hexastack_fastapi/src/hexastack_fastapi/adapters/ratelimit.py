@@ -1,7 +1,7 @@
 import inspect
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 
 from fastapi import HTTPException, Request, status
 
@@ -10,28 +10,37 @@ from hexastack_core.ports.ratelimit import RateLimiterPort
 from hexastack_core.utils.context import get_user_context
 
 
-def get_remote_address(request: Request) -> str:
+def get_remote_address(request: Request, trust_proxy: bool = False) -> str:
     """Extract client IP address from FastAPI request headers or client socket.
 
     Args:
         request: Incoming FastAPI Request object.
+        trust_proxy: Whether to trust X-Forwarded-For headers from upstream proxies.
 
     Returns:
         Client IP string.
     """
+    if trust_proxy:
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+
+    if request.client and request.client.host:
+        return request.client.host
+
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[0].strip()
-    if request.client and request.client.host:
-        return request.client.host
+
     return "127.0.0.1"
 
 
-def get_user_or_ip_key(request: Request) -> str:
+def get_user_or_ip_key(request: Request, trust_proxy: bool = False) -> str:
     """Extract rate limit bucket key from ambient UserContext or fallback to client IP.
 
     Args:
         request: Incoming FastAPI Request object.
+        trust_proxy: Whether to trust X-Forwarded-For headers from upstream proxies.
 
     Returns:
         Rate limit identifier string (e.g. 'user:usr_123', 'tenant:t_456', or 'ip:1.2.3.4').
@@ -41,7 +50,7 @@ def get_user_or_ip_key(request: Request) -> str:
         return f"user:{user_ctx.user_id}"
     if user_ctx and user_ctx.tenant_id:
         return f"tenant:{user_ctx.tenant_id}"
-    return f"ip:{get_remote_address(request)}"
+    return f"ip:{get_remote_address(request, trust_proxy=trust_proxy)}"
 
 
 class SlowapiRateLimiterAdapter(RateLimiterPort):
@@ -136,7 +145,10 @@ def _enforce_rate_limit(
 ) -> None:
     """Check rate limit quota against application rate limiter and raise HTTPException if exceeded."""
     if request is None:
-        return
+        raise RuntimeError(
+            f"@rate_limit applied to '{fn_name}', but no Request instance was received. "
+            "Ensure the route declares 'request: Request' or FastAPI forwards the request."
+        )
     limiter_port: RateLimiterPort | None = getattr(
         request.app.state, "rate_limiter", None
     )
@@ -178,6 +190,11 @@ def rate_limit(
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         fn_name = getattr(fn, "__name__", "endpoint")
+        sig = inspect.signature(fn)
+        has_req_param = any(
+            p.annotation is Request or p.name == "request"
+            for p in sig.parameters.values()
+        )
 
         if inspect.iscoroutinefunction(fn):
 
@@ -185,7 +202,22 @@ def rate_limit(
             async def async_wrapped(*args: Any, **kwargs: Any) -> Any:
                 req = _extract_request(args, kwargs)
                 _enforce_rate_limit(req, fn_name, limit, key_extractor, detail)
+                if not has_req_param:
+                    kwargs.pop("request", None)
                 return await fn(*args, **kwargs)
+
+            if not has_req_param:
+                params = list(sig.parameters.values())
+                params.append(
+                    inspect.Parameter(
+                        "request",
+                        inspect.Parameter.KEYWORD_ONLY,
+                        annotation=Request,
+                    )
+                )
+                cast("Any", async_wrapped).__signature__ = sig.replace(
+                    parameters=params
+                )
 
             return async_wrapped
 
@@ -193,7 +225,20 @@ def rate_limit(
         def sync_wrapped(*args: Any, **kwargs: Any) -> Any:
             req = _extract_request(args, kwargs)
             _enforce_rate_limit(req, fn_name, limit, key_extractor, detail)
+            if not has_req_param:
+                kwargs.pop("request", None)
             return fn(*args, **kwargs)
+
+        if not has_req_param:
+            params = list(sig.parameters.values())
+            params.append(
+                inspect.Parameter(
+                    "request",
+                    inspect.Parameter.KEYWORD_ONLY,
+                    annotation=Request,
+                )
+            )
+            cast("Any", sync_wrapped).__signature__ = sig.replace(parameters=params)
 
         return sync_wrapped
 

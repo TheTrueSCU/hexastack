@@ -109,3 +109,35 @@ def test_otel_span_status_codes(otel_tracer: OtelTracingAdapter):
     span_other.set_status("UNKNOWN", "unknown state")
     status_other = getattr(span_other._span, "status", None)
     assert status_other is not None and status_other.status_code == StatusCode.ERROR
+
+
+def test_otel_batch_and_simple_processor_and_shutdown():
+    from opentelemetry.sdk.trace.export import (
+        BatchSpanProcessor,
+        ConsoleSpanExporter,
+        SimpleSpanProcessor,
+    )
+
+    batch_adapter = OtelTracingAdapter(
+        service_name="batch-svc",
+        exporter=ConsoleSpanExporter(),
+        use_batch_processor=True,
+    )
+    processors = batch_adapter._provider._active_span_processor._span_processors
+    has_batch = any(isinstance(p, BatchSpanProcessor) for p in processors)
+    assert has_batch is True
+
+    simple_adapter = OtelTracingAdapter(
+        service_name="simple-svc",
+        exporter=ConsoleSpanExporter(),
+        use_batch_processor=False,
+    )
+    processors_simple = simple_adapter._provider._active_span_processor._span_processors
+    has_simple = any(isinstance(p, SimpleSpanProcessor) for p in processors_simple)
+    assert has_simple is True
+
+    # Test shutdown
+    res = batch_adapter.shutdown()
+    assert res is None
+    res_simple = simple_adapter.shutdown()
+    assert res_simple is None

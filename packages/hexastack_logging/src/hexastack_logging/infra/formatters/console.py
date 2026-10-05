@@ -76,7 +76,9 @@ class ConsoleFormatter(logging.Formatter):
         msg = record.getMessage()
         formatted = f"{time_part} {level_str}{context_part} {msg}"
 
-        if record.exc_info:
+        if record.exc_text:
+            formatted += "\n" + record.exc_text
+        elif record.exc_info:
             formatted += "\n" + self.formatException(record.exc_info)
 
         return formatted

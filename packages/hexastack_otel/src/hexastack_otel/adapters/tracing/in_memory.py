@@ -148,6 +148,10 @@ class InMemoryTracingAdapter(TracingPort):
             self.finished_spans.append(span)
             _current_in_memory_span.reset(token)
 
+    def shutdown(self) -> None:
+        """Shutdown in-memory tracing adapter and clear recorded spans."""
+        self.clear()
+
 
 __all__ = [
     "InMemorySpan",

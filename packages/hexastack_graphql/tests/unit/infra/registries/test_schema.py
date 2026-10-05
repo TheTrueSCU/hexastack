@@ -175,3 +175,26 @@ def test_schema_registry_with_query_and_mutation():
 
     res_m = schema.execute_sync("mutation { add(a: 2, b: 3) }")
     assert res_m.data == {"add": 5}
+
+
+def test_schema_registry_allow_mutations_false():
+    reg = GraphQLSchemaRegistry()
+
+    @strawberry.type
+    class QRoot:
+        @strawberry.field
+        def hello(self) -> str:
+            return "world"
+
+    @strawberry.type
+    class MRoot:
+        @strawberry.mutation
+        def add(self, x: int) -> int:
+            return x + 1
+
+    reg.register_query_type(QRoot)
+    reg.register_mutation_type(MRoot)
+
+    schema = reg.build_schema(allow_mutations=False)
+    has_mutation = schema.mutation is not None
+    assert has_mutation is False

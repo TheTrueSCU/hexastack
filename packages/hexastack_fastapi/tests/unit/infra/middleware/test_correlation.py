@@ -54,7 +54,8 @@ def test_correlation_middleware_propagated_id():
 
 
 def test_correlation_middleware_user_context():
-    app = create_test_app()
+    cfg = HexastackFastApiConfig(trust_identity_headers=True)
+    app = create_test_app(cfg)
     client = TestClient(app)
 
     headers = {
@@ -70,12 +71,31 @@ def test_correlation_middleware_user_context():
     assert data["tenant_id"] == "tenant-acme"
 
 
+def test_correlation_middleware_untrusted_identity_headers_default():
+    """Verify that by default, untrusted user and tenant headers are ignored."""
+    app = create_test_app()
+    client = TestClient(app)
+
+    headers = {
+        "X-Correlation-ID": "corr-999",
+        "X-User-ID": "spoofed-user",
+        "X-Tenant-ID": "spoofed-tenant",
+    }
+    response = client.get("/ping", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["correlation_id"] == "corr-999"
+    assert data["user_id"] is None
+    assert data["tenant_id"] is None
+
+
 def test_correlation_middleware_tenant_only_and_non_http_scope():
     """Verify tenant_only header extraction and non-http scope pass through."""
     from unittest.mock import AsyncMock
 
     # 1. Tenant header without user header
-    app = create_test_app()
+    cfg = HexastackFastApiConfig(trust_identity_headers=True)
+    app = create_test_app(cfg)
     client = TestClient(app)
     res = client.get("/ping", headers={"X-Tenant-ID": "tenant-xyz"})
     assert res.status_code == 200

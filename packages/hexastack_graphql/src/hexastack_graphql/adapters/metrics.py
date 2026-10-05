@@ -47,11 +47,7 @@ class StrawberryMetricsExtension(SchemaExtension):
                 return
 
         duration = time.perf_counter() - start_time
-        op_name = self.execution_context.operation_name or (
-            self.execution_context.query[:30]
-            if self.execution_context.query
-            else "anonymous"
-        )
+        op_name = self.execution_context.operation_name or "anonymous"
         self._metrics.increment_counter(
             "graphql_operations_total",
             value=1.0,

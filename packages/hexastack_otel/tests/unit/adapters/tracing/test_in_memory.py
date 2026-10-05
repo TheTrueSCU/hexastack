@@ -224,3 +224,14 @@ def test_in_memory_span_default_context_generation():
     assert len(span.context.trace_id) == 32
     assert span.status_description is None
     assert span.end_time is None
+
+
+def test_in_memory_shutdown(in_memory_tracer: InMemoryTracingAdapter):
+    span = in_memory_tracer.start_span("to_clear")
+    span.end()
+    in_memory_tracer.finished_spans.append(span)
+    assert len(in_memory_tracer.finished_spans) == 1
+
+    res = in_memory_tracer.shutdown()
+    assert res is None
+    assert len(in_memory_tracer.finished_spans) == 0

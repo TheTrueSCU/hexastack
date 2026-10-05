@@ -98,9 +98,17 @@ class HttpMetricsMiddleware:
             await self._app(scope, receive, send_wrapper)
         finally:
             duration = time.perf_counter() - start_time
+            route = scope.get("route")
+            if route is not None and hasattr(route, "path_format"):
+                metric_path = route.path_format
+            elif status_code == 404:
+                metric_path = "unmatched"
+            else:
+                metric_path = path
+
             labels = {
                 "method": method,
-                "path": path,
+                "path": metric_path,
                 "status_code": str(status_code),
             }
             metrics.increment_counter(
@@ -112,7 +120,7 @@ class HttpMetricsMiddleware:
             metrics.record_histogram(
                 "http_request_duration_seconds",
                 value=duration,
-                labels={"method": method, "path": path},
+                labels={"method": method, "path": metric_path},
                 description="HTTP request duration distribution in seconds",
             )
 

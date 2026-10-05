@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Sequence
 
 import grpc
@@ -6,6 +7,7 @@ from hexastack_grpc.domain.config import HexastackGrpcConfig
 
 __all__ = [
     "create_async_grpc_server",
+    "run_async_grpc_server",
     "run_grpc_server",
 ]
 
@@ -35,6 +37,24 @@ def create_async_grpc_server(
     return server
 
 
+async def run_async_grpc_server(
+    server: grpc.aio.Server,
+    block: bool = True,
+) -> None:
+    """Start the asynchronous gRPC server and optionally await its termination.
+
+    Args:
+        server: Configured grpc.aio.Server instance.
+        block: If True, awaits server.wait_for_termination().
+    """
+    await server.start()
+    if block:
+        try:
+            await server.wait_for_termination()
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            await server.stop(grace=5.0)
+
+
 def run_grpc_server(
     server: grpc.Server,
     block: bool = True,
@@ -44,7 +64,15 @@ def run_grpc_server(
     Args:
         server: Configured grpc.Server instance.
         block: If True, blocks thread with server.wait_for_termination().
+
+    Raises:
+        TypeError: If an asynchronous grpc.aio.Server is passed.
     """
+    if isinstance(server, grpc.aio.Server):
+        raise TypeError(
+            "run_grpc_server only supports synchronous grpc.Server. "
+            "Use await run_async_grpc_server(...) for grpc.aio.Server instances."
+        )
     server.start()
     if block:
         try:

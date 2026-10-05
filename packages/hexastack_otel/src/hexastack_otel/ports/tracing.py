@@ -125,6 +125,15 @@ class TracingPort(ABC):
             Active SpanPort instance within the context block.
         """
 
+    @abstractmethod
+    def shutdown(self) -> None:
+        """Shutdown tracing providers and flush any pending telemetry data.
+
+        Notes/Architectural Intent:
+            Ensures that buffered spans in background batch processors are flushed
+            before process shutdown. Adapters without background flushes can no-op.
+        """
+
 
 __all__ = [
     "SpanContext",

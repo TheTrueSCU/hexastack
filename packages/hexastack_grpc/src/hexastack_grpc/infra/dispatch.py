@@ -170,7 +170,5 @@ async def dispatch_rpc_bidirectional_stream[C: Command, R](
             cmd = command_cls(**fields)
             res = bus.dispatch(cmd)
             if inspect.isawaitable(res):
-                import asyncio
-
-                res = asyncio.run(res)
+                res = await res
             yield res
