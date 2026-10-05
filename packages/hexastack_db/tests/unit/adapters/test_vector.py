@@ -1,0 +1,193 @@
+import pytest
+from sqlalchemy import MetaData, String, create_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from hexastack_core.testing.flags import require_extra
+from hexastack_db.adapters.vector import (
+    AsyncPgVectorStoreAdapter,
+    PgVectorStoreAdapter,
+    _cosine_similarity,
+    create_vector_table,
+)
+from hexastack_db.infra.config import PgVectorConfig
+
+
+@require_extra("aiosqlite")
+@pytest.mark.anyio
+async def test_async_pg_vector_store_adapter():
+    async_engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=StaticPool,
+    )
+    async_factory = async_sessionmaker(bind=async_engine)
+    config = PgVectorConfig(table_name="test_async_vectors", dimension=2)
+
+    adapter = AsyncPgVectorStoreAdapter(session_factory=async_factory, config=config)
+    await adapter.create_table_async()
+
+    # Default config constructor
+    default_adapter = AsyncPgVectorStoreAdapter(session_factory=async_factory)
+    assert default_adapter._config.table_name == "hexastack_vectors"
+    assert default_adapter._config.dimension == 1536
+
+    # Upsert
+    await adapter.upsert_async("v1", [0.707, 0.707], {"title": "diagonal"})
+    await adapter.upsert_async("v2", [1.0, 0.0], {"title": "horizontal"})
+
+    # Update existing
+    await adapter.upsert_async("v1", [0.707, 0.707], {"title": "diagonal_updated"})
+
+    # Get
+    res = await adapter.get_async("v1")
+    assert res is not None
+    emb, meta = res
+    assert emb == [0.707, 0.707]
+    assert meta == {"title": "diagonal_updated"}
+
+    # Get non-existent
+    assert await adapter.get_async("non_existent") is None
+
+    # Search
+    results = await adapter.search_async([0.707, 0.707], limit=2)
+    assert len(results) == 2
+    assert results[0]["_id"] == "v1"
+    assert results[0]["_score"] > results[1]["_score"]
+
+    # Test default limit = 5 in search_async
+    for i in range(10):
+        await adapter.upsert_async(f"bulk_{i}", [1.0, float(i)], {"index": i})
+    default_limit_results = await adapter.search_async([1.0, 0.0])
+    assert len(default_limit_results) == 5
+
+    # Constructor overrides with table_name and dimension
+    custom_async_adapter = AsyncPgVectorStoreAdapter(
+        session_factory=async_factory,
+        table_name="override_async_vectors",
+        dimension=256,
+    )
+    assert custom_async_adapter._table_name == "override_async_vectors"
+    assert custom_async_adapter._dimension == 256
+    assert custom_async_adapter._table.name == "override_async_vectors"
+
+    # Delete
+    del_v1 = await adapter.delete_async("v1")
+    assert del_v1 is True
+    del_non_existent = await adapter.delete_async("non_existent")
+    assert del_non_existent is False
+    v1_after_del = await adapter.get_async("v1")
+    assert v1_after_del is None
+
+    # Clear
+    await adapter.clear_async()
+    search_after_clear = await adapter.search_async([1.0, 0.0])
+    assert len(search_after_clear) == 0
+
+
+def test_cosine_similarity_math():
+    # Identical vectors
+    assert pytest.approx(_cosine_similarity([1.0, 0.0], [1.0, 0.0])) == 1.0
+    assert pytest.approx(_cosine_similarity([1.0, 2.0, 3.0], [1.0, 2.0, 3.0])) == 1.0
+
+    # Orthogonal vectors
+    assert pytest.approx(_cosine_similarity([1.0, 0.0], [0.0, 1.0])) == 0.0
+
+    # Opposing vectors
+    assert pytest.approx(_cosine_similarity([1.0, 0.0], [-1.0, 0.0])) == -1.0
+
+    # Zero norm vectors (killing norm1 == 0.0 or norm2 == 0.0 mutants)
+    assert _cosine_similarity([0.0, 0.0], [1.0, 0.0]) == 0.0
+    assert _cosine_similarity([1.0, 0.0], [0.0, 0.0]) == 0.0
+    assert _cosine_similarity([0.0, 0.0], [0.0, 0.0]) == 0.0
+
+
+def test_create_vector_table_caching():
+    meta = MetaData()
+    t1 = create_vector_table("my_vectors", dimension=128, metadata=meta)
+    assert t1.name == "my_vectors"
+    assert "id" in t1.c
+    assert "embedding" in t1.c
+    assert "metadata" in t1.c
+    assert t1.c.id.primary_key is True
+    assert isinstance(t1.c.id.type, String)
+    assert t1.c.id.type.length == 64
+    assert t1.c.embedding.nullable is False
+    assert t1.c.metadata.nullable is False
+
+    # Re-call returns cached table from metadata
+    t2 = create_vector_table("my_vectors", dimension=128, metadata=meta)
+    assert t1 is t2
+
+    # None metadata creates fresh table
+    t3 = create_vector_table("fresh_vectors", dimension=64, metadata=None)
+    assert t3.name == "fresh_vectors"
+
+
+def test_pg_vector_store_adapter_sync():
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    factory = sessionmaker(bind=engine)
+    config = PgVectorConfig(table_name="test_vectors", dimension=2)
+
+    adapter = PgVectorStoreAdapter(session_factory=factory, config=config)
+    adapter.create_table()
+
+    # Default constructor without explicit config
+    default_adapter = PgVectorStoreAdapter(session_factory=factory)
+    assert default_adapter._config.table_name == "hexastack_vectors"
+    assert default_adapter._config.dimension == 1536
+
+    # Constructor overrides with table_name and dimension
+    custom_sync_adapter = PgVectorStoreAdapter(
+        session_factory=factory,
+        table_name="override_sync_vectors",
+        dimension=512,
+    )
+    assert custom_sync_adapter._table_name == "override_sync_vectors"
+    assert custom_sync_adapter._dimension == 512
+    assert custom_sync_adapter._table.name == "override_sync_vectors"
+
+    # Upsert
+    adapter.upsert("v1", [1.0, 0.0], {"doc": "x_axis"})
+    adapter.upsert("v2", [0.0, 1.0], {"doc": "y_axis"})
+
+    # Update existing
+    adapter.upsert("v1", [1.0, 0.0], {"doc": "x_axis_updated"})
+
+    # Get
+    res = adapter.get("v1")
+    assert res is not None
+    v1_emb, v1_meta = res
+    assert v1_emb == [1.0, 0.0]
+    assert v1_meta == {"doc": "x_axis_updated"}
+
+    # Get non-existent
+    assert adapter.get("non_existent") is None
+
+    # Search with ordering check
+    results = adapter.search([0.99, 0.01], limit=2)
+    assert len(results) == 2
+    assert results[0]["_id"] == "v1"
+    assert results[1]["_id"] == "v2"
+    assert results[0]["_score"] > results[1]["_score"]
+
+    # Test default limit = 5 in search()
+    for i in range(10):
+        adapter.upsert(f"sync_bulk_{i}", [1.0, float(i)], {"index": i})
+    default_sync_results = adapter.search([1.0, 0.0])
+    assert len(default_sync_results) == 5
+
+    # Delete
+    deleted_v1 = adapter.delete("v1")
+    assert deleted_v1 is True
+    deleted_non_existent = adapter.delete("non_existent")
+    assert deleted_non_existent is False
+    assert adapter.get("v1") is None
+
+    # Clear
+    adapter.clear()
+    assert len(adapter.search([0.0, 1.0])) == 0
