@@ -87,9 +87,9 @@ def _build_flipt_provider(opts: FlagProviderOptions) -> AbstractProvider:
 def _parse_env_flag_value(val: str) -> Any:
     """Parse string environment variable value into bool, int, float, or dict/list/string."""
     lower = val.lower().strip()
-    if lower in ("true", "1", "yes", "on"):
+    if lower in ("true", "yes", "on"):
         return True
-    if lower in ("false", "0", "no", "off"):
+    if lower in ("false", "no", "off"):
         return False
     try:
         return int(val)

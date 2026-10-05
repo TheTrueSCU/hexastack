@@ -69,9 +69,12 @@ class DatabaseBootstrapper(BootstrapperPort):
         if async_mode and isinstance(engine, AsyncEngine):
 
             async def _create_all_async() -> None:
-                async with engine.begin() as conn:
-                    for metadata in registered:
-                        await conn.run_sync(metadata.create_all)
+                try:
+                    async with engine.begin() as conn:
+                        for metadata in registered:
+                            await conn.run_sync(metadata.create_all)
+                finally:
+                    await engine.dispose()
 
             import asyncio
 
@@ -121,6 +124,12 @@ class DatabaseBootstrapper(BootstrapperPort):
             if db_config.auto_create_tables:
                 import asyncio
 
+                async def _create_vector_table_async() -> None:
+                    try:
+                        await async_vector_store.create_table_async()
+                    finally:
+                        await async_engine.dispose()
+
                 try:
                     loop = asyncio.get_running_loop()
                 except RuntimeError:
@@ -133,10 +142,10 @@ class DatabaseBootstrapper(BootstrapperPort):
                         max_workers=1
                     ) as executor:
                         executor.submit(
-                            asyncio.run, async_vector_store.create_table_async()
+                            asyncio.run, _create_vector_table_async()
                         ).result()
                 else:
-                    asyncio.run(async_vector_store.create_table_async())
+                    asyncio.run(_create_vector_table_async())
 
             if AsyncPgVectorStoreAdapter not in di:
                 di.add_instance(

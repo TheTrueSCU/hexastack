@@ -117,6 +117,8 @@ def test_initialize_env_provider(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setenv("FEATURE_FLAG_BETA_MODE", "true")
     monkeypatch.setenv("FEATURE_FLAG_MAX_RETRIES", "7")
+    monkeypatch.setenv("FEATURE_FLAG_ZERO_FLAG", "0")
+    monkeypatch.setenv("FEATURE_FLAG_ONE_FLAG", "1")
     monkeypatch.setenv("FEATURE_FLAG_PAYLOAD", '{"nested": "data"}')
 
     initialize_openfeature_provider(
@@ -128,6 +130,12 @@ def test_initialize_env_provider(monkeypatch: pytest.MonkeyPatch):
 
     retries = adapter.get_integer_value("max_retries")
     assert retries == 7
+
+    zero_val = adapter.get_integer_value("zero_flag")
+    assert zero_val == 0
+
+    one_val = adapter.get_integer_value("one_flag")
+    assert one_val == 1
 
     payload = adapter.get_object_value("payload")
     assert payload == {"nested": "data"}
