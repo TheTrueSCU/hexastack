@@ -141,3 +141,12 @@ def test_otel_batch_and_simple_processor_and_shutdown():
     assert res is None
     res_simple = simple_adapter.shutdown()
     assert res_simple is None
+
+    # Test shutdown with shared/injected provider
+    from opentelemetry.sdk.trace import TracerProvider
+
+    shared_provider = TracerProvider()
+    shared_adapter = OtelTracingAdapter(tracer_provider=shared_provider)
+    assert shared_adapter._owns_provider is False
+    res_shared = shared_adapter.shutdown()
+    assert res_shared is None

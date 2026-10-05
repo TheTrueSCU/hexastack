@@ -51,8 +51,11 @@ async def run_async_grpc_server(
     if block:
         try:
             await server.wait_for_termination()
-        except (KeyboardInterrupt, asyncio.CancelledError):
+        except KeyboardInterrupt:
             await server.stop(grace=5.0)
+        except asyncio.CancelledError:
+            await server.stop(grace=5.0)
+            raise
 
 
 def run_grpc_server(

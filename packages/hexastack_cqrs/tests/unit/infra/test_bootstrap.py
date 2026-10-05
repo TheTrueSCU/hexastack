@@ -234,6 +234,9 @@ def test_bootstrap_cqrs_with_extra_bootstrappers():
         def configure(self, context: BootstrapContext) -> None:
             context.properties["custom_executed"] = True
 
+        def register_config(self, registry: Any) -> None:
+            pass
+
     result = bootstrap_cqrs(bootstrappers=[CustomBootstrapper()])
     assert result.container is not None
 

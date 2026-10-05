@@ -80,6 +80,17 @@ async def test_run_async_grpc_server_cancelled():
 
     mock_server = AsyncMock(spec=grpc.aio.Server)
     mock_server.wait_for_termination.side_effect = asyncio.CancelledError()
+    with pytest.raises(asyncio.CancelledError):
+        await run_async_grpc_server(mock_server, block=True)
+    mock_server.stop.assert_awaited_once_with(grace=5.0)
+
+
+@pytest.mark.anyio
+async def test_run_async_grpc_server_keyboard_interrupt():
+    from unittest.mock import AsyncMock
+
+    mock_server = AsyncMock(spec=grpc.aio.Server)
+    mock_server.wait_for_termination.side_effect = KeyboardInterrupt()
     await run_async_grpc_server(mock_server, block=True)
     mock_server.stop.assert_awaited_once_with(grace=5.0)
 

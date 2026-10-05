@@ -30,7 +30,7 @@ class DummyDiagnostics(PrDiagnosticPort):
 def test_pr_diagnostic_port_cannot_instantiate_abstract() -> None:
     """Ensure abstract port cannot be instantiated directly."""
     with pytest.raises(TypeError):
-        PrDiagnosticPort()  # type: ignore[abstract]
+        PrDiagnosticPort()  # ty: ignore[call-non-callable]
 
 
 def test_concrete_diagnostics_satisfies_contract() -> None:

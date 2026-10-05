@@ -32,10 +32,10 @@ def test_remote_exec_result_slots_and_immutability() -> None:
 
     with pytest.raises((AttributeError, TypeError)):
         # Frozen dataclass should reject attribute mutation
-        res.exit_status = 1  # type: ignore[misc]
+        res.exit_status = 1  # ty: ignore[invalid-assignment]
 
 
 def test_remote_execution_port_cannot_be_instantiated_directly() -> None:
     """Validate that RemoteExecutionPort is an abstract ABC requiring implementation."""
     with pytest.raises(TypeError):
-        RemoteExecutionPort()  # type: ignore[abstract]
+        RemoteExecutionPort()  # ty: ignore[call-non-callable]

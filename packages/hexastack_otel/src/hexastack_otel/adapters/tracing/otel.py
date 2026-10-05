@@ -72,9 +72,11 @@ class OtelTracingAdapter(TracingPort):
 
         if tracer_provider is not None:
             self._provider = tracer_provider
+            self._owns_provider = False
         else:
             resource = Resource.create({"service.name": service_name})
             self._provider = TracerProvider(resource=resource)
+            self._owns_provider = True
             if exporter is not None:
                 processor = (
                     BatchSpanProcessor(exporter)
@@ -86,8 +88,11 @@ class OtelTracingAdapter(TracingPort):
         self._tracer = self._provider.get_tracer("hexastack", "0.1.0")
 
     def shutdown(self) -> None:
-        """Shutdown the underlying tracer provider and flush any pending spans."""
-        self._provider.shutdown()
+        """Shutdown tracer provider if owned by this adapter, or force-flush shared provider."""
+        if self._owns_provider:
+            self._provider.shutdown()
+        else:
+            self._provider.force_flush()
 
     def extract_context(self, carrier: dict[str, str]) -> SpanContext | None:
         ctx = self._propagator.extract(carrier)

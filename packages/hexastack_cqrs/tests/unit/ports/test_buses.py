@@ -58,16 +58,16 @@ def test_bus_ports():
 def test_abstract_bus_ports_cannot_be_instantiated_directly():
 
     with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-        CommandBusPort()  # type: ignore[abstract]
+        CommandBusPort()  # ty: ignore[call-non-callable]
 
     with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-        EventBusPort()  # type: ignore[abstract]
+        EventBusPort()  # ty: ignore[call-non-callable]
 
     with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-        QueryBusPort()  # type: ignore[abstract]
+        QueryBusPort()  # ty: ignore[call-non-callable]
 
     with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-        HandlerDispatcherPort()  # type: ignore[abstract]
+        HandlerDispatcherPort()  # ty: ignore[call-non-callable]
 
     # Test MiddlewarePort runtime_checkable protocol
     class CallableMiddleware:

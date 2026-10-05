@@ -8,9 +8,9 @@ from hexastack_events.ports.outbox import (
 
 def test_outbox_relay_port_abstract():
     with pytest.raises(TypeError):
-        OutboxRelayPort()  # type: ignore[abstract]
+        OutboxRelayPort()  # ty: ignore[call-non-callable]
 
 
 def test_outbox_storage_port_abstract():
     with pytest.raises(TypeError):
-        OutboxStoragePort()  # type: ignore[abstract]
+        OutboxStoragePort()  # ty: ignore[call-non-callable]
