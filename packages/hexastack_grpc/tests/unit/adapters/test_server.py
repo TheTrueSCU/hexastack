@@ -5,6 +5,7 @@ import pytest
 
 from hexastack_grpc.adapters.server import (
     create_async_grpc_server,
+    run_async_grpc_server,
     run_grpc_server,
 )
 
@@ -59,3 +60,46 @@ def test_run_grpc_server_non_blocking():
     mock_server_def = MagicMock(spec=grpc.Server)
     run_grpc_server(mock_server_def)
     mock_server_def.wait_for_termination.assert_called_once()
+
+
+@pytest.mark.anyio
+async def test_run_async_grpc_server_normal():
+    from unittest.mock import AsyncMock
+
+    mock_server = AsyncMock(spec=grpc.aio.Server)
+    await run_async_grpc_server(mock_server, block=True)
+    mock_server.start.assert_awaited_once()
+    mock_server.wait_for_termination.assert_awaited_once()
+    mock_server.stop.assert_not_called()
+
+
+@pytest.mark.anyio
+async def test_run_async_grpc_server_cancelled():
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    mock_server = AsyncMock(spec=grpc.aio.Server)
+    mock_server.wait_for_termination.side_effect = asyncio.CancelledError()
+    with pytest.raises(asyncio.CancelledError):
+        await run_async_grpc_server(mock_server, block=True)
+    mock_server.stop.assert_awaited_once_with(grace=5.0)
+
+
+@pytest.mark.anyio
+async def test_run_async_grpc_server_keyboard_interrupt():
+    from unittest.mock import AsyncMock
+
+    mock_server = AsyncMock(spec=grpc.aio.Server)
+    mock_server.wait_for_termination.side_effect = KeyboardInterrupt()
+    await run_async_grpc_server(mock_server, block=True)
+    mock_server.stop.assert_awaited_once_with(grace=5.0)
+
+
+def test_run_grpc_server_type_error_on_async_server():
+    from unittest.mock import AsyncMock
+
+    mock_server = AsyncMock(spec=grpc.aio.Server)
+    with pytest.raises(TypeError) as exc_info:
+        run_grpc_server(mock_server)
+    err_msg = str(exc_info.value)
+    assert "run_grpc_server only supports synchronous" in err_msg

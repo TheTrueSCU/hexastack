@@ -6,6 +6,7 @@ from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
     SimpleSpanProcessor,
     SpanExporter,
 )
@@ -63,19 +64,35 @@ class OtelTracingAdapter(TracingPort):
         service_name: str = "hexastack-app",
         tracer_provider: TracerProvider | None = None,
         exporter: SpanExporter | None = None,
+        *,
+        use_batch_processor: bool = True,
     ) -> None:
         self._service_name = service_name
         self._propagator = TraceContextTextMapPropagator()
 
         if tracer_provider is not None:
             self._provider = tracer_provider
+            self._owns_provider = False
         else:
             resource = Resource.create({"service.name": service_name})
             self._provider = TracerProvider(resource=resource)
+            self._owns_provider = True
             if exporter is not None:
-                self._provider.add_span_processor(SimpleSpanProcessor(exporter))
+                processor = (
+                    BatchSpanProcessor(exporter)
+                    if use_batch_processor
+                    else SimpleSpanProcessor(exporter)
+                )
+                self._provider.add_span_processor(processor)
 
         self._tracer = self._provider.get_tracer("hexastack", "0.1.0")
+
+    def shutdown(self) -> None:
+        """Shutdown tracer provider if owned by this adapter, or force-flush shared provider."""
+        if self._owns_provider:
+            self._provider.shutdown()
+        else:
+            self._provider.force_flush()
 
     def extract_context(self, carrier: dict[str, str]) -> SpanContext | None:
         ctx = self._propagator.extract(carrier)

@@ -17,7 +17,7 @@ from hexastack_flow.ports.orchestrator import CqrsWorkflowOrchestratorPort
 def test_orchestrator_port_cannot_be_instantiated_directly() -> None:
     """Ensure CqrsWorkflowOrchestratorPort is abstract."""
     with pytest.raises(TypeError):
-        CqrsWorkflowOrchestratorPort()  # type: ignore[abstract]
+        CqrsWorkflowOrchestratorPort()  # ty: ignore[call-non-callable]
 
 
 def test_concrete_orchestrator_subclass() -> None:

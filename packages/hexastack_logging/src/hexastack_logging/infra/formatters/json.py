@@ -45,7 +45,9 @@ class JsonFormatter(logging.Formatter):
             log_data["user_id"] = getattr(record, "user_id", None)
             log_data["tenant_id"] = getattr(record, "tenant_id", None)
 
-        if record.exc_info:
+        if record.exc_text:
+            log_data["exception"] = record.exc_text
+        elif record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
 
         return json.dumps(log_data)

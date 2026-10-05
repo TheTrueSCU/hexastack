@@ -9,10 +9,10 @@ from hexastack_ui.ports.presenter import DevToolsPresenterPort, UIPresenterPort
 def test_ports_abstract_instantiation_raises():
     """Verify abstract presentation ports cannot be instantiated directly."""
     with pytest.raises(TypeError):
-        UIPresenterPort()  # type: ignore[abstract]
+        UIPresenterPort()  # ty: ignore[call-non-callable]
 
     with pytest.raises(TypeError):
-        DevToolsPresenterPort()  # type: ignore[abstract]
+        DevToolsPresenterPort()  # ty: ignore[call-non-callable]
 
 
 def test_concrete_port_implementation():

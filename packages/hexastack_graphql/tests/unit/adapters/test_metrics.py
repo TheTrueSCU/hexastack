@@ -57,9 +57,11 @@ def test_strawberry_metrics_extension_query_substring_fallback() -> None:
     with contextlib.suppress(StopIteration):
         next(gen)
 
-    expected_op = "query LongQueryNameThatExceeds"
-    assert metrics.counters[0]["labels"]["operation"] == expected_op
-    assert metrics.histograms[0]["labels"]["operation"] == expected_op
+    expected_op = "anonymous"
+    op_counter = metrics.counters[0]["labels"]["operation"]
+    assert op_counter == expected_op
+    op_histo = metrics.histograms[0]["labels"]["operation"]
+    assert op_histo == expected_op
 
 
 def test_strawberry_metrics_extension_anonymous_fallback() -> None:

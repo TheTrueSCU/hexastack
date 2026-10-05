@@ -195,11 +195,16 @@ class WebSocketCqrsBridge:
                         if asyncio.iscoroutine(cb_res):
                             await cb_res
                 except Exception as exc:
+                    err_msg = (
+                        str(exc)
+                        if isinstance(exc, (ValueError, TypeError, KeyError))
+                        else "Internal server error."
+                    )
                     await websocket.send_json(
                         {
                             "status": "error",
                             "type": type_tag,
-                            "error": str(exc),
+                            "error": err_msg,
                         }
                     )
         except WebSocketDisconnect:

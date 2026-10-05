@@ -7,15 +7,23 @@ _DEFAULT_MASKED_KEYS = {
     "api_key",
     "apikey",
     "authorization",
+    "bearer",
+    "card_number",
     "client_secret",
+    "credit_card",
+    "cvv",
     "password",
+    "private_key",
     "refresh_token",
     "secret",
+    "ssn",
     "token",
 }
 
 _DEFAULT_PATTERNS = [
     r"Bearer\s+[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.[A-Za-z0-9-_.+/=]+",
+    r"Bearer\s+[A-Za-z0-9\-\._~\+\/]+=*",
+    r"\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b",
     r"(sk-[A-Za-z0-9]{20,})",
     r"(ghp_[A-Za-z0-9]{36})",
 ]

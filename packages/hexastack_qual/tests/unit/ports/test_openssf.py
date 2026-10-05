@@ -67,7 +67,7 @@ class TestOpenSsfAuditorPortContract:
     def test_cannot_instantiate_abstract_port(self) -> None:
         """Port must be abstract and raise TypeError on direct instantiation."""
         with pytest.raises(TypeError):
-            OpenSsfAuditorPort()  # type: ignore[abstract]
+            OpenSsfAuditorPort()  # ty: ignore[call-non-callable]
 
     def test_stub_audit_openssf_returns_summary(self) -> None:
         """audit_openssf() returns an OpenSsfAuditSummary with expected fields."""

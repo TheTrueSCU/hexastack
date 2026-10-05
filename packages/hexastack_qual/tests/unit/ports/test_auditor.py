@@ -56,7 +56,7 @@ class DummyAuditor(QualityAuditorPort):
 def test_quality_auditor_port_cannot_instantiate_abstract() -> None:
     """Ensure abstract port cannot be instantiated directly."""
     with pytest.raises(TypeError):
-        QualityAuditorPort()  # type: ignore[abstract]
+        QualityAuditorPort()  # ty: ignore[call-non-callable]
 
 
 def test_concrete_auditor_satisfies_contract() -> None:

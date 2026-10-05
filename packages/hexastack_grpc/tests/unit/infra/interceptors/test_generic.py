@@ -211,7 +211,10 @@ def test_map_exception_to_status_code(
     _map_exception_to_status_code directly."""
     code, msg = _map_exception_to_status_code(exc)
     assert code == expected_code
-    assert msg == str(exc)
+    if expected_code in (grpc.StatusCode.INTERNAL, grpc.StatusCode.UNKNOWN):
+        assert msg == "Internal server error."
+    else:
+        assert msg == str(exc)
 
 
 @pytest.mark.anyio

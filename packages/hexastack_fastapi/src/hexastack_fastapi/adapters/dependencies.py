@@ -240,14 +240,19 @@ def require_rate_limit(
 
     async def _dependency(request: Request) -> None:
         limiter = get_rate_limiter(request)
-        if limiter is not None:
-            key = key_extractor(request)
-            if not limiter.hit(key, limit):
-                reset_sec = limiter.get_reset_window(key, limit)
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail=detail or f"Rate limit exceeded: {limit}.",
-                    headers={"Retry-After": str(reset_sec)},
-                )
+        if limiter is None:
+            from hexastack_core.adapters.ratelimit import InMemoryRateLimiter
+
+            limiter = InMemoryRateLimiter()
+            request.app.state.rate_limiter = limiter
+
+        key = key_extractor(request)
+        if not limiter.hit(key, limit):
+            reset_sec = limiter.get_reset_window(key, limit)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=detail or f"Rate limit exceeded: {limit}.",
+                headers={"Retry-After": str(reset_sec)},
+            )
 
     return _dependency

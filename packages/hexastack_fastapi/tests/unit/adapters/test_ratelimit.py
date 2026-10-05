@@ -278,7 +278,77 @@ def test_rate_limit_decorator_positional_request_arg():
     def positional_ep(r: Request):
         return {"pos": True}
 
-    assert positional_ep(req) == {"pos": True}
+    res1 = positional_ep(req)
+    assert res1 == {"pos": True}
     with pytest.raises(HTTPException) as exc_info:
         positional_ep(req)
-    assert exc_info.value.status_code == 429
+    status_code = exc_info.value.status_code
+    assert status_code == 429
+
+
+def test_rate_limit_decorator_injected_request_async():
+    app = FastAPI()
+    limiter = InMemoryRateLimiter()
+    app.state.rate_limiter = limiter
+
+    @app.get("/injected-async")
+    @rate_limit("1/minute")
+    async def injected_async():
+        return {"ok": True}
+
+    client = TestClient(app)
+    r1 = client.get("/injected-async")
+    status1 = r1.status_code
+    assert status1 == 200
+
+    r2 = client.get("/injected-async")
+    status2 = r2.status_code
+    assert status2 == 429
+
+
+def test_rate_limit_decorator_injected_request_sync():
+    app = FastAPI()
+    limiter = InMemoryRateLimiter()
+    app.state.rate_limiter = limiter
+
+    @app.get("/injected-sync")
+    @rate_limit("1/minute")
+    def injected_sync():
+        return {"ok": True}
+
+    client = TestClient(app)
+    r1 = client.get("/injected-sync")
+    status1 = r1.status_code
+    assert status1 == 200
+
+    r2 = client.get("/injected-sync")
+    status2 = r2.status_code
+    assert status2 == 429
+
+
+def test_rate_limit_no_request_runtime_error():
+    from hexastack_fastapi.adapters.ratelimit import _enforce_rate_limit
+
+    with pytest.raises(RuntimeError) as exc_info:
+        _enforce_rate_limit(None, "bad_ep", "1/minute", lambda r: "k", None)
+    err_msg = str(exc_info.value)
+    assert "no Request instance" in err_msg
+
+
+def test_get_remote_address_trust_proxy():
+    app = FastAPI()
+    req = Request(
+        scope={
+            "type": "http",
+            "app": app,
+            "headers": [(b"x-forwarded-for", b"203.0.113.195, 70.41.3.18")],
+            "client": ("198.51.100.1", 1234),
+        }
+    )
+    # trust_proxy False uses client socket
+    ip_untrusted = get_remote_address(req, trust_proxy=False)
+    assert ip_untrusted == "198.51.100.1"
+
+    # trust_proxy True uses X-Forwarded-For
+    ip_trusted = get_remote_address(req, trust_proxy=True)
+    assert ip_trusted == "203.0.113.195"

@@ -116,7 +116,48 @@ def test_log_sanitizer_filter_masks_record_dict_and_tuple_args():
         args=(),
         exc_info=None,
     )
-    assert filt.filter(record_msg_dict) is True
+    res_msg_dict = filt.filter(record_msg_dict)
+    assert res_msg_dict is True
     assert isinstance(record_msg_dict.msg, dict)
     assert record_msg_dict.msg["password"] == "***REDACTED***"
     assert record_msg_dict.msg["data"] == 123
+
+    # 4. Exception object in args
+    err = ValueError("Failed connection with token Bearer secret-tok-888")
+    record_err_args = logging.LogRecord(
+        name="test_logger",
+        level=logging.ERROR,
+        pathname=__file__,
+        lineno=10,
+        msg="Error occurred: %s",
+        args=(err,),
+        exc_info=None,
+    )
+    res_err_args = filt.filter(record_err_args)
+    assert res_err_args is True
+    assert isinstance(record_err_args.args, tuple)
+    assert "secret-tok-888" not in record_err_args.args[0]
+    assert "***REDACTED***" in record_err_args.args[0]
+
+    # 5. exc_info without pre-populated exc_text
+    try:
+        raise RuntimeError("Secret leaked in trace: Bearer secret-tok-777")
+    except RuntimeError:
+        import sys
+
+        exc_info = sys.exc_info()
+
+    record_exc_info = logging.LogRecord(
+        name="test_logger",
+        level=logging.ERROR,
+        pathname=__file__,
+        lineno=10,
+        msg="Boom",
+        args=(),
+        exc_info=exc_info,
+    )
+    res_exc_info = filt.filter(record_exc_info)
+    assert res_exc_info is True
+    assert record_exc_info.exc_text is not None
+    assert "secret-tok-777" not in record_exc_info.exc_text
+    assert "***REDACTED***" in record_exc_info.exc_text

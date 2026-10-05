@@ -37,6 +37,7 @@ class CorrelationHttpMiddleware:
         self._correlation_header_name = cfg.correlation_header
         self._user_header = cfg.user_header.lower().encode("latin1")
         self._tenant_header = cfg.tenant_header.lower().encode("latin1")
+        self._trust_identity_headers = cfg.trust_identity_headers
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Process incoming ASGI request, inject context tokens, and wrap response.
@@ -64,16 +65,17 @@ class CorrelationHttpMiddleware:
         correlation_id = raw_cid.decode("latin1") if raw_cid else new_correlation_id()
         corr_token = set_correlation_id(correlation_id)
 
-        # 2. Extract User / Tenant context
-        raw_uid = header_map.get(self._user_header)
-        raw_tid = header_map.get(self._tenant_header)
+        # 2. Extract User / Tenant context (only if explicitly trusted upstream)
         user_token = None
-        if raw_uid or raw_tid:
-            user_context = UserContext(
-                user_id=raw_uid.decode("latin1") if raw_uid else "anonymous",
-                tenant_id=raw_tid.decode("latin1") if raw_tid else None,
-            )
-            user_token = set_user_context(user_context)
+        if self._trust_identity_headers:
+            raw_uid = header_map.get(self._user_header)
+            raw_tid = header_map.get(self._tenant_header)
+            if raw_uid or raw_tid:
+                user_context = UserContext(
+                    user_id=raw_uid.decode("latin1") if raw_uid else "anonymous",
+                    tenant_id=raw_tid.decode("latin1") if raw_tid else None,
+                )
+                user_token = set_user_context(user_context)
 
         # 3. Intercept response to inject correlation header
         async def send_wrapper(message: Message) -> None:

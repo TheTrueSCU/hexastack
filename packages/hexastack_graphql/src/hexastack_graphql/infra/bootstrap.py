@@ -60,7 +60,11 @@ class GraphQLBootstrapper(BootstrapperPort):
 
         # 1. Compile schema from registry with CorrelationExtension class
         extensions = [CorrelationExtension]
-        schema = registry.build_schema(extensions=extensions)
+        schema = registry.build_schema(
+            extensions=extensions,
+            allow_queries=cfg.allow_queries,
+            allow_mutations=cfg.allow_mutations,
+        )
 
         # 2. Register Schema and Registry into DI container
         context.container.add_instance(schema, declared_class=strawberry.Schema)

@@ -33,7 +33,7 @@ class DummyMutator(MutationInspectorPort):
 def test_mutation_inspector_port_cannot_instantiate_abstract() -> None:
     """Ensure abstract port cannot be instantiated directly."""
     with pytest.raises(TypeError):
-        MutationInspectorPort()  # type: ignore[abstract]
+        MutationInspectorPort()  # ty: ignore[call-non-callable]
 
 
 def test_concrete_mutator_satisfies_contract() -> None:
