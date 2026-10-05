@@ -139,3 +139,16 @@ def test_initialize_env_provider(monkeypatch: pytest.MonkeyPatch):
 
     payload = adapter.get_object_value("payload")
     assert payload == {"nested": "data"}
+
+
+def test_parse_env_flag_value_deep_recursion():
+    """Verify deeply nested JSON raising RecursionError falls back to raw string."""
+    from unittest.mock import patch
+
+    from hexastack_flags.adapters.providers.factory import _parse_env_flag_value
+
+    with patch(
+        "json.loads", side_effect=RecursionError("maximum recursion depth exceeded")
+    ):
+        res = _parse_env_flag_value('{"deep": true}')
+        assert res == '{"deep": true}'

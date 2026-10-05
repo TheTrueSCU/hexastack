@@ -107,7 +107,7 @@ def _parse_env_flag_value(val: str) -> Any:
         parsed = json.loads(val)
         if isinstance(parsed, (dict, list)):
             return parsed
-    except (json.JSONDecodeError, TypeError, ValueError):
+    except (json.JSONDecodeError, TypeError, ValueError, RecursionError):
         # Value is neither valid JSON nor a collection, fallback to original string
         pass
     return val
