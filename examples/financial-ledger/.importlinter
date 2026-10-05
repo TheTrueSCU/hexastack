@@ -1,0 +1,34 @@
+[importlinter]
+root_package = financial_ledger
+include_type_checking = False
+
+# 1. Strict Dependency Inversion: Infra -> Adapters -> Ports -> Domain
+[importlinter:contract:hexagonal-layers]
+name = Hexagonal Architecture Layers
+type = layers
+containers =
+    financial_ledger
+layers =
+    infra
+    adapters
+    ports
+    domain
+
+# 2. Pure Python Core: Domain cannot import outer framework layers
+[importlinter:contract:domain-purity]
+name = Domain Purity Guarantee
+type = forbidden
+source_modules =
+    financial_ledger.domain
+forbidden_modules =
+    financial_ledger.adapters
+    financial_ledger.infra
+    financial_ledger.ports
+
+# 3. Adapter Independence: Driving and Driven adapters communicate exclusively via Ports
+[importlinter:contract:adapter-independence]
+name = Adapter Independence
+type = independence
+modules =
+    financial_ledger.adapters.driving
+    financial_ledger.adapters.driven

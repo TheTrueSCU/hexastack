@@ -1,0 +1,14 @@
+.git
+.gitignore
+.venv
+.pytest_cache
+.coverage
+.mutmut-cache
+.secrets.baseline
+htmlcov
+dist
+build
+tests
+docs
+__pycache__
+*.pyc
