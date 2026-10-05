@@ -313,6 +313,7 @@ class DltProjectionConsumer:
         self._write_disposition = write_disposition
         self._buffer: list[dict[str, Any]] = []
         self._lock = threading.RLock()
+        self._flush_lock = threading.Lock()
 
     @property
     def buffer_size(self) -> int:
@@ -330,10 +331,13 @@ class DltProjectionConsumer:
             dlt.LoadInfo if a batch flush was triggered, None otherwise.
         """
         row = _normalize_event(event)
+        should_flush = False
         with self._lock:
             self._buffer.append(row)
             if len(self._buffer) >= self._batch_size:
-                return self.flush()
+                should_flush = True
+        if should_flush:
+            return self.flush()
         return None
 
     def flush(self) -> Any:
@@ -342,22 +346,23 @@ class DltProjectionConsumer:
         Returns:
             dlt.LoadInfo metadata from the pipeline load, or None if buffer is empty.
         """
-        with self._lock:
-            if not self._buffer:
-                return None
-            items = list(self._buffer)
-            self._buffer.clear()
-
-        try:
-            return self._sink.ingest(
-                items,
-                table_name=self._table_name,
-                write_disposition=self._write_disposition,
-            )
-        except Exception:
+        with self._flush_lock:
             with self._lock:
-                self._buffer = items + self._buffer
-            raise
+                if not self._buffer:
+                    return None
+                items = list(self._buffer)
+                self._buffer.clear()
+
+            try:
+                return self._sink.ingest(
+                    items,
+                    table_name=self._table_name,
+                    write_disposition=self._write_disposition,
+                )
+            except Exception:
+                with self._lock:
+                    self._buffer = items + self._buffer
+                raise
 
     async def consume_async(
         self, event: CloudEventEnvelope | Event | dict[str, Any]

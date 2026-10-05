@@ -70,16 +70,22 @@ def test_create_cqrs_agent_defaults(pipeline: ExecutionPipeline):
 
 
 def test_create_cqrs_agent_with_config(pipeline: ExecutionPipeline):
-    """Verify create_cqrs_agent resolves model from HexastackAiConfig."""
+    """Verify create_cqrs_agent resolves distinct model from HexastackAiConfig."""
+    from unittest.mock import patch
+
     from hexastack_ai.domain.config import HexastackAiConfig
 
-    cfg = HexastackAiConfig(model="test")
-    agent = create_cqrs_agent(
-        pipeline=pipeline,
-        messages=[CalculateTaxCommand],
-        config=cfg,
-    )
-    assert agent is not None
+    with patch("hexastack_ai.infra.tools.Agent") as mock_agent_cls:
+        cfg = HexastackAiConfig(model="custom-provider:custom-model-v2")
+        create_cqrs_agent(
+            pipeline=pipeline,
+            messages=[CalculateTaxCommand],
+            config=cfg,
+        )
+        assert mock_agent_cls.called is True
+        _, kwargs = mock_agent_cls.call_args
+        model_arg = kwargs.get("model")
+        assert model_arg == "custom-provider:custom-model-v2"
 
 
 @pytest.mark.anyio

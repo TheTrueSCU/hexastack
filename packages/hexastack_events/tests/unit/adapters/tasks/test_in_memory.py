@@ -109,3 +109,13 @@ def test_complete_and_fail_worker_lease_ownership():
     queue.complete(task.id, worker_id="worker-1")
     state_after_owner = task.state
     assert state_after_owner == TaskState.COMPLETED
+
+    # Unleased/unowned task rejects completion or failure with worker_id
+    task2 = queue.enqueue("unleased_job", {})
+    queue.complete(task2.id, worker_id="worker-1")
+    state_unleased_complete = task2.state
+    assert state_unleased_complete == TaskState.PENDING
+
+    queue.fail(task2.id, "err", worker_id="worker-1")
+    state_unleased_fail = task2.state
+    assert state_unleased_fail == TaskState.PENDING

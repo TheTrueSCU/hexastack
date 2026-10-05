@@ -64,7 +64,7 @@ class SemanticVectorCache(SemanticCachePort):
         )
         matches = self._memory.search(
             query_embedding=query_embedding,
-            limit=5,
+            limit=self._config.max_entries,
             min_score=cutoff,
         )
         if not matches:
@@ -173,7 +173,7 @@ class AsyncSemanticVectorCache(AsyncSemanticCachePort):
         )
         matches = await self._memory.search(
             query_embedding=query_embedding,
-            limit=5,
+            limit=self._config.max_entries,
             min_score=cutoff,
         )
         if not matches:

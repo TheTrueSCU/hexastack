@@ -111,10 +111,8 @@ class InMemoryTaskQueueAdapter(TaskQueuePort, AsyncTaskQueuePort):
         with self._lock:
             task = self._tasks.get(task_id)
             if task is not None:
-                if (
-                    worker_id is not None
-                    and task.lease_owner is not None
-                    and task.lease_owner != worker_id
+                if worker_id is not None and (
+                    task.lease_owner is None or task.lease_owner != worker_id
                 ):
                     return
                 task.complete()
@@ -130,10 +128,8 @@ class InMemoryTaskQueueAdapter(TaskQueuePort, AsyncTaskQueuePort):
         with self._lock:
             task = self._tasks.get(task_id)
             if task is not None:
-                if (
-                    worker_id is not None
-                    and task.lease_owner is not None
-                    and task.lease_owner != worker_id
+                if worker_id is not None and (
+                    task.lease_owner is None or task.lease_owner != worker_id
                 ):
                     return
                 task.fail(error)

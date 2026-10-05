@@ -178,3 +178,24 @@ def test_semantic_cache_isolation_from_non_cache_entries() -> None:
     cache.set([1.0, 0.0, 0.0], "cache-hit-payload")
     cache_hit = cache.get([1.0, 0.0, 0.0])
     assert cache_hit == "cache-hit-payload"
+
+
+def test_semantic_cache_search_beyond_five_non_cache_entries() -> None:
+    """Verify semantic cache finds entries even when >5 non-cache entries match first."""
+    from hexastack_ai.domain.memory import MemoryEntry
+
+    memory = InMemoryVectorMemoryAdapter()
+    cache = SemanticVectorCache(memory)
+
+    for i in range(7):
+        memory.store(
+            MemoryEntry(
+                content=f"Non-cache entry {i}",
+                embedding=[1.0, 0.0, 0.0],
+                metadata={"category": "chat"},
+            )
+        )
+
+    cache.set([1.0, 0.0, 0.0], "found-after-many-non-cache")
+    hit = cache.get([1.0, 0.0, 0.0])
+    assert hit == "found-after-many-non-cache"

@@ -193,8 +193,12 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
             with self._connection() as conn:
                 conn.execute(insert_stmt)
         except IntegrityError:
+            if hasattr(self._target, "rollback"):
+                self._target.rollback()
             with self._connection() as conn:
-                conn.execute(update_stmt)
+                res = conn.execute(update_stmt)
+                if not res.rowcount or res.rowcount == 0:
+                    raise
 
     def get_run(self, run_id: str) -> WorkflowExecutionState | None:
         """Retrieve aggregate workflow run state by unique execution ID.
@@ -333,8 +337,12 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
             with self._connection() as conn:
                 conn.execute(insert_stmt)
         except IntegrityError:
+            if hasattr(self._target, "rollback"):
+                self._target.rollback()
             with self._connection() as conn:
-                conn.execute(update_stmt)
+                res = conn.execute(update_stmt)
+                if not res.rowcount or res.rowcount == 0:
+                    raise
 
     def get_checkpoint(self, run_id: str, step_name: str) -> CheckpointRecord | None:
         """Retrieve the checkpoint for a specific step in a run.

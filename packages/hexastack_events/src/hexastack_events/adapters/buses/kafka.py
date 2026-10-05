@@ -210,25 +210,14 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
 
         Notes/Architectural Intent:
             Idempotent: Subsequent invocations while connected return immediately.
-            Pins producer lifecycle strictly to self._loop to prevent cross-loop dispatch.
         """
         if self._is_connected:
-            return
-
-        try:
-            current_loop = asyncio.get_running_loop()
-        except RuntimeError:
-            current_loop = None
-
-        if current_loop is not self._loop:
-            future = asyncio.run_coroutine_threadsafe(self._async_connect(), self._loop)
-            await asyncio.wrap_future(future)
             return
 
         await self._async_connect()
 
     async def _async_disconnect(self) -> None:
-        """Internal disconnect routine running strictly on self._loop."""
+        """Internal disconnect routine."""
         for task in self._consumer_tasks:
             task.cancel()
 
@@ -252,18 +241,6 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         Notes/Architectural Intent:
             Ensures in-flight offsets are committed and producer flush buffers are drained.
         """
-        try:
-            current_loop = asyncio.get_running_loop()
-        except RuntimeError:
-            current_loop = None
-
-        if current_loop is not self._loop:
-            future = asyncio.run_coroutine_threadsafe(
-                self._async_disconnect(), self._loop
-            )
-            await asyncio.wrap_future(future)
-            return
-
         await self._async_disconnect()
 
     async def __aenter__(self) -> KafkaDistributedEventBus:
@@ -364,18 +341,6 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         Raises:
             EventDeliveryError: If the message cannot be delivered.
         """
-        try:
-            current_loop = asyncio.get_running_loop()
-        except RuntimeError:
-            current_loop = None
-
-        if current_loop is not self._loop:
-            future = asyncio.run_coroutine_threadsafe(
-                self._async_publish_envelope(envelope), self._loop
-            )
-            await asyncio.wrap_future(future)
-            return
-
         await self._async_publish_envelope(envelope)
 
     def publish(self, event: Event) -> None:
@@ -590,6 +555,13 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
                     )
                     if processed:
                         await consumer.commit()
+                    else:
+                        logger.error(
+                            "Failed to process message or route to DLQ for offset %s on topic %s; halting consumer to prevent skipping uncommitted messages",
+                            msg.offset,
+                            topic,
+                        )
+                        break
             except asyncio.CancelledError:
                 # Normal cancellation during subscriber shutdown
                 pass
