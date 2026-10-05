@@ -76,6 +76,8 @@ class EventsBootstrapper(BootstrapperPort):
 
         if relay is not None:
             di.add_instance(relay, declared_class=OutboxRelayPort)
+            if cfg.auto_start_relay:
+                relay.start()
 
         # 5. Assemble and Bind OutboxCaptureMiddleware
         capture_mw = OutboxCaptureMiddleware(

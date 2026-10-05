@@ -101,27 +101,41 @@ class InMemoryTaskQueueAdapter(TaskQueuePort, AsyncTaskQueuePort):
                 return selected
             return None
 
-    def complete(self, task_id: str) -> None:
+    def complete(self, task_id: str, worker_id: str | None = None) -> None:
         """Mark a leased task as successfully completed.
 
         Args:
             task_id: Task record ID.
+            worker_id: Optional worker identifier to verify lease ownership.
         """
         with self._lock:
             task = self._tasks.get(task_id)
             if task is not None:
+                if (
+                    worker_id is not None
+                    and task.lease_owner is not None
+                    and task.lease_owner != worker_id
+                ):
+                    return
                 task.complete()
 
-    def fail(self, task_id: str, error: str) -> None:
+    def fail(self, task_id: str, error: str, worker_id: str | None = None) -> None:
         """Record a failure for a leased task, dead-lettering if attempts exceeded.
 
         Args:
             task_id: Task record ID.
             error: Error message/traceback string.
+            worker_id: Optional worker identifier to verify lease ownership.
         """
         with self._lock:
             task = self._tasks.get(task_id)
             if task is not None:
+                if (
+                    worker_id is not None
+                    and task.lease_owner is not None
+                    and task.lease_owner != worker_id
+                ):
+                    return
                 task.fail(error)
 
     def renew_lease(
@@ -178,15 +192,17 @@ class InMemoryTaskQueueAdapter(TaskQueuePort, AsyncTaskQueuePort):
                 lease_duration_seconds=lease_duration_seconds,
             )
 
-    async def complete_async(self, task_id: str) -> None:
+    async def complete_async(self, task_id: str, worker_id: str | None = None) -> None:
         """Complete a task asynchronously."""
         async with self._async_lock:
-            self.complete(task_id)
+            self.complete(task_id, worker_id=worker_id)
 
-    async def fail_async(self, task_id: str, error: str) -> None:
+    async def fail_async(
+        self, task_id: str, error: str, worker_id: str | None = None
+    ) -> None:
         """Fail a task attempt asynchronously."""
         async with self._async_lock:
-            self.fail(task_id, error)
+            self.fail(task_id, error, worker_id=worker_id)
 
     async def renew_lease_async(
         self,

@@ -401,3 +401,22 @@ def test_dlt_sources_and_pipeline_execution(tmp_path: Path) -> None:
     )
     info2 = p2.run(outbox_src)
     assert not info2.has_failed_jobs
+
+
+def test_dlt_projection_consumer_flush_restores_buffer_on_error() -> None:
+    """Verify that buffer items are restored if ingestion fails during flush."""
+    from unittest.mock import MagicMock
+
+    mock_sink = MagicMock()
+    mock_sink.ingest.side_effect = RuntimeError("Ingestion pipeline failure")
+    consumer = DltProjectionConsumer(sink=mock_sink, batch_size=10)
+
+    consumer.consume({"event_type": "user.signup", "user_id": 123})
+    buf_size_before = consumer.buffer_size
+    assert buf_size_before == 1
+
+    with pytest.raises(RuntimeError, match="Ingestion pipeline failure"):
+        consumer.flush()
+
+    buf_size_after = consumer.buffer_size
+    assert buf_size_after == 1

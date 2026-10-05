@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 import logging
 import threading
 from collections.abc import Callable
@@ -171,15 +172,8 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         future = asyncio.run_coroutine_threadsafe(coro, self._loop)
         return future.result()
 
-    async def connect(self) -> None:
-        """Connect producer to Kafka brokers.
-
-        Raises:
-            EventDeliveryError: If broker connection fails.
-
-        Notes/Architectural Intent:
-            Idempotent: Subsequent invocations while connected return immediately.
-        """
+    async def _async_connect(self) -> None:
+        """Internal connection routine running strictly on self._loop."""
         if self._is_connected:
             return
 
@@ -208,12 +202,33 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
                 f"Failed to connect to Kafka at {self._bootstrap_servers}: {exc}"
             ) from exc
 
-    async def disconnect(self) -> None:
-        """Stop all consumers and producer, closing network connections.
+    async def connect(self) -> None:
+        """Connect producer to Kafka brokers.
+
+        Raises:
+            EventDeliveryError: If broker connection fails.
 
         Notes/Architectural Intent:
-            Ensures in-flight offsets are committed and producer flush buffers are drained.
+            Idempotent: Subsequent invocations while connected return immediately.
+            Pins producer lifecycle strictly to self._loop to prevent cross-loop dispatch.
         """
+        if self._is_connected:
+            return
+
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if current_loop is not self._loop:
+            future = asyncio.run_coroutine_threadsafe(self._async_connect(), self._loop)
+            await asyncio.wrap_future(future)
+            return
+
+        await self._async_connect()
+
+    async def _async_disconnect(self) -> None:
+        """Internal disconnect routine running strictly on self._loop."""
         for task in self._consumer_tasks:
             task.cancel()
 
@@ -230,6 +245,26 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
             self._producer = None
 
         self._is_connected = False
+
+    async def disconnect(self) -> None:
+        """Stop all consumers and producer, closing network connections.
+
+        Notes/Architectural Intent:
+            Ensures in-flight offsets are committed and producer flush buffers are drained.
+        """
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if current_loop is not self._loop:
+            future = asyncio.run_coroutine_threadsafe(
+                self._async_disconnect(), self._loop
+            )
+            await asyncio.wrap_future(future)
+            return
+
+        await self._async_disconnect()
 
     async def __aenter__(self) -> KafkaDistributedEventBus:
         """Enter asynchronous context manager, establishing broker connection."""
@@ -271,19 +306,12 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         Raises:
             EventDeliveryError: If publishing or encoding fails.
         """
-        self._run(self.publish_envelope_async(envelope))
+        self._run(self._async_publish_envelope(envelope))
 
-    async def publish_envelope_async(self, envelope: CloudEventEnvelope) -> None:
-        """Asynchronously publish a CloudEvents envelope to its designated Kafka topic.
-
-        Args:
-            envelope: CloudEvents envelope model.
-
-        Raises:
-            EventDeliveryError: If the message cannot be delivered.
-        """
+    async def _async_publish_envelope(self, envelope: CloudEventEnvelope) -> None:
+        """Internal publish routine running on self._loop."""
         if not self._is_connected or self._producer is None:
-            await self.connect()
+            await self._async_connect()
 
         if self._producer is None:
             raise EventDeliveryError("Kafka producer is not connected.")
@@ -326,6 +354,29 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
             raise EventDeliveryError(
                 f"Failed to publish event {envelope.id} to topic '{topic}': {exc}"
             ) from exc
+
+    async def publish_envelope_async(self, envelope: CloudEventEnvelope) -> None:
+        """Asynchronously publish a CloudEvents envelope to its designated Kafka topic.
+
+        Args:
+            envelope: CloudEvents envelope model.
+
+        Raises:
+            EventDeliveryError: If the message cannot be delivered.
+        """
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if current_loop is not self._loop:
+            future = asyncio.run_coroutine_threadsafe(
+                self._async_publish_envelope(envelope), self._loop
+            )
+            await asyncio.wrap_future(future)
+            return
+
+        await self._async_publish_envelope(envelope)
 
     def publish(self, event: Event) -> None:
         """Wrap domain Event into CloudEventEnvelope and publish.
@@ -405,17 +456,31 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
             consumer_kwargs["ssl_context"] = self._ssl_context
         return consumer_kwargs
 
-    async def _send_dlq_message(self, dlq_topic: str, msg: Any) -> None:
-        """Forward an unparseable or exhausted message to the DLQ topic."""
-        if not self._enable_dlq or self._producer is None:
-            return
-        with contextlib.suppress(Exception):
+    async def _send_dlq_message(self, dlq_topic: str, msg: Any) -> bool:
+        """Forward an unparseable or exhausted message to the DLQ topic.
+
+        Returns:
+            True if delivered successfully or DLQ routing is disabled, False on failure.
+        """
+        if not self._enable_dlq:
+            return True
+        if self._producer is None:
+            return False
+        try:
             await self._producer.send_and_wait(
                 topic=dlq_topic,
                 value=msg.value,
                 key=msg.key,
                 headers=msg.headers,
             )
+            return True
+        except Exception as exc:
+            logger.error(
+                "Failed to forward message to DLQ topic %s: %s",
+                dlq_topic,
+                exc,
+            )
+            return False
 
     async def _invoke_handler_with_retries(
         self,
@@ -423,15 +488,20 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         handler: Callable[[Any], Any],
         msg: Any,
         dlq_topic: str,
-    ) -> None:
-        """Invoke event handler with exponential or linear retry backoff and DLQ fallback."""
+    ) -> bool:
+        """Invoke event handler with retry backoff and DLQ fallback.
+
+        Returns:
+            True if handled successfully or successfully forwarded to DLQ,
+            False if handler failed and DLQ delivery failed.
+        """
         retries = 0
         while retries < self._max_retries:
             try:
                 res = handler(envelope)
-                if asyncio.iscoroutine(res):
+                if inspect.isawaitable(res):
                     await res
-                return
+                return True
             except Exception as handler_exc:
                 retries += 1
                 logger.warning(
@@ -441,12 +511,20 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
                     self._max_retries,
                     handler_exc,
                 )
-        await self._send_dlq_message(dlq_topic, msg)
-        logger.info(
-            "Forwarded exhausted event %s to DLQ topic %s",
+        dlq_sent = await self._send_dlq_message(dlq_topic, msg)
+        if dlq_sent:
+            logger.info(
+                "Forwarded exhausted event %s to DLQ topic %s",
+                envelope.id,
+                dlq_topic,
+            )
+            return True
+        logger.error(
+            "Failed to forward exhausted event %s to DLQ topic %s; offset will not be committed",
             envelope.id,
             dlq_topic,
         )
+        return False
 
     async def _process_consumer_message(
         self,
@@ -454,8 +532,12 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         topic: str,
         dlq_topic: str,
         handler: Callable[[Any], Any],
-    ) -> None:
-        """Deserialize and dispatch a single message from the Kafka topic."""
+    ) -> bool:
+        """Deserialize and dispatch a single message from the Kafka topic.
+
+        Returns:
+            True if message was handled or safely forwarded to DLQ, False otherwise.
+        """
         try:
             raw_data = decode_cloudevent_bytes(msg.value)
             envelope = CloudEventEnvelope.model_validate(raw_data)
@@ -465,10 +547,11 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
                 topic,
                 parse_exc,
             )
-            await self._send_dlq_message(dlq_topic, msg)
-            return
+            return await self._send_dlq_message(dlq_topic, msg)
 
-        await self._invoke_handler_with_retries(envelope, handler, msg, dlq_topic)
+        return await self._invoke_handler_with_retries(
+            envelope, handler, msg, dlq_topic
+        )
 
     async def subscribe_async(
         self,
@@ -502,8 +585,11 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         async def _consume_loop() -> None:
             try:
                 async for msg in consumer:
-                    await self._process_consumer_message(msg, topic, dlq_topic, handler)
-                    await consumer.commit()
+                    processed = await self._process_consumer_message(
+                        msg, topic, dlq_topic, handler
+                    )
+                    if processed:
+                        await consumer.commit()
             except asyncio.CancelledError:
                 # Normal cancellation during subscriber shutdown
                 pass

@@ -88,3 +88,21 @@ def test_events_bootstrapper_configuration_huey():
     assert isinstance(relay, HueyOutboxRelay)
     assert relay._batch_size == 25
     assert ctx.properties["outbox_storage"] is custom_storage
+
+
+def test_events_bootstrapper_auto_start_relay():
+    bootstrapper = EventsBootstrapper()
+    container = Container()
+    config_reg = ConfigRegistry()
+    bootstrapper.register_config(config_reg)
+
+    cfg = HexastackEventsConfig(relay_mode="huey", auto_start_relay=True)
+    container.add_instance(cfg, declared_class=HexastackEventsConfig)
+
+    ctx = BootstrapContext(container=container, config=None, config_registry=config_reg)
+    bootstrapper.configure(ctx)
+
+    relay = container.resolve(OutboxRelayPort)
+    assert isinstance(relay, HueyOutboxRelay)
+    is_active = relay._is_active
+    assert is_active is True

@@ -69,6 +69,19 @@ def test_create_cqrs_agent_defaults(pipeline: ExecutionPipeline):
     )
 
 
+def test_create_cqrs_agent_with_config(pipeline: ExecutionPipeline):
+    """Verify create_cqrs_agent resolves model from HexastackAiConfig."""
+    from hexastack_ai.domain.config import HexastackAiConfig
+
+    cfg = HexastackAiConfig(model="test")
+    agent = create_cqrs_agent(
+        pipeline=pipeline,
+        messages=[CalculateTaxCommand],
+        config=cfg,
+    )
+    assert agent is not None
+
+
 @pytest.mark.anyio
 async def test_create_tool_for_message(pipeline: ExecutionPipeline):
     tool_fn = create_tool_for_message(CalculateTaxCommand, pipeline)

@@ -290,6 +290,59 @@ def test_subscribe_raises_on_js_failure(adapter):
         a.subscribe("OrderCreatedEvent", lambda e: None)
 
 
+def test_subscribe_async_handler_awaits_before_ack(adapter):
+    """Verify that an async handler is awaited before msg.ack() is called."""
+    a, (_, _, mock_js, _) = adapter
+    a._run(a.connect())
+
+    executed = False
+
+    async def async_handler(envelope):
+        nonlocal executed
+        executed = True
+
+    a.subscribe("OrderCreatedEvent", async_handler)
+
+    call_kwargs = mock_js.subscribe.call_args[1]
+    cb = call_kwargs["cb"]
+
+    mock_msg = MagicMock()
+    mock_msg.data = encode_cloudevent_bytes(_make_envelope())
+    mock_msg.ack = AsyncMock()
+    mock_msg.nak = AsyncMock()
+
+    a._run(cb(mock_msg))
+
+    is_exec = executed
+    assert is_exec is True
+    mock_msg.ack.assert_awaited_once()
+    mock_msg.nak.assert_not_called()
+
+
+def test_subscribe_async_handler_naks_on_error(adapter):
+    """Verify that an async handler exception results in msg.nak()."""
+    a, (_, _, mock_js, _) = adapter
+    a._run(a.connect())
+
+    async def failing_async_handler(envelope):
+        raise ValueError("handler failed")
+
+    a.subscribe("OrderCreatedEvent", failing_async_handler)
+
+    call_kwargs = mock_js.subscribe.call_args[1]
+    cb = call_kwargs["cb"]
+
+    mock_msg = MagicMock()
+    mock_msg.data = encode_cloudevent_bytes(_make_envelope())
+    mock_msg.ack = AsyncMock()
+    mock_msg.nak = AsyncMock()
+
+    a._run(cb(mock_msg))
+
+    mock_msg.nak.assert_awaited_once()
+    mock_msg.ack.assert_not_called()
+
+
 # ---------------------------------------------------------------------------
 # disconnect tests
 # ---------------------------------------------------------------------------

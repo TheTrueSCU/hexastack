@@ -348,11 +348,16 @@ class DltProjectionConsumer:
             items = list(self._buffer)
             self._buffer.clear()
 
-        return self._sink.ingest(
-            items,
-            table_name=self._table_name,
-            write_disposition=self._write_disposition,
-        )
+        try:
+            return self._sink.ingest(
+                items,
+                table_name=self._table_name,
+                write_disposition=self._write_disposition,
+            )
+        except Exception:
+            with self._lock:
+                self._buffer = items + self._buffer
+            raise
 
     async def consume_async(
         self, event: CloudEventEnvelope | Event | dict[str, Any]

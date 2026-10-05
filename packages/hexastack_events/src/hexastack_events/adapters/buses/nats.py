@@ -21,6 +21,7 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import asyncio
+import inspect
 import threading
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
@@ -368,7 +369,9 @@ class NatsJetStreamEventBusAdapter(DistributedEventBusPort):
             try:
                 raw = decode_cloudevent_bytes(msg.data)
                 envelope = CloudEventEnvelope.model_validate(raw)
-                handler(envelope)
+                res = handler(envelope)
+                if inspect.isawaitable(res):
+                    await res
                 await msg.ack()
             except Exception:
                 await msg.nak()

@@ -85,3 +85,27 @@ async def test_async_task_queue_operations():
 
     await queue.complete_async(task.id)
     assert task.state == TaskState.COMPLETED
+
+
+def test_complete_and_fail_worker_lease_ownership():
+    """Verify that only the lease owner can complete or fail a leased task when worker_id is provided."""
+    queue = InMemoryTaskQueueAdapter()
+    task = queue.enqueue("sensitive_job", {})
+
+    leased = queue.lease_next("worker-1", lease_duration_seconds=30.0)
+    assert leased is not None
+
+    # Stale/different worker tries to complete
+    queue.complete(task.id, worker_id="worker-rogue")
+    state_after_rogue = task.state
+    assert state_after_rogue == TaskState.LEASED
+
+    # Stale/different worker tries to fail
+    queue.fail(task.id, "bogus error", worker_id="worker-rogue")
+    state_after_rogue_fail = task.state
+    assert state_after_rogue_fail == TaskState.LEASED
+
+    # Actual owner completes
+    queue.complete(task.id, worker_id="worker-1")
+    state_after_owner = task.state
+    assert state_after_owner == TaskState.COMPLETED
