@@ -39,12 +39,35 @@ class InMemoryAccountRepository(AccountRepositoryPort):
         """
         with self._lock:
             existing = self._storage.get(account.account_id)
-            if existing is not None and existing.version > account.version:
+            if existing is not None and existing.version >= account.version:
                 raise ConcurrencyConflictError(
                     f"Optimistic concurrency conflict on account '{account.account_id}': "
                     f"persisted version is {existing.version}, update has version {account.version}."
                 )
             self._storage[account.account_id] = copy.deepcopy(account)
+
+    def save_all(self, accounts: list[Account]) -> None:
+        """Persist multiple accounts atomically with preflight optimistic concurrency validation.
+
+        Args:
+            accounts: Sequence of accounts to save atomically.
+
+        Raises:
+            ConcurrencyConflictError: If any account fails optimistic concurrency validation.
+
+        Notes/Architectural Intent:
+            Preflights all accounts under the lock before modifying state to ensure all-or-nothing atomicity.
+        """
+        with self._lock:
+            for account in accounts:
+                existing = self._storage.get(account.account_id)
+                if existing is not None and existing.version >= account.version:
+                    raise ConcurrencyConflictError(
+                        f"Optimistic concurrency conflict on account '{account.account_id}': "
+                        f"persisted version is {existing.version}, update has version {account.version}."
+                    )
+            for account in accounts:
+                self._storage[account.account_id] = copy.deepcopy(account)
 
     def get_by_id(self, account_id: str) -> Account | None:
         """Retrieve an account by its unique identifier.
@@ -89,12 +112,23 @@ class InMemoryLedgerRepository(LedgerRepositoryPort):
         Args:
             transaction: Balanced journal transaction to record.
 
+        Raises:
+            ConcurrencyConflictError: If a transaction with the same ID exists with different contents.
+
         Notes/Architectural Intent:
-            Transactions are append-only and idempotent; existing transaction IDs are skipped.
+            Transactions are append-only and idempotent; existing transaction IDs are skipped if identical.
         """
         with self._lock:
             if transaction.transaction_id in self._transactions:
-                # Idempotent: immutable transaction already persisted; do not duplicate entries
+                existing_tx = self._transactions[transaction.transaction_id]
+                if (
+                    existing_tx.reference != transaction.reference
+                    or existing_tx.entries != transaction.entries
+                ):
+                    raise ConcurrencyConflictError(
+                        f"Transaction '{transaction.transaction_id}' already exists with different contents."
+                    )
+                # Idempotent replay of identical transaction
                 return
             self._transactions[transaction.transaction_id] = copy.deepcopy(transaction)
             for entry in transaction.entries:

@@ -68,7 +68,7 @@ def create_todo(
 ) -> TodoItemDTO:
     # Non-admin users cannot spoof owner_id for another user; bind to authenticated user
     effective_owner = user.user_id
-    if "admin" in user.roles and cmd.owner_id:
+    if "admin" in user.roles and cmd.owner_id is not None:
         effective_owner = cmd.owner_id
     cmd = CreateTodoCommand(
         title=cmd.title,

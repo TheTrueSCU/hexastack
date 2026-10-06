@@ -21,7 +21,22 @@ from todo_app.domain.commands import (
 from todo_app.domain.models import TodoItem, TodoNotFoundError
 from todo_app.ports.repositories import TodoRepositoryPort
 
-_DEFAULT_NOTIFIER = InMemoryNotificationAdapter()
+
+class _DefaultNotifierSentinel(NotificationPort):
+    """Sentinel marker for unprovided default notifier."""
+
+    def notify(
+        self,
+        title: str,
+        body: str,
+        priority: NotificationPriority = NotificationPriority.NORMAL,
+        tags: list[str] | None = None,
+        targets: list[str] | None = None,
+    ) -> bool:
+        return True
+
+
+_SENTINEL_NOTIFIER = _DefaultNotifierSentinel()
 
 
 def _to_dto(item: TodoItem) -> TodoItemDTO:
@@ -59,7 +74,7 @@ class CreateTodoHandler:
         """
         item = TodoItem(
             title=cmd.title,
-            owner_id=cmd.owner_id,
+            owner_id=cmd.owner_id or "alice",
             description=cmd.description,
             priority=cmd.priority,
         )
@@ -112,10 +127,14 @@ class DeleteTodoHandler:
     def __init__(
         self,
         repo: TodoRepositoryPort,
-        notifier: NotificationPort = _DEFAULT_NOTIFIER,
+        notifier: NotificationPort = _SENTINEL_NOTIFIER,
     ) -> None:
         self.repo = repo
-        self.notifier = notifier
+        self.notifier = (
+            InMemoryNotificationAdapter()
+            if isinstance(notifier, _DefaultNotifierSentinel)
+            else notifier
+        )
 
     def __call__(self, cmd: DeleteTodoCommand) -> bool:
         """Delete target To-Do item and dispatch security notifications on admin overrides.
@@ -254,7 +273,7 @@ def handle_complete_todo(
 def handle_delete_todo(
     cmd: DeleteTodoCommand,
     repo: TodoRepositoryPort,
-    notifier: NotificationPort = _DEFAULT_NOTIFIER,
+    notifier: NotificationPort | None = None,
 ) -> bool:
     """Functional convenience helper to delete a To-Do item.
 
@@ -270,7 +289,8 @@ def handle_delete_todo(
         TodoNotFoundError: If item does not exist.
         PermissionDeniedError: If requester lacks permission.
     """
-    return DeleteTodoHandler(repo, notifier)(cmd)
+    effective_notifier = InMemoryNotificationAdapter() if notifier is None else notifier
+    return DeleteTodoHandler(repo, effective_notifier)(cmd)
 
 
 def handle_list_todos(

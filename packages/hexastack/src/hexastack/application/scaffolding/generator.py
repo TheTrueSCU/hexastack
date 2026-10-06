@@ -66,9 +66,18 @@ class ProjectScaffolder:
 
     def _validate_target_directory(self) -> None:
         if self._direct_target:
-            if (self.target_dir / "pyproject.toml").exists():
+            potential_collisions = [
+                "pyproject.toml",
+                "README.md",
+                "Dockerfile",
+                ".gitignore",
+            ]
+            colliding = [
+                f for f in potential_collisions if (self.target_dir / f).exists()
+            ]
+            if colliding:
                 raise FileExistsError(
-                    f"Directory '{self.target_dir}' already contains a pyproject.toml."
+                    f"Directory '{self.target_dir}' already contains conflicting file(s): {', '.join(colliding)}."
                 )
         else:
             if self.target_dir.exists() and any(self.target_dir.iterdir()):

@@ -123,6 +123,7 @@ class FreezeAccountHandler:
             raise AccountNotFoundError(f"Account '{cmd.account_id}' not found.")
 
         account.status = AccountStatus.FROZEN
+        account.version += 1
         self.account_repo.save(account)
         return FreezeAccountResponse(
             account_id=account.account_id,
@@ -216,8 +217,7 @@ class TransferMoneyHandler:
             entries=[debit_entry, credit_entry],
         )
 
-        self.account_repo.save(source)
-        self.account_repo.save(dest)
+        self.account_repo.save_all([source, dest])
         self.ledger_repo.save_transaction(tx)
 
         return TransferMoneyResponse(
@@ -297,9 +297,8 @@ class RecordTransactionHandler:
         for entry in entries:
             accounts[entry.account_id].apply_entry(entry)
 
-        # Persist all
-        for acc in accounts.values():
-            self.account_repo.save(acc)
+        # Persist all atomically
+        self.account_repo.save_all(list(accounts.values()))
         self.ledger_repo.save_transaction(tx)
 
         return RecordTransactionResponse(
