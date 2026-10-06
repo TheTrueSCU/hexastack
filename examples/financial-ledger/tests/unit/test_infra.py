@@ -22,6 +22,7 @@ from financial_ledger.domain.commands import (
 )
 from financial_ledger.domain.exceptions import (
     AccountNotFoundError,
+    ConcurrencyConflictError,
     InvalidAmountError,
 )
 from financial_ledger.domain.models import (
@@ -278,3 +279,134 @@ def test_fastapi_rest_endpoints():
     )
     # Will fail with 400 because acc-rest-src is frozen
     assert res7.status_code == 400
+
+
+def test_cross_tenant_transfer_and_postings_rejected(
+    account_repo: InMemoryAccountRepository,
+    ledger_repo: InMemoryLedgerRepository,
+):
+    """Verify transfers and postings cannot cross tenant boundaries."""
+    acc_t1 = Account(
+        account_id="acc-t1",
+        tenant_id="tenant-1",
+        balance=Decimal("100.00"),
+        currency="USD",
+    )
+    acc_t2 = Account(
+        account_id="acc-t2",
+        tenant_id="tenant-2",
+        balance=Decimal("50.00"),
+        currency="USD",
+    )
+    account_repo.save(acc_t1)
+    account_repo.save(acc_t2)
+
+    transfer_handler = TransferMoneyHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
+    with pytest.raises(InvalidAmountError, match="across tenant boundaries"):
+        transfer_handler(
+            TransferMoneyCommand(
+                source_account_id="acc-t1",
+                destination_account_id="acc-t2",
+                amount=Decimal("10.00"),
+                currency="USD",
+                reference="CROSS-TENANT",
+            )
+        )
+
+    record_handler = RecordTransactionHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
+    with pytest.raises(InvalidAmountError, match="crosses tenant boundaries"):
+        record_handler(
+            RecordTransactionCommand(
+                reference="CROSS-TENANT-RECORD",
+                description="Cross tenant split",
+                entries=[
+                    PostingLineDto(
+                        account_id="acc-t1",
+                        direction="DEBIT",
+                        amount=Decimal("10.00"),
+                        currency="USD",
+                    ),
+                    PostingLineDto(
+                        account_id="acc-t2",
+                        direction="CREDIT",
+                        amount=Decimal("10.00"),
+                        currency="USD",
+                    ),
+                ],
+            )
+        )
+
+
+def test_currency_mismatch_rejected(
+    account_repo: InMemoryAccountRepository,
+    ledger_repo: InMemoryLedgerRepository,
+):
+    """Verify currency mismatches in accounts or transfers are rejected."""
+    acc_usd = Account(account_id="acc-usd", currency="USD", balance=Decimal("100.00"))
+    acc_eur = Account(account_id="acc-eur", currency="EUR", balance=Decimal("100.00"))
+    account_repo.save(acc_usd)
+    account_repo.save(acc_eur)
+
+    transfer_handler = TransferMoneyHandler(
+        account_repo=account_repo, ledger_repo=ledger_repo
+    )
+    with pytest.raises(InvalidAmountError, match="Transfer currency"):
+        transfer_handler(
+            TransferMoneyCommand(
+                source_account_id="acc-usd",
+                destination_account_id="acc-eur",
+                amount=Decimal("10.00"),
+                currency="USD",
+                reference="CURR-MISMATCH",
+            )
+        )
+
+
+def test_concurrency_conflict_and_ledger_idempotency(
+    account_repo: InMemoryAccountRepository,
+    ledger_repo: InMemoryLedgerRepository,
+):
+    """Verify optimistic locking prevents lost updates and ledger save is idempotent."""
+    acc = Account(account_id="acc-conc", balance=Decimal("100.00"))
+    account_repo.save(acc)
+
+    # First read and modification
+    c1 = account_repo.get_by_id("acc-conc")
+    assert c1 is not None
+    entry1 = TransactionEntry(
+        account_id="acc-conc", direction=EntryDirection.DEBIT, amount=Decimal("10.00")
+    )
+    c1.apply_entry(entry1)
+    account_repo.save(c1)
+
+    # Stale object with old version cannot overwrite newer version
+    stale = Account(account_id="acc-conc", balance=Decimal("50.00"), version=0)
+    with pytest.raises(ConcurrencyConflictError):
+        account_repo.save(stale)
+
+    # Resaving existing transaction does not duplicate entries
+    tx = JournalTransaction(
+        reference="TX-IDEM",
+        description="Idempotent test",
+        entries=[
+            TransactionEntry(
+                account_id="acc-conc",
+                direction=EntryDirection.DEBIT,
+                amount=Decimal("10.00"),
+            ),
+            TransactionEntry(
+                account_id="acc-conc",
+                direction=EntryDirection.CREDIT,
+                amount=Decimal("10.00"),
+            ),
+        ],
+    )
+    ledger_repo.save_transaction(tx)
+    entries_count_1 = len(ledger_repo.get_entries_for_account("acc-conc"))
+    ledger_repo.save_transaction(tx)
+    entries_count_2 = len(ledger_repo.get_entries_for_account("acc-conc"))
+    assert entries_count_1 == entries_count_2

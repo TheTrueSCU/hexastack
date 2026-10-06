@@ -55,15 +55,14 @@ def add_serve_command(app: typer.Typer) -> None:
                 "Install via 'pip install hexastack[web]' or 'pip install uvicorn[standard]'."
             )
 
-        if importlib.util.find_spec("fastapi") is None:
+        if (
+            importlib.util.find_spec("fastapi") is None
+            or importlib.util.find_spec("hexastack_fastapi") is None
+        ):
             raise MissingDependencyError(
-                "fastapi is required to run the local server. "
+                "fastapi and hexastack-fastapi are required to run the local server. "
                 "Install via 'pip install hexastack[fastapi]'."
             )
-
-        from hexastack.adapters.fastapi import create_demo_app
-
-        demo_app = create_demo_app()
 
         if ziti_identity is not None:
             from rich.console import Console
@@ -85,9 +84,31 @@ def add_serve_command(app: typer.Typer) -> None:
                 bind_port=port,
             )
             adapter = OpenZitiASGIAdapter(ziti_config)
-            adapter.run_uvicorn(demo_app, reload=reload)
+            if reload:
+                adapter.run_uvicorn(
+                    "hexastack.adapters.fastapi:create_demo_app",
+                    factory=True,
+                    reload=True,
+                )
+            else:
+                from hexastack.adapters.fastapi import create_demo_app
+
+                demo_app = create_demo_app()
+                adapter.run_uvicorn(demo_app, reload=False)
             return
 
         import uvicorn
 
-        uvicorn.run(demo_app, host=host, port=port, reload=reload)
+        if reload:
+            uvicorn.run(
+                "hexastack.adapters.fastapi:create_demo_app",
+                factory=True,
+                host=host,
+                port=port,
+                reload=True,
+            )
+        else:
+            from hexastack.adapters.fastapi import create_demo_app
+
+            demo_app = create_demo_app()
+            uvicorn.run(demo_app, host=host, port=port, reload=False)

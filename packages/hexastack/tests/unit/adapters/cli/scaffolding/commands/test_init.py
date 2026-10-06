@@ -57,3 +57,21 @@ def test_init_command(tmp_path):
         res_wiz = runner.invoke(app, ["--interactive"])
         assert res_wiz.exit_code == 0
         assert mock_scaffold.called
+
+    with patch(
+        "hexastack.adapters.cli.scaffolding.commands.init.scaffold_project",
+        side_effect=FileExistsError("Target directory already exists."),
+    ):
+        res_err = runner.invoke(
+            app,
+            [
+                "--name",
+                "existing_project",
+                "--template",
+                "minimal",
+                "--db",
+                "in-memory",
+            ],
+        )
+        assert res_err.exit_code == 1
+        assert "Initialization failed" in res_err.output

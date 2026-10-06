@@ -10,7 +10,9 @@ dependencies = [
 [tool.uv]
 package = false
 override-dependencies = [
+    "multidict>=6.9.1",
     "pyjwt>=2.14.0",
+    "werkzeug>=3.1.9",
 ]
 
 [tool.uv.workspace]
@@ -97,7 +99,9 @@ dev = [
 
 [tool.ty.environment]
 extra-paths = [
+    "examples/financial-ledger/src",
     "examples/todo-app/src",
+    "examples/trip-booking/src",
 ]
 
 [tool.coverage.run]

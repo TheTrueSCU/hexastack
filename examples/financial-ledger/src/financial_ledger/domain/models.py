@@ -61,6 +61,7 @@ class Account:
     balance: Decimal = field(default_factory=lambda: Decimal("0.00"))
     credit_limit: Decimal = field(default_factory=lambda: Decimal("0.00"))
     status: AccountStatus = AccountStatus.ACTIVE
+    version: int = 0
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def assert_active(self) -> None:
@@ -83,8 +84,14 @@ class Account:
         Raises:
             AccountFrozenError: If account is frozen or closed.
             InsufficientFundsError: If resulting balance breaches credit limit.
+            InvalidAmountError: If entry currency does not match account currency.
         """
         self.assert_active()
+        if entry.currency != self.currency:
+            raise InvalidAmountError(
+                f"Currency mismatch on account '{self.account_id}': "
+                f"account currency is '{self.currency}', but entry currency is '{entry.currency}'."
+            )
         if entry.direction == EntryDirection.CREDIT:
             self.balance += entry.amount
         elif entry.direction == EntryDirection.DEBIT:
@@ -93,6 +100,7 @@ class Account:
                     f"Insufficient funds on account '{self.account_id}'. Current: {self.balance}, Required: {entry.amount}"
                 )
             self.balance -= entry.amount
+        self.version += 1
 
 
 @dataclass
@@ -139,17 +147,27 @@ class JournalTransaction:
                 "A double-entry transaction requires at least two posting lines."
             )
 
-        total_debits = sum(
-            (e.amount for e in self.entries if e.direction == EntryDirection.DEBIT),
-            start=Decimal("0.00"),
-        )
-        total_credits = sum(
-            (e.amount for e in self.entries if e.direction == EntryDirection.CREDIT),
-            start=Decimal("0.00"),
-        )
-
-        if total_debits != total_credits:
-            raise UnbalancedTransactionError(
-                f"Unbalanced double-entry transaction '{self.reference}': "
-                f"total debits ({total_debits}) != total credits ({total_credits})"
+        currencies = {e.currency for e in self.entries}
+        for curr in sorted(currencies):
+            curr_debits = sum(
+                (
+                    e.amount
+                    for e in self.entries
+                    if e.direction == EntryDirection.DEBIT and e.currency == curr
+                ),
+                start=Decimal("0.00"),
             )
+            curr_credits = sum(
+                (
+                    e.amount
+                    for e in self.entries
+                    if e.direction == EntryDirection.CREDIT and e.currency == curr
+                ),
+                start=Decimal("0.00"),
+            )
+
+            if curr_debits != curr_credits:
+                raise UnbalancedTransactionError(
+                    f"Unbalanced double-entry transaction '{self.reference}' for currency '{curr}': "
+                    f"total debits ({curr_debits}) != total credits ({curr_credits})"
+                )

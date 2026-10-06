@@ -263,7 +263,17 @@ def test_multi_legged_record_transaction(
     )
     res = record_handler(cmd)
     assert res.entry_count == 3
+    payer = account_repo.get_by_id("acc-payer")
+    assert payer is not None
+    payer_balance = payer.balance
+    assert payer_balance == Decimal("0.00")
 
-    assert account_repo.get_by_id("acc-payer").balance == Decimal("0.00")
-    assert account_repo.get_by_id("acc-merchant").balance == Decimal("97.00")
-    assert account_repo.get_by_id("acc-fee").balance == Decimal("3.00")
+    merchant = account_repo.get_by_id("acc-merchant")
+    assert merchant is not None
+    merchant_balance = merchant.balance
+    assert merchant_balance == Decimal("97.00")
+
+    fee = account_repo.get_by_id("acc-fee")
+    assert fee is not None
+    fee_balance = fee.balance
+    assert fee_balance == Decimal("3.00")

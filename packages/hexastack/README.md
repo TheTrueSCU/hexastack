@@ -244,7 +244,7 @@ hexastack grpc serve --host 0.0.0.0 --port 50051
 # Manage database migrations (requires hexastack[db])
 hexastack db init migrations/
 hexastack db revision "add users table"
-hexastack db upgrade head
+hexastack db migrate
 hexastack db current
 hexastack db history
 ```

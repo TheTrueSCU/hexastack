@@ -58,5 +58,8 @@ ignore = ["D100", "D104", "D107", "E501"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**/*.py" = ["ARG", "D", "E501", "S101", "S105"]
+
 [tool.uv.sources]
 hexastack-workspace = { path = "../../", editable = true }

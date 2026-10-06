@@ -25,7 +25,7 @@ router = CqrsRouter(tags=["todos"])
 def get_current_user(
     authorization: Annotated[str | None, Header()] = None,
 ) -> UserContext:
-    """Extract authenticated user context from Bearer token or fallback to demo alice."""
+    """Extract authenticated user context from Bearer token or fallback to demo anonymous."""
     if authorization and authorization.startswith("Bearer "):
         token = authorization.removeprefix("Bearer ").strip()
         # Simulated/demo token parser: "user:bob" -> UserContext(user_id="bob", roles=["user"])
@@ -40,8 +40,13 @@ def get_current_user(
                         detail="Invalid admin credentials: caller cannot claim admin role.",
                     )
                 roles = ["admin"]
-            else:
+            elif role == "user":
                 roles = ["user"]
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"Unsupported identity role: '{role}'",
+                )
             ctx = UserContext(user_id=user_id, roles=roles)
             set_user_context(ctx)
             return ctx
@@ -50,7 +55,7 @@ def get_current_user(
         return ctx
 
     # Default ambient user for unauthenticated requests
-    ctx = UserContext(user_id="alice", roles=["user"])
+    ctx = UserContext(user_id="anonymous", roles=[])
     set_user_context(ctx)
     return ctx
 
@@ -61,14 +66,16 @@ def create_todo(
     pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
     user: Annotated[UserContext, Depends(get_current_user)],
 ) -> TodoItemDTO:
-    # If owner_id was not explicitly specified, bind to current authenticated user
-    if not cmd.owner_id or cmd.owner_id == "alice":
-        cmd = CreateTodoCommand(
-            title=cmd.title,
-            owner_id=user.user_id,
-            description=cmd.description,
-            priority=cmd.priority,
-        )
+    # Non-admin users cannot spoof owner_id for another user; bind to authenticated user
+    effective_owner = user.user_id
+    if "admin" in user.roles and cmd.owner_id:
+        effective_owner = cmd.owner_id
+    cmd = CreateTodoCommand(
+        title=cmd.title,
+        owner_id=effective_owner,
+        description=cmd.description,
+        priority=cmd.priority,
+    )
     return pipeline.execute(cmd)
 
 
