@@ -168,3 +168,52 @@ def test_admin_can_complete_any_users_todo() -> None:
         assert comp_status == 200
         completed_flag = comp_resp.json()["completed"]
         assert completed_flag is True
+
+
+@pytest.mark.ch03
+def test_anonymous_cannot_access_or_modify_alices_todo() -> None:
+    """Verify unauthenticated requests cannot view, complete, or delete Alice's tasks."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "auth_test.db"
+        app = build_app(db_url=f"sqlite:///{db_path}")
+        client = TestClient(app)
+
+        alice_headers = {"Authorization": "Bearer user:alice"}
+        resp = client.post(
+            "/todos",
+            json={"title": "Alice Confidential", "priority": "high"},
+            headers=alice_headers,
+        )
+        assert resp.status_code == 201
+        todo_id = resp.json()["id"]
+
+        # Anonymous cannot read Alice's task
+        anon_get = client.get(f"/todos/{todo_id}")
+        assert anon_get.status_code == 403
+
+        # Anonymous cannot complete Alice's task
+        anon_comp = client.post(f"/todos/{todo_id}/complete")
+        assert anon_comp.status_code == 403
+
+        # Anonymous cannot delete Alice's task
+        anon_del = client.delete(f"/todos/{todo_id}")
+        assert anon_del.status_code == 403
+
+
+@pytest.mark.ch03
+def test_user_cannot_spoof_task_ownership() -> None:
+    """Verify non-admin caller cannot claim another user's identity as owner."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "auth_test.db"
+        app = build_app(db_url=f"sqlite:///{db_path}")
+        client = TestClient(app)
+
+        alice_headers = {"Authorization": "Bearer user:alice"}
+        resp = client.post(
+            "/todos",
+            json={"title": "Spoofed Task", "owner_id": "bob", "priority": "low"},
+            headers=alice_headers,
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["owner_id"] == "alice"

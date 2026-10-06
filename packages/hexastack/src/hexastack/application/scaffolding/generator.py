@@ -24,18 +24,27 @@ class ProjectScaffolder:
         with zero-framework domain isolation, pre-configured import-linter rules, and passing tests.
     """
 
-    def __init__(self, config: ScaffoldConfig, output_dir: Path | None = None) -> None:
+    def __init__(
+        self,
+        config: ScaffoldConfig,
+        output_dir: Path | None = None,
+        target_dir: Path | None = None,
+    ) -> None:
         """Initialize project scaffolder with target configuration and root destination directory.
 
         Args:
             config: Project scaffolding parameters.
             output_dir: Destination base directory (defaults to current working directory).
+            target_dir: Explicit destination directory to write into directly, bypassing `base_dir / name`.
         """
         self.config = config
         self.base_dir = output_dir or Path.cwd()
         self.project_slug = config.name.lower().replace("-", "_").replace(" ", "_")
         self.package_name = self.project_slug
-        self.target_dir = self.base_dir / config.name
+        self._direct_target = target_dir is not None
+        self.target_dir = (
+            target_dir if target_dir is not None else self.base_dir / config.name
+        )
 
     def generate(self) -> Path:
         """Render and write all project files to disk.
@@ -56,10 +65,25 @@ class ProjectScaffolder:
         return self.target_dir
 
     def _validate_target_directory(self) -> None:
-        if self.target_dir.exists() and any(self.target_dir.iterdir()):
-            raise FileExistsError(
-                f"Directory '{self.target_dir}' already exists and is not empty."
-            )
+        if self._direct_target:
+            potential_collisions = [
+                "pyproject.toml",
+                "README.md",
+                "Dockerfile",
+                ".gitignore",
+            ]
+            colliding = [
+                f for f in potential_collisions if (self.target_dir / f).exists()
+            ]
+            if colliding:
+                raise FileExistsError(
+                    f"Directory '{self.target_dir}' already contains conflicting file(s): {', '.join(colliding)}."
+                )
+        else:
+            if self.target_dir.exists() and any(self.target_dir.iterdir()):
+                raise FileExistsError(
+                    f"Directory '{self.target_dir}' already exists and is not empty."
+                )
         self.target_dir.mkdir(parents=True, exist_ok=True)
 
     def _write_file(self, rel_path: str, content: str) -> None:
@@ -453,6 +477,7 @@ def scaffold_project(
     include_mutation: bool = True,
     include_sentry: bool = False,
     output_dir: Path | None = None,
+    target_dir: Path | None = None,
 ) -> Path:
     """Convenience helper to scaffold a new Hexastack project."""
     config = ScaffoldConfig(
@@ -471,7 +496,7 @@ def scaffold_project(
         include_mutation=include_mutation,
         include_sentry=include_sentry,
     )
-    scaffolder = ProjectScaffolder(config, output_dir=output_dir)
+    scaffolder = ProjectScaffolder(config, output_dir=output_dir, target_dir=target_dir)
     return scaffolder.generate()
 
 

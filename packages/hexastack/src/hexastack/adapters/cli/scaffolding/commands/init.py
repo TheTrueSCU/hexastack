@@ -233,22 +233,24 @@ def add_init_command(app: typer.Typer) -> None:
             include_openssf = with_openssf or (selected_template == "enterprise")
             include_sentry = with_sentry
 
-        target_path = scaffold_project(
-            name=proj_name,
-            template=selected_template,
-            db_type=selected_db,
-            include_events=include_events,
-            include_mcp=include_mcp,
-            include_release=include_release,
-            include_openssf=include_openssf,
-            include_qual=include_qual,
-            include_agents=include_agents,
-            include_mutation=include_mutation,
-            include_sentry=include_sentry,
-            output_dir=current_dir.parent,
-        )
+        try:
+            target_path = scaffold_project(
+                name=proj_name,
+                template=selected_template,
+                db_type=selected_db,
+                include_events=include_events,
+                include_mcp=include_mcp,
+                include_release=include_release,
+                include_openssf=include_openssf,
+                include_qual=include_qual,
+                include_agents=include_agents,
+                include_mutation=include_mutation,
+                include_sentry=include_sentry,
+                target_dir=current_dir,
+            )
+        except FileExistsError as exc:
+            typer.echo(f"❌ Initialization failed: {exc}", err=True)
+            raise typer.Exit(code=1) from exc
 
         typer.echo(f"🎉 Initialized Hexastack project in '{target_path}'")
-        typer.echo(
-            f"   Next steps:\n     cd {proj_name}\n     uv sync\n     uv run pytest"
-        )
+        typer.echo("   Next steps:\n     uv sync\n     uv run pytest")

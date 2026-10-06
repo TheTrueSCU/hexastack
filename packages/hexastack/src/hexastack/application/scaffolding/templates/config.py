@@ -17,14 +17,13 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 # Install dependencies in isolated layer
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev
+    uv sync --no-install-project --no-dev
 
 # Copy application source and build final virtualenv
 COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --no-dev
 
 # Final rootless production runtime stage
 FROM python:3.13-slim-bookworm AS runtime
@@ -125,6 +124,7 @@ dev = [
     "hypothesis>=6.168.3",
     "pre-commit>=4.6.2",
     "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.16.9",
     "ty>=0.0.84",
 ]

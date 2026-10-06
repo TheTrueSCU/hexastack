@@ -17,7 +17,7 @@ def test_db_commands():
     assert res.exit_code == 0
     assert "init" in res.output
     assert "revision" in res.output
-    assert "upgrade" in res.output
+    assert "migrate" in res.output
 
     with patch("hexastack_db.infra.migrations.init_migrations") as mock_init:
         res = runner.invoke(app, ["db", "init", "custom_mig"])

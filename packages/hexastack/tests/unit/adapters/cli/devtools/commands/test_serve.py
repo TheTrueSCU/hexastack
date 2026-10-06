@@ -24,6 +24,17 @@ def test_serve_commands(tmp_path: Path):
     assert "ziti-identity" in clean_output
 
     with patch("uvicorn.run") as mock_uvicorn:
+        res_default = runner.invoke(app, [])
+        assert res_default.exit_code == 0
+        mock_uvicorn.assert_called_once_with(
+            "hexastack.adapters.fastapi:create_demo_app",
+            factory=True,
+            host="127.0.0.1",
+            port=8000,
+            reload=True,
+        )
+
+    with patch("uvicorn.run") as mock_uvicorn:
         res_run = runner.invoke(app, ["--no-reload"])
         assert res_run.exit_code == 0
         mock_uvicorn.assert_called_once()

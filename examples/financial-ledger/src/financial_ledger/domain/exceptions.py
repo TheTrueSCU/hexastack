@@ -6,6 +6,7 @@ __all__ = [
     "AccountAlreadyExistsError",
     "AccountFrozenError",
     "AccountNotFoundError",
+    "ConcurrencyConflictError",
     "FinancialLedgerDomainError",
     "InsufficientFundsError",
     "InvalidAmountError",
@@ -15,6 +16,10 @@ __all__ = [
 
 class FinancialLedgerDomainError(Exception):
     """Base exception for all financial ledger domain errors."""
+
+
+class ConcurrencyConflictError(FinancialLedgerDomainError):
+    """Raised when an account state was modified by a concurrent transaction."""
 
 
 class InsufficientFundsError(FinancialLedgerDomainError):

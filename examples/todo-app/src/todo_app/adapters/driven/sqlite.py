@@ -111,7 +111,7 @@ class SqliteTodoRepository(TodoRepositoryPort):
 
 
 __all__ = [
+    "create_sqlite_session_factory",
     "SqliteTodoRepository",
     "TodoItemModel",
-    "create_sqlite_session_factory",
 ]

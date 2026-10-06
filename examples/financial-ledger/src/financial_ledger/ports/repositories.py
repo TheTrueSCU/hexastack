@@ -20,6 +20,18 @@ class AccountRepositoryPort(ABC):
         """Persist an account state."""
         raise NotImplementedError
 
+    def save_all(self, accounts: list[Account]) -> None:
+        """Persist multiple account states.
+
+        Args:
+            accounts: Sequence of accounts to save.
+
+        Notes/Architectural Intent:
+            Default fallback iterates save sequentially; atomic repositories should override this method.
+        """
+        for account in accounts:
+            self.save(account)
+
     @abstractmethod
     def get_by_id(self, account_id: str) -> Account | None:
         """Retrieve an account by its unique identifier."""

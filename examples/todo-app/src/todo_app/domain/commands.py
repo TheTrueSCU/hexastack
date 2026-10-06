@@ -16,7 +16,7 @@ class CreateTodoCommand(Command):
     """Command to create a new To-Do task."""
 
     title: str = Field(..., min_length=1, description="Title of the task.")
-    owner_id: str = Field("alice", description="Owner identifier of the task.")
+    owner_id: str | None = Field(None, description="Owner identifier of the task.")
     description: str = Field("", description="Optional details or context.")
     priority: Priority = Field(Priority.MEDIUM, description="Task urgency level.")
 
