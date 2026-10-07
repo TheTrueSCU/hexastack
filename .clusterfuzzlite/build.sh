@@ -1,16 +1,9 @@
 #!/bin/bash -eu
 
 python3 -m pip install --upgrade pip
-python3 -m pip install uv
-uv pip install --system -e "packages/hexastack[all]" || python3 -m pip install -e "packages/hexastack[all]" || true
+python3 -m pip install --ignore-requires-python .
 
-# Find all Atheris fuzz harnesses across packages
+# Find and compile all Atheris fuzz harnesses across packages
 for fuzzer in $(find packages -name 'test_fuzz_*.py'); do
-    fuzzer_basename=$(basename -s .py "$fuzzer")
-    cp "$fuzzer" "$OUT/${fuzzer_basename}.py"
-    cat <<EOF > "$OUT/${fuzzer_basename}"
-#!/bin/sh
-exec python3 "$OUT/${fuzzer_basename}.py" "\$@"
-EOF
-    chmod +x "$OUT/${fuzzer_basename}"
+    compile_python_fuzzer "$fuzzer"
 done
