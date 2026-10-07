@@ -66,7 +66,7 @@ class CorrelationHttpMiddleware:
         corr_token = set_correlation_id(correlation_id)
 
         # 2. Extract User / Tenant context (only if explicitly trusted upstream)
-        user_token = None
+        user_context = None
         if self._trust_identity_headers:
             raw_uid = header_map.get(self._user_header)
             raw_tid = header_map.get(self._tenant_header)
@@ -75,7 +75,7 @@ class CorrelationHttpMiddleware:
                     user_id=raw_uid.decode("latin1") if raw_uid else "anonymous",
                     tenant_id=raw_tid.decode("latin1") if raw_tid else None,
                 )
-                user_token = set_user_context(user_context)
+        user_token = set_user_context(user_context)
 
         # 3. Intercept response to inject correlation header
         async def send_wrapper(message: Message) -> None:
@@ -93,8 +93,7 @@ class CorrelationHttpMiddleware:
             await self._app(scope, receive, send_wrapper)
         finally:
             correlation_id_ctx.reset(corr_token)
-            if user_token is not None:
-                user_ctx.reset(user_token)
+            user_ctx.reset(user_token)
 
 
 __all__ = [

@@ -163,8 +163,11 @@ class LiteLlmAdapter(LlmProviderPort):
             kwargs["api_base"] = self._config.litellm.api_base
 
         try:
-            response = litellm.completion(**kwargs)
-            return response.choices[0].message.content or ""
+            response: Any = litellm.completion(**kwargs)
+            choices = getattr(response, "choices", None)
+            if choices:
+                return choices[0].message.content or ""
+            return ""
         except Exception as exc:
             raise LlmProviderError(
                 str(exc),
@@ -211,8 +214,11 @@ class LiteLlmAdapter(LlmProviderPort):
             kwargs["api_base"] = self._config.litellm.api_base
 
         try:
-            response = await litellm.acompletion(**kwargs)
-            return response.choices[0].message.content or ""
+            response: Any = await litellm.acompletion(**kwargs)
+            choices = getattr(response, "choices", None)
+            if choices:
+                return choices[0].message.content or ""
+            return ""
         except Exception as exc:
             raise LlmProviderError(
                 str(exc),

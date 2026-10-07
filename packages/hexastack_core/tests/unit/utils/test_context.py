@@ -32,17 +32,21 @@ def test_context_helper_functions():
 
 
 def test_context_vars_and_user_context():
-    correlation_id_ctx.set("req-12345")
+    corr_token = correlation_id_ctx.set("req-12345")
     assert correlation_id_ctx.get() == "req-12345"
 
     user = UserContext(user_id="u-99", roles=["admin", "user"], tenant_id="tenant-1")
-    user_ctx.set(user)
+    user_token = user_ctx.set(user)
 
-    retrieved = user_ctx.get()
-    assert retrieved is not None
-    assert retrieved.user_id == "u-99"
-    assert retrieved.roles == ["admin", "user"]
-    assert retrieved.tenant_id == "tenant-1"
+    try:
+        retrieved = user_ctx.get()
+        assert retrieved is not None
+        assert retrieved.user_id == "u-99"
+        assert retrieved.roles == ["admin", "user"]
+        assert retrieved.tenant_id == "tenant-1"
+    finally:
+        user_ctx.reset(user_token)
+        correlation_id_ctx.reset(corr_token)
 
 
 def test_correlation_scope():

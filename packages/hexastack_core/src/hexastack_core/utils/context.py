@@ -1,5 +1,5 @@
 import uuid
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from dataclasses import dataclass, field
@@ -36,7 +36,7 @@ __all__ = [
 
 
 @contextmanager
-def correlation_scope(cid: str | None = None) -> Iterator[str]:
+def correlation_scope(cid: str | None = None) -> Generator[str]:
     """Execute a code block within a managed correlation ID scope.
 
     Notes/Architectural Intent:

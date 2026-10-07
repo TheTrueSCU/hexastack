@@ -5,7 +5,7 @@ Notes/Architectural Intent:
     to enable contract-driven fuzzing and invariant testing on Command/Query pipelines.
 """
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
@@ -54,7 +54,7 @@ def flag_scope(
     overrides: dict[str, Any],
     *,
     context: EvaluationContext | None = None,
-) -> Iterator[None]:
+) -> Generator[None]:
     """Temporarily override feature flags within a context block for test isolation.
 
     Notes/Architectural Intent:
