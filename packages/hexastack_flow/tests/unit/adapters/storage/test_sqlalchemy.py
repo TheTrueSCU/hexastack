@@ -172,10 +172,10 @@ def test_step_checkpoint_crud(sqlite_store: SqlAlchemyWorkflowStore) -> None:
     chk_list = sqlite_store.get_checkpoints("run-chk-1")
     assert len(chk_list) == 1
 
-    # Delete
-    sqlite_store.delete_checkpoints("run-chk-1")
-    after_del = sqlite_store.get_checkpoints("run-chk-1")
-    assert len(after_del) == 0
+    # Clear checkpoints via port method
+    sqlite_store.clear_checkpoints("run-chk-1")
+    after_clear = sqlite_store.get_checkpoints("run-chk-1")
+    assert len(after_clear) == 0
 
 
 def test_missing_sqlalchemy_dependency() -> None:

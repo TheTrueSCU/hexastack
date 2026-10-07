@@ -1938,21 +1938,21 @@ wheels = [
 
 [[package]]
 name = "hexaflow"
-version = "0.4.0"
+version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/80/e0/9d1a1758a11fadba4f000cd21ef84dad2a8d91c7803663eb68c57ae2a9ab/hexaflow-0.4.0.tar.gz", hash = "sha256:75f273fa5796892b13ce26501fd5a894052b5c83b22104b996ae84d5198d04b6", size = 133588, upload-time = "2026-09-25T16:54:30.537Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/73/45/2de4a3e1fd6dfc7a3bce4a6b07b69368971eb2b0deaa9b2a356a9661161b/hexaflow-0.4.1.tar.gz", hash = "sha256:06b38c7067dc399c2ae9b9e6d7f937a3a767e54dc93b098aaabd2b9a19c8fbd2", size = 142682, upload-time = "2026-10-03T16:33:41.936Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4f/59/67f26240dd7c978ff2b01ede9ac21279d3492b8a0d268739aba5b8742c99/hexaflow-0.4.0-py3-none-any.whl", hash = "sha256:a188093fab6c13688bd1107b68cce22750ae6f22000b29559aeee3220c306f66", size = 44765, upload-time = "2026-09-25T16:54:29.636Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/3e/018644e48b1a45f04422ebe609667d19b42165f507dfcc7e5f2e3eee8c44/hexaflow-0.4.1-py3-none-any.whl", hash = "sha256:7e0390c90fa5d2cc060c22b400bba15cd1d64727fb45ed24b735a55bff1fcb97", size = 46675, upload-time = "2026-10-03T16:33:40.775Z" },
 ]
 
 [[package]]
 name = "hexaqual"
-version = "0.9.0"
+version = "0.9.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "complexipy" },
@@ -1969,9 +1969,9 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/05/2d/30b5182c9ca815f1c1513c7fed88fde42924e46fb239a417aa52110ed3a6/hexaqual-0.9.0.tar.gz", hash = "sha256:95dff7a3a407cda6d7b82b6b54420df2c6fd19ccf85afa47de79611c30a0caf9", size = 395396, upload-time = "2026-09-28T04:58:15.956Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/4f/df40dcbea19f926e5713a224f5564c9cfe2543078ef81889177056d7db15/hexaqual-0.9.1.tar.gz", hash = "sha256:4424c0f142f1d228327b5f8abca7943a78d3758b2f36cbd070fb8f94929bbed3", size = 407417, upload-time = "2026-10-03T06:25:41.748Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/60/d9284c4ca3a0376270a17cee987473da6eb2738a4a7700f5b7ae7df17419/hexaqual-0.9.0-py3-none-any.whl", hash = "sha256:e9ba2c7d0862fde774cd0241db393ff4bcc622ce25248bd52321f74b343ad3a1", size = 267364, upload-time = "2026-09-28T04:58:14.851Z" },
+    { url = "https://files.pythonhosted.org/packages/15/07/774912fcd12c089326261d16c624995869e351795bb6488705bb8d118645/hexaqual-0.9.1-py3-none-any.whl", hash = "sha256:733a390627c694baa2ad4c55f41786920d4b165eb764b9682127a822e1a384b9", size = 275196, upload-time = "2026-10-03T06:25:40.141Z" },
 ]
 
 [package.optional-dependencies]
@@ -2694,7 +2694,7 @@ events = [
 
 [package.metadata]
 requires-dist = [
-    { name = "hexaflow", specifier = ">=0.4.0" },
+    { name = "hexaflow", specifier = ">=0.4.1" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-db", marker = "extra == 'db'", editable = "packages/hexastack_db" },
@@ -2884,7 +2884,7 @@ ui = [
 
 [package.metadata]
 requires-dist = [
-    { name = "hexaqual", extras = ["all"], specifier = ">=0.9.0" },
+    { name = "hexaqual", extras = ["all"], specifier = ">=0.9.1" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-events", marker = "extra == 'events'", editable = "packages/hexastack_events" },
@@ -3026,7 +3026,7 @@ dev = [
     { name = "fsspec", specifier = ">=2024.1.0" },
     { name = "grpcio-reflection", specifier = ">=1.84.0" },
     { name = "grpcio-tools", specifier = ">=1.84.0" },
-    { name = "hexaqual", extras = ["all"], specifier = ">=0.9.0" },
+    { name = "hexaqual", extras = ["all"], specifier = ">=0.9.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "huey", specifier = ">=3.4.0" },
     { name = "hypothesis", specifier = ">=6.168.1" },
