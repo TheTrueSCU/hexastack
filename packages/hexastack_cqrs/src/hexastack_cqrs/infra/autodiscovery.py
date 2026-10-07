@@ -82,6 +82,7 @@ def _register_presenter(
     container: Container | None,
 ) -> None:
     """Register discovered CQRS presenter instance."""
+    presenter_inst: PresenterPort
     if inspect.isclass(obj) and container is not None:
         if obj not in container:
             container.register(obj)

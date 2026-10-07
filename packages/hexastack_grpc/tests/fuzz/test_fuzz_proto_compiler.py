@@ -15,15 +15,19 @@ import tempfile
 import time
 from typing import Any
 
+from hexastack_core.domain.exceptions import MissingDependencyError
+
 try:
     import atheris  # type: ignore[import-not-found]
 except ImportError:
     atheris = None  # type: ignore[assignment]
 
-with contextlib.suppress(ImportError):
-    import grpc_tools.protoc  # noqa: F401
+try:
+    from grpc_tools import protoc as _grpc_protoc
+except ImportError:
+    _grpc_protoc = None
 
-from hexastack_core.domain.exceptions import MissingDependencyError
+HAS_GRPC_TOOLS: bool = _grpc_protoc is not None
 
 if atheris is not None:
     with atheris.instrument_imports():
@@ -122,6 +126,7 @@ def fuzz_one_input(data: bytes) -> None:
 
 def test_fuzz_proto_compiler_smoke() -> None:
     """Smoke test ProtoCompiler fuzz harness under pytest."""
+    _ = HAS_GRPC_TOOLS
     res = run_standalone(runs=10)
     assert res["passed"] is True
 

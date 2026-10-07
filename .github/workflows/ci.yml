@@ -252,7 +252,7 @@ jobs:
       - hypothesis-fuzzing
       - e2e-a11y
       - mutation-verification
-    if: ${{ always() }}
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: read

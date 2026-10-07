@@ -51,9 +51,10 @@ class TransactionEntry:
 class JournalTransaction:
     reference: str
     description: str
-    entries: list[TransactionEntry]
+    entries: Sequence[TransactionEntry]
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "entries", tuple(self.entries))
         if len(self.entries) < 2:
             raise UnbalancedTransactionError(
                 "A double-entry transaction requires at least two posting lines."
