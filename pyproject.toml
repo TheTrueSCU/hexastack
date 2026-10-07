@@ -49,7 +49,7 @@ dev = [
     "alembic>=1.19.1",
     "atheris>=3.1.0; sys_platform == 'linux' or sys_platform == 'darwin'",
     "complexipy>=7.0.1",
-    "deptry>=0.23.0",
+    "deptry>=0.25.1",
     "detect-secrets>=1.5.0",
     "dirty-equals>=0.11",
     "dlt>=1.30.0",
