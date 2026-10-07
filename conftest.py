@@ -82,3 +82,22 @@ def fake_user_id(fake) -> str:
 def fake_email(fake) -> str:
     """Generate a realistic, deterministic synthetic safe email."""
     return fake.safe_email()
+
+
+@pytest.fixture(autouse=True)
+def _reset_hermetic_contextvars():
+    """Ensure contextvars are reset to default state across test invocations.
+
+    Notes/Architectural Intent:
+        Guarantees hermetic test isolation across parallel xdist workers
+        preventing leaked user_ctx or correlation_id_ctx from cascading.
+    """
+    from hexastack_core.utils.context import correlation_id_ctx, user_ctx
+
+    token_cid = correlation_id_ctx.set("")
+    token_user = user_ctx.set(None)
+    try:
+        yield
+    finally:
+        correlation_id_ctx.reset(token_cid)
+        user_ctx.reset(token_user)
