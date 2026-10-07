@@ -9,7 +9,7 @@ WORKDIR $SRC/hexastack
 # Ensure Python 3.13 is installed and sync the full workspace environment with uv
 RUN uv python install 3.13 && \
     uv sync --frozen && \
-    uv pip install pyinstaller
+    uv pip install pyinstaller grpcio-tools
 
 # Activate virtual environment for pyinstaller and compile_python_fuzzer
 ENV PATH="$SRC/hexastack/.venv/bin:$PATH"
