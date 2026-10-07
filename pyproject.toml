@@ -71,7 +71,7 @@ dev = [
     "limits>=5.8.0",
     "locust>=2.46.6",
     "memray>=1.20.0",
-    "mutmut<3",
+    "mutmut<4",
     "nats-py>=2.16.0",
     "nicegui>=3.16.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.44.0",
