@@ -103,7 +103,7 @@ class Account:
         self.version += 1
 
 
-@dataclass
+@dataclass(frozen=True)
 class TransactionEntry:
     """Individual debit or credit posting line in a double-entry transaction."""
 
@@ -121,7 +121,7 @@ class TransactionEntry:
             )
 
 
-@dataclass
+@dataclass(frozen=True)
 class JournalTransaction:
     """Double-entry journal transaction composed of balanced debit and credit entries.
 

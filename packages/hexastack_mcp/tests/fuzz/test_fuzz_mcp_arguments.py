@@ -9,7 +9,6 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import asyncio
-import importlib
 import json
 import random
 import sys
@@ -28,9 +27,9 @@ from hexastack_mcp.domain.exceptions import (
 from hexastack_mcp.infra.registries.server import McpServerRegistry
 
 try:
-    atheris: Any = importlib.import_module("atheris")
+    import atheris  # type: ignore[import-not-found]
 except ImportError:
-    atheris = None
+    atheris = None  # type: ignore[assignment]
 
 
 class FuzzEchoBus(CommandBusPort):

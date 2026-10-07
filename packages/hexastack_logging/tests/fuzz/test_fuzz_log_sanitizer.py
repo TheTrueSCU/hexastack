@@ -8,16 +8,15 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
-import importlib
 import os
 import sys
 import time
 from typing import Any
 
 try:
-    atheris: Any = importlib.import_module("atheris")
+    import atheris  # type: ignore[import-not-found]
 except ImportError:
-    atheris = None
+    atheris = None  # type: ignore[assignment]
 
 if atheris is not None:
     with atheris.instrument_imports():

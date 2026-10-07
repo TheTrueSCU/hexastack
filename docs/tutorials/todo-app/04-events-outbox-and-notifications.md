@@ -78,10 +78,10 @@ class DeleteTodoHandler:
     def __init__(
         self,
         repo: TodoRepositoryPort,
-        notifier: NotificationPort = InMemoryNotificationAdapter(),
+        notifier: NotificationPort | None = None,
     ) -> None:
         self.repo = repo
-        self.notifier = notifier
+        self.notifier = notifier or InMemoryNotificationAdapter()
 
     def __call__(self, cmd: DeleteTodoCommand) -> bool:
         item = self.repo.get_by_id(cmd.todo_id)

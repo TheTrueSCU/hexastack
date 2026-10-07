@@ -9,7 +9,6 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import contextlib
-import importlib
 import json
 import random
 import sys
@@ -32,9 +31,9 @@ from hexastack_flow.adapters.cqrs.steps import as_command_step
 from hexastack_flow.domain.models import CqrsStepMetadata, WorkflowExecutionResult
 
 try:
-    atheris: Any = importlib.import_module("atheris")
+    import atheris  # type: ignore[import-not-found]
 except ImportError:
-    atheris = None
+    atheris = None  # type: ignore[assignment]
 
 _MAX_PER_CALL_DURATION = 0.05  # 50ms
 

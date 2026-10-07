@@ -219,3 +219,52 @@ updates:
       hexastack-otel-minor-patch:
         update-types: [minor, patch]
     labels: [dependencies, python, hexastack-otel]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_qual
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-qual-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-qual]
+
+  - package-ecosystem: pip
+    directory: /packages/hexastack_ui
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      hexastack-ui-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, hexastack-ui]
+
+  # ── Python: examples/* ────────────────────────────────────────────────────────
+  - package-ecosystem: pip
+    directory: /examples/todo-app
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      todo-app-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, example-todo-app]
+
+  - package-ecosystem: pip
+    directory: /examples/financial-ledger
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: UTC
+    groups:
+      financial-ledger-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python, example-financial-ledger]

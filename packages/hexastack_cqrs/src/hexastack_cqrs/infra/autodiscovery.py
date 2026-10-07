@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import inspect
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import BaseModel
 from rodi import Container
@@ -12,12 +14,14 @@ from hexastack_core.infra.autodiscovery import (
 )
 from hexastack_core.infra.decorators import ConfigMetadata, ExceptionMetadata
 from hexastack_core.infra.registries.config import ConfigRegistry
-from hexastack_core.ports.presenter import PresenterPort
 from hexastack_cqrs.infra.decorators import (
     HandlerMetadata,
     PresenterMetadata,
 )
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+
+if TYPE_CHECKING:
+    from hexastack_core.ports.presenter import PresenterPort
 
 __all__ = [
     "autodiscover_cqrs",

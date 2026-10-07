@@ -9,7 +9,6 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import contextlib
-import importlib
 import json
 import random
 import sys
@@ -25,9 +24,9 @@ from hexastack_flags.domain.config import HexastackFlagsConfig
 from hexastack_flags.domain.models import FeatureFlagProviderType, FlagProviderOptions
 
 try:
-    atheris: Any = importlib.import_module("atheris")
+    import atheris  # type: ignore[import-not-found]
 except ImportError:
-    atheris = None
+    atheris = None  # type: ignore[assignment]
 
 _MAX_PER_CALL_DURATION = 0.25  # 250ms budget for pathological fuzz input under CI load
 

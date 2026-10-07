@@ -16,7 +16,7 @@ By the end of this guide, you will understand:
 
 Double-entry bookkeeping mandates that every financial transaction consists of at least two posting lines whose total debits exactly equal total credits:
 
-3176087\sum \text{Debits} = \sum \text{Credits}3176087
+$$ \sum \text{Debits} = \sum \text{Credits} $$
 
 ### Pure Domain Entities & Invariant Enforcement
 
@@ -33,7 +33,7 @@ class EntryDirection(StrEnum):
     CREDIT = "CREDIT"
 
 
-@dataclass
+@dataclass(frozen=True)
 class TransactionEntry:
     account_id: str
     direction: EntryDirection
@@ -47,7 +47,7 @@ class TransactionEntry:
             )
 
 
-@dataclass
+@dataclass(frozen=True)
 class JournalTransaction:
     reference: str
     description: str
@@ -59,18 +59,30 @@ class JournalTransaction:
                 "A double-entry transaction requires at least two posting lines."
             )
 
-        total_debits = sum(
-            e.amount for e in self.entries if e.direction == EntryDirection.DEBIT
-        )
-        total_credits = sum(
-            e.amount for e in self.entries if e.direction == EntryDirection.CREDIT
-        )
-
-        if total_debits != total_credits:
-            raise UnbalancedTransactionError(
-                f"Unbalanced double-entry transaction '{self.reference}': "
-                f"total debits ({total_debits}) != total credits ({total_credits})"
+        currencies = {e.currency for e in self.entries}
+        for curr in sorted(currencies):
+            curr_debits = sum(
+                (
+                    e.amount
+                    for e in self.entries
+                    if e.direction == EntryDirection.DEBIT and e.currency == curr
+                ),
+                start=Decimal("0.00"),
             )
+            curr_credits = sum(
+                (
+                    e.amount
+                    for e in self.entries
+                    if e.direction == EntryDirection.CREDIT and e.currency == curr
+                ),
+                start=Decimal("0.00"),
+            )
+
+            if curr_debits != curr_credits:
+                raise UnbalancedTransactionError(
+                    f"Unbalanced double-entry transaction '{self.reference}' for currency '{curr}': "
+                    f"total debits ({curr_debits}) != total credits ({curr_credits})"
+                )
 ```
 
 ---

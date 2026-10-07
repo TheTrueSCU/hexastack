@@ -53,7 +53,7 @@ def build_app(
         ],
     )
     pipeline = res.container.resolve(ExecutionPipeline)
-    assistant = TodoAiAssistant(llm=llm, pipeline=pipeline)
+    assistant = TodoAiAssistant(llm=llm, pipeline=pipeline, flags=flags)
     app = res.container.resolve(FastAPI)
     app.include_router(router)
     return app, assistant

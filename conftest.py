@@ -56,7 +56,7 @@ def pytest_configure(config: pytest.Config) -> None:
         settings.load_profile("monorepo")
     except ImportError:
         # Hypothesis is an optional test dependency in lean execution contexts
-        _hypothesis_available = False  # noqa: F841
+        pass
 
 
 @pytest.fixture
