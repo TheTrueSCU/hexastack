@@ -14,5 +14,6 @@ RUN uv python install 3.13 && \
 # Activate virtual environment for pyinstaller and compile_python_fuzzer
 ENV PATH="$SRC/hexastack/.venv/bin:$PATH"
 ENV VIRTUAL_ENV="$SRC/hexastack/.venv"
+ENV PYDANTIC_DISABLE_PLUGINS=1
 
 COPY .clusterfuzzlite/build.sh $SRC/
