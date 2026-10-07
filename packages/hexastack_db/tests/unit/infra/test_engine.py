@@ -36,7 +36,8 @@ def test_create_async_engine_auto_adapter():
     # SQLite URL rewrite
     cfg_sqlite = HexastackDatabaseConfig(url="sqlite:///:memory:", async_mode=True)
     async_engine_sqlite = create_async_db_engine(cfg_sqlite)
-    assert "sqlite+aiosqlite:///:memory:" in str(async_engine_sqlite.url)
+    assert async_engine_sqlite.url.drivername == "sqlite+aiosqlite"
+    assert async_engine_sqlite.url.database == ":memory:"
 
     # Postgres URL rewrite (without connecting)
     cfg_pg = HexastackDatabaseConfig(

@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any, Protocol, runtime_checkable
 
@@ -18,7 +18,7 @@ __all__ = [
 
 
 @contextmanager
-def isolate_registries(*registries: Any) -> Iterator[None]:
+def isolate_registries(*registries: Any) -> Generator[None]:
     """Context manager ensuring registry state is isolated during execution.
 
     Notes/Architectural Intent:

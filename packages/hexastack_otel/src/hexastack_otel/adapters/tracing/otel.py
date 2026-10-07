@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
@@ -144,7 +144,7 @@ class OtelTracingAdapter(TracingPort):
         name: str,
         *,
         attributes: dict[str, Any] | None = None,
-    ) -> Iterator[OtelSpan]:
+    ) -> Generator[OtelSpan]:
         with self._tracer.start_as_current_span(name, attributes=attributes) as raw:
             yield OtelSpan(raw)
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
@@ -114,7 +114,7 @@ class TracingPort(ABC):
         name: str,
         *,
         attributes: dict[str, Any] | None = None,
-    ) -> Iterator[SpanPort]:
+    ) -> Generator[SpanPort]:
         """Context manager creating a scoped span that automatically ends on exit.
 
         Args:

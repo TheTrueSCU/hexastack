@@ -1,6 +1,6 @@
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any
@@ -135,7 +135,7 @@ class InMemoryTracingAdapter(TracingPort):
         name: str,
         *,
         attributes: dict[str, Any] | None = None,
-    ) -> Iterator[InMemorySpan]:
+    ) -> Generator[InMemorySpan]:
         span = self.start_span(name, attributes=attributes)
         token = _current_in_memory_span.set(span)
         try:
