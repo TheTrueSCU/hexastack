@@ -125,8 +125,6 @@ class LogSanitizerFilter(logging.Filter):
 
         # 4. Sanitize exc_text if present
         if record.exc_info and not record.exc_text:
-            import logging
-
             record.exc_text = logging.Formatter().formatException(record.exc_info)
         if record.exc_text:
             record.exc_text = self._sanitizer.sanitize_traceback(record.exc_text)

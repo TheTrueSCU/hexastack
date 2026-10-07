@@ -77,16 +77,28 @@ Create `src/todo_app/domain/assistant.py`:
 """Autonomous AI Productivity Assistant service built on LlmProviderPort."""
 
 from hexastack_core.ports.ai import LlmProviderPort
+from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from todo_app.domain.commands import ListTodosQuery
 
 
 class TodoAiAssistant:
-    def __init__(self, llm: LlmProviderPort, pipeline: ExecutionPipeline) -> None:
+    def __init__(
+        self,
+        llm: LlmProviderPort,
+        pipeline: ExecutionPipeline,
+        flags: FeatureFlagPort | None = None,
+    ) -> None:
         self.llm = llm
         self.pipeline = pipeline
+        self.flags = flags
 
     def generate_morning_briefing(self, user_id: str = "alice") -> str:
+        if self.flags and not self.flags.get_boolean_value(
+            "experimental_ai_assistant", default=True
+        ):
+            return "AI assistant features are currently disabled by feature flag."
+
         todos = self.pipeline.execute(
             ListTodosQuery(owner_id=user_id, completed_only=False)
         )
@@ -161,7 +173,7 @@ def build_app(
         ],
     )
     pipeline = res.container.resolve(ExecutionPipeline)
-    assistant = TodoAiAssistant(llm=llm, pipeline=pipeline)
+    assistant = TodoAiAssistant(llm=llm, pipeline=pipeline, flags=flags)
     app = res.container.resolve(FastAPI)
     app.include_router(router)
     return app, assistant

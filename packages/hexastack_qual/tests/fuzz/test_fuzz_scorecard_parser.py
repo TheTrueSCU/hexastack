@@ -8,7 +8,6 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
-import importlib
 import json
 import random
 import sys
@@ -18,9 +17,9 @@ from typing import Any
 from pydantic import ValidationError
 
 try:
-    atheris: Any = importlib.import_module("atheris")
+    import atheris  # type: ignore[import-not-found]
 except ImportError:
-    atheris = None
+    atheris = None  # type: ignore[assignment]
 
 if atheris is not None:
     with atheris.instrument_imports():
@@ -72,7 +71,7 @@ def fuzz_one_input(data: bytes) -> None:
             QualityScorecard.model_validate_json(data)
     except (ValidationError, ValueError, UnicodeDecodeError):
         # Expected parsing/validation failure on invalid fuzzed inputs
-        _fuzz_input_invalid = True  # noqa: F841
+        pass
 
     # Test MutantReport parser
     try:
@@ -82,7 +81,7 @@ def fuzz_one_input(data: bytes) -> None:
             MutantReport.model_validate_json(data)
     except (ValidationError, ValueError, UnicodeDecodeError):
         # Expected parsing/validation failure on invalid fuzzed inputs
-        _fuzz_input_invalid = True  # noqa: F841
+        pass
 
     # Test PrHealthSummary parser
     try:
@@ -92,7 +91,7 @@ def fuzz_one_input(data: bytes) -> None:
             PrHealthSummary.model_validate_json(data)
     except (ValidationError, ValueError, UnicodeDecodeError):
         # Expected parsing/validation failure on invalid fuzzed inputs
-        _fuzz_input_invalid = True  # noqa: F841
+        pass
 
     # Test ComplexityMetric parser
     try:
@@ -102,7 +101,7 @@ def fuzz_one_input(data: bytes) -> None:
             ComplexityMetric.model_validate_json(data)
     except (ValidationError, ValueError, UnicodeDecodeError):
         # Expected parsing/validation failure on invalid fuzzed inputs
-        _fuzz_input_invalid = True  # noqa: F841
+        pass
 
     elapsed = time.perf_counter() - t0
     if elapsed > _MAX_ALLOWED_DURATION_SECONDS:

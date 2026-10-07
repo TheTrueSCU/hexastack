@@ -1,0 +1,17 @@
+{
+    "autoReview": [
+        "open"
+    ],
+    "triggerOnDrafts": false,
+    "ignorePatterns": [
+        "uv.lock",
+        "examples/**/uv.lock",
+        "graphify-out/**",
+        ".codegraph/**",
+        "docs/**",
+        "tests/snapshots/**",
+        "**/*.svg",
+        "**/*.min.*"
+    ],
+    "strictness": 2
+}

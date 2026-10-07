@@ -1,13 +1,13 @@
 # 🛡️ Enterprise Compliance & Regulatory Readiness Guide
 
-> **Scope:** Technical Safeguards, Security Controls, and Regulatory Alignment for Deployments Built on **Hexastack**.
-> **Status:** Production Ready • Formally Aligned with **HIPAA**, **FedRAMP (NIST SP 800-53 Rev. 5)**, **SOC 2 Type II**, and **PCI-DSS v4.0**.
+> **Scope:** Technical Safeguards, Architectural Controls, and Regulatory Alignment Patterns for Deployments Built on **Hexastack**.
+> **Status:** Architectural Alignment Guide for **HIPAA**, **FedRAMP (NIST SP 800-53 Rev. 5)**, **SOC 2 Type II**, and **PCI-DSS v4.0**.
 
 ---
 
 ## 1. Executive Summary & Compliance Architecture
 
-Hexastack is an open-source, modular backend architecture framework designed for high-integrity, safety-critical, and enterprise workloads. While compliance certifications (such as FedRAMP Authorization to Operate (ATO), SOC 2 Type II attestation, or HIPAA BAA execution) evaluate the complete operational environment (including cloud infrastructure, organizational policies, and personnel), **Hexastack provides the software-level technical controls required to pass these audits out of the box.**
+Hexastack is an open-source, modular backend architecture framework designed for high-integrity, safety-critical, and enterprise workloads. While formal compliance certifications (such as FedRAMP Authorization to Operate (ATO), SOC 2 Type II attestation, or HIPAA BAA execution) evaluate the complete operational environment (including cloud infrastructure, organizational policies, and personnel), **Hexastack provides the software-level architectural patterns and technical building blocks to assist organizations in meeting these controls.**
 
 ```mermaid
 graph TD
@@ -121,12 +121,12 @@ For security vulnerability reports or formal compliance mapping inquiries:
 
 ## In-Depth Articles
 
-!!! tip "On DEV.to"
-    [Building for HIPAA and FedRAMP: Architecture as Compliance](devto://hipaa-fedramp-compliance) —
+!!! tip "Architecture & Regulatory Controls"
+    [Building for HIPAA and FedRAMP: Architecture as Compliance](medium/hipaa-fedramp-compliance.md) —
     how Hexastack's CQRS audit trail, PII sanitizer, `@authorize` pipeline integration, OpenSSF Gold
     supply chain controls, and CNCF-standardized observability map to specific regulatory requirements.
 
-!!! tip "On DEV.to"
-    [90%+ Coverage Isn't Enough: Mutation Testing + OpenSSF Gold](devto://mutation-testing-openssf) —
+!!! tip "Testing Rigor & Mutation"
+    [90%+ Coverage Isn't Enough: Mutation Testing + OpenSSF Gold](medium/mutation-testing-openssf.md) —
     on the difference between coverage theater and actual test rigor, and how the OpenSSF Scorecard
     supply chain controls support FedRAMP SA-11 and SA-22.

@@ -60,20 +60,37 @@ router = CqrsRouter(tags=["todos"])
 def get_current_user(
     authorization: Annotated[str | None, Header()] = None,
 ) -> UserContext:
-    """Extract authenticated user context from Bearer token."""
+    """Extract authenticated user context from Bearer token or fallback to demo anonymous."""
     if authorization and authorization.startswith("Bearer "):
         token = authorization.removeprefix("Bearer ").strip()
+        # Simulated/demo token parser: "user:bob" -> UserContext(user_id="bob", roles=["user"])
+        # or "admin:superadmin" -> UserContext(user_id="superadmin", roles=["admin"])
         if ":" in token:
             role, user_id = token.split(":", 1)
-            ctx = UserContext(user_id=user_id, roles=[role])
+            if role == "admin":
+                # Verify caller identity is authorized for admin privileges
+                if user_id != "superadmin":
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Invalid admin credentials: caller cannot claim admin role.",
+                    )
+                roles = ["admin"]
+            elif role == "user":
+                roles = ["user"]
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"Unsupported identity role: '{role}'",
+                )
+            ctx = UserContext(user_id=user_id, roles=roles)
             set_user_context(ctx)
             return ctx
         ctx = UserContext(user_id=token, roles=["user"])
         set_user_context(ctx)
         return ctx
 
-    # Default fallback context for development
-    ctx = UserContext(user_id="alice", roles=["user"])
+    # Default ambient user for unauthenticated requests
+    ctx = UserContext(user_id="anonymous", roles=[])
     set_user_context(ctx)
     return ctx
 
@@ -84,13 +101,16 @@ def create_todo(
     pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
     user: Annotated[UserContext, Depends(get_current_user)],
 ) -> TodoItemDTO:
-    if not cmd.owner_id or cmd.owner_id == "alice":
-        cmd = CreateTodoCommand(
-            title=cmd.title,
-            owner_id=user.user_id,
-            description=cmd.description,
-            priority=cmd.priority,
-        )
+    # Non-admin users cannot spoof owner_id for another user; bind to authenticated user
+    effective_owner = user.user_id
+    if "admin" in user.roles and cmd.owner_id is not None:
+        effective_owner = cmd.owner_id
+    cmd = CreateTodoCommand(
+        title=cmd.title,
+        owner_id=effective_owner,
+        description=cmd.description,
+        priority=cmd.priority,
+    )
     return pipeline.execute(cmd)
 
 
@@ -100,19 +120,12 @@ def delete_todo(
     pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
     user: Annotated[UserContext, Depends(get_current_user)],
 ) -> dict[str, bool]:
-    # 1. Fetch item to verify ownership
-    query = GetTodoQuery(todo_id=todo_id)
-    dto: TodoItemDTO = pipeline.execute(query)
-
-    # 2. Reject if caller is not an admin and does not own the task
-    if "admin" not in user.roles and dto.owner_id != user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Forbidden: '{user.user_id}' cannot delete task owned by '{dto.owner_id}'.",
-        )
-
-    # 3. Execute deletion
-    cmd = DeleteTodoCommand(todo_id=todo_id)
+    is_admin = "admin" in user.roles
+    cmd = DeleteTodoCommand(
+        todo_id=todo_id,
+        requester_id=user.user_id,
+        is_admin=is_admin,
+    )
     pipeline.execute(cmd)
     return {"deleted": True}
 ```

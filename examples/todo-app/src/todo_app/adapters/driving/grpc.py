@@ -21,7 +21,7 @@ from hexastack_grpc.infra.decorators import proto_schema
     message CreateTodoResponse {
         string id = 1;
         string title = 2;
-        string status = 3;
+        bool completed = 3;
     }
 
     service TodoService {

@@ -9,6 +9,7 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -103,7 +104,7 @@ class Account:
         self.version += 1
 
 
-@dataclass
+@dataclass(frozen=True)
 class TransactionEntry:
     """Individual debit or credit posting line in a double-entry transaction."""
 
@@ -121,7 +122,7 @@ class TransactionEntry:
             )
 
 
-@dataclass
+@dataclass(frozen=True)
 class JournalTransaction:
     """Double-entry journal transaction composed of balanced debit and credit entries.
 
@@ -132,7 +133,7 @@ class JournalTransaction:
 
     reference: str
     description: str
-    entries: list[TransactionEntry]
+    entries: Sequence[TransactionEntry]
     transaction_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
@@ -142,6 +143,7 @@ class JournalTransaction:
         Raises:
             UnbalancedTransactionError: If sum of debits != sum of credits.
         """
+        object.__setattr__(self, "entries", tuple(self.entries))
         if len(self.entries) < 2:
             raise UnbalancedTransactionError(
                 "A double-entry transaction requires at least two posting lines."

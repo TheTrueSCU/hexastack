@@ -384,11 +384,15 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         rows = self._fetch_all_mappings(stmt)
         return [self._map_checkpoint_row(r) for r in rows]
 
-    def delete_checkpoints(self, run_id: str) -> None:
-        """Delete all step checkpoints for a given workflow run.
+    def clear_checkpoints(self, run_id: str) -> None:
+        """Clear all recorded step checkpoints for a workflow run upon restart.
 
         Args:
-            run_id: Unique run ID.
+            run_id: Parent workflow execution ID.
+
+        Notes/Architectural Intent:
+            Enables full re-execution from scratch during restart_async without
+            retaining stale completed step checkpoints.
         """
         stmt = self._step_checkpoints.delete().where(
             self._step_checkpoints.c.run_id == run_id

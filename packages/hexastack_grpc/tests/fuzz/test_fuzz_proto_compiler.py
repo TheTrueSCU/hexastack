@@ -9,17 +9,25 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import contextlib
-import importlib
 import os
 import sys
 import tempfile
 import time
 from typing import Any
 
+from hexastack_core.domain.exceptions import MissingDependencyError
+
 try:
-    atheris: Any = importlib.import_module("atheris")
+    import atheris  # type: ignore[import-not-found]
 except ImportError:
-    atheris = None
+    atheris = None  # type: ignore[assignment]
+
+try:
+    from grpc_tools import protoc as _grpc_protoc
+except ImportError:
+    _grpc_protoc = None
+
+HAS_GRPC_TOOLS: bool = _grpc_protoc is not None
 
 if atheris is not None:
     with atheris.instrument_imports():
@@ -106,8 +114,8 @@ def fuzz_one_input(data: bytes) -> None:
                 outputs = ProtoCompiler.compile_metadata([meta], output_dir=tmp_out)
             # If it succeeded, outputs should contain generated files
             assert isinstance(outputs, list)
-        except ProtoCompilationError:
-            # Expected graceful failure when schema has syntax errors
+        except (ProtoCompilationError, MissingDependencyError):
+            # Expected graceful failure when schema has syntax errors or optional tooling is absent
             pass
         except Exception as exc:
             # Uncaught exceptions (e.g. segfault, unhandled OS error) constitute a bug
@@ -118,6 +126,7 @@ def fuzz_one_input(data: bytes) -> None:
 
 def test_fuzz_proto_compiler_smoke() -> None:
     """Smoke test ProtoCompiler fuzz harness under pytest."""
+    _ = HAS_GRPC_TOOLS
     res = run_standalone(runs=10)
     assert res["passed"] is True
 
