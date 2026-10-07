@@ -20,6 +20,11 @@ try:
 except ImportError:
     atheris = None  # type: ignore[assignment]
 
+with contextlib.suppress(ImportError):
+    import grpc_tools.protoc  # noqa: F401
+
+from hexastack_core.domain.exceptions import MissingDependencyError
+
 if atheris is not None:
     with atheris.instrument_imports():
         from hexastack_grpc.domain.exceptions import ProtoCompilationError
@@ -105,8 +110,8 @@ def fuzz_one_input(data: bytes) -> None:
                 outputs = ProtoCompiler.compile_metadata([meta], output_dir=tmp_out)
             # If it succeeded, outputs should contain generated files
             assert isinstance(outputs, list)
-        except ProtoCompilationError:
-            # Expected graceful failure when schema has syntax errors
+        except (ProtoCompilationError, MissingDependencyError):
+            # Expected graceful failure when schema has syntax errors or optional tooling is absent
             pass
         except Exception as exc:
             # Uncaught exceptions (e.g. segfault, unhandled OS error) constitute a bug
