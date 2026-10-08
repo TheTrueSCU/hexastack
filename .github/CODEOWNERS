@@ -1,2 +1,6 @@
 # Global code owners for Hexastack repository
 * @TheTrueSCU
+
+# Unassign lockfiles so Dependabot and automated tooling do not require CODEOWNER approval
+uv.lock
+**/uv.lock
