@@ -259,7 +259,14 @@ jobs:
             exit 1
           fi
           sed -i -E "s/hexastack\[(.*)\]>=[0-9]+\.[0-9]+\.[0-9]+/hexastack[\1]>=${VERSION}/g" pyproject.toml
-          uv lock --refresh
+          # Poll with retry for PyPI CDN index propagation
+          for attempt in {1..12}; do
+            if uv lock --refresh; then
+              break
+            fi
+            echo "Waiting for PyPI CDN index propagation (attempt $attempt/12)..."
+            sleep 15
+          done
 
       - name: Check for Changes
         if: steps.check-token.outputs.enabled == 'true'
