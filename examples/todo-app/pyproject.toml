@@ -1,6 +1,6 @@
 [project]
 name = "todo-app"
-version = "0.7.0"
+version = "0.8.0"
 description = "Hexagonal To-Do Microservice Tutorial"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -64,6 +64,7 @@ convention = "google"
 [tool.uv]
 override-dependencies = [
     "mako>=1.4.2",
+    "mcp<2",
     "multidict>=6.9.1,<7.0.0",
     "pyjwt>=2.14.0",
     "virtualenv>=21.7.13",

@@ -37,6 +37,7 @@ ALL_KNOWN_PACKAGES = (
         "hexastack_logging",
         "hexastack_mcp",
         "hexastack_otel",
+        "hexastack_qual",
         "hexastack_ui",
     }
 )

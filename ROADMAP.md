@@ -70,8 +70,18 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 
 ---
 
-## 🚀 Active Milestone: v0.8.0 (Deep Sentry Ecosystem & Edge Profiles)
-- [ ] **Sentry Ecosystem Runtime Adapters**: Native Sentry SDK integration across hexastack-fastapi, hexastack-cqrs, and hexastack-events.
+### v0.8.0 (Deep Sentry Telemetry, Zero-Trust Dark Services & Dual-Implementation Oracles) ✅
+- [x] **Zero-Trust Dark Microservices (`hexastack-fastapi[ziti]`)**: `OpenZitiASGIAdapter` for perimeter-less, listening-port-free dark service execution on OpenZiti overlay networks.
+- [x] **Dual-Implementation Oracle Rigor**: Hypothesis stateful oracles proving mathematical equivalence between production implementations and naive reference models (`SqlAlchemyRepository`, `DiskCacheAdapter`, `SlidingWindowRateLimiter`, `SqlAlchemyOutboxStorage`).
+- [x] **Deep Sentry Telemetry & Error Enrichment**: Native Sentry SDK integration across `hexastack-logging[sentry]`, FastAPI 500 error context enrichment, and live DevTools observability dashboard.
+- [x] **Remote Execution Port & SSH Bridge**: `RemoteExecutionPort`, `AsyncSshAdapter`, and `zrok` peer sharing.
+- [x] **Workflow & Governance Synchronization**: Aligned with `hexaflow>=0.4.1` and `hexaqual[all]>=0.9.1`, with complete umbrella `qual` re-export.
+- [x] **Comprehensive Security & Audit Hardening**: 100% remediation of OpenSSF Scorecard, CodeQL SAST, and Greptile findings.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 18 subpackages to `v0.8.0`.
+
+---
+
+## 🚀 Active Milestone: v0.9.0 (Edge Profiles, Voice Pipelines & Multi-Python Matrix)
 - [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
 - [ ] **Voice & WebRTC Audio Pipeline**: Real-time conversational audio bridge (`hexastack-ui[voice]`).
 - [ ] **Prefect Orchestrator Adapter**: `PrefectOrchestratorAdapter` behind the `hexastack-flow` orchestrator port as an optional extra (`hexastack-flow[prefect]`), leveraging Prefect task result caching and pluggable task runners (thread/process/Dask/Ray), with dual-implementation oracle tests against the asyncio engine. *(Airflow, Luigi, Dagster, and joblib evaluated and deferred; joblib's memoization is covered by Prefect caching.)*

@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-graphql"
-version = "0.7.0"
+version = "0.8.0"
 description = "Strawberry GraphQL presentation adapter and CQRS integration for Hexastack"
 readme = "README.md"
 license = "Apache-2.0"

@@ -166,7 +166,7 @@ gh run list --branch <branch-name>
 
 ## 5. Active Packages in Workspace
 
-All 18 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.7.0`**):
+All 18 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.8.0`**):
 
 - `hexastack-core`: Primitives, ports, events, domain models, caching, rate limiting, and in-memory adapters.
 - `hexastack-cqrs`: Command and Query execution pipelines, registries, buses, and middleware.

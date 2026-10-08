@@ -17,6 +17,8 @@ from hexastack.subpackages import (
 )
 
 if TYPE_CHECKING:
+    import hexastack_qual as qual
+
     import hexastack_ai as ai
     import hexastack_auth as auth
     import hexastack_cli as cli
@@ -50,6 +52,7 @@ __all__ = [
     "logging",
     "mcp",
     "otel",
+    "qual",
     "ui",
 ]
 

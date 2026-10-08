@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v0.8.0 (2026-10-07)
+
+### Highlights & Features
+* **Zero-Trust Dark Microservices (`hexastack-fastapi[ziti]`)**: Added `OpenZitiASGIAdapter` (`openziti>=0.8.0`) enabling FastAPI microservices to bind directly to OpenZiti zero-trust overlay networks with no listening TCP ports or exposed perimeter surfaces.
+* **Dual-Implementation Oracle Rigor**: Established mathematical equivalence testing via Hypothesis state machines comparing production adapters against naive reference oracles ($f_{\text{prod}}(x) \equiv f_{\text{oracle}}(x)$) for `SqlAlchemyRepository`, `DiskCacheAdapter`, `SlidingWindowRateLimiter`, and `SqlAlchemyOutboxStorage`.
+* **Deep Sentry Telemetry & Error Enrichment (`hexastack-logging[sentry]`, `hexastack-fastapi`, `hexastack-ui`)**: Native Sentry SDK integration across logging and web presentation, enriching unhandled 500 exceptions with correlation headers and tenant context, with real-time health and release telemetry visualized in NiceGUI DevTools.
+* **Remote Execution Port & Zrok Sharing (`hexastack-core[ssh]`)**: Added `RemoteExecutionPort`, `AsyncSshAdapter` (`asyncssh>=2.15.0`), and `zrok` peer tunnel sharing for distributed worker execution.
+* **Workflow & Governance Synchronization (`hexaflow>=0.4.1`, `hexaqual>=0.9.1`)**: Aligned workflow execution with `hexaflow>=0.4.1` (concurrent stage execution and strict step independence) and upgraded dev toolchain to `hexaqual[all]>=0.9.1`. Fully registered `hexastack-qual` (`qual`) into umbrella package re-exports (`hexastack/__init__.py`, `subpackages.py`), restoring 100% architectural boundary compliance.
+* **Comprehensive Security & Audit Hardening**: Remediated 100% of OpenSSF Scorecard, CodeQL SAST, and Greptile audit findings, including fail-closed rate limiters, token validation hardening, and CI workflow run checkout isolation.
+* **Unified Workspace Lockstep Versioning (v0.8.0)**: Synchronized version bump across root workspace and all 18 subpackages (`hexastack`, `hexastack_ai`, `hexastack_auth`, `hexastack_cli`, `hexastack_core`, `hexastack_cqrs`, `hexastack_db`, `hexastack_events`, `hexastack_fastapi`, `hexastack_flags`, `hexastack_flow`, `hexastack_graphql`, `hexastack_grpc`, `hexastack_logging`, `hexastack_mcp`, `hexastack_otel`, `hexastack_qual`, `hexastack_ui`).
+
 ## v0.7.0 (2026-09-30)
 
 ### Highlights & Features

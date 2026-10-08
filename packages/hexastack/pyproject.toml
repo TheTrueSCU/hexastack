@@ -1,6 +1,6 @@
 [project]
 name = "hexastack"
-version = "0.7.0"
+version = "0.8.0"
 description = "Hexastack - Modern Hexagonal Architecture & CQRS Framework for Python"
 readme = "README.md"
 license = "Apache-2.0"
@@ -200,9 +200,10 @@ all = [
     "hexastack-ai[all]",
     "hexastack-auth",
     "hexastack-cli",
+    "hexastack-core[ssh]",
     "hexastack-db[all]",
     "hexastack-events",
-    "hexastack-fastapi",
+    "hexastack-fastapi[ziti]",
     "hexastack-flags",
     "hexastack-flow",
     "hexastack-graphql",

@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-workspace"
-version = "0.7.0"
+version = "0.8.0"
 requires-python = ">=3.13"
 dependencies = [
     "hexastack[all]",
@@ -47,6 +47,7 @@ hexastack-ui = { workspace = true }
 dev = [
     "aiokafka>=0.14.0",
     "alembic>=1.19.1",
+    "asyncssh>=2.17.0",
     "atheris>=3.1.0; sys_platform == 'linux' or sys_platform == 'darwin'",
     "complexipy>=7.0.1",
     "deptry>=0.25.1",
@@ -74,6 +75,7 @@ dev = [
     "mutmut<3",
     "nats-py>=2.16.0",
     "nicegui>=3.16.0",
+    "openziti>=1.0.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.44.0",
     "pip-audit>=2.10.1",
     "playwright>=1.63.0",

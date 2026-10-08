@@ -36,6 +36,7 @@ ALL_SUBPACKAGES: list[str] = [
     "logging",
     "mcp",
     "otel",
+    "qual",
     "ui",
 ]
 

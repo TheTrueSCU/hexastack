@@ -2227,7 +2227,7 @@ all = [
 
 [[package]]
 name = "hexastack"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2243,9 +2243,10 @@ all = [
     { name = "hexastack-ai", extra = ["all"] },
     { name = "hexastack-auth" },
     { name = "hexastack-cli" },
+    { name = "hexastack-core", extra = ["ssh"] },
     { name = "hexastack-db", extra = ["all"] },
     { name = "hexastack-events" },
-    { name = "hexastack-fastapi" },
+    { name = "hexastack-fastapi", extra = ["ziti"] },
     { name = "hexastack-flags" },
     { name = "hexastack-flow" },
     { name = "hexastack-graphql" },
@@ -2453,6 +2454,7 @@ requires-dist = [
     { name = "hexastack-core", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["fsspec"], marker = "extra == 'fsspec'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["redis"], marker = "extra == 'redis'", editable = "packages/hexastack_core" },
+    { name = "hexastack-core", extras = ["ssh"], marker = "extra == 'all'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["ssh"], marker = "extra == 'ssh'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["valkey"], marker = "extra == 'valkey'", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
@@ -2476,11 +2478,11 @@ requires-dist = [
     { name = "hexastack-events", extras = ["msgspec"], marker = "extra == 'msgspec'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["nats"], marker = "extra == 'nats'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["sql"], marker = "extra == 'sql'", editable = "packages/hexastack_events" },
-    { name = "hexastack-fastapi", marker = "extra == 'all'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", marker = "extra == 'fastapi'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", marker = "extra == 'web'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["docs"], marker = "extra == 'docs'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["ratelimit"], marker = "extra == 'ratelimit'", editable = "packages/hexastack_fastapi" },
+    { name = "hexastack-fastapi", extras = ["ziti"], marker = "extra == 'all'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-fastapi", extras = ["ziti"], marker = "extra == 'ziti'", editable = "packages/hexastack_fastapi" },
     { name = "hexastack-flags", marker = "extra == 'all'", editable = "packages/hexastack_flags" },
     { name = "hexastack-flags", marker = "extra == 'flags'", editable = "packages/hexastack_flags" },
@@ -2531,7 +2533,7 @@ provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "doc
 
 [[package]]
 name = "hexastack-ai"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_ai" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2573,7 +2575,7 @@ provides-extras = ["mcp", "qdrant", "all"]
 
 [[package]]
 name = "hexastack-auth"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_auth" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2619,7 +2621,7 @@ provides-extras = ["fastapi", "grpc", "opa", "openfga", "spiffe"]
 
 [[package]]
 name = "hexastack-cli"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_cli" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2647,7 +2649,7 @@ provides-extras = ["testing"]
 
 [[package]]
 name = "hexastack-core"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_core" }
 dependencies = [
     { name = "pydantic" },
@@ -2695,7 +2697,7 @@ provides-extras = ["filelock", "fsspec", "redis", "ssh", "testing", "valkey"]
 
 [[package]]
 name = "hexastack-cqrs"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_cqrs" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2719,7 +2721,7 @@ provides-extras = ["huey"]
 
 [[package]]
 name = "hexastack-db"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_db" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2781,7 +2783,7 @@ provides-extras = ["sqlite", "postgresql", "pgvector", "duckdb", "migrations", "
 
 [[package]]
 name = "hexastack-events"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_events" }
 dependencies = [
     { name = "cloudevents" },
@@ -2845,7 +2847,7 @@ provides-extras = ["apprise", "dlt", "filelock", "huey", "janus", "kafka", "msgs
 
 [[package]]
 name = "hexastack-fastapi"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_fastapi" }
 dependencies = [
     { name = "fastapi" },
@@ -2889,7 +2891,7 @@ provides-extras = ["auth", "docs", "ratelimit", "testing", "ziti"]
 
 [[package]]
 name = "hexastack-flags"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_flags" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2913,7 +2915,7 @@ provides-extras = ["flagd"]
 
 [[package]]
 name = "hexastack-flow"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_flow" }
 dependencies = [
     { name = "hexaflow" },
@@ -2949,7 +2951,7 @@ provides-extras = ["db", "events", "all"]
 
 [[package]]
 name = "hexastack-graphql"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_graphql" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2975,7 +2977,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-grpc"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_grpc" }
 dependencies = [
     { name = "grpcio" },
@@ -3003,7 +3005,7 @@ provides-extras = ["reflection"]
 
 [[package]]
 name = "hexastack-logging"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_logging" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3043,7 +3045,7 @@ provides-extras = ["loguru", "rich", "structlog", "all", "sentry"]
 
 [[package]]
 name = "hexastack-mcp"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_mcp" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3069,7 +3071,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-otel"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_otel" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3105,7 +3107,7 @@ provides-extras = ["otlp"]
 
 [[package]]
 name = "hexastack-qual"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_qual" }
 dependencies = [
     { name = "hexaqual", extra = ["all"] },
@@ -3143,7 +3145,7 @@ provides-extras = ["events", "mcp", "ui", "all"]
 
 [[package]]
 name = "hexastack-ui"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/hexastack_ui" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3188,7 +3190,7 @@ provides-extras = ["fastapi", "nicegui", "devtools", "textual", "all"]
 
 [[package]]
 name = "hexastack-workspace"
-version = "0.7.0"
+version = "0.8.0"
 source = { virtual = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },
@@ -3199,6 +3201,7 @@ dependencies = [
 dev = [
     { name = "aiokafka" },
     { name = "alembic" },
+    { name = "asyncssh" },
     { name = "atheris", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "complexipy" },
     { name = "deptry" },
@@ -3228,6 +3231,7 @@ dev = [
     { name = "nicegui" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", version = "1.44.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.14' and platform_python_implementation != 'PyPy') or platform_python_implementation == 'PyPy' or sys_platform == 'emscripten'" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", version = "1.45.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14' and platform_python_implementation != 'PyPy' and sys_platform != 'emscripten'" },
+    { name = "openziti" },
     { name = "pip-audit" },
     { name = "playwright" },
     { name = "pre-commit" },
@@ -3261,6 +3265,7 @@ requires-dist = [
 dev = [
     { name = "aiokafka", specifier = ">=0.14.0" },
     { name = "alembic", specifier = ">=1.19.1" },
+    { name = "asyncssh", specifier = ">=2.17.0" },
     { name = "atheris", marker = "sys_platform == 'darwin' or sys_platform == 'linux'", specifier = ">=3.1.0" },
     { name = "complexipy", specifier = ">=7.0.1" },
     { name = "deptry", specifier = ">=0.25.1" },
@@ -3289,6 +3294,7 @@ dev = [
     { name = "nats-py", specifier = ">=2.16.0" },
     { name = "nicegui", specifier = ">=3.16.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.44.0" },
+    { name = "openziti", specifier = ">=1.0.0" },
     { name = "pip-audit", specifier = ">=2.10.1" },
     { name = "playwright", specifier = ">=1.63.0" },
     { name = "pre-commit", specifier = ">=4.6.2" },

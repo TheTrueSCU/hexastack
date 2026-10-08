@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-cli"
-version = "0.7.0"
+version = "0.8.0"
 description = "Hexastack CLI presentation adapter with Typer and Rich"
 readme = "README.md"
 license = "Apache-2.0"

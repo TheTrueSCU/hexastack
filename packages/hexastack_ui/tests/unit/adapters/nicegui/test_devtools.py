@@ -581,7 +581,7 @@ def test_observability_tab_and_sentry_topology():
             masked_dsn = "https://dummyk...123456"
             environment = "production"
 
-            release = "hexastack@v0.7.0"
+            release = "hexastack@v0.8.0"
 
             def debug(self, message: str, extra: Any = None) -> None:
                 pass

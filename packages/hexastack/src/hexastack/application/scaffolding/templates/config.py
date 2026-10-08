@@ -107,7 +107,7 @@ description = "{config.description}"
 readme = "README.md"
 requires-python = "{config.python_version}"
 dependencies = [
-    "hexastack{extras_str}>=0.7.0",
+    "hexastack{extras_str}>=0.8.0",
     "pydantic-settings>=2.0.0",
 ]
 

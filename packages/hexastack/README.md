@@ -93,6 +93,8 @@ graph TD
 - `[graphql]`: Installs `hexastack-graphql`.
 - `[mcp]`: Installs `hexastack-mcp` for Model Context Protocol AI agent tools.
 - `[grpc]`: Installs `hexastack-grpc` for high-performance RPC services.
+- `[qual]`: Installs `hexastack-qual` for quality, governance, and release engineering with hexaqual.
+- `[ui]`: Installs `hexastack-ui` for NiceGUI & Textual interactive DevTools consoles.
 - `[web]`: Installs `hexastack-fastapi` and `uvicorn[standard]`.
 - `[docs]`: Installs `zensical` for static documentation generation and hosting.
 - `[testing]`: Installs recommended testing tools (`hypothesis`, `inline-snapshot`, `playwright`, `pytest-archon`, `schemathesis`).
