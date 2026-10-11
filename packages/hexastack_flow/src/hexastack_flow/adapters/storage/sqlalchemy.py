@@ -400,6 +400,24 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         with self._connection() as conn:
             conn.execute(stmt)
 
+    def delete_checkpoint(self, run_id: str, step_name: str) -> None:
+        """Delete an individual step execution checkpoint during time-travel rewind.
+
+        Args:
+            run_id: Parent workflow execution ID.
+            step_name: Name of the step whose checkpoint should be removed.
+
+        Notes/Architectural Intent:
+            Supports WorkflowMemento time-travel rewind (rewind_to) by selectively
+            deleting downstream checkpoints so the engine can re-execute them.
+        """
+        stmt = self._step_checkpoints.delete().where(
+            self._step_checkpoints.c.run_id == run_id,
+            self._step_checkpoints.c.step_name == step_name,
+        )
+        with self._connection() as conn:
+            conn.execute(stmt)
+
     @staticmethod
     def _map_checkpoint_row(row: Any) -> CheckpointRecord:
         """Deserialize a database row into a CheckpointRecord.

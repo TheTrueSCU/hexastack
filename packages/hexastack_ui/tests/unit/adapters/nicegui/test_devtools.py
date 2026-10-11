@@ -51,6 +51,7 @@ def test_render_internal_tabs():
         _render_live_runner,
         _render_middleware_chain,
         _render_topology_tab,
+        _render_workflow_tab,
     )
 
     client = Client(page("/test-render-tabs"))
@@ -60,6 +61,7 @@ def test_render_internal_tabs():
         _render_middleware_chain([])
         _render_live_runner(empty_container, None, [])
         _render_cqrs_tab(empty_container, None)
+        _render_workflow_tab(empty_container)
         _render_flags_tab(empty_container)
         _render_container_tab(empty_container)
         _render_topology_tab(empty_container, None)
@@ -100,6 +102,7 @@ def test_render_internal_tabs():
         _render_middleware_chain([mw, AuthTestMiddleware()])
         _render_live_runner(container, pipeline_mock, [mw])
         _render_cqrs_tab(container, pipeline=pipeline_mock)
+        _render_workflow_tab(container)
         _render_flags_tab(container)
         _render_container_tab(container)
         _render_topology_tab(container, pipeline=pipeline_mock)

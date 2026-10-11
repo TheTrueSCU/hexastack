@@ -6,6 +6,7 @@ Notes/Architectural Intent:
     publishes lifecycle domain events.
 """
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from types import TracebackType
 from typing import Any
@@ -15,6 +16,7 @@ from hexaflow.adapters.storage.in_memory import InMemoryStateStore
 from hexaflow.domain.models import WorkflowDefinition
 from hexaflow.domain.state import StepStatus, WorkflowExecutionState, WorkflowStatus
 from hexaflow.ports.engine import WorkflowEnginePort
+from hexaflow.ports.middleware import StepMiddlewarePort
 from hexaflow.ports.storage import WorkflowStateStorePort
 
 from hexastack_cqrs.ports.buses import EventBusPort
@@ -47,6 +49,7 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
         event_bus: EventBusPort | None = None,
         max_process_workers: int | None = None,
         max_thread_workers: int | None = None,
+        middleware: Sequence[StepMiddlewarePort] | None = None,
     ) -> None:
         """Initialize runner with state store, execution engine, and event bus.
 
@@ -56,14 +59,35 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
             event_bus: Optional EventBusPort for publishing workflow domain events.
             max_process_workers: Optional maximum worker processes for ExecutionPool.PROCESS.
             max_thread_workers: Optional maximum worker threads for ExecutionPool.THREAD.
+            middleware: Optional sequence of StepMiddlewarePort interceptors.
         """
         self._store = state_store or InMemoryStateStore()
         self._engine = engine or AsyncioWorkflowEngine(
             state_store=self._store,
             max_process_workers=max_process_workers,
             max_thread_workers=max_thread_workers,
+            middleware=middleware,
         )
+        if engine is not None and middleware:
+            use_fn = getattr(self._engine, "use", None)
+            if callable(use_fn):
+                for mw in middleware:
+                    use_fn(mw)
         self._event_bus = event_bus
+
+    def use(self, middleware: StepMiddlewarePort) -> "CqrsWorkflowRunner":
+        """Register a StepMiddlewarePort interceptor onto the underlying engine.
+
+        Args:
+            middleware: StepMiddlewarePort interceptor instance.
+
+        Returns:
+            Self for fluent chaining.
+        """
+        use_fn = getattr(self._engine, "use", None)
+        if callable(use_fn):
+            use_fn(middleware)
+        return self
 
     def execute(
         self,
@@ -143,6 +167,84 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
             )
 
         return self._to_result(state)
+
+    def rewind(
+        self,
+        run_id: str,
+        workflow: WorkflowDefinition,
+        to_step: str,
+        patch_inputs: dict[str, Any] | None = None,
+        skip_steps: set[str] | list[str] | None = None,
+    ) -> WorkflowExecutionResult:
+        """Rewind workflow execution to before a step and re-evaluate downstream steps.
+
+        Args:
+            run_id: Unique identifier of the workflow run to rewind.
+            workflow: WorkflowDefinition matching the run.
+            to_step: The target step identifier to rewind before.
+            patch_inputs: Optional override inputs for the resumed step frontier.
+            skip_steps: Optional collection of step names to explicitly skip.
+
+        Returns:
+            WorkflowExecutionResult reflecting post-rewind replay outcome.
+        """
+        state = self._engine.rewind(
+            run_id=run_id,
+            workflow=workflow,
+            to_step=to_step,
+            patch_inputs=patch_inputs,
+            skip_steps=skip_steps,
+        )
+        self._emit_terminal_events(state)
+        return self._to_result(state)
+
+    def simulate(
+        self,
+        workflow: WorkflowDefinition,
+        initial_inputs: dict[str, Any] | None = None,
+        allow_unsafe: bool = False,
+        fault_injection: dict[str, Exception] | None = None,
+    ) -> WorkflowExecutionResult:
+        """Perform a dry-run simulation of the workflow DAG without mutating production systems.
+
+        Args:
+            workflow: The WorkflowDefinition to simulate.
+            initial_inputs: Optional dictionary of root arguments.
+            allow_unsafe: When True, executes side-effecting steps without mocks.
+            fault_injection: Optional mapping of step names to simulated Exceptions.
+
+        Returns:
+            WorkflowExecutionResult reflecting the simulated execution state.
+        """
+        state = self._engine.run(
+            workflow=workflow,
+            initial_inputs=initial_inputs,
+            dry_run=True,
+            allow_unsafe=allow_unsafe,
+            fault_injection=fault_injection,
+        )
+        return self._to_result(state)
+
+    def render(
+        self,
+        workflow: WorkflowDefinition,
+        format_name: str = "mermaid",
+    ) -> str:
+        """Render the workflow DAG into a visual diagram or structural format.
+
+        Args:
+            workflow: The WorkflowDefinition to visualize.
+            format_name: Name of renderer format ('mermaid', 'dot', 'ascii', 'json').
+
+        Returns:
+            Rendered diagram or structured output string.
+        """
+        from hexaflow.adapters.renderers import default_renderer_registry
+        from hexaflow.domain.graph import WorkflowGraph
+
+        graph = WorkflowGraph.from_workflow(workflow)
+        renderer = default_renderer_registry.get(format_name)
+        return renderer.render(graph)
 
     def close(self) -> None:
         """Release underlying engine worker pools and execution resources."""

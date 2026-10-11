@@ -1832,16 +1832,17 @@ wheels = [
 
 [[package]]
 name = "hexaflow"
-version = "0.4.1"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
+    { name = "pyyaml" },
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/73/45/2de4a3e1fd6dfc7a3bce4a6b07b69368971eb2b0deaa9b2a356a9661161b/hexaflow-0.4.1.tar.gz", hash = "sha256:06b38c7067dc399c2ae9b9e6d7f937a3a767e54dc93b098aaabd2b9a19c8fbd2", size = 142682, upload-time = "2026-10-03T16:33:41.936Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/23/75/87a1553ec99d476ea9049e9bc7778302780a81b76d97fbcf4a3bbbd0c376/hexaflow-0.5.0.tar.gz", hash = "sha256:a56204037240a92375115110c94b69a8f244e912632b8b1e25cbabfe4a4a2a6c", size = 193131, upload-time = "2026-10-11T21:45:47.706Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/3e/018644e48b1a45f04422ebe609667d19b42165f507dfcc7e5f2e3eee8c44/hexaflow-0.4.1-py3-none-any.whl", hash = "sha256:7e0390c90fa5d2cc060c22b400bba15cd1d64727fb45ed24b735a55bff1fcb97", size = 46675, upload-time = "2026-10-03T16:33:40.775Z" },
+    { url = "https://files.pythonhosted.org/packages/58/d2/f91b457d4b39caab66ce292aad80c3fecd22d9d7f8bdaafeba3d3044e4c9/hexaflow-0.5.0-py3-none-any.whl", hash = "sha256:bf4da426c015d5a84c1b2628d187377918b765de5d7f6fe61f65620400e19271", size = 80435, upload-time = "2026-10-11T21:45:46.31Z" },
 ]
 
 [[package]]
@@ -2590,7 +2591,7 @@ events = [
 
 [package.metadata]
 requires-dist = [
-    { name = "hexaflow", specifier = ">=0.4.1" },
+    { name = "hexaflow", specifier = ">=0.5.0" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-db", marker = "extra == 'db'", editable = "packages/hexastack_db" },

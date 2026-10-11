@@ -90,6 +90,71 @@ class CqrsWorkflowOrchestratorPort(ABC):
         """
 
     @abstractmethod
+    def rewind(
+        self,
+        run_id: str,
+        workflow: WorkflowDefinition,
+        to_step: str,
+        patch_inputs: dict[str, Any] | None = None,
+        skip_steps: set[str] | list[str] | None = None,
+    ) -> WorkflowExecutionResult:
+        """Rewind workflow execution to before a step and re-evaluate downstream steps.
+
+        Args:
+            run_id: The unique identifier of the workflow run to rewind.
+            workflow: WorkflowDefinition matching the run.
+            to_step: The target step identifier to rewind before.
+            patch_inputs: Optional override inputs for the resumed step frontier.
+            skip_steps: Optional collection of step names to explicitly skip.
+
+        Returns:
+            WorkflowExecutionResult reflecting the state after time-travel replay.
+
+        Raises:
+            WorkflowNotFoundError: If run_id does not exist.
+            WorkflowError: If to_step is invalid or rewind fails.
+        """
+
+    @abstractmethod
+    def simulate(
+        self,
+        workflow: WorkflowDefinition,
+        initial_inputs: dict[str, Any] | None = None,
+        allow_unsafe: bool = False,
+        fault_injection: dict[str, Exception] | None = None,
+    ) -> WorkflowExecutionResult:
+        """Perform a dry-run simulation of the workflow DAG without side effects.
+
+        Args:
+            workflow: The workflow DAG definition to simulate.
+            initial_inputs: Optional dictionary of root arguments.
+            allow_unsafe: When True, executes side-effecting steps without mocks.
+            fault_injection: Optional mapping of step names to simulated Exceptions.
+
+        Returns:
+            WorkflowExecutionResult summarizing the simulated outcome.
+
+        Raises:
+            WorkflowError: If simulation validation or fatal error occurs.
+        """
+
+    @abstractmethod
+    def render(
+        self,
+        workflow: WorkflowDefinition,
+        format_name: str = "mermaid",
+    ) -> str:
+        """Render the workflow DAG into a visual diagram or structural format.
+
+        Args:
+            workflow: The workflow DAG definition to visualize.
+            format_name: Name of renderer format ('mermaid', 'dot', 'ascii', 'json').
+
+        Returns:
+            Rendered diagram or structured output string.
+        """
+
+    @abstractmethod
     def close(self) -> None:
         """Release underlying engine worker pools and execution resources.
 

@@ -172,7 +172,14 @@ def test_step_checkpoint_crud(sqlite_store: SqlAlchemyWorkflowStore) -> None:
     chk_list = sqlite_store.get_checkpoints("run-chk-1")
     assert len(chk_list) == 1
 
-    # Clear checkpoints via port method
+    # Delete specific checkpoint via delete_checkpoint
+    sqlite_store.delete_checkpoint("run-chk-1", "step_a")
+    after_del = sqlite_store.get_checkpoints("run-chk-1")
+    assert len(after_del) == 0
+
+    # Re-save checkpoint and test clear_checkpoints
+    sqlite_store.save_checkpoint(updated_chk)
+    assert len(sqlite_store.get_checkpoints("run-chk-1")) == 1
     sqlite_store.clear_checkpoints("run-chk-1")
     after_clear = sqlite_store.get_checkpoints("run-chk-1")
     assert len(after_clear) == 0
