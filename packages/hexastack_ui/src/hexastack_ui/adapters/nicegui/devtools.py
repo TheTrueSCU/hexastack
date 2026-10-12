@@ -384,7 +384,7 @@ def _render_observability_tab(container: Container) -> None:
                     ui.chip(
                         "Not Configured",
                         icon="error_outline",
-                        color="amber-9",
+                        color="grey-9",
                         text_color="white",
                     )
 
