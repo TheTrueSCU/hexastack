@@ -689,19 +689,27 @@ def _render_workflow_tab(container: Container) -> None:
             try:
                 if orchestrator and hasattr(orchestrator, "simulate"):
                     res = orchestrator.simulate(wf)
-                    log_output.push(f"   ↳ [STATUS] {res.status}")
+                    status_val = res.status
+                    log_output.push(f"   ↳ [STATUS] {status_val}")
                     log_output.push(
                         f"   ↳ [COMPLETED STEPS] {', '.join(res.completed_steps)}"
                     )
                     log_output.push(f"   ↳ [SIMULATED OUTPUTS] {res.outputs}")
                 else:
                     state = wf.simulate()
-                    log_output.push(f"   ↳ [STATUS] {state.status.value}")
+                    status_val = state.status.value
+                    log_output.push(f"   ↳ [STATUS] {status_val}")
                     chk_keys = list(state.step_checkpoints.keys())
                     log_output.push(f"   ↳ [COMPLETED STEPS] {', '.join(chk_keys)}")
-                log_output.push(
-                    "✅ [SUCCESS] Dry-run simulation completed safely with 0 side effects."
-                )
+
+                if status_val == "COMPLETED":
+                    log_output.push(
+                        "✅ [SUCCESS] Dry-run simulation completed safely with 0 side effects."
+                    )
+                else:
+                    log_output.push(
+                        f"⚠️ [WARNING] Dry-run simulation ended with status: {status_val}"
+                    )
             except Exception as exc:
                 log_output.push(f"❌ [ERROR] Simulation failed: {exc}")
 
