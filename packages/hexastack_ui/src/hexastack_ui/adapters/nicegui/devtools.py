@@ -632,7 +632,14 @@ def _render_workflow_tab(container: Container) -> None:
             except Exception:
                 pass
 
-    from hexaflow import Workflow
+    try:
+        from hexaflow import Workflow
+    except ModuleNotFoundError:
+        with ui.card().classes("hx-card w-full p-4"):
+            ui.label(
+                "Workflow tools require the optional 'hexaflow' dependency."
+            ).classes("text-slate-500 italic")
+        return
 
     # Create a representative or registered demo workflow
     wf = Workflow(name="order_saga", version="1.0.0")
@@ -662,11 +669,14 @@ def _render_workflow_tab(container: Container) -> None:
     def dispatch_order(ctx) -> dict:
         return {"tracking": "TRK-001"}
 
-    mermaid_code = (
-        orchestrator.render(wf, format_name="mermaid")
-        if orchestrator and hasattr(orchestrator, "render")
-        else wf.render("mermaid")
-    )
+    try:
+        mermaid_code = (
+            orchestrator.render(wf, format_name="mermaid")
+            if orchestrator and hasattr(orchestrator, "render")
+            else wf.render("mermaid")
+        )
+    except Exception:
+        mermaid_code = wf.render("mermaid")
 
     with ui.card().classes("hx-card w-full mb-6 p-4"):
         ui.label("Workflow Execution Graph (Mermaid)").classes(
