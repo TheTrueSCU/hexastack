@@ -89,22 +89,29 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
             use_fn(middleware)
         return self
 
+    def _to_definition(self, workflow: Any) -> WorkflowDefinition:
+        """Resolve a Workflow DSL instance or WorkflowDefinition to WorkflowDefinition."""
+        if hasattr(workflow, "to_definition") and callable(workflow.to_definition):
+            return workflow.to_definition()
+        return workflow
+
     def execute(
         self,
-        workflow: WorkflowDefinition,
+        workflow: WorkflowDefinition | Any,
         initial_inputs: dict[str, Any] | None = None,
     ) -> WorkflowExecutionResult:
         """Execute workflow definition from the first stage.
 
         Args:
-            workflow: The WorkflowDefinition to run.
+            workflow: The WorkflowDefinition or Workflow DSL instance to run.
             initial_inputs: Optional dictionary of root arguments.
 
         Returns:
             WorkflowExecutionResult summarizing status, step outputs, and timing.
         """
+        wf_def = self._to_definition(workflow)
         start_time = datetime.now(UTC)
-        state = self._engine.run(workflow, initial_inputs=initial_inputs)
+        state = self._engine.run(wf_def, initial_inputs=initial_inputs)
 
         if self._event_bus is not None:
             self._event_bus.publish(
@@ -121,40 +128,42 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
     def resume(
         self,
         run_id: str,
-        workflow: WorkflowDefinition,
+        workflow: WorkflowDefinition | Any,
         patch_inputs: dict[str, Any] | None = None,
     ) -> WorkflowExecutionResult:
         """Resume a suspended workflow run from its latest checkpoints.
 
         Args:
             run_id: Unique identifier of the suspended run.
-            workflow: WorkflowDefinition specification matching the run.
+            workflow: WorkflowDefinition or Workflow DSL specification matching the run.
             patch_inputs: Optional updated inputs for the suspended step.
 
         Returns:
             WorkflowExecutionResult reflecting post-resumption status.
         """
-        state = self._engine.resume(run_id, workflow, patch_inputs=patch_inputs)
+        wf_def = self._to_definition(workflow)
+        state = self._engine.resume(run_id, wf_def, patch_inputs=patch_inputs)
         self._emit_terminal_events(state)
         return self._to_result(state)
 
     def abort(
         self,
         run_id: str,
-        workflow: WorkflowDefinition,
+        workflow: WorkflowDefinition | Any,
         reason: str = "Operator aborted",
     ) -> WorkflowExecutionResult:
         """Abort a workflow and unwind completed steps via compensation hooks.
 
         Args:
             run_id: Unique identifier of the workflow run.
-            workflow: WorkflowDefinition specification containing compensation hooks.
+            workflow: WorkflowDefinition or Workflow DSL specification containing compensation hooks.
             reason: Operator rationale or explanation for cancellation.
 
         Returns:
             WorkflowExecutionResult reflecting the aborted state.
         """
-        state = self._engine.abort(run_id, workflow)
+        wf_def = self._to_definition(workflow)
+        state = self._engine.abort(run_id, wf_def)
 
         if self._event_bus is not None:
             self._event_bus.publish(
@@ -171,7 +180,7 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
     def rewind(
         self,
         run_id: str,
-        workflow: WorkflowDefinition,
+        workflow: WorkflowDefinition | Any,
         to_step: str,
         patch_inputs: dict[str, Any] | None = None,
         skip_steps: set[str] | list[str] | None = None,
@@ -180,7 +189,7 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
 
         Args:
             run_id: Unique identifier of the workflow run to rewind.
-            workflow: WorkflowDefinition matching the run.
+            workflow: WorkflowDefinition or Workflow DSL specification matching the run.
             to_step: The target step identifier to rewind before.
             patch_inputs: Optional override inputs for the resumed step frontier.
             skip_steps: Optional collection of step names to explicitly skip.
@@ -188,9 +197,10 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
         Returns:
             WorkflowExecutionResult reflecting post-rewind replay outcome.
         """
+        wf_def = self._to_definition(workflow)
         state = self._engine.rewind(
             run_id=run_id,
-            workflow=workflow,
+            workflow=wf_def,
             to_step=to_step,
             patch_inputs=patch_inputs,
             skip_steps=skip_steps,
@@ -200,7 +210,7 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
 
     def simulate(
         self,
-        workflow: WorkflowDefinition,
+        workflow: WorkflowDefinition | Any,
         initial_inputs: dict[str, Any] | None = None,
         allow_unsafe: bool = False,
         fault_injection: dict[str, Exception] | None = None,
@@ -208,7 +218,7 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
         """Perform a dry-run simulation of the workflow DAG without mutating production systems.
 
         Args:
-            workflow: The WorkflowDefinition to simulate.
+            workflow: The WorkflowDefinition or Workflow DSL instance to simulate.
             initial_inputs: Optional dictionary of root arguments.
             allow_unsafe: When True, executes side-effecting steps without mocks.
             fault_injection: Optional mapping of step names to simulated Exceptions.
@@ -216,8 +226,9 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
         Returns:
             WorkflowExecutionResult reflecting the simulated execution state.
         """
+        wf_def = self._to_definition(workflow)
         state = self._engine.run(
-            workflow=workflow,
+            workflow=wf_def,
             initial_inputs=initial_inputs,
             dry_run=True,
             allow_unsafe=allow_unsafe,
@@ -227,13 +238,13 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
 
     def render(
         self,
-        workflow: WorkflowDefinition,
+        workflow: WorkflowDefinition | Any,
         format_name: str = "mermaid",
     ) -> str:
         """Render the workflow DAG into a visual diagram or structural format.
 
         Args:
-            workflow: The WorkflowDefinition to visualize.
+            workflow: The WorkflowDefinition or Workflow DSL instance to visualize.
             format_name: Name of renderer format ('mermaid', 'dot', 'ascii', 'json').
 
         Returns:
@@ -242,7 +253,8 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
         from hexaflow.adapters.renderers import default_renderer_registry
         from hexaflow.domain.graph import WorkflowGraph
 
-        graph = WorkflowGraph.from_workflow(workflow)
+        wf_def = self._to_definition(workflow)
+        graph = WorkflowGraph.from_workflow(wf_def)
         renderer = default_renderer_registry.get(format_name)
         return renderer.render(graph)
 

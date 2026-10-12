@@ -282,6 +282,35 @@ def test_runner_render() -> None:
     assert "step_b" in mermaid_out
 
 
+def test_runner_workflow_dsl_instance_interoperability() -> None:
+    """Validate that CqrsWorkflowRunner transparently converts Workflow DSL instances."""
+    from hexaflow import Workflow
+
+    runner = CqrsWorkflowRunner()
+    wf = Workflow(name="dsl_flow")
+
+    @wf.stage("stage_1")
+    @wf.step("step_1", dry_run=lambda ctx: "mocked_val")
+    def step_1(ctx):
+        return "real_val"
+
+    # Test render with DSL instance
+    mermaid = runner.render(wf, format_name="mermaid")
+    assert "step_1" in mermaid
+
+    # Test simulate with DSL instance
+    sim_res = runner.simulate(wf)
+    sim_status = sim_res.status
+    assert sim_status == "COMPLETED"
+    assert sim_res.outputs["step_1"] == "mocked_val"
+
+    # Test execute with DSL instance
+    exec_res = runner.execute(wf)
+    exec_status = exec_res.status
+    assert exec_status == "COMPLETED"
+    assert exec_res.outputs["step_1"] == "real_val"
+
+
 def test_runner_middleware() -> None:
     """Validate middleware pipeline registration and invocation in CqrsWorkflowRunner."""
     from hexaflow.adapters.middleware import InOutStepMiddleware
