@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from hexastack_core.utils.imports import require_dependency
+from hexastack_core.utils.imports import optional_dependency, require_dependency
 
 
 def test_require_dependency_installed_module() -> None:
@@ -55,3 +55,24 @@ def test_require_dependency_missing_module_with_feature_name() -> None:
             package="hexastack-events",
             feature_name="Kafka Event Bus",
         )
+
+
+def test_optional_dependency_installed_module() -> None:
+    """Test optional_dependency returns module when installed."""
+    mod = optional_dependency("json")
+    assert mod is not None
+    assert hasattr(mod, "loads")
+
+
+def test_optional_dependency_missing_module_default() -> None:
+    """Test optional_dependency returns None or default when module is missing."""
+    with patch(
+        "importlib.import_module",
+        side_effect=ModuleNotFoundError("No module named 'nonexistent_pkg'"),
+    ):
+        res_none = optional_dependency("nonexistent_pkg")
+        assert res_none is None
+
+        sentinel = object()
+        res_default = optional_dependency("nonexistent_pkg", default=sentinel)
+        assert res_default is sentinel

@@ -12,7 +12,10 @@ from hexastack_core.utils.fs import (
     atomic_write_bytes,
     atomic_write_text,
 )
-from hexastack_core.utils.imports import require_dependency
+from hexastack_core.utils.imports import (
+    optional_dependency,
+    require_dependency,
+)
 
 __all__ = [
     "atomic_write_bytes",
@@ -21,6 +24,7 @@ __all__ = [
     "get_correlation_id",
     "get_user_context",
     "new_correlation_id",
+    "optional_dependency",
     "require_dependency",
     "set_correlation_id",
     "set_user_context",

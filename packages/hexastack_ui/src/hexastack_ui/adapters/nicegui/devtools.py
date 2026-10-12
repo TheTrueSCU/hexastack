@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 from rodi import Container
 
+from hexastack_core.utils.imports import optional_dependency
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_ui.adapters.nicegui.page import check_nicegui_installed, mount_ui_app
 
@@ -632,9 +633,8 @@ def _render_workflow_tab(container: Container) -> None:
             except Exception:
                 pass
 
-    try:
-        from hexaflow import Workflow
-    except ModuleNotFoundError:
+    hexaflow = optional_dependency("hexaflow")
+    if hexaflow is None:
         with ui.card().classes("hx-card w-full p-4"):
             ui.label(
                 "Workflow tools require the optional 'hexaflow' dependency."
@@ -642,7 +642,7 @@ def _render_workflow_tab(container: Container) -> None:
         return
 
     # Create a representative or registered demo workflow
-    wf = Workflow(name="order_saga", version="1.0.0")
+    wf = hexaflow.Workflow(name="order_saga", version="1.0.0")
 
     @wf.stage("validation")
     @wf.step("validate_order")

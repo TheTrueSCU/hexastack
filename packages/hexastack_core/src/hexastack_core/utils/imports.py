@@ -47,6 +47,32 @@ def require_dependency(
         ) from exc
 
 
+def optional_dependency(
+    module_name: str,
+    *,
+    default: Any = None,
+) -> Any:
+    """Import an optional third-party module, returning a default value if unavailable.
+
+    Args:
+        module_name: Python module import path (e.g. 'hexaflow', 'sentry_sdk').
+        default: Fallback value returned if the module is not installed (defaults to None).
+
+    Returns:
+        The imported module object, or `default` if ModuleNotFoundError is encountered.
+
+    Notes/Architectural Intent:
+        Complements `require_dependency` by providing a safe, clean mechanism for
+        progressive feature enhancement in presentation layers, devtools dashboards,
+        and diagnostics without boilerplate try/except blocks.
+    """
+    try:
+        return importlib.import_module(module_name)
+    except ModuleNotFoundError:
+        return default
+
+
 __all__ = [
+    "optional_dependency",
     "require_dependency",
 ]

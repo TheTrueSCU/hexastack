@@ -620,3 +620,90 @@ def test_observability_tab_and_sentry_topology():
             'Pipeline -.-> Sentry["Sentry Error Reporting"]' in mermaid_code
         )
         assert has_sentry_link is True
+
+
+def test_render_workflow_tab_success():
+    """Verify _render_workflow_tab renders DAG visualizer and saga simulator."""
+    from nicegui import Client, ui
+    from nicegui.page import page
+
+    from hexastack_ui.adapters.nicegui.devtools import _render_workflow_tab
+
+    client = Client(page("/test-workflow-tab"))
+    with client.layout.default_slot:
+        container = Container()
+        _render_workflow_tab(container)
+
+    sim_btns = [
+        e
+        for e in client.elements.values()
+        if isinstance(e, ui.button) and e._props.get("label") == "Simulate Saga"
+    ]
+    assert len(sim_btns) == 1
+    listener = list(sim_btns[0]._event_listeners.values())[0]
+    handler = listener.handler
+    assert callable(handler)
+    handler(None)
+
+
+def test_render_workflow_tab_with_orchestrator():
+    """Verify _render_workflow_tab when CqrsWorkflowOrchestratorPort is present."""
+    from datetime import UTC, datetime
+    from unittest.mock import MagicMock
+
+    from nicegui import Client, ui
+    from nicegui.page import page
+
+    from hexastack_flow.domain.models import WorkflowExecutionResult
+    from hexastack_flow.ports.orchestrator import CqrsWorkflowOrchestratorPort
+    from hexastack_ui.adapters.nicegui.devtools import _render_workflow_tab
+
+    mock_orch = MagicMock(spec=CqrsWorkflowOrchestratorPort)
+    mock_orch.render.return_value = "flowchart TD\n  step1-->step2"
+    now = datetime.now(UTC)
+    mock_orch.simulate.return_value = WorkflowExecutionResult(
+        run_id="run-sim-1",
+        workflow_name="order_saga",
+        status="COMPLETED",
+        completed_steps=("validate_order", "authorize_payment", "dispatch_order"),
+        outputs={},
+        started_at=now,
+        ended_at=now,
+    )
+
+    container = Container()
+    container.add_instance(mock_orch, declared_class=CqrsWorkflowOrchestratorPort)
+
+    client = Client(page("/test-workflow-tab-orch"))
+    with client.layout.default_slot:
+        _render_workflow_tab(container)
+
+    sim_btns = [
+        e
+        for e in client.elements.values()
+        if isinstance(e, ui.button) and e._props.get("label") == "Simulate Saga"
+    ]
+    assert len(sim_btns) == 1
+    listener = list(sim_btns[0]._event_listeners.values())[0]
+    handler = listener.handler
+    assert callable(handler)
+    handler(None)
+    mock_orch.simulate.assert_called_once()
+
+
+def test_render_workflow_tab_missing_hexaflow(monkeypatch):
+    """Verify _render_workflow_tab renders fallback notice when hexaflow is absent."""
+    from nicegui import Client
+    from nicegui.page import page
+
+    from hexastack_ui.adapters.nicegui.devtools import _render_workflow_tab
+
+    monkeypatch.setattr(
+        "hexastack_ui.adapters.nicegui.devtools.optional_dependency",
+        lambda name: None,
+    )
+
+    client = Client(page("/test-workflow-tab-missing"))
+    with client.layout.default_slot:
+        container = Container()
+        _render_workflow_tab(container)
