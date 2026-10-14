@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils import require_dependency
 from hexastack_ui.domain.models import DevToolsDashboardState
 from hexastack_ui.ports.presenter import DevToolsPresenterPort
 
@@ -31,13 +31,12 @@ def check_textual_installed() -> None:
     Notes/Architectural Intent:
         Enables lazy import error reporting with installation hints.
     """
-    try:
-        import textual  # noqa: F401
-    except ImportError as e:
-        raise MissingDependencyError(
-            "Textual is required for hexastack-ui Textual support. "
-            "Install with 'pip install hexastack-ui[textual]' or 'pip install textual'."
-        ) from e
+    require_dependency(
+        "textual",
+        extra="textual",
+        package="hexastack-ui",
+        feature_name="Textual Terminal Dashboard",
+    )
 
 
 def _create_textual_app_class() -> type:

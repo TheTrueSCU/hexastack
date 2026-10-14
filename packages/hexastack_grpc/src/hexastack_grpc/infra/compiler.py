@@ -10,8 +10,9 @@ from __future__ import annotations
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils import require_dependency
 from hexastack_core.utils.fs import atomic_write_text
 from hexastack_grpc.domain.exceptions import ProtoCompilationError
 from hexastack_grpc.domain.models import ProtoSchemaMetadata
@@ -21,14 +22,13 @@ class ProtoCompiler:
     """In-process compiler translating .proto files and inline schemas into Python stubs."""
 
     @staticmethod
-    def _require_grpc_tools() -> None:
-        try:
-            import grpc_tools.protoc  # noqa: F401
-        except ImportError as e:
-            raise MissingDependencyError(
-                "grpcio-tools is required to compile protobuf schemas. "
-                "Install with 'pip install hexastack-grpc[tools]' or 'pip install grpcio-tools'."
-            ) from e
+    def _require_grpc_tools() -> Any:
+        return require_dependency(
+            "grpc_tools.protoc",
+            extra="tools",
+            package="hexastack-grpc",
+            feature_name="Protobuf Compiler",
+        )
 
     @classmethod
     def compile_files(

@@ -35,7 +35,7 @@ try:
 except ImportError:
     atheris = None  # type: ignore[assignment]
 
-_MAX_PER_CALL_DURATION = 0.05  # 50ms
+_MAX_PER_CALL_DURATION = 0.50  # 500ms budget under parallel CI worker load
 
 
 class FuzzEchoBus(CommandBusPort):

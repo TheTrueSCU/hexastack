@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils import require_dependency
 from hexastack_core.utils.fs import atomic_write_text
 from hexastack_fastapi.testing.cursor import VIRTUAL_CURSOR_SCRIPT
 
@@ -71,13 +71,12 @@ class DemoNarrator:
         Raises:
             MissingDependencyError: If `playwright` is not installed.
         """
-        try:
-            import playwright  # noqa: F401
-        except ImportError as e:
-            raise MissingDependencyError(
-                "Playwright is required to record feature demos. "
-                "Install with 'pip install hexastack-fastapi[testing]' or 'pip install playwright'."
-            ) from e
+        require_dependency(
+            "playwright",
+            extra="testing",
+            package="hexastack-fastapi",
+            feature_name="Feature Demo Recording",
+        )
 
         self.page = page
         self.output_name = output_name

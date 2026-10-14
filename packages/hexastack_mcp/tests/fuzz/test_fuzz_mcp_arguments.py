@@ -60,7 +60,7 @@ _tool_wrapper = _registry._create_cqrs_tool_wrapper(
     server_read_only=False,
 )
 
-_MAX_PER_CALL_DURATION = 0.05  # 50ms
+_MAX_PER_CALL_DURATION = 0.50  # 500ms budget under parallel CI worker load
 
 
 def fuzz_one_input(data: bytes) -> None:

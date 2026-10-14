@@ -20,6 +20,7 @@ from hexastack_core.ports.repository import (
     AsyncRepositoryPort,
     RepositoryPort,
 )
+from hexastack_core.utils import require_dependency
 from hexastack_db.domain.exceptions import (
     DatabaseConnectionError,
     DatabaseError,
@@ -36,15 +37,12 @@ def _require_duckdb() -> Any:
     Raises:
         ImportError: If duckdb is not installed in the active environment.
     """
-    try:
-        import duckdb
-
-        return duckdb
-    except ImportError as exc:
-        raise ImportError(
-            "duckdb is required for DuckDbRepository. "
-            "Install with: pip install hexastack-db[duckdb]"
-        ) from exc
+    return require_dependency(
+        "duckdb",
+        extra="duckdb",
+        package="hexastack-db",
+        feature_name="DuckDbRepository",
+    )
 
 
 def _quote_ident(name: str) -> str:

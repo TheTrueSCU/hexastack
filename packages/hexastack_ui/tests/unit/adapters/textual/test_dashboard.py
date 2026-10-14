@@ -33,7 +33,7 @@ def test_check_textual_installed_missing() -> None:
         with pytest.raises(MissingDependencyError) as exc_info:
             check_textual_installed()
         err_msg = str(exc_info.value)
-        assert "Textual is required" in err_msg
+        assert "textual' is required" in err_msg
 
 
 @pytest.mark.asyncio

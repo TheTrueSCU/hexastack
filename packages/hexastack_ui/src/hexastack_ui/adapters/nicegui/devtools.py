@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 from rodi import Container
 
+from hexastack_core.utils.imports import optional_dependency
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_ui.adapters.nicegui.page import check_nicegui_installed, mount_ui_app
 
@@ -384,7 +385,7 @@ def _render_observability_tab(container: Container) -> None:
                     ui.chip(
                         "Not Configured",
                         icon="error_outline",
-                        color="amber-9",
+                        color="grey-9",
                         text_color="white",
                     )
 
@@ -612,6 +613,124 @@ def _render_topology_tab(
         ui.mermaid(mermaid_code).classes("w-full")
 
 
+def _render_workflow_tab(container: Container) -> None:
+    """Render Workflow Orchestration tab showing DAG visualization and saga simulation."""
+    from nicegui import ui
+
+    ui.label("Workflow Orchestration & DAG Visualizer").classes("hx-section-heading")
+    ui.label(
+        "Interactive workflow DAG rendering and dry-run saga simulation powered by hexaflow."
+    ).classes("hx-subtext")
+
+    # Check if CqrsWorkflowOrchestratorPort is registered in container
+    orchestrator = None
+    service_map = getattr(container, "_map", {})
+    for cls in service_map:
+        if getattr(cls, "__name__", "") == "CqrsWorkflowOrchestratorPort":
+            try:
+                orchestrator = container.resolve(cls)
+                break
+            except Exception:
+                # Silently ignore resolution errors if container services are missing dependencies
+                pass
+
+    hexaflow = optional_dependency("hexaflow")
+    if hexaflow is None:
+        with ui.card().classes("hx-card w-full p-4"):
+            ui.label(
+                "Workflow tools require the optional 'hexaflow' dependency."
+            ).classes("text-slate-500 italic")
+        return
+
+    # Create a representative or registered demo workflow
+    wf = hexaflow.Workflow(name="order_saga", version="1.0.0")
+
+    @wf.stage("validation")
+    @wf.step("validate_order")
+    def validate_order(ctx) -> dict:
+        return {"order_id": "ord-101", "valid": True}
+
+    @wf.stage("payment")
+    @wf.step(
+        "authorize_payment",
+        depends_on=["validate_order"],
+        side_effects=True,
+        dry_run=lambda _: {"status": "AUTH_SIMULATED"},
+    )
+    def authorize_payment(ctx) -> dict:
+        return {"status": "PAID"}
+
+    @wf.stage("fulfillment")
+    @wf.step(
+        "dispatch_order",
+        depends_on=["authorize_payment"],
+        side_effects=True,
+        dry_run=lambda _: {"tracking": "SIM-TRACK-999"},
+    )
+    def dispatch_order(ctx) -> dict:
+        return {"tracking": "TRK-001"}
+
+    try:
+        mermaid_code = (
+            orchestrator.render(wf, format_name="mermaid")
+            if orchestrator and hasattr(orchestrator, "render")
+            else wf.render("mermaid")
+        )
+    except Exception:
+        mermaid_code = wf.render("mermaid")
+
+    with ui.card().classes("hx-card w-full mb-6 p-4"):
+        ui.label("Workflow Execution Graph (Mermaid)").classes(
+            "font-semibold text-slate-700 dark:text-slate-200 mb-2"
+        )
+        ui.mermaid(mermaid_code).classes("w-full")
+
+    with ui.card().classes("hx-card w-full p-4"):
+        ui.label("Dry-Run Saga Simulator").classes(
+            "font-semibold text-slate-700 dark:text-slate-200 mb-2"
+        )
+        ui.label(
+            "Simulate workflow execution with side-effect fail-closed guards without mutating production databases:"
+        ).classes("hx-subtext")
+
+        log_output = ui.log(max_lines=10).classes("hx-log-console mb-3")
+
+        def _run_sim() -> None:
+            log_output.push("▶️ [SIMULATION] Starting dry-run saga simulation...")
+            try:
+                if orchestrator and hasattr(orchestrator, "simulate"):
+                    res = orchestrator.simulate(wf)
+                    status_val = res.status
+                    log_output.push(f"   ↳ [STATUS] {status_val}")
+                    log_output.push(
+                        f"   ↳ [COMPLETED STEPS] {', '.join(res.completed_steps)}"
+                    )
+                    log_output.push(f"   ↳ [SIMULATED OUTPUTS] {res.outputs}")
+                else:
+                    state = wf.simulate()
+                    status_val = state.status.value
+                    log_output.push(f"   ↳ [STATUS] {status_val}")
+                    chk_keys = list(state.step_checkpoints.keys())
+                    log_output.push(f"   ↳ [COMPLETED STEPS] {', '.join(chk_keys)}")
+
+                if status_val == "COMPLETED":
+                    log_output.push(
+                        "✅ [SUCCESS] Dry-run simulation completed safely with 0 side effects."
+                    )
+                else:
+                    log_output.push(
+                        f"⚠️ [WARNING] Dry-run simulation ended with status: {status_val}"
+                    )
+            except Exception as exc:
+                log_output.push(f"❌ [ERROR] Simulation failed: {exc}")
+
+        ui.button(
+            "Simulate Saga", on_click=_run_sim, icon="play_arrow", color="blue-9"
+        ).classes("text-white font-medium shadow-sm").tooltip(
+            "Execute dry-run simulation safely"
+        )
+
+
 def _render_devtools_content(
     container: Container,
     pipeline: ExecutionPipeline | None,
@@ -632,14 +751,18 @@ def _render_devtools_content(
 
     with ui.tabs().classes("w-full bg-slate-100 dark:bg-slate-800") as tabs:
         tab_cqrs = ui.tab("CQRS Registry", icon="bolt")
+        tab_workflows = ui.tab("Workflows", icon="account_tree")
         tab_flags = ui.tab("Feature Flags", icon="toggle_on")
         tab_container = ui.tab("DI Container", icon="hub")
         tab_observability = ui.tab("Observability", icon="monitor_heart")
-        tab_topology = ui.tab("Resource Topology", icon="account_tree")
+        tab_topology = ui.tab("Resource Topology", icon="schema")
 
     with ui.tab_panels(tabs, value=tab_cqrs).classes("w-full p-6"):
         with ui.tab_panel(tab_cqrs):
             _render_cqrs_tab(container, pipeline=pipeline)
+
+        with ui.tab_panel(tab_workflows):
+            _render_workflow_tab(container)
 
         with ui.tab_panel(tab_flags):
             _render_flags_tab(container)

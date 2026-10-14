@@ -185,3 +185,174 @@ async def test_runner_async_context_manager() -> None:
     async with CqrsWorkflowRunner(max_process_workers=1) as runner:
         engine = runner._engine
         assert engine is not None
+
+
+def test_runner_rewind() -> None:
+    """Validate rewinding a workflow to a historical step and replaying."""
+    runner = CqrsWorkflowRunner()
+    counter = 0
+
+    def _inc(ctx) -> int:
+        nonlocal counter
+        counter += 1
+        return counter
+
+    wf = WorkflowDefinition(
+        name="rewind_flow",
+        stages=(
+            StageDefinition(
+                name="stage_1",
+                steps=(
+                    StepDefinition(name="step_1", action=lambda ctx: "first"),
+                    StepDefinition(
+                        name="step_2",
+                        action=_inc,
+                        depends_on=("step_1",),
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    initial_res = runner.execute(wf)
+    status_init = initial_res.status
+    assert status_init == "COMPLETED"
+    assert counter == 1
+
+    rewound_res = runner.rewind(initial_res.run_id, wf, to_step="step_2")
+    status_rewound = rewound_res.status
+    assert status_rewound == "COMPLETED"
+    assert counter == 2
+
+
+def test_runner_simulate() -> None:
+    """Validate dry-run simulation through CqrsWorkflowRunner."""
+    runner = CqrsWorkflowRunner()
+    called = False
+
+    def _action(ctx) -> str:
+        nonlocal called
+        called = True
+        return "actual"
+
+    wf = WorkflowDefinition(
+        name="sim_flow",
+        stages=(
+            StageDefinition(
+                name="stage_1",
+                steps=(
+                    StepDefinition(
+                        name="step_1",
+                        action=_action,
+                        dry_run=lambda ctx: "mocked",
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    sim_res = runner.simulate(wf)
+    sim_status = sim_res.status
+    assert sim_status == "COMPLETED"
+    assert called is False
+    assert sim_res.outputs["step_1"] == "mocked"
+
+
+def test_runner_render() -> None:
+    """Validate diagram rendering through CqrsWorkflowRunner."""
+    runner = CqrsWorkflowRunner()
+    wf = WorkflowDefinition(
+        name="render_flow",
+        stages=(
+            StageDefinition(
+                name="stage_1",
+                steps=(
+                    StepDefinition(name="step_a", action=lambda ctx: 1),
+                    StepDefinition(
+                        name="step_b", action=lambda ctx: 2, depends_on=("step_a",)
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    mermaid_out = runner.render(wf, format_name="mermaid")
+    assert "graph" in mermaid_out or "flowchart" in mermaid_out
+    assert "step_a" in mermaid_out
+    assert "step_b" in mermaid_out
+
+
+def test_runner_workflow_dsl_instance_interoperability() -> None:
+    """Validate that CqrsWorkflowRunner transparently converts Workflow DSL instances."""
+    from hexaflow import Workflow
+
+    runner = CqrsWorkflowRunner()
+    wf = Workflow(name="dsl_flow")
+
+    @wf.stage("stage_1")
+    @wf.step("step_1", dry_run=lambda ctx: "mocked_val")
+    def step_1(ctx):
+        return "real_val"
+
+    # Test render with DSL instance
+    mermaid = runner.render(wf, format_name="mermaid")
+    assert "step_1" in mermaid
+
+    # Test simulate with DSL instance
+    sim_res = runner.simulate(wf)
+    sim_status = sim_res.status
+    assert sim_status == "COMPLETED"
+    assert sim_res.outputs["step_1"] == "mocked_val"
+
+    # Test execute with DSL instance
+    exec_res = runner.execute(wf)
+    exec_status = exec_res.status
+    assert exec_status == "COMPLETED"
+    assert exec_res.outputs["step_1"] == "real_val"
+
+
+def test_runner_middleware() -> None:
+    """Validate middleware pipeline registration and invocation in CqrsWorkflowRunner."""
+    from hexaflow.adapters.middleware import InOutStepMiddleware
+
+    intercepted = []
+
+    class AuditMiddleware(InOutStepMiddleware):
+        def before(self, ctx):
+            intercepted.append(f"before:{ctx.step_name}")
+            return ctx.step_name
+
+        def after(self, ctx, result, context):
+            intercepted.append(f"after:{context}")
+            return result
+
+    audit_mw = AuditMiddleware()
+    runner = CqrsWorkflowRunner(middleware=[audit_mw])
+
+    wf = WorkflowDefinition(
+        name="mw_flow",
+        stages=(
+            StageDefinition(
+                name="stage_1",
+                steps=(StepDefinition(name="step_x", action=lambda ctx: "x"),),
+            ),
+        ),
+    )
+
+    res = runner.execute(wf)
+    res_status = res.status
+    assert res_status == "COMPLETED"
+    assert intercepted == ["before:step_x", "after:step_x"]
+
+    # Test runner.use() chaining
+    runner_chained = CqrsWorkflowRunner()
+    res_use = runner_chained.use(audit_mw)
+    assert res_use is runner_chained
+
+    # Test custom engine passed in with middleware
+    from hexaflow.adapters.engines.local_async import AsyncioWorkflowEngine
+
+    custom_engine = AsyncioWorkflowEngine()
+    runner_custom = CqrsWorkflowRunner(engine=custom_engine, middleware=[audit_mw])
+    assert runner_custom is not None
+    assert len(custom_engine._middleware) >= 1

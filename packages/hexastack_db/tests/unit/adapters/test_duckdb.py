@@ -10,6 +10,7 @@ import duckdb
 import pyarrow as pa
 import pytest
 
+from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_db.adapters.duckdb import (
     AsyncDuckDbRepository,
     DuckDbRepository,
@@ -46,10 +47,10 @@ class ComplexMetric:
 
 
 def test_require_duckdb_missing():
-    """Verify informative ImportError is raised when duckdb is missing."""
+    """Verify informative MissingDependencyError is raised when duckdb is missing."""
     with (
         patch.dict("sys.modules", {"duckdb": None}),
-        pytest.raises(ImportError, match="duckdb is required for DuckDbRepository"),
+        pytest.raises(MissingDependencyError, match="duckdb.*is required"),
     ):
         _require_duckdb()
 

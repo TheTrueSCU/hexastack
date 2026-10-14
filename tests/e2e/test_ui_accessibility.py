@@ -113,3 +113,15 @@ def test_devtools_ui_wcag_accessibility(devtools_server: str, page: Page) -> Non
     assert crit_count_obs == 0, (
         f"Accessibility violations on Observability tab: {critical_violations_obs}"
     )
+
+    # 6. Audit Workflows Tab
+    smart_click(page, page.get_by_text("Workflows"))
+    expect(page.get_by_text("Workflow Orchestration & DAG Visualizer")).to_be_visible()
+    violations_wf = run_axe_scan(page)
+    critical_violations_wf = [
+        v for v in violations_wf if v.get("impact") in ("critical", "serious")
+    ]
+    crit_count_wf = len(critical_violations_wf)
+    assert crit_count_wf == 0, (
+        f"Accessibility violations on Workflows tab: {critical_violations_wf}"
+    )

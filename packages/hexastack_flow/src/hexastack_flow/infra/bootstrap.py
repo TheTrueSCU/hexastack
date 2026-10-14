@@ -5,6 +5,8 @@ Notes/Architectural Intent:
     into the dependency injection container and exposing orchestration services.
 """
 
+from typing import Any
+
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
@@ -40,12 +42,26 @@ class FlowBootstrapper(BootstrapperPort):
         if EventBusPort in di:
             event_bus = di.resolve(EventBusPort)
 
+        middleware: list[Any] = []
+        try:
+            from hexastack_otel.ports.tracing import TracingPort
+
+            if TracingPort in di:
+                tracer = di.resolve(TracingPort)
+                from hexastack_flow.adapters.middleware.otel import OtelStepMiddleware
+
+                middleware.append(OtelStepMiddleware(tracer=tracer))
+        except ImportError:
+            # hexastack-otel is optional; do not register OtelStepMiddleware if absent
+            pass
+
         max_process_workers = context.properties.get("flow_max_process_workers")
         max_thread_workers = context.properties.get("flow_max_thread_workers")
         runner = CqrsWorkflowRunner(
             event_bus=event_bus,
             max_process_workers=max_process_workers,
             max_thread_workers=max_thread_workers,
+            middleware=middleware or None,
         )
         di.add_instance(runner, declared_class=CqrsWorkflowOrchestratorPort)
         context.properties["flow_runner"] = runner

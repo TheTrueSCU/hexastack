@@ -1,9 +1,7 @@
-class HexastackError(Exception):
-    """Base exception class for all Hexastack domain and infrastructure exceptions.
-
-    Notes/Architectural Intent:
-        Provides a common root exception type allowing applications to catch all framework-originated errors.
-    """
+from hexastack_core.exceptions import (
+    HexastackError,
+    MissingDependencyError,
+)
 
 
 class DependencyResolutionError(HexastackError):
@@ -19,15 +17,6 @@ class HexastackRegistryError(HexastackError):
 
     Notes/Architectural Intent:
         Base exception for all registry-related errors across Hexastack packages.
-    """
-
-
-class MissingDependencyError(ImportError, HexastackError):
-    """Exception raised when an optional external package dependency is not installed.
-
-    Notes/Architectural Intent:
-        Dual-inherits from ImportError and HexastackError so standard import checkers and
-        framework-level error handlers can seamlessly catch optional dependency omissions.
     """
 
 

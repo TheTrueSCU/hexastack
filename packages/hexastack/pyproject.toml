@@ -109,6 +109,7 @@ openfga = [
     "hexastack-auth[openfga]",
 ]
 otel = [
+    "hexastack-flow[otel]",
     "hexastack-otel",
 ]
 otlp = [
