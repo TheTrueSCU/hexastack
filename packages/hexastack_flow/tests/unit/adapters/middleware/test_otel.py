@@ -121,8 +121,14 @@ def test_otel_step_middleware_sync_step_error() -> None:
     def failing_action(c: StepContext) -> None:
         raise ValueError("Insufficient funds")
 
-    with pytest.raises(ValueError, match="Insufficient funds"):
+    raised = False
+    try:
         middleware(ctx, failing_action)
+    except ValueError as exc:
+        raised = True
+        err_msg = str(exc)
+        assert "Insufficient funds" in err_msg
+    assert raised is True
 
     finished = tracer.finished_spans
     assert len(finished) == 1
@@ -150,9 +156,15 @@ async def test_otel_step_middleware_async_step_error() -> None:
     async def failing_async(c: StepContext) -> None:
         raise ConnectionError("Gateway timeout")
 
-    with pytest.raises(ConnectionError, match="Gateway timeout"):
-        coro = middleware(ctx, failing_async)
-        await coro
+    coro = middleware(ctx, failing_async)
+    raised = False
+    try:
+        _ = await coro
+    except ConnectionError as exc:
+        raised = True
+        err_msg = str(exc)
+        assert "Gateway timeout" in err_msg
+    assert raised is True
 
     finished = tracer.finished_spans
     assert len(finished) == 1

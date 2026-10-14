@@ -52,6 +52,7 @@ class FlowBootstrapper(BootstrapperPort):
 
                 middleware.append(OtelStepMiddleware(tracer=tracer))
         except ImportError:
+            # hexastack-otel is optional; do not register OtelStepMiddleware if absent
             pass
 
         max_process_workers = context.properties.get("flow_max_process_workers")
