@@ -613,8 +613,212 @@ def _render_topology_tab(
         ui.mermaid(mermaid_code).classes("w-full")
 
 
+def _build_demo_workflow(hexaflow_mod: Any) -> Any:
+    """Build a representative multi-stage order saga for DevTools visualization.
+
+    Args:
+        hexaflow_mod: Imported hexaflow module or namespace.
+
+    Returns:
+        Workflow instance configured with stages and steps.
+    """
+    wf = hexaflow_mod.Workflow(name="order_saga", version="1.0.0")
+
+    @wf.stage("validation")
+    @wf.step("validate_order")
+    def validate_order(ctx: Any) -> dict[str, Any]:
+        return {"order_id": "ord-101", "valid": True}
+
+    @wf.stage("payment")
+    @wf.step(
+        "authorize_payment",
+        depends_on=["validate_order"],
+        side_effects=True,
+        dry_run=lambda: {"status": "AUTH_SIMULATED"},
+    )
+    def authorize_payment(ctx: Any) -> dict[str, Any]:
+        return {"status": "PAID"}
+
+    @wf.stage("fulfillment")
+    @wf.step(
+        "dispatch_order",
+        depends_on=["authorize_payment"],
+        side_effects=True,
+        dry_run=lambda: {"tracking": "SIM-TRACK-999"},
+    )
+    def dispatch_order(ctx: Any) -> dict[str, Any]:
+        return {"tracking": "TRK-001"}
+
+    return wf
+
+
+def _resolve_available_workflows(
+    container: Container,
+    orchestrator: Any,
+    hexaflow_mod: Any,
+) -> dict[str, Any]:
+    """Discover registered application workflows, providing a demo saga as fallback.
+
+    Args:
+        container: Application DI container.
+        orchestrator: Optional workflow orchestrator port implementation.
+        hexaflow_mod: Imported hexaflow module or namespace.
+
+    Returns:
+        Mapping of workflow display names to workflow definitions or instances.
+    """
+    workflows: dict[str, Any] = {}
+    props = getattr(container, "properties", {})
+    if isinstance(props, dict):
+        reg = props.get("workflows")
+        if isinstance(reg, dict):
+            workflows.update(reg)
+    if (
+        orchestrator
+        and hasattr(orchestrator, "workflows")
+        and isinstance(orchestrator.workflows, dict)
+    ):
+        workflows.update(orchestrator.workflows)
+
+    demo = _build_demo_workflow(hexaflow_mod)
+    demo_key = "order_saga (Demo)"
+    if demo_key not in workflows:
+        workflows[demo_key] = demo
+    return workflows
+
+
+def _resolve_orchestrator(container: Container) -> Any | None:
+    """Resolve workflow orchestrator port from DI container if registered.
+
+    Args:
+        container: Application DI container.
+
+    Returns:
+        Resolved orchestrator instance or None.
+    """
+    service_map = getattr(container, "_map", {})
+    for cls in service_map:
+        if getattr(cls, "__name__", "") == "CqrsWorkflowOrchestratorPort":
+            try:
+                return container.resolve(cls)
+            except Exception:
+                return None
+    return None
+
+
+def _render_workflow_mermaid(
+    orchestrator: Any,
+    workflow: Any,
+    direction: Any = "TD",
+    highlight_cp: bool = False,
+    highlight_nodes: set[str] | None = None,
+) -> str:
+    """Render workflow DAG to Mermaid string with direction and highlighting options.
+
+    Args:
+        orchestrator: Optional orchestrator port.
+        workflow: Target workflow definition or instance.
+        direction: Layout direction ('TD' or 'LR').
+        highlight_cp: Whether to highlight critical execution path.
+        highlight_nodes: Optional set of step IDs to visually highlight.
+
+    Returns:
+        Mermaid diagram source code string.
+    """
+    if workflow is None:
+        return "graph TD\n  empty[No workflow diagram available]"
+
+    opts = None
+    try:
+        from hexaflow.ports.renderer import RenderOptions
+
+        opts = RenderOptions(
+            direction=direction,
+            highlight_critical_path=highlight_cp,
+            highlight_node_ids=frozenset(highlight_nodes)
+            if highlight_nodes
+            else frozenset(),
+        )
+    except Exception:
+        opts = None
+
+    try:
+        if orchestrator and hasattr(orchestrator, "render"):
+            return str(
+                orchestrator.render(workflow, format_name="mermaid", options=opts)
+            )
+        if opts and hasattr(workflow, "render"):
+            return str(workflow.render("mermaid", options=opts))
+        if hasattr(workflow, "render"):
+            return str(workflow.render("mermaid"))
+    except Exception:
+        if hasattr(workflow, "render"):
+            return str(workflow.render("mermaid"))
+    return "graph TD\n  empty[No workflow diagram available]"
+
+
+def _execute_saga_simulation(
+    orchestrator: Any,
+    workflow: Any,
+    log_output: Any,
+) -> list[str]:
+    """Execute dry-run simulation and log step progress.
+
+    Args:
+        orchestrator: Optional orchestrator port.
+        workflow: Target workflow to simulate.
+        log_output: NiceGUI log component to output traces.
+
+    Returns:
+        List of completed step names.
+    """
+    if workflow is None:
+        log_output.push("❌ [ERROR] No workflow selected for simulation.")
+        return []
+
+    wf_label = getattr(workflow, "name", "workflow")
+    log_output.push(
+        f"▶️ [SIMULATION] Starting dry-run saga simulation for '{wf_label}'..."
+    )
+    try:
+        if orchestrator and hasattr(orchestrator, "simulate"):
+            res = orchestrator.simulate(workflow)
+            status_val = str(res.status)
+            completed = list(res.completed_steps)
+            outputs = res.outputs
+        elif hasattr(workflow, "simulate"):
+            state = workflow.simulate()
+            status_val = str(state.status.value)
+            completed = list(state.step_checkpoints.keys())
+            outputs = {k: v.output_payload for k, v in state.step_checkpoints.items()}
+        else:
+            log_output.push("❌ [ERROR] Workflow cannot be simulated.")
+            return []
+
+        log_output.push(f"   ↳ [STATUS] {status_val}")
+        log_output.push(f"   ↳ [COMPLETED STEPS] {', '.join(completed)}")
+        log_output.push(f"   ↳ [SIMULATED OUTPUTS] {outputs}")
+
+        if status_val == "COMPLETED":
+            log_output.push(
+                "✅ [SUCCESS] Dry-run simulation completed safely with 0 side effects."
+            )
+        else:
+            log_output.push(
+                f"⚠️ [WARNING] Dry-run simulation ended with status: {status_val}"
+            )
+        return completed
+    except Exception as exc:
+        log_output.push(f"❌ [ERROR] Simulation failed: {exc}")
+        return []
+
+
 def _render_workflow_tab(container: Container) -> None:
-    """Render Workflow Orchestration tab showing DAG visualization and saga simulation."""
+    """Render interactive workflow DAG visualizer and saga simulation panel.
+
+    Args:
+        container: Application DI container providing services and orchestrator.
+    """
     from nicegui import ui
 
     ui.label("Workflow Orchestration & DAG Visualizer").classes("hx-section-heading")
@@ -622,18 +826,7 @@ def _render_workflow_tab(container: Container) -> None:
         "Interactive workflow DAG rendering and dry-run saga simulation powered by hexaflow."
     ).classes("hx-subtext")
 
-    # Check if CqrsWorkflowOrchestratorPort is registered in container
-    orchestrator = None
-    service_map = getattr(container, "_map", {})
-    for cls in service_map:
-        if getattr(cls, "__name__", "") == "CqrsWorkflowOrchestratorPort":
-            try:
-                orchestrator = container.resolve(cls)
-                break
-            except Exception:
-                # Silently ignore resolution errors if container services are missing dependencies
-                pass
-
+    orchestrator = _resolve_orchestrator(container)
     hexaflow = optional_dependency("hexaflow")
     if hexaflow is None:
         with ui.card().classes("hx-card w-full p-4"):
@@ -642,48 +835,58 @@ def _render_workflow_tab(container: Container) -> None:
             ).classes("text-slate-500 italic")
         return
 
-    # Create a representative or registered demo workflow
-    wf = hexaflow.Workflow(name="order_saga", version="1.0.0")
-
-    @wf.stage("validation")
-    @wf.step("validate_order")
-    def validate_order(ctx) -> dict:
-        return {"order_id": "ord-101", "valid": True}
-
-    @wf.stage("payment")
-    @wf.step(
-        "authorize_payment",
-        depends_on=["validate_order"],
-        side_effects=True,
-        dry_run=lambda _: {"status": "AUTH_SIMULATED"},
-    )
-    def authorize_payment(ctx) -> dict:
-        return {"status": "PAID"}
-
-    @wf.stage("fulfillment")
-    @wf.step(
-        "dispatch_order",
-        depends_on=["authorize_payment"],
-        side_effects=True,
-        dry_run=lambda _: {"tracking": "SIM-TRACK-999"},
-    )
-    def dispatch_order(ctx) -> dict:
-        return {"tracking": "TRK-001"}
-
-    try:
-        mermaid_code = (
-            orchestrator.render(wf, format_name="mermaid")
-            if orchestrator and hasattr(orchestrator, "render")
-            else wf.render("mermaid")
-        )
-    except Exception:
-        mermaid_code = wf.render("mermaid")
+    workflows = _resolve_available_workflows(container, orchestrator, hexaflow)
+    wf_names = list(workflows.keys())
+    active_wf_name = [wf_names[0]]
+    highlighted_steps: set[str] = set()
 
     with ui.card().classes("hx-card w-full mb-6 p-4"):
-        ui.label("Workflow Execution Graph (Mermaid)").classes(
-            "font-semibold text-slate-700 dark:text-slate-200 mb-2"
+        with ui.row().classes(
+            "w-full items-center justify-between mb-3 flex-wrap gap-2"
+        ):
+            with ui.row().classes("items-center gap-2"):
+                ui.icon("account_tree", size="sm").classes("text-blue-500")
+                ui.label("Workflow Execution Graph (Mermaid)").classes(
+                    "font-semibold text-slate-700 dark:text-slate-200"
+                )
+
+            with ui.row().classes("items-center gap-3"):
+                wf_select = ui.select(
+                    options=wf_names,
+                    value=active_wf_name[0],
+                    label="Active Workflow",
+                ).classes("w-56 text-xs")
+
+                dir_select = ui.select(
+                    {"TD": "Top-to-Bottom (TD)", "LR": "Left-to-Right (LR)"},
+                    value="TD",
+                    label="Layout Direction",
+                ).classes("w-44 text-xs")
+
+                cp_switch = ui.switch("Critical Path", value=False).classes("text-xs")
+
+        initial_mermaid = _render_workflow_mermaid(
+            orchestrator,
+            workflows.get(active_wf_name[0]),
+            direction=str(dir_select.value or "TD"),
+            highlight_cp=bool(cp_switch.value),
         )
-        ui.mermaid(mermaid_code).classes("w-full")
+        mermaid_view = ui.mermaid(initial_mermaid).classes("w-full")
+
+        def _update_view() -> None:
+            active_wf_name[0] = wf_select.value or wf_names[0]
+            new_code = _render_workflow_mermaid(
+                orchestrator,
+                workflows.get(active_wf_name[0]),
+                direction=str(dir_select.value or "TD"),
+                highlight_cp=bool(cp_switch.value),
+                highlight_nodes=highlighted_steps,
+            )
+            mermaid_view.set_content(new_code)
+
+        wf_select.on_value_change(_update_view)
+        dir_select.on_value_change(_update_view)
+        cp_switch.on_value_change(_update_view)
 
     with ui.card().classes("hx-card w-full p-4"):
         ui.label("Dry-Run Saga Simulator").classes(
@@ -693,42 +896,37 @@ def _render_workflow_tab(container: Container) -> None:
             "Simulate workflow execution with side-effect fail-closed guards without mutating production databases:"
         ).classes("hx-subtext")
 
-        log_output = ui.log(max_lines=10).classes("hx-log-console mb-3")
+        log_output = ui.log(max_lines=12).classes("hx-log-console mb-3")
 
         def _run_sim() -> None:
-            log_output.push("▶️ [SIMULATION] Starting dry-run saga simulation...")
-            try:
-                if orchestrator and hasattr(orchestrator, "simulate"):
-                    res = orchestrator.simulate(wf)
-                    status_val = res.status
-                    log_output.push(f"   ↳ [STATUS] {status_val}")
-                    log_output.push(
-                        f"   ↳ [COMPLETED STEPS] {', '.join(res.completed_steps)}"
-                    )
-                    log_output.push(f"   ↳ [SIMULATED OUTPUTS] {res.outputs}")
-                else:
-                    state = wf.simulate()
-                    status_val = state.status.value
-                    log_output.push(f"   ↳ [STATUS] {status_val}")
-                    chk_keys = list(state.step_checkpoints.keys())
-                    log_output.push(f"   ↳ [COMPLETED STEPS] {', '.join(chk_keys)}")
+            completed = _execute_saga_simulation(
+                orchestrator,
+                workflows.get(active_wf_name[0]),
+                log_output,
+            )
+            highlighted_steps.clear()
+            highlighted_steps.update(completed)
+            _update_view()
 
-                if status_val == "COMPLETED":
-                    log_output.push(
-                        "✅ [SUCCESS] Dry-run simulation completed safely with 0 side effects."
-                    )
-                else:
-                    log_output.push(
-                        f"⚠️ [WARNING] Dry-run simulation ended with status: {status_val}"
-                    )
-            except Exception as exc:
-                log_output.push(f"❌ [ERROR] Simulation failed: {exc}")
+        def _reset_sim() -> None:
+            highlighted_steps.clear()
+            _update_view()
+            log_output.push("🔄 [RESET] Visual highlights cleared.")
 
-        ui.button(
-            "Simulate Saga", on_click=_run_sim, icon="play_arrow", color="blue-9"
-        ).classes("text-white font-medium shadow-sm").tooltip(
-            "Execute dry-run simulation safely"
-        )
+        with ui.row().classes("gap-2 mt-2"):
+            ui.button(
+                "Simulate Saga", on_click=_run_sim, icon="play_arrow", color="blue-9"
+            ).classes("text-white font-medium shadow-sm").tooltip(
+                "Execute dry-run simulation safely"
+            )
+            ui.button(
+                "Reset Highlights",
+                on_click=_reset_sim,
+                icon="restart_alt",
+                color="grey-8",
+            ).classes("text-white font-medium shadow-sm").tooltip(
+                "Reset graph step highlights"
+            )
 
 
 def _render_devtools_content(

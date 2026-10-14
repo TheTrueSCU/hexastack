@@ -240,12 +240,14 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
         self,
         workflow: WorkflowDefinition | Any,
         format_name: str = "mermaid",
+        options: Any | None = None,
     ) -> str:
         """Render the workflow DAG into a visual diagram or structural format.
 
         Args:
             workflow: The WorkflowDefinition or Workflow DSL instance to visualize.
             format_name: Name of renderer format ('mermaid', 'dot', 'ascii', 'json').
+            options: Optional renderer options (direction, critical path, highlight nodes).
 
         Returns:
             Rendered diagram or structured output string.
@@ -256,6 +258,8 @@ class CqrsWorkflowRunner(CqrsWorkflowOrchestratorPort):
         wf_def = self._to_definition(workflow)
         graph = WorkflowGraph.from_workflow(wf_def)
         renderer = default_renderer_registry.get(format_name)
+        if options is not None:
+            return renderer.render(graph, options=options)
         return renderer.render(graph)
 
     def close(self) -> None:
