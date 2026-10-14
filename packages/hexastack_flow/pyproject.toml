@@ -22,8 +22,11 @@ db = [
 events = [
     "hexastack-events",
 ]
+otel = [
+    "hexastack-otel",
+]
 all = [
-    "hexastack-flow[db,events]",
+    "hexastack-flow[db,events,otel]",
 ]
 
 [project.entry-points."hexastack.bootstrappers"]
@@ -38,6 +41,7 @@ hexastack-core = { workspace = true }
 hexastack-cqrs = { workspace = true }
 hexastack-db = { workspace = true }
 hexastack-events = { workspace = true }
+hexastack-otel = { workspace = true }
 
 [tool.importlinter]
 root_packages = ["hexastack_flow"]

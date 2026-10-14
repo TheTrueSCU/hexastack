@@ -2002,6 +2002,7 @@ openfga = [
     { name = "hexastack-auth", extra = ["openfga"] },
 ]
 otel = [
+    { name = "hexastack-flow", extra = ["otel"] },
     { name = "hexastack-otel" },
 ]
 otlp = [
@@ -2144,6 +2145,7 @@ requires-dist = [
     { name = "hexastack-flow", marker = "extra == 'flow'", editable = "packages/hexastack_flow" },
     { name = "hexastack-flow", extras = ["db"], marker = "extra == 'db'", editable = "packages/hexastack_flow" },
     { name = "hexastack-flow", extras = ["events"], marker = "extra == 'events'", editable = "packages/hexastack_flow" },
+    { name = "hexastack-flow", extras = ["otel"], marker = "extra == 'otel'", editable = "packages/hexastack_flow" },
     { name = "hexastack-graphql", marker = "extra == 'all'", editable = "packages/hexastack_graphql" },
     { name = "hexastack-graphql", marker = "extra == 'graphql'", editable = "packages/hexastack_graphql" },
     { name = "hexastack-grpc", marker = "extra == 'grpc'", editable = "packages/hexastack_grpc" },
@@ -2579,6 +2581,7 @@ dependencies = [
 all = [
     { name = "hexastack-db" },
     { name = "hexastack-events" },
+    { name = "hexastack-otel" },
     { name = "sqlalchemy" },
 ]
 db = [
@@ -2588,6 +2591,9 @@ db = [
 events = [
     { name = "hexastack-events" },
 ]
+otel = [
+    { name = "hexastack-otel" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -2596,10 +2602,11 @@ requires-dist = [
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-db", marker = "extra == 'db'", editable = "packages/hexastack_db" },
     { name = "hexastack-events", marker = "extra == 'events'", editable = "packages/hexastack_events" },
-    { name = "hexastack-flow", extras = ["db", "events"], marker = "extra == 'all'", editable = "packages/hexastack_flow" },
+    { name = "hexastack-flow", extras = ["db", "events", "otel"], marker = "extra == 'all'", editable = "packages/hexastack_flow" },
+    { name = "hexastack-otel", marker = "extra == 'otel'", editable = "packages/hexastack_otel" },
     { name = "sqlalchemy", marker = "extra == 'db'", specifier = ">=2.0.0" },
 ]
-provides-extras = ["db", "events", "all"]
+provides-extras = ["db", "events", "otel", "all"]
 
 [[package]]
 name = "hexastack-graphql"

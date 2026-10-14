@@ -4,7 +4,7 @@ Notes/Architectural Intent:
     Exports CQRS, Storage, and Event adapters bridging hexaflow into Hexastack.
 """
 
-from hexastack_flow.adapters import cqrs, events, storage
+from hexastack_flow.adapters import cqrs, events, middleware, storage
 from hexastack_flow.adapters.cqrs import (
     CommandStep,
     CqrsWorkflowRunner,
@@ -13,6 +13,7 @@ from hexastack_flow.adapters.cqrs import (
     as_query_step,
 )
 from hexastack_flow.adapters.events import WorkflowEventPublisher
+from hexastack_flow.adapters.middleware import OtelStepMiddleware
 from hexastack_flow.adapters.storage import SqlAlchemyWorkflowStore
 
 __all__ = [
@@ -22,6 +23,8 @@ __all__ = [
     "cqrs",
     "CqrsWorkflowRunner",
     "events",
+    "middleware",
+    "OtelStepMiddleware",
     "QueryStep",
     "SqlAlchemyWorkflowStore",
     "storage",
