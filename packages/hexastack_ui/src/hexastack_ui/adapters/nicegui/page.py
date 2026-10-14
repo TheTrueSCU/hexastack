@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils import require_dependency
 
 __all__ = [
     "check_nicegui_installed",
@@ -27,13 +27,12 @@ def check_nicegui_installed() -> None:
     Notes/Architectural Intent:
         Enables lazy import error reporting with installation hints.
     """
-    try:
-        import nicegui  # noqa: F401
-    except ImportError as e:
-        raise MissingDependencyError(
-            "NiceGUI is required for hexastack-ui NiceGUI support. "
-            "Install with 'pip install hexastack-ui[nicegui]' or 'pip install nicegui'."
-        ) from e
+    require_dependency(
+        "nicegui",
+        extra="nicegui",
+        package="hexastack-ui",
+        feature_name="NiceGUI DevTools",
+    )
 
 
 def ui_page(

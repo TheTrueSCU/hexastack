@@ -5,8 +5,8 @@ from typing import Any, cast
 
 from fastapi import HTTPException, Request, status
 
-from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_core.ports.ratelimit import RateLimiterPort
+from hexastack_core.utils import require_dependency
 from hexastack_core.utils.context import get_user_context
 
 
@@ -77,14 +77,20 @@ class SlowapiRateLimiterAdapter(RateLimiterPort):
         Raises:
             MissingDependencyError: If slowapi or limits is not installed.
         """
-        try:
-            from limits.storage import storage_from_string
-            from slowapi import Limiter
-        except ImportError as e:
-            raise MissingDependencyError(
-                "slowapi and limits are required for SlowapiRateLimiterAdapter. "
-                "Install with 'pip install hexastack-fastapi[ratelimit]'."
-            ) from e
+        limits_storage = require_dependency(
+            "limits.storage",
+            extra="ratelimit",
+            package="hexastack-fastapi",
+            feature_name="Slowapi Rate Limiter Storage",
+        )
+        slowapi = require_dependency(
+            "slowapi",
+            extra="ratelimit",
+            package="hexastack-fastapi",
+            feature_name="Slowapi Rate Limiter",
+        )
+        storage_from_string = limits_storage.storage_from_string
+        Limiter = slowapi.Limiter
 
         self._key_func = key_func or get_user_or_ip_key
         self._default_limits: list[Any] = list(default_limits or ["100/minute"])

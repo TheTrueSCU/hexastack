@@ -10,6 +10,8 @@ from __future__ import annotations
 import importlib
 from typing import Any
 
+from hexastack_core.exceptions import MissingDependencyError
+
 
 def require_dependency(
     module_name: str,
@@ -18,7 +20,7 @@ def require_dependency(
     package: str,
     feature_name: str | None = None,
 ) -> Any:
-    """Import an optional third-party module or raise an informative ImportError.
+    """Import an optional third-party module or raise MissingDependencyError.
 
     Args:
         module_name: Python module import path (e.g. 'dlt', 'nats', 'filelock').
@@ -30,7 +32,7 @@ def require_dependency(
         The imported module object.
 
     Raises:
-        ImportError: If the requested module is not installed.
+        MissingDependencyError: If the requested module is not installed.
 
     Notes/Architectural Intent:
         Standardizes optional dependency verification across all hexagonal adapters,
@@ -41,7 +43,7 @@ def require_dependency(
         return importlib.import_module(module_name)
     except ImportError as exc:
         context = f" for {feature_name}" if feature_name else ""
-        raise ImportError(
+        raise MissingDependencyError(
             f"Optional dependency '{module_name}' is required{context}. "
             f"Install with: pip install {package}[{extra}]"
         ) from exc

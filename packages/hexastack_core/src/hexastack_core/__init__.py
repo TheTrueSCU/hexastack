@@ -1,8 +1,9 @@
-from hexastack_core import adapters, domain, infra, ports, testing, utils
+from hexastack_core import adapters, domain, exceptions, infra, ports, testing, utils
 
 __all__ = [
     "adapters",
     "domain",
+    "exceptions",
     "infra",
     "ports",
     "testing",

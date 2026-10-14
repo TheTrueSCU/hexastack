@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils import require_dependency
 
 __all__ = [
     "openziti_bind",
@@ -90,15 +91,12 @@ class OpenZitiASGIAdapter:
         Raises:
             MissingDependencyError: If openziti is not installed.
         """
-        try:
-            import openziti
-
-            return openziti
-        except ImportError as exc:
-            raise MissingDependencyError(
-                "openziti is required for OpenZiti zero-trust networking. "
-                "Install with 'pip install hexastack-fastapi[ziti]' or 'pip install openziti'."
-            ) from exc
+        return require_dependency(
+            "openziti",
+            extra="ziti",
+            package="hexastack-fastapi",
+            feature_name="OpenZiti Zero-Trust Network",
+        )
 
     def get_bindings(
         self, host: str | None = None, port: int | None = None

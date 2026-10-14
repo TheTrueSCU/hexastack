@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
+from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_core.utils.imports import optional_dependency, require_dependency
 
 
@@ -17,14 +18,14 @@ def test_require_dependency_installed_module() -> None:
 
 
 def test_require_dependency_missing_module() -> None:
-    """Test that importing a missing module raises an informative ImportError."""
+    """Test that importing a missing module raises an informative MissingDependencyError."""
     with (
         patch(
             "importlib.import_module",
             side_effect=ImportError("No module named 'nonexistent_lib'"),
         ),
         pytest.raises(
-            ImportError,
+            MissingDependencyError,
             match=r"Optional dependency 'nonexistent_lib' is required\. Install with: pip install hexastack-events\[dlt\]",
         ) as exc_info,
     ):
@@ -45,7 +46,7 @@ def test_require_dependency_missing_module_with_feature_name() -> None:
             side_effect=ImportError("No module named 'fake_lib'"),
         ),
         pytest.raises(
-            ImportError,
+            MissingDependencyError,
             match=r"Optional dependency 'fake_lib' is required for Kafka Event Bus\. Install with: pip install hexastack-events\[kafka\]",
         ),
     ):

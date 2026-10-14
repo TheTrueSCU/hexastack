@@ -73,11 +73,11 @@
 <!-- hexastack_ui_adapters_nicegui_page -->
 <g id="node9" class="node">
 <title>hexastack_ui_adapters_nicegui_page</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#2bac4b" stroke="black" cx="245.87" cy="-367.31" rx="59.29" ry="36.54"/>
-<text text-anchor="middle" x="245.87" y="-381.31" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">hexastack_ui.</text>
-<text text-anchor="middle" x="245.87" y="-370.31" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">adapters.</text>
-<text text-anchor="middle" x="245.87" y="-359.31" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">nicegui.</text>
-<text text-anchor="middle" x="245.87" y="-348.31" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">page</text>
+<ellipse fill="#2db44e" stroke="black" cx="245.87" cy="-367.31" rx="59.29" ry="36.54"/>
+<text text-anchor="middle" x="245.87" y="-381.31" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">hexastack_ui.</text>
+<text text-anchor="middle" x="245.87" y="-370.31" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">adapters.</text>
+<text text-anchor="middle" x="245.87" y="-359.31" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">nicegui.</text>
+<text text-anchor="middle" x="245.87" y="-348.31" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">page</text>
 </g>
 <!-- hexastack_core&#45;&gt;hexastack_ui_adapters_nicegui_page -->
 <g id="edge5" class="edge">
@@ -163,13 +163,13 @@
 <g id="edge13" class="edge">
 <title>hexastack_ui_adapters_nicegui_page&#45;&gt;hexastack_ui_adapters_nicegui</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M244.04,-330.32C243.87,-299.86 246.94,-255.75 262.87,-221 267.67,-210.53 275.2,-200.69 283.02,-192.3"/>
-<polygon fill="#2bac4b" stroke="black" points="285.67,-194.59 290.21,-185.01 280.69,-189.67 285.67,-194.59"/>
+<polygon fill="#2db44e" stroke="black" points="285.67,-194.59 290.21,-185.01 280.69,-189.67 285.67,-194.59"/>
 </g>
 <!-- hexastack_ui_adapters_nicegui_page&#45;&gt;hexastack_ui_adapters_nicegui_devtools -->
 <g id="edge14" class="edge">
 <title>hexastack_ui_adapters_nicegui_page&#45;&gt;hexastack_ui_adapters_nicegui_devtools</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M267.01,-332.87C275.12,-320.05 284.38,-305.41 292.51,-292.56"/>
-<polygon fill="#2bac4b" stroke="black" points="295.54,-294.31 297.93,-283.98 289.63,-290.56 295.54,-294.31"/>
+<polygon fill="#2db44e" stroke="black" points="295.54,-294.31 297.93,-283.98 289.63,-290.56 295.54,-294.31"/>
 </g>
 <!-- hexastack_ui_adapters_textual -->
 <g id="node10" class="node">

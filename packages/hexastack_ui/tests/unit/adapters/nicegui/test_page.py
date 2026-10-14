@@ -35,6 +35,6 @@ def test_check_nicegui_installed_missing():
     """Verify check_nicegui_installed raises MissingDependencyError when nicegui is not present."""
     with (
         patch.dict(sys.modules, {"nicegui": None}),
-        pytest.raises(MissingDependencyError, match="NiceGUI is required"),
+        pytest.raises(MissingDependencyError, match="nicegui.*is required"),
     ):
         check_nicegui_installed()
