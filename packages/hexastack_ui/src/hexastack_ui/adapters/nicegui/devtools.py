@@ -631,6 +631,7 @@ def _render_workflow_tab(container: Container) -> None:
                 orchestrator = container.resolve(cls)
                 break
             except Exception:
+                # Silently ignore resolution errors if container services are missing dependencies
                 pass
 
     hexaflow = optional_dependency("hexaflow")

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from hexastack_core.exceptions import (
     HexastackError,
     MissingDependencyError,
@@ -28,6 +26,10 @@ def test_missing_dependency_error_hierarchy() -> None:
 
 def test_missing_dependency_error_catchable_as_import_error() -> None:
     """Verify MissingDependencyError can be caught by standard ImportError handlers."""
-    with pytest.raises(ImportError) as exc_info:
+    caught = False
+    try:
         raise MissingDependencyError("Testing ImportError catchability")
-    assert isinstance(exc_info.value, HexastackError)
+    except ImportError as exc:
+        caught = True
+        assert isinstance(exc, HexastackError)
+    assert caught is True
