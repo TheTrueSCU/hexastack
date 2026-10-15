@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -116,7 +118,21 @@ class CliNarrator:
             )
 
         # Execute command in-memory
-        res = self.runner.invoke(self.app, args, input=input, env=env)
+        # If an event loop is running in the active thread, offload execution to a thread pool
+        # to ensure commands invoking asyncio.run() (e.g. Hexaflow simulate/run) succeed without RuntimeError.
+        try:
+            asyncio.get_running_loop()
+            is_loop_running = True
+        except RuntimeError:
+            is_loop_running = False
+
+        if is_loop_running:
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                res = pool.submit(
+                    self.runner.invoke, self.app, args, input=input, env=env
+                ).result()
+        else:
+            res = self.runner.invoke(self.app, args, input=input, env=env)
 
         if self.record_mode and record:
             # 2. Record command output text
