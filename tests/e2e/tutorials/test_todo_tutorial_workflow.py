@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -320,6 +322,53 @@ def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workfl
     return wf
 
 
+def _run_workflow_safely(wf: Workflow) -> Any:
+    """Execute workflow synchronously, offloading to thread pool if event loop is running.
+
+    Args:
+        wf: Hexaflow workflow to execute.
+
+    Returns:
+        WorkflowExecutionState result from running the workflow.
+
+    Notes/Architectural Intent:
+        Prevents 'RuntimeError: asyncio.run() cannot be called from a running event loop'
+        when tests are run inside pytest-asyncio auto-managed test event loops.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None and loop.is_running():
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(wf.run).result()
+    return wf.run()
+
+
+def _simulate_workflow_safely(wf: Workflow) -> Any:
+    """Execute workflow dry-run simulation, offloading to thread pool if event loop is running.
+
+    Args:
+        wf: Hexaflow workflow to simulate.
+
+    Returns:
+        WorkflowExecutionState result from simulating the workflow.
+
+    Notes/Architectural Intent:
+        Prevents event loop re-entrance errors during dry-run simulation in pytest-asyncio suites.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None and loop.is_running():
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(wf.simulate).result()
+    return wf.simulate()
+
+
 def test_todo_tutorial_workflow_dag_structure() -> None:
     """Validate To-Do tutorial Hexaflow DAG topology, dependencies, and dry-run simulation."""
     wf = create_todo_tutorial_workflow()
@@ -365,7 +414,7 @@ def test_todo_tutorial_workflow_dag_structure() -> None:
     assert has_ascii_nodes is True
 
     # Validate dry-run DAG simulation without executing terminal commands
-    sim_res = wf.simulate()
+    sim_res = _simulate_workflow_safely(wf)
     sim_status = sim_res.status
     assert sim_status == WorkflowStatus.COMPLETED
 
@@ -406,7 +455,7 @@ def test_todo_tutorial_workflow_execution() -> None:
             )
             wf = create_todo_tutorial_workflow(narrator)
 
-            res = wf.run()
+            res = _run_workflow_safely(wf)
 
             res_status = res.status
             assert res_status == WorkflowStatus.COMPLETED
