@@ -26,6 +26,17 @@ Explore the built-in developer console providing live CQRS message dispatching, 
 
 ---
 
+## 3. Workflow Orchestration & Saga Simulation (Hexaflow + DevTools)
+
+Inspect DAG execution graphs, adjust layout orientations, toggle critical path bottlenecks, and simulate dry-run saga checkpoints fail-closed with zero side-effects:
+
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="assets/demos/devtools-workflow-saga-simulator.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="assets/demos/devtools-workflow-saga-simulator.vtt" default>
+</video>
+
+---
+
 ## In-Depth Articles
 
 !!! tip "On DEV.to"

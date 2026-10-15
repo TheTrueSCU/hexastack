@@ -7,8 +7,10 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import asyncio
 import importlib.resources
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -757,6 +759,52 @@ def _render_workflow_mermaid(
     return "graph TD\n  empty[No workflow diagram available]"
 
 
+def _run_sync_safe(target_fn: Any, *args: Any, **kwargs: Any) -> Any:
+    """Execute callable safely, offloading to a worker thread if an event loop is running.
+
+    Args:
+        target_fn: Function to invoke.
+        *args: Positional arguments for target_fn.
+        **kwargs: Keyword arguments for target_fn.
+
+    Returns:
+        Result returned by target_fn.
+    """
+    try:
+        asyncio.get_running_loop()
+        is_loop = True
+    except RuntimeError:
+        is_loop = False
+
+    if is_loop:
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(target_fn, *args, **kwargs).result()
+    return target_fn(*args, **kwargs)
+
+
+def _invoke_simulation(orchestrator: Any, workflow: Any) -> tuple[str, list[str], Any]:
+    """Invoke simulation on orchestrator or workflow object safely.
+
+    Args:
+        orchestrator: Optional orchestrator port.
+        workflow: Target workflow definition or instance.
+
+    Returns:
+        Tuple of (status_val, completed_steps, outputs).
+
+    Raises:
+        TypeError: If workflow cannot be simulated.
+    """
+    if orchestrator and hasattr(orchestrator, "simulate"):
+        res = _run_sync_safe(orchestrator.simulate, workflow)
+        return str(res.status), list(res.completed_steps), res.outputs
+    if hasattr(workflow, "simulate"):
+        state = _run_sync_safe(workflow.simulate)
+        outputs = {k: v.output_payload for k, v in state.step_checkpoints.items()}
+        return str(state.status.value), list(state.step_checkpoints.keys()), outputs
+    raise TypeError("Workflow cannot be simulated.")
+
+
 def _execute_saga_simulation(
     orchestrator: Any,
     workflow: Any,
@@ -781,20 +829,7 @@ def _execute_saga_simulation(
         f"▶️ [SIMULATION] Starting dry-run saga simulation for '{wf_label}'..."
     )
     try:
-        if orchestrator and hasattr(orchestrator, "simulate"):
-            res = orchestrator.simulate(workflow)
-            status_val = str(res.status)
-            completed = list(res.completed_steps)
-            outputs = res.outputs
-        elif hasattr(workflow, "simulate"):
-            state = workflow.simulate()
-            status_val = str(state.status.value)
-            completed = list(state.step_checkpoints.keys())
-            outputs = {k: v.output_payload for k, v in state.step_checkpoints.items()}
-        else:
-            log_output.push("❌ [ERROR] Workflow cannot be simulated.")
-            return []
-
+        status_val, completed, outputs = _invoke_simulation(orchestrator, workflow)
         log_output.push(f"   ↳ [STATUS] {status_val}")
         log_output.push(f"   ↳ [COMPLETED STEPS] {', '.join(completed)}")
         log_output.push(f"   ↳ [SIMULATED OUTPUTS] {outputs}")
