@@ -40,9 +40,10 @@ uv tool install "hexastack[all]"
 hexastack new web-api todo-app --description "Hexagonal To-Do Microservice" --db in-memory
 ```
 
+### Part 1: Project Scaffolding Walkthrough
 <video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-  <source src="../../assets/demos/todo-ch01-cli-demo.webm" type="video/webm">
-  <track label="English" kind="subtitles" srclang="en" src="../../assets/demos/todo-ch01-cli-demo.vtt" default>
+  <source src="../../assets/demos/todo-ch01-cli-demo-part1-scaffolding.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="../../assets/demos/todo-ch01-cli-demo-part1-scaffolding.vtt" default>
 </video>
 
 Let's navigate into the newly created service:
@@ -90,6 +91,12 @@ todo-app/
     ├── unit/
     └── hypothesis/
 ```
+
+### Part 2: Hexagonal Layout & CLI Introspection Walkthrough
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; margin: 16px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="../../assets/demos/todo-ch01-cli-demo-part2-layout.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="../../assets/demos/todo-ch01-cli-demo-part2-layout.vtt" default>
+</video>
 
 ---
 

@@ -23,7 +23,8 @@ from hexastack.adapters.cli.scaffolding.commands import add_scaffold_commands
 from hexastack_cli.testing.narrator import CliNarrator
 from tests.e2e.tutorials.helpers import (
     step_ch01_scaffold_minimal,
-    step_ch02_configure_sqlite,
+    step_ch02_1_scaffold_sqlite_service,
+    step_ch02_2_inspect_db_commands,
 )
 
 
@@ -61,16 +62,42 @@ def test_todo_ch02_cli_demo() -> None:
             # Replay step 1 silently (no recording)
             step_ch01_scaffold_minimal(narrator, record=False)
 
-            # Record step 2
-            step_ch02_configure_sqlite(narrator, record=True)
+            # Record Chapter 2 Part 1: Scaffold SQLite persistent service
+            step_ch02_1_scaffold_sqlite_service(narrator, record=True)
+            seg1 = narrator.checkpoint_segment("part1-sqlite")
 
+            # Record Chapter 2 Part 2: Inspect Alembic database migration commands
+            step_ch02_2_inspect_db_commands(narrator, record=True)
             narrator.step(
                 "SQLite persistence configured with decoupled SQLAlchemy adapter"
             )
+            seg2 = narrator.checkpoint_segment("part2-migrations")
             artifacts = narrator.finish()
 
+            segment_count = narrator._segment_count
+            assert segment_count == 2
+
             if os.environ.get("RECORD_DEMO") == "1":
-                assert "vtt" in artifacts and artifacts["vtt"].exists()
-                assert "webm" in artifacts and artifacts["webm"].exists()
+                seg1_vtt = seg1.get("vtt")
+                has_seg1_vtt = seg1_vtt is not None and seg1_vtt.exists()
+                assert has_seg1_vtt is True
+
+                seg1_webm = seg1.get("webm")
+                has_seg1_webm = seg1_webm is not None and seg1_webm.exists()
+                assert has_seg1_webm is True
+
+                seg2_vtt = seg2.get("vtt")
+                has_seg2_vtt = seg2_vtt is not None and seg2_vtt.exists()
+                assert has_seg2_vtt is True
+
+                seg2_webm = seg2.get("webm")
+                has_seg2_webm = seg2_webm is not None and seg2_webm.exists()
+                assert has_seg2_webm is True
+
+                has_seg1_key = "todo-ch02-cli-demo-part1-sqlite_webm" in artifacts
+                assert has_seg1_key is True
+
+                has_seg2_key = "todo-ch02-cli-demo-part2-migrations_webm" in artifacts
+                assert has_seg2_key is True
         finally:
             os.chdir(orig_cwd)

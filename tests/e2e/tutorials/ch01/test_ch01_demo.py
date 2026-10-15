@@ -21,7 +21,10 @@ from hexastack.adapters.cli.devtools.commands import (
 )
 from hexastack.adapters.cli.scaffolding.commands import add_scaffold_commands
 from hexastack_cli.testing.narrator import CliNarrator
-from tests.e2e.tutorials.helpers import step_ch01_scaffold_minimal
+from tests.e2e.tutorials.helpers import (
+    step_ch01_1_scaffold_project,
+    step_ch01_2_inspect_layout,
+)
 
 
 def _build_cli_app() -> typer.Typer:
@@ -54,13 +57,40 @@ def test_todo_ch01_cli_demo() -> None:
                 output_dir=repo_root / "docs" / "assets" / "demos",
             )
 
-            step_ch01_scaffold_minimal(narrator, record=True)
+            # Step 1: Scaffold microservice with in-memory persistence
+            step_ch01_1_scaffold_project(narrator, record=True)
+            seg1 = narrator.checkpoint_segment("part1-scaffolding")
 
+            # Step 2: Inspect pure hexagonal architecture CLI layout and help
+            step_ch01_2_inspect_layout(narrator, record=True)
             narrator.step("Project scaffolded with zero external dependencies")
+            seg2 = narrator.checkpoint_segment("part2-layout")
             artifacts = narrator.finish()
 
+            segment_count = narrator._segment_count
+            assert segment_count == 2
+
             if os.environ.get("RECORD_DEMO") == "1":
-                assert "vtt" in artifacts and artifacts["vtt"].exists()
-                assert "webm" in artifacts and artifacts["webm"].exists()
+                seg1_vtt = seg1.get("vtt")
+                has_seg1_vtt = seg1_vtt is not None and seg1_vtt.exists()
+                assert has_seg1_vtt is True
+
+                seg1_webm = seg1.get("webm")
+                has_seg1_webm = seg1_webm is not None and seg1_webm.exists()
+                assert has_seg1_webm is True
+
+                seg2_vtt = seg2.get("vtt")
+                has_seg2_vtt = seg2_vtt is not None and seg2_vtt.exists()
+                assert has_seg2_vtt is True
+
+                seg2_webm = seg2.get("webm")
+                has_seg2_webm = seg2_webm is not None and seg2_webm.exists()
+                assert has_seg2_webm is True
+
+                has_seg1_key = "todo-ch01-cli-demo-part1-scaffolding_webm" in artifacts
+                assert has_seg1_key is True
+
+                has_seg2_key = "todo-ch01-cli-demo-part2-layout_webm" in artifacts
+                assert has_seg2_key is True
         finally:
             os.chdir(orig_cwd)
