@@ -707,3 +707,96 @@ def test_render_workflow_tab_missing_hexaflow(monkeypatch):
     with client.layout.default_slot:
         container = Container()
         _render_workflow_tab(container)
+
+
+def test_workflow_visual_controls_and_helpers():
+    """Verify workflow DevTools visual controls, direction toggle, and helpers.
+
+    Notes/Architectural Intent:
+        Validates layout direction switching, critical path toggling, reset handler,
+        and simulation progress tracking without mutating production state.
+    """
+    import hexaflow
+    from nicegui import Client, ui
+    from nicegui.page import page
+
+    from hexastack_ui.adapters.nicegui.devtools import (
+        _build_demo_workflow,
+        _execute_saga_simulation,
+        _render_workflow_mermaid,
+        _render_workflow_tab,
+        _resolve_available_workflows,
+    )
+
+    demo_wf = _build_demo_workflow(hexaflow)
+    name = getattr(demo_wf, "name", "")
+    assert name == "order_saga"
+
+    container = Container()
+    resolved = _resolve_available_workflows(container, None, hexaflow)
+    has_demo = "order_saga (Demo)" in resolved
+    assert has_demo is True
+
+    diagram_td = _render_workflow_mermaid(
+        None, demo_wf, direction="TD", highlight_cp=False
+    )
+    is_str_td = isinstance(diagram_td, str)
+    assert is_str_td is True
+
+    diagram_lr = _render_workflow_mermaid(
+        None,
+        demo_wf,
+        direction="LR",
+        highlight_cp=True,
+        highlight_nodes={"validate_order"},
+    )
+    is_str_lr = isinstance(diagram_lr, str)
+    assert is_str_lr is True
+
+    mock_log = MagicMock()
+    completed = _execute_saga_simulation(None, demo_wf, mock_log)
+    step_count = len(completed)
+    assert step_count == 3
+
+    none_res = _render_workflow_mermaid(None, None)
+    has_empty = "No workflow diagram available" in none_res
+    assert has_empty is True
+
+    empty_completed = _execute_saga_simulation(None, None, mock_log)
+    empty_len = len(empty_completed)
+    assert empty_len == 0
+
+    client = Client(page("/test-workflow-controls"))
+    with client.layout.default_slot:
+        _render_workflow_tab(container)
+
+    reset_btns = [
+        e
+        for e in client.elements.values()
+        if isinstance(e, ui.button) and e._props.get("label") == "Reset Highlights"
+    ]
+    reset_btn_count = len(reset_btns)
+    assert reset_btn_count == 1
+    reset_listener = list(reset_btns[0]._event_listeners.values())[0]
+    reset_handler = reset_listener.handler
+    assert callable(reset_handler)
+    if callable(reset_handler):
+        reset_handler(None)
+
+    dir_selects = [
+        e
+        for e in client.elements.values()
+        if isinstance(e, ui.select) and e._props.get("label") == "Layout Direction"
+    ]
+    has_dir = len(dir_selects) == 1
+    assert has_dir is True
+    dir_selects[0].set_value("LR")
+
+    cp_switches = [
+        e
+        for e in client.elements.values()
+        if isinstance(e, ui.switch) and getattr(e, "text", "") == "Critical Path"
+    ]
+    has_cp = len(cp_switches) == 1
+    assert has_cp is True
+    cp_switches[0].set_value(True)

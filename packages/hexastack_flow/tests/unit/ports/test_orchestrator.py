@@ -104,6 +104,7 @@ def test_concrete_orchestrator_subclass() -> None:
             self,
             workflow: WorkflowDefinition,
             format_name: str = "mermaid",
+            options: Any | None = None,
         ) -> str:
             return "graph LR\n    A --> B"
 
@@ -132,7 +133,7 @@ def test_concrete_orchestrator_subclass() -> None:
     status_sim = res_sim.status
     assert status_sim == "COMPLETED"
 
-    diagram = orch.render(wf, format_name="mermaid")
+    diagram = orch.render(wf, format_name="mermaid", options=None)
     assert "graph LR" in diagram
 
     orch.close()
@@ -173,7 +174,7 @@ async def test_orchestrator_aclose() -> None:
         ):
             return self.execute(workflow)
 
-        def render(self, workflow, format_name="mermaid"):
+        def render(self, workflow, format_name="mermaid", options=None):
             return "graph TD"
 
         def close(self) -> None:

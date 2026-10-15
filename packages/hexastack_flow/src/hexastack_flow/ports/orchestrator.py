@@ -143,12 +143,14 @@ class CqrsWorkflowOrchestratorPort(ABC):
         self,
         workflow: WorkflowDefinition,
         format_name: str = "mermaid",
+        options: Any | None = None,
     ) -> str:
         """Render the workflow DAG into a visual diagram or structural format.
 
         Args:
             workflow: The workflow DAG definition to visualize.
             format_name: Name of renderer format ('mermaid', 'dot', 'ascii', 'json').
+            options: Optional renderer options (direction, critical path, highlight nodes).
 
         Returns:
             Rendered diagram or structured output string.
