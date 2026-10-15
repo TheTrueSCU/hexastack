@@ -70,7 +70,7 @@ jobs:
       - name: Visualize Pipeline DAG & Critical Path via Hexaflow
         if: always()
         run: |
-          uv run --with "hexaflow>=0.5.0" hexaflow graph render .github/workflows/release.yml --summary --critical-path
+          uvx --python 3.13 --from "hexaflow>=0.5.0" hexaflow graph render .github/workflows/release.yml --summary --critical-path
 
       - name: Install Copy-Paste Detection
         run: cargo install jscpd --locked
