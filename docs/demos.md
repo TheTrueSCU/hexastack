@@ -6,11 +6,18 @@
 
 ## 1. Project Scaffolding CLI Experience
 
-Watch the `hexastack` zero-install CLI in action — generating production microservices with full hexagonal directory layouts, import-linter contracts, and passing test suites:
+Watch the `hexastack` zero-install CLI in action — generating production microservices with full hexagonal directory layouts, import-linter contracts, and passing test suites.
 
+### Part 1: REST Web API Microservice with SQLite
 <video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-  <source src="assets/demos/hexastack-scaffolding-cli-demo.webm" type="video/webm">
-  <track label="English" kind="subtitles" srclang="en" src="assets/demos/hexastack-scaffolding-cli-demo.vtt" default>
+  <source src="assets/demos/hexastack-scaffolding-cli-demo-part1-rest-api.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="assets/demos/hexastack-scaffolding-cli-demo-part1-rest-api.vtt" default>
+</video>
+
+### Part 2: Event-Driven Streaming Service with Outbox
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="assets/demos/hexastack-scaffolding-cli-demo-part2-event-driven.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="assets/demos/hexastack-scaffolding-cli-demo-part2-event-driven.vtt" default>
 </video>
 
 ---
@@ -39,11 +46,18 @@ Inspect DAG execution graphs, adjust layout orientations, toggle critical path b
 
 ## 4. Pipeline DAG Analysis & Critical Path CLI (`hexaflow graph render`)
 
-Inspect complex workflows and GitHub Actions CI pipelines directly from your terminal — rendering ASCII dependency trees, detecting critical path bottlenecks, generating Mermaid diagrams for CI summaries, and simulating dry-run saga execution:
+Inspect complex workflows and GitHub Actions CI pipelines directly from your terminal — rendering ASCII dependency trees, detecting critical path bottlenecks, generating Mermaid diagrams for CI summaries, and simulating dry-run saga execution.
 
+### Part 1: CI Pipeline ASCII Tree & Mermaid Diagram Generation
 <video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
-  <source src="assets/demos/hexaflow-graph-render-cli.webm" type="video/webm">
-  <track label="English" kind="subtitles" srclang="en" src="assets/demos/hexaflow-graph-render-cli.vtt" default>
+  <source src="assets/demos/hexaflow-graph-render-cli-part1-ci-pipeline.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="assets/demos/hexaflow-graph-render-cli-part1-ci-pipeline.vtt" default>
+</video>
+
+### Part 2: Topological Graph Metrics & Dry-Run Saga Simulation
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="assets/demos/hexaflow-graph-render-cli-part2-saga-simulation.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="assets/demos/hexaflow-graph-render-cli-part2-saga-simulation.vtt" default>
 </video>
 
 ---

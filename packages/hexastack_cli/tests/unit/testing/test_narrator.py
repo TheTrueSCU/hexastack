@@ -202,3 +202,59 @@ def test_cli_narrator_checkpoint_segment_recording_mode(monkeypatch):
         has_seg2_key = "tutorial-demo-part2-exec_webm" in final
         assert has_seg1_key is True
         assert has_seg2_key is True
+
+
+def test_cli_narrator_finish_auto_checkpoints_final_segment(monkeypatch):
+    """Verify finish() auto-checkpoints remaining events as 'final' and consolidates all segments."""
+    app = typer.Typer()
+
+    @app.command()
+    def step1():
+        print("Executing Step 1")
+
+    @app.command()
+    def step2():
+        print("Executing Step 2")
+
+    rendered_calls = []
+
+    def mock_render_video(events, output_path, title):
+        output_path.write_text("dummy-video-data")
+        vtt_file = output_path.with_suffix(".vtt")
+        vtt_file.write_text("WEBVTT\n")
+        rendered_calls.append({"events": events, "output_path": output_path})
+        return output_path, vtt_file
+
+    monkeypatch.setattr(
+        "hexastack_cli.testing.terminal.render_cli_demo_video",
+        mock_render_video,
+    )
+    monkeypatch.setenv("RECORD_DEMO", "1")
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_dir = Path(tmpdir)
+        narrator = CliNarrator(app, output_name="auto-final-demo", output_dir=out_dir)
+
+        # Segment 1
+        narrator.step("Phase 1")
+        res1 = narrator.run_command(["step1"])
+        exit1 = res1.exit_code
+        assert exit1 == 0
+        seg1 = narrator.checkpoint_segment("phase1")
+        has_seg1 = "webm" in seg1 and seg1["webm"].exists()
+        assert has_seg1 is True
+
+        # Phase 2 without manual checkpoint
+        narrator.step("Phase 2")
+        res2 = narrator.run_command(["step2"])
+        exit2 = res2.exit_code
+        assert exit2 == 0
+
+        # finish() should auto-checkpoint phase 2 as 'final' and return all consolidated artifacts
+        final = narrator.finish()
+        has_phase1_key = "auto-final-demo-phase1_webm" in final
+        has_final_key = "auto-final-demo-final_webm" in final
+        has_latest_webm = "webm" in final and final["webm"].exists()
+        assert has_phase1_key is True
+        assert has_final_key is True
+        assert has_latest_webm is True
