@@ -31,31 +31,71 @@ def test_scaffolding_cli_demo():
             # Step 1: Display help menu
             narrator.step("Exploring Hexastack project scaffolding subcommands")
             res_help = narrator.run_command(["new", "--help"])
-            assert res_help.exit_code == 0
+            exit_code_help = res_help.exit_code
+            assert exit_code_help == 0
 
             # Step 2: Scaffold a new web-api microservice
             narrator.step("Scaffolding a new REST Web API microservice with SQLite")
             res_new = narrator.run_command(
                 ["new", "web-api", "billing-service", "--db", "sqlite"]
             )
-            assert res_new.exit_code == 0
-            assert Path(tmpdir, "billing-service", "pyproject.toml").exists()
+            exit_code_new = res_new.exit_code
+            assert exit_code_new == 0
+            billing_toml_exists = Path(
+                tmpdir, "billing-service", "pyproject.toml"
+            ).exists()
+            assert billing_toml_exists is True
+
+            # Checkpoint Segment 1: REST Web API
+            seg_rest = narrator.checkpoint_segment("part1-rest-api")
 
             # Step 3: Scaffold an event-driven service
             narrator.step("Scaffolding an Event-Driven streaming service with Outbox")
             res_event = narrator.run_command(["new", "event-driven", "order-service"])
-            assert res_event.exit_code == 0
-            assert Path(tmpdir, "order-service", "pyproject.toml").exists()
+            exit_code_event = res_event.exit_code
+            assert exit_code_event == 0
+            order_toml_exists = Path(tmpdir, "order-service", "pyproject.toml").exists()
+            assert order_toml_exists is True
 
-            # Step 4: Finalize artifacts
+            # Finalize Segment 2: Event-Driven Service
             narrator.step(
                 "Microservices successfully scaffolded with full hexagonal architecture"
             )
+            seg_events = narrator.checkpoint_segment("part2-event-driven")
             artifacts = narrator.finish()
 
+            segment_count = narrator._segment_count
+            assert segment_count == 2
+
             if os.environ.get("RECORD_DEMO") == "1":
-                assert "vtt" in artifacts and artifacts["vtt"].exists()
-                assert "webm" in artifacts and artifacts["webm"].exists()
+                seg_rest_vtt = seg_rest.get("vtt")
+                has_rest_vtt = seg_rest_vtt is not None and seg_rest_vtt.exists()
+                assert has_rest_vtt is True
+
+                seg_rest_webm = seg_rest.get("webm")
+                has_rest_webm = seg_rest_webm is not None and seg_rest_webm.exists()
+                assert has_rest_webm is True
+
+                seg_events_vtt = seg_events.get("vtt")
+                has_events_vtt = seg_events_vtt is not None and seg_events_vtt.exists()
+                assert has_events_vtt is True
+
+                seg_events_webm = seg_events.get("webm")
+                has_events_webm = (
+                    seg_events_webm is not None and seg_events_webm.exists()
+                )
+                assert has_events_webm is True
+
+                has_rest_key = (
+                    "hexastack-scaffolding-cli-demo-part1-rest-api_webm" in artifacts
+                )
+                assert has_rest_key is True
+
+                has_events_key = (
+                    "hexastack-scaffolding-cli-demo-part2-event-driven_webm"
+                    in artifacts
+                )
+                assert has_events_key is True
         finally:
             os.chdir(orig_cwd)
 
@@ -128,6 +168,9 @@ def dispatch_order():
         exit_code_mermaid = res_mermaid.exit_code
         assert exit_code_mermaid == 0
 
+        # Checkpoint Segment 1: Static CI Pipeline Visualization
+        seg_ci = narrator.checkpoint_segment("part1-ci-pipeline")
+
         # Step 4: Topological graph metrics and critical path analysis
         narrator.step(
             "Analyzing workflow topological graph metrics and critical path length"
@@ -152,15 +195,35 @@ def dispatch_order():
         exit_code_sim = res_sim.exit_code
         assert exit_code_sim == 0
 
-        # Finalize demo recording
+        # Finalize Segment 2: Dynamic Saga Simulation & Analysis
         narrator.step("Hexaflow graph rendering and DAG analysis complete")
+        seg_saga = narrator.checkpoint_segment("part2-saga-simulation")
         artifacts = narrator.finish()
 
-        if os.environ.get("RECORD_DEMO") == "1":
-            vtt_artifact = artifacts.get("vtt")
-            vtt_exists = vtt_artifact is not None and vtt_artifact.exists()
-            assert vtt_exists is True
+        segment_count = narrator._segment_count
+        assert segment_count == 2
 
-            webm_artifact = artifacts.get("webm")
-            webm_exists = webm_artifact is not None and webm_artifact.exists()
-            assert webm_exists is True
+        if os.environ.get("RECORD_DEMO") == "1":
+            seg_ci_vtt = seg_ci.get("vtt")
+            has_ci_vtt = seg_ci_vtt is not None and seg_ci_vtt.exists()
+            assert has_ci_vtt is True
+
+            seg_ci_webm = seg_ci.get("webm")
+            has_ci_webm = seg_ci_webm is not None and seg_ci_webm.exists()
+            assert has_ci_webm is True
+
+            seg_saga_vtt = seg_saga.get("vtt")
+            has_saga_vtt = seg_saga_vtt is not None and seg_saga_vtt.exists()
+            assert has_saga_vtt is True
+
+            seg_saga_webm = seg_saga.get("webm")
+            has_saga_webm = seg_saga_webm is not None and seg_saga_webm.exists()
+            assert has_saga_webm is True
+
+            has_ci_key = "hexaflow-graph-render-cli-part1-ci-pipeline_webm" in artifacts
+            assert has_ci_key is True
+
+            has_saga_key = (
+                "hexaflow-graph-render-cli-part2-saga-simulation_webm" in artifacts
+            )
+            assert has_saga_key is True

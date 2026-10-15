@@ -247,7 +247,15 @@ class CliNarrator:
 
         if self.events:
             if self._segment_count > 0:
-                return self.checkpoint_segment("final")
+                self.checkpoint_segment("final")
+                all_artifacts: dict[str, Path] = {}
+                for seg_name, arts in self.segments.items():
+                    for k, v in arts.items():
+                        all_artifacts[f"{seg_name}_{k}"] = v
+                if self.segments:
+                    latest_seg = list(self.segments.values())[-1]
+                    all_artifacts.update(latest_seg)
+                return all_artifacts
 
             now = time.time() - self.start_time
             if (
