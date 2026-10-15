@@ -37,6 +37,17 @@ Inspect DAG execution graphs, adjust layout orientations, toggle critical path b
 
 ---
 
+## 4. Pipeline DAG Analysis & Critical Path CLI (`hexaflow graph render`)
+
+Inspect complex workflows and GitHub Actions CI pipelines directly from your terminal — rendering ASCII dependency trees, detecting critical path bottlenecks, generating Mermaid diagrams for CI summaries, and simulating dry-run saga execution:
+
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="assets/demos/hexaflow-graph-render-cli.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="assets/demos/hexaflow-graph-render-cli.vtt" default>
+</video>
+
+---
+
 ## In-Depth Articles
 
 !!! tip "On DEV.to"

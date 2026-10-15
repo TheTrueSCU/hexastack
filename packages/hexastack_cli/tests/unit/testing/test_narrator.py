@@ -63,3 +63,18 @@ def test_cli_narrator_demo_recording_mode():
             os.environ["RECORD_DEMO"] = orig_env
         else:
             os.environ.pop("RECORD_DEMO", None)
+
+
+def test_cli_narrator_custom_bin_name():
+    """Verify CliNarrator formats commands with custom bin_name."""
+    app = typer.Typer(name="custom_tool")
+
+    @app.command()
+    def ping():
+        typer.echo("pong")
+
+    narrator = CliNarrator(app, bin_name="custom-cli")
+    assert narrator.bin_name == "custom-cli"
+
+    narrator_auto = CliNarrator(app)
+    assert narrator_auto.bin_name == "custom_tool"

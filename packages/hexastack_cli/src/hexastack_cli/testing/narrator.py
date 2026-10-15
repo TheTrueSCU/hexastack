@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +31,7 @@ class CliNarrator:
         output_dir: Path | None = None,
         width: int = 100,
         height: int = 24,
+        bin_name: str | None = None,
     ) -> None:
         """Initialize CLI narrator attached to a Typer or Click application.
 
@@ -38,12 +41,19 @@ class CliNarrator:
             output_dir: Target output directory for generated demo artifacts.
             width: Terminal column width.
             height: Terminal row height.
+            bin_name: Display binary name for recorded command lines (defaults to app name or 'hexastack').
+
+        Notes/Architectural Intent:
+            Configurable bin_name allows narrating commands from across the hexa- family of tools
+            (e.g., hexaflow, hexaqual, hq) with accurate terminal prompts in generated demo videos.
         """
         self.app = app
         self.output_name = output_name
         self.output_dir = output_dir or Path("docs/assets/demos")
         self.width = width
         self.height = height
+        app_name = getattr(getattr(app, "info", None), "name", None)
+        self.bin_name = bin_name or app_name or "hexastack"
         self.record_mode = os.environ.get("RECORD_DEMO") in ("1", "true", "True")
         self.runner = CliRunner()
         self.start_time: float = time.time()
@@ -94,7 +104,7 @@ class CliNarrator:
         Returns:
             CliRunner Result containing exit code, stdout, and stderr.
         """
-        cmd_str = f"hexastack {' '.join(args)}"
+        cmd_str = f"{self.bin_name} {' '.join(args)}"
 
         if self.record_mode and record:
             # 1. Record input command string
@@ -108,7 +118,21 @@ class CliNarrator:
             )
 
         # Execute command in-memory
-        res = self.runner.invoke(self.app, args, input=input, env=env)
+        # If an event loop is running in the active thread, offload execution to a thread pool
+        # to ensure commands invoking asyncio.run() (e.g. Hexaflow simulate/run) succeed without RuntimeError.
+        try:
+            asyncio.get_running_loop()
+            is_loop_running = True
+        except RuntimeError:
+            is_loop_running = False
+
+        if is_loop_running:
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                res = pool.submit(
+                    self.runner.invoke, self.app, args, input=input, env=env
+                ).result()
+        else:
+            res = self.runner.invoke(self.app, args, input=input, env=env)
 
         if self.record_mode and record:
             # 2. Record command output text
@@ -166,7 +190,7 @@ class CliNarrator:
         render_cli_demo_video(
             events=self.events,
             output_path=video_path,
-            title=f"Hexastack CLI — {base_name}",
+            title=f"{self.bin_name} CLI — {base_name}",
         )
         artifacts["webm"] = video_path
 
