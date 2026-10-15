@@ -29,6 +29,7 @@ class CliNarrator:
         output_dir: Path | None = None,
         width: int = 100,
         height: int = 24,
+        bin_name: str | None = None,
     ) -> None:
         """Initialize CLI narrator attached to a Typer or Click application.
 
@@ -38,12 +39,19 @@ class CliNarrator:
             output_dir: Target output directory for generated demo artifacts.
             width: Terminal column width.
             height: Terminal row height.
+            bin_name: Display binary name for recorded command lines (defaults to app name or 'hexastack').
+
+        Notes/Architectural Intent:
+            Configurable bin_name allows narrating commands from across the hexa- family of tools
+            (e.g., hexaflow, hexaqual, hq) with accurate terminal prompts in generated demo videos.
         """
         self.app = app
         self.output_name = output_name
         self.output_dir = output_dir or Path("docs/assets/demos")
         self.width = width
         self.height = height
+        app_name = getattr(getattr(app, "info", None), "name", None)
+        self.bin_name = bin_name or app_name or "hexastack"
         self.record_mode = os.environ.get("RECORD_DEMO") in ("1", "true", "True")
         self.runner = CliRunner()
         self.start_time: float = time.time()
@@ -94,7 +102,7 @@ class CliNarrator:
         Returns:
             CliRunner Result containing exit code, stdout, and stderr.
         """
-        cmd_str = f"hexastack {' '.join(args)}"
+        cmd_str = f"{self.bin_name} {' '.join(args)}"
 
         if self.record_mode and record:
             # 1. Record input command string
@@ -166,7 +174,7 @@ class CliNarrator:
         render_cli_demo_video(
             events=self.events,
             output_path=video_path,
-            title=f"Hexastack CLI — {base_name}",
+            title=f"{self.bin_name} CLI — {base_name}",
         )
         artifacts["webm"] = video_path
 
