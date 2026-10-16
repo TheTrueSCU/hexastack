@@ -10,6 +10,9 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Coroutine
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import pytest
@@ -28,6 +31,20 @@ from hexastack_cqrs.infra.registries import (
     QueryRegistry,
 )
 from hexastack_mcp.adapters.fastapi import mount_mcp_sse
+
+
+def _run_coro_safely(coro: Coroutine[Any, Any, Any]) -> Any:
+    """Execute coroutine safely even if an event loop is already running on the current thread."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None and loop.is_running():
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    return asyncio.run(coro)
+
 
 # ---------------------------------------------------------------------------
 # Domain CQRS Contracts & Models
@@ -121,8 +138,7 @@ def support_pipeline() -> ExecutionPipeline:
 
 
 @pytest.mark.e2e
-@pytest.mark.anyio
-async def test_ai_agent_cqrs_tool_reflection(
+def test_ai_agent_cqrs_tool_reflection(
     support_pipeline: ExecutionPipeline,
 ) -> None:
     """Verify that domain CQRS messages reflect automatically into callable AI agent tools.
@@ -146,8 +162,8 @@ async def test_ai_agent_cqrs_tool_reflection(
     is_agent_created = agent is not None
     assert is_agent_created is True
 
-    # Run agent execution with offline test model
-    res = await agent.run("Lookup customer cust-vip-1 and file a ticket")
+    # Run agent execution with offline test model safely in running event loop context
+    res = _run_coro_safely(agent.run("Lookup customer cust-vip-1 and file a ticket"))
     has_response = res is not None
     assert has_response is True
 

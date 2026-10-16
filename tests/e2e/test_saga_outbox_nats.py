@@ -12,8 +12,10 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from collections.abc import Generator
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -36,6 +38,20 @@ from hexastack_events.domain.models import (
 )
 from hexastack_events.domain.serialization import decode_cloudevent_bytes
 from hexastack_otel.adapters.tracing.in_memory import InMemoryTracingAdapter
+
+
+def _run_in_thread_if_loop_active(func: Any, *args: Any, **kwargs: Any) -> Any:
+    """Execute callable offloaded to thread pool if an asyncio event loop is active on current thread."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None and loop.is_running():
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(func, *args, **kwargs).result()
+    return func(*args, **kwargs)
+
 
 # ---------------------------------------------------------------------------
 # Domain Events & Models
@@ -302,7 +318,7 @@ def test_checkout_saga_happy_path(
         order_data=order_data,
         simulate_payment_failure=False,
     )
-    result = saga.run()
+    result = _run_in_thread_if_loop_active(saga.run)
 
     result_status = result.status
     assert result_status == WorkflowStatus.COMPLETED
@@ -421,13 +437,13 @@ def test_checkout_saga_compensation_on_failure(
         order_data=order_data,
         simulate_payment_failure=True,
     )
-    result = saga.run()
+    result = _run_in_thread_if_loop_active(saga.run)
 
     result_status = result.status
     assert result_status == WorkflowStatus.SUSPENDED
 
     # Trigger compensation unwinding across completed steps
-    saga.abort(result.run_id)
+    _run_in_thread_if_loop_active(saga.abort, result.run_id)
 
     # Step 2: Verify compensation staged OrderCancelledEvent into outbox
     pending = sqlite_outbox_storage.fetch_pending(limit=10)

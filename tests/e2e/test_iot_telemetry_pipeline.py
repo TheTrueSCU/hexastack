@@ -10,9 +10,11 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import asyncio
 import time
 import uuid
-from collections.abc import AsyncIterator, Generator
+from collections.abc import AsyncIterator, Coroutine, Generator
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -34,6 +36,20 @@ from hexastack_events.domain.serialization import (
 )
 from hexastack_grpc.infra.dispatch import dispatch_rpc_bidirectional_stream
 from hexastack_otel.adapters.tracing.in_memory import InMemoryTracingAdapter
+
+
+def _run_coro_safely(coro: Coroutine[Any, Any, Any]) -> Any:
+    """Execute coroutine safely even if an event loop is already running on the current thread."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None and loop.is_running():
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    return asyncio.run(coro)
+
 
 # ---------------------------------------------------------------------------
 # Domain Models & CQRS Messages
@@ -98,8 +114,7 @@ def in_memory_tracer() -> Generator[InMemoryTracingAdapter]:
 
 
 @pytest.mark.e2e
-@pytest.mark.anyio
-async def test_iot_telemetry_grpc_streaming_and_disk_cache(
+def test_iot_telemetry_grpc_streaming_and_disk_cache(
     disk_cache_dir: Path,
     in_memory_tracer: InMemoryTracingAdapter,
 ) -> None:
@@ -169,13 +184,17 @@ async def test_iot_telemetry_grpc_streaming_and_disk_cache(
         for p in packets:
             yield p
 
-    results: list[dict[str, Any]] = []
-    async for response in dispatch_rpc_bidirectional_stream(
-        requests_iterator=_mock_client_stream(),
-        command_cls=IngestSensorReadingCommand,
-        container=container,
-    ):
-        results.append(response)
+    async def _consume_stream() -> list[dict[str, Any]]:
+        stream_results: list[dict[str, Any]] = []
+        async for response in dispatch_rpc_bidirectional_stream(
+            requests_iterator=_mock_client_stream(),
+            command_cls=IngestSensorReadingCommand,
+            container=container,
+        ):
+            stream_results.append(response)
+        return stream_results
+
+    results: list[dict[str, Any]] = _run_coro_safely(_consume_stream())
 
     # 4. Verify streaming responses
     result_count = len(results)
