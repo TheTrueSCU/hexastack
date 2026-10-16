@@ -284,6 +284,24 @@ def test_render_table_structures_and_schemas(monkeypatch):
 
     monkeypatch.setattr(ui, "table", mock_table)
 
+    captured_switches: list[dict] = []
+    orig_switch = ui.switch
+
+    def mock_switch(*args, **kwargs):
+        captured_switches.append(kwargs)
+        return orig_switch(*args, **kwargs)
+
+    monkeypatch.setattr(ui, "switch", mock_switch)
+
+    captured_badges: list[dict] = []
+    orig_badge = ui.badge
+
+    def mock_badge(text, *args, **kwargs):
+        captured_badges.append({"text": text, **kwargs})
+        return orig_badge(text, *args, **kwargs)
+
+    monkeypatch.setattr(ui, "badge", mock_badge)
+
     client = Client(page("/test-table-schemas"))
     with client.layout.default_slot:
         container = Container()
@@ -324,29 +342,28 @@ def test_render_table_structures_and_schemas(monkeypatch):
             {"type": "Query", "name": "BetaQuery"},
         ]
 
-        # 2. Feature flags table
+        # 2. Feature flags controls (interactive switches & badges)
         flags_adapter = InMemoryFeatureFlagAdapter({"feature_x": True, "quota": 42})
         container.add_instance(flags_adapter, declared_class=FeatureFlagPort)
 
         _render_flags_tab(container)
-        flags_table = captured_tables[-1]
-        assert len(flags_table["columns"]) == 2
-        assert flags_table["columns"][0] == {
-            "name": "flag",
-            "label": "Flag Key",
-            "field": "flag",
-            "sortable": True,
-        }
-        assert flags_table["columns"][1] == {
-            "name": "enabled",
-            "label": "Status",
-            "field": "enabled",
-            "sortable": True,
-        }
-        assert flags_table["row_key"] == "flag"
-        assert flags_table["pagination"] == {"rowsPerPage": 10}
-        assert {"flag": "feature_x", "enabled": "True"} in flags_table["rows"]
-        assert {"flag": "quota", "enabled": "42"} in flags_table["rows"]
+        switches_count = len(captured_switches)
+        assert switches_count == 1
+        assert captured_switches[0]["value"] is True
+        assert captured_switches[0]["text"] == "Enabled"
+
+        # Verify hot-swapping switch toggle
+        on_change = captured_switches[0]["on_change"]
+        change_event = MagicMock()
+        change_event.value = False
+        on_change(change_event)
+        flag_val = flags_adapter.is_enabled("feature_x")
+        assert flag_val is False
+
+        # Verify non-boolean badge
+        badges_count = len(captured_badges)
+        assert badges_count == 1
+        assert captured_badges[0]["text"] == "42"
 
         # 3. DI Container services table
         _render_container_tab(container)
