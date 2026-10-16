@@ -9,6 +9,11 @@ from hexaflow import Workflow
 from hexastack_cli.testing.narrator import CliNarrator
 
 
+def _serialize_artifacts(seg: dict[str, Any]) -> dict[str, str]:
+    """Serialize artifact Path objects to strings for Hexaflow state persistence."""
+    return {k: str(v) for k, v in seg.items()}
+
+
 def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workflow:
     """Create a unified Hexaflow DAG orchestrating the 7-chapter To-Do tutorial journey.
 
@@ -66,7 +71,7 @@ def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workfl
             "chapter": 1,
             "status": "completed",
             "segments": ["part1-scaffolding", "part2-layout"],
-            "artifacts": [seg1, seg2],
+            "artifacts": [_serialize_artifacts(seg1), _serialize_artifacts(seg2)],
         }
 
     @wf.step(
@@ -104,7 +109,7 @@ def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workfl
             "chapter": 2,
             "status": "completed",
             "segments": ["part1-sqlite", "part2-migrations"],
-            "artifacts": [seg1, seg2],
+            "artifacts": [_serialize_artifacts(seg1), _serialize_artifacts(seg2)],
         }
 
     @wf.step(
@@ -134,7 +139,7 @@ def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workfl
             "chapter": 3,
             "status": "completed",
             "segments": ["ch03-cli-demo"],
-            "artifacts": [seg],
+            "artifacts": [_serialize_artifacts(seg)],
         }
 
     @wf.step(
@@ -163,7 +168,7 @@ def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workfl
             "chapter": 4,
             "status": "completed",
             "segments": ["ch04-cli-demo"],
-            "artifacts": [seg],
+            "artifacts": [_serialize_artifacts(seg)],
         }
 
     @wf.step(
@@ -203,7 +208,7 @@ def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workfl
             "chapter": 5,
             "status": "completed",
             "segments": ["ch05-cli-demo"],
-            "artifacts": [seg],
+            "artifacts": [_serialize_artifacts(seg)],
         }
 
     @wf.step(
@@ -230,7 +235,7 @@ def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workfl
             "chapter": 6,
             "status": "completed",
             "segments": ["ch06-cli-demo"],
-            "artifacts": [seg],
+            "artifacts": [_serialize_artifacts(seg)],
         }
 
     @wf.step(
@@ -267,7 +272,7 @@ def create_todo_tutorial_workflow(narrator: CliNarrator | None = None) -> Workfl
             "chapter": 7,
             "status": "completed",
             "segments": ["ch07-cli-demo"],
-            "artifacts": [seg],
+            "artifacts": [_serialize_artifacts(seg)],
         }
 
     return wf
