@@ -121,7 +121,10 @@ def support_pipeline() -> ExecutionPipeline:
 
 
 @pytest.mark.e2e
-def test_ai_agent_cqrs_tool_reflection(support_pipeline: ExecutionPipeline) -> None:
+@pytest.mark.anyio
+async def test_ai_agent_cqrs_tool_reflection(
+    support_pipeline: ExecutionPipeline,
+) -> None:
     """Verify that domain CQRS messages reflect automatically into callable AI agent tools.
 
     Args:
@@ -144,7 +147,7 @@ def test_ai_agent_cqrs_tool_reflection(support_pipeline: ExecutionPipeline) -> N
     assert is_agent_created is True
 
     # Run agent execution with offline test model
-    res = agent.run_sync("Lookup customer cust-vip-1 and file a ticket")
+    res = await agent.run("Lookup customer cust-vip-1 and file a ticket")
     has_response = res is not None
     assert has_response is True
 
