@@ -62,6 +62,17 @@ Inspect complex workflows and GitHub Actions CI pipelines directly from your ter
 
 ---
 
+## 5. Live Resource Interconnect Topology (Hexastack DevTools)
+
+Explore the live architectural interconnect graph rendered directly inside the DevTools console — tracing relationships across entrypoint clients, execution middlewares, CQRS command/query dispatchers, distributed event brokers, and persistence ports:
+
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="assets/demos/devtools-resource-topology.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="assets/demos/devtools-resource-topology.vtt" default>
+</video>
+
+---
+
 ## In-Depth Articles
 
 !!! tip "On DEV.to"
