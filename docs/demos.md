@@ -73,6 +73,17 @@ Explore the live architectural interconnect graph rendered directly inside the D
 
 ---
 
+## 6. Dynamic Feature Flag Hot-Swapping (Hexastack DevTools)
+
+Zero-downtime runtime flag hot-swapping directly within the Hexastack DevTools console. Evaluate and mutate dynamic feature toggles in real time without application restarts or cache invalidation, with complete WCAG 2.1 AA accessibility compliance:
+
+<video controls autoplay loop muted playsinline width="100%" style="border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+  <source src="assets/demos/devtools-feature-flags-hotswapping.webm" type="video/webm">
+  <track label="English" kind="subtitles" srclang="en" src="assets/demos/devtools-feature-flags-hotswapping.vtt" default>
+</video>
+
+---
+
 ## In-Depth Articles
 
 !!! tip "On DEV.to"
