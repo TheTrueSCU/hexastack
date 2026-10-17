@@ -1,3 +1,5 @@
+import re
+
 from typer.testing import CliRunner
 
 from hexastack_cli.adapters.suggest import (
@@ -12,6 +14,13 @@ from hexastack_cli.adapters.suggest import (
 )
 from hexastack_cli.infra.app import create_cli_app
 from hexastack_cli.infra.config import HexastackCliConfig
+
+_ANSI_REGEX = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def _strip_ansi(text: str) -> str:
+    """Strip ANSI escape and color sequences from string output."""
+    return _ANSI_REGEX.sub("", text)
 
 
 def test_find_closest_match():
@@ -124,7 +133,7 @@ def test_subcommand_typo_non_interactive():
     runner = CliRunner()
     res = runner.invoke(app, ["deply"])
     exit_code = res.exit_code
-    output = res.output
+    output = _strip_ansi(res.output)
     assert exit_code == 2
     assert "Did you mean 'deploy'?" in output
 
@@ -186,14 +195,14 @@ def test_option_typo_non_interactive():
     # Separated option flag
     res1 = runner.invoke(app, ["--prt", "9000"])
     code1 = res1.exit_code
-    out1 = res1.output
+    out1 = _strip_ansi(res1.output)
     assert code1 == 2
     assert "Did you mean '--port'?" in out1
 
     # Inline '=' assignment
     res2 = runner.invoke(app, ["--prt=9000"])
     code2 = res2.exit_code
-    out2 = res2.output
+    out2 = _strip_ansi(res2.output)
     assert code2 == 2
     assert "Did you mean '--port'?" in out2
 
@@ -319,6 +328,6 @@ def test_create_cli_app_integration():
     # Test subcommand suggestion works on create_cli_app
     res_typo = runner.invoke(app, ["sreve"])
     code_typo = res_typo.exit_code
-    out_typo = res_typo.output
+    out_typo = _strip_ansi(res_typo.output)
     assert code_typo == 2
     assert "Did you mean 'serve'?" in out_typo
