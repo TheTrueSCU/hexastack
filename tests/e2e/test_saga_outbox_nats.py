@@ -23,6 +23,7 @@ import pytest
 from hexaflow import Workflow, WorkflowStatus
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from hexastack_core.domain import Event
 from hexastack_events.adapters.buses.nats import NatsJetStreamEventBusAdapter
@@ -84,7 +85,12 @@ class OrderCancelledEvent(Event):
 @pytest.fixture
 def sqlite_outbox_storage() -> Generator[SqlAlchemyOutboxStorage]:
     """Provide clean in-memory SQLite database session and SqlAlchemyOutboxStorage."""
-    engine = create_engine("sqlite:///:memory:", echo=False)
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        echo=False,
+    )
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine)
     storage = SqlAlchemyOutboxStorage(session_factory=session_factory)
