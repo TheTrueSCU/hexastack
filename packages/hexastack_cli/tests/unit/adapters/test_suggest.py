@@ -308,7 +308,7 @@ def test_unrecognized_without_suggestion():
 
 
 def test_create_cli_app_integration():
-    cfg = HexastackCliConfig(app_name="hexatest", version="0.8.0")
+    cfg = HexastackCliConfig(app_name="hexatest", version="0.9.0")
     app = create_cli_app(config=cfg)
 
     @app.command("serve")
@@ -323,7 +323,7 @@ def test_create_cli_app_integration():
     code_ver = res_ver.exit_code
     out_ver = res_ver.stdout
     assert code_ver == 0
-    assert "hexatest 0.8.0" in out_ver
+    assert "hexatest 0.9.0" in out_ver
 
     # Test subcommand suggestion works on create_cli_app
     res_typo = runner.invoke(app, ["sreve"])

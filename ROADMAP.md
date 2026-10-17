@@ -81,7 +81,18 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 
 ---
 
-## 🚀 Active Milestone: v0.9.0 (Edge Profiles, Voice Pipelines & Multi-Python Matrix)
+### v0.9.0 (Typo Tolerance, Workflow Simulation, Sliced Video Demos & DevTools Topology) ✅
+- [x] **`TyperSuggest` CLI Typo Tolerance (`hexastack-cli`)**: Drop-in forgiving command line runner with Levenshtein-based suggestion fallback, interactive confirmation prompts, negative-number flag immunity, and non-interactive CI safety.
+- [x] **`CliNarrator.checkpoint_segment()` Sliced Demo Recording (`hexastack-cli`)**: Chapterized terminal recording generating sliced `.webm` videos and synchronized `.vtt` captions across workflow boundaries.
+- [x] **`Hexaflow v0.5.0` Integration (`hexastack-flow`)**: Step-aware execution middleware (`StepMiddlewarePort`), pluggable DAG visualizers (Mermaid, ASCII, Graphviz DOT) with critical path bottleneck detection, and deterministic in-memory dry-run saga simulations (`wf.simulate()`).
+- [x] **DevTools Visual Controls & Resource Topology (`hexastack-ui`)**: Real-time Mermaid DAG rendering with TD/LR orientation toggling, dynamic saga discovery, step highlighting, and live resource interconnect topology navigation across buses, endpoints, brokers, and storage ports.
+- [x] **End-to-End User Journeys (HS-03 – HS-07)**: Full verification and demonstration across resource topology navigation, dynamic feature flag hot-swapping, and NATS outbox sagas.
+- [x] **Tutorial Suite Meta-Orchestration**: Consolidated 7-Chapter To-Do tutorial journey into a declarative Hexaflow DAG with chapterized video demo embeds.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 18 subpackages to `v0.9.0`.
+
+---
+
+## 🚀 Active Milestone: v0.10.0 (Edge Profiles, Voice Pipelines & Multi-Python Matrix)
 - [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
 - [ ] **Voice & WebRTC Audio Pipeline**: Real-time conversational audio bridge (`hexastack-ui[voice]`).
 - [ ] **Prefect Orchestrator Adapter**: `PrefectOrchestratorAdapter` behind the `hexastack-flow` orchestrator port as an optional extra (`hexastack-flow[prefect]`), leveraging Prefect task result caching and pluggable task runners (thread/process/Dask/Ray), with dual-implementation oracle tests against the asyncio engine. *(Airflow, Luigi, Dagster, and joblib evaluated and deferred; joblib's memoization is covered by Prefect caching.)*

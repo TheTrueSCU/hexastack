@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v0.9.0 (2026-10-17)
+
+### Highlights & Features
+* **`TyperSuggest` CLI Typo Tolerance (`hexastack-cli`)**: Drop-in forgiving command line runner with Levenshtein-based suggestion fallback, interactive confirmation prompts, negative-number flag immunity, and non-interactive CI safety.
+* **`CliNarrator.checkpoint_segment()` Sliced Demo Recording (`hexastack-cli`)**: Chapterized terminal recording generating sliced `.webm` videos and synchronized `.vtt` captions across workflow boundaries.
+* **`Hexaflow v0.5.0` Integration (`hexastack-flow`)**: Step-aware execution middleware (`StepMiddlewarePort`), pluggable DAG visualizers (Mermaid, ASCII, Graphviz DOT) with critical path bottleneck detection, and deterministic in-memory dry-run saga simulations (`wf.simulate()`).
+* **DevTools Visual Controls & Resource Topology (`hexastack-ui`)**: Real-time Mermaid DAG rendering with TD/LR orientation toggling, dynamic saga discovery, step highlighting, and live resource interconnect topology navigation across buses, endpoints, brokers, and storage ports.
+* **End-to-End User Journeys (HS-03 – HS-07)**: Full verification and demonstration across resource topology navigation, dynamic feature flag hot-swapping, and NATS outbox sagas.
+* **Tutorial Suite Meta-Orchestration**: Consolidated 7-Chapter To-Do tutorial journey into a declarative Hexaflow DAG with chapterized video demo embeds.
+* **Unified Workspace Lockstep Versioning (v0.9.0)**: Synchronized version bump across root workspace and all 18 subpackages (`hexastack`, `hexastack_ai`, `hexastack_auth`, `hexastack_cli`, `hexastack_core`, `hexastack_cqrs`, `hexastack_db`, `hexastack_events`, `hexastack_fastapi`, `hexastack_flags`, `hexastack_flow`, `hexastack_graphql`, `hexastack_grpc`, `hexastack_logging`, `hexastack_mcp`, `hexastack_otel`, `hexastack_qual`, `hexastack_ui`).
+
 ## v0.8.0 (2026-10-07)
 
 ### Highlights & Features

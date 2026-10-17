@@ -401,7 +401,7 @@ def _render_observability_tab(container: Container) -> None:
         logger, "environment", os.getenv("SENTRY_ENVIRONMENT", "development")
     )
     release = getattr(
-        logger, "release", os.getenv("SENTRY_RELEASE", "hexastack@v0.8.0")
+        logger, "release", os.getenv("SENTRY_RELEASE", "hexastack@v0.9.0")
     )
 
     with ui.row().classes("w-full gap-4 flex-wrap mb-6"):
