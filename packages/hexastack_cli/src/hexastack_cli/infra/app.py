@@ -3,6 +3,7 @@ from rich.console import Console
 from rodi import Container
 
 from hexastack_cli.adapters.presenter import RichTerminalPresenter
+from hexastack_cli.adapters.suggest import TyperSuggest
 from hexastack_cli.infra.config import HexastackCliConfig
 from hexastack_core.domain import Generic
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
@@ -41,7 +42,7 @@ def create_cli_app(
     cfg = config or HexastackCliConfig()
     active_console = console or Console()
 
-    app = typer.Typer(
+    app = TyperSuggest(
         name=cfg.app_name,
         help=cfg.help_text,
         rich_markup_mode="rich" if cfg.rich_markup else None,
