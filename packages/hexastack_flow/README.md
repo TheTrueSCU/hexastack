@@ -23,7 +23,10 @@
 2. **Durable Distributed Sagas**: Workflows natively subsume the Saga pattern by pairing forward command execution stages with compensating rollback stages, backed by durable checkpoints.
 3. **Enterprise Persistence**: `SqlAlchemyWorkflowStore` persists workflow execution records and step checkpoints directly to PostgreSQL/SQLite/MySQL within transactional boundaries.
 4. **Event Streaming**: Emits domain events (`WorkflowStartedEvent`, `WorkflowStepCompletedEvent`, `WorkflowSuspendedEvent`, `WorkflowCompletedEvent`, `WorkflowAbortedEvent`) wrapped in standard `CloudEventEnvelope`s through `hexastack-events`.
-5. **DevTools Visualizer**: Backing engine for NiceGUI and Textual DAG monitoring.
+5. **Pluggable Graph Subsystem & Visualizers**: Render workflows directly to Mermaid diagrams (`wf.render("mermaid")`), Graphviz DOT, or terminal ASCII trees with automatic critical path bottleneck detection (`critical_path=True`).
+6. **Dry-Run Simulation**: In-memory pre-flight saga validation (`wf.simulate()`) executing pure steps and mocking mutating steps fail-closed with zero external side-effects.
+7. **Step Execution Middleware**: Interceptors (`StepMiddlewarePort`) for latency instrumentation, execution logging, and OpenTelemetry distributed tracing cascades.
+8. **DevTools Visualizer**: Backing engine for NiceGUI reactive DAG monitoring, orientation toggling, and step highlighting.
 
 ---
 

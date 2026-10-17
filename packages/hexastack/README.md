@@ -20,11 +20,10 @@
 
 ## 1. Overview & Capabilities
 
-`hexastack` acts as the umbrella distribution for the entire Hexastack monorepo, offering:
-
-- **Scoped Extras**: Single-command installs for scoped use cases (e.g., `pip install hexastack[cli]`, `pip install hexastack[web]`, `pip install hexastack[graphql]`, `pip install hexastack[mcp]`, `pip install hexastack[grpc]`, `pip install hexastack[db]`).
+- **Scoped Extras**: Single-command installs for scoped use cases (e.g., `pip install hexastack[cli]`, `pip install hexastack[web]`, `pip install hexastack[graphql]`, `pip install hexastack[mcp]`, `pip install hexastack[grpc]`, `pip install hexastack[db]`, `pip install hexastack[ui]`, `pip install hexastack[flow]`).
 - **Zero-Install Project Scaffolding**: `hexastack new <template> <name>` instantly scaffolds production-grade microservices adhering strictly to Hexagonal Architecture, complete with tiered CI, import-linter contracts, and passing test suites.
-- **Interactive Diagnostic CLI**: The `hexastack` terminal command provides system health checks, package inspection, CQRS message route exploration, local FastAPI dev server launching, MCP server execution, gRPC daemon hosting, and Alembic database migration management.
+- **Typo-Tolerant Diagnostic CLI**: Powered by `TyperSuggest`, the `hexastack` terminal command provides auto-suggestions for misspelled commands and flags, system health checks, package inspection, CQRS message route exploration, local FastAPI dev server launching, MCP server execution, gRPC daemon hosting, and Alembic database migration management.
+- **Turnkey DevTools Console**: Launch the reactive developer dashboard (`hexastack ui`) with live resource interconnect topology, Hexaflow workflow DAG visualizer, saga simulations, and dynamic feature flag hot-swapping.
 
 ---
 

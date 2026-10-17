@@ -20,9 +20,11 @@
 
 - **Nested Command Hierarchies**: Nest subcommands naturally (`app user create`, `app db migrate`) using `@cli_group`.
 - **Command Aliases**: Register multiple aliases for the same action (`app user new == app user create`).
+- **Typo Tolerance & Suggestions (`TyperSuggest`)**: Drop-in replacement for `typer.Typer` that intercepts unrecognized subcommands or flags, computes closest matches via Levenshtein distance, prompts interactively for confirmation, and exits cleanly in CI/non-interactive pipelines.
 - **Feature Flag Gating**: Gate CLI commands dynamically with `@feature_flag_command(...)` and `@cli_command(..., feature_flag=...)`.
 - **Rich Formatted & CI-Friendly Output**: Beautiful tables, panels, and spinners for interactive terminals; clean text/JSON streaming for CI/CD pipelines.
 - **Direct CQRS Dispatching**: Declaratively expose domain commands (`@cli_command`) and queries (`@cli_query`) with automatic parameter parsing and validation.
+- **Automated Demo Narration & Slicing (`CliNarrator`)**: Headless terminal recording generating asciinema streams, high-resolution `.webm` videos, chapterized `.checkpoint_segment()` flushes, and synchronized `.vtt` subtitles.
 
 ---
 
@@ -31,7 +33,8 @@
 ```
 hexastack_cli/
 ├── domain/          # CliContext, OutputFormat enum
-├── adapters/        # Rich presenters, Typer command runners
+├── adapters/        # Rich presenters, Typer command runners, TyperSuggest
+├── testing/         # CliNarrator, TerminalEvent (demo video & VTT recorder)
 └── infra/           # create_cli_app, CliBootstrapper (order=40), @cli_command, @cli_query, @cli_group, @feature_flag_command
 ```
 
@@ -39,7 +42,7 @@ hexastack_cli/
 
 | Category | Exports |
 |---|---|
-| **Application Factory** | `create_cli_app`, `CliBootstrapper` (order=30) |
+| **Application Factory & Typo Tolerance** | `create_cli_app`, `TyperSuggest`, `SuggestGroup`, `SuggestCommand`, `CliBootstrapper` (order=40) |
 | **Decorators** | `@cli_command`, `@cli_query`, `@cli_group`, `@feature_flag_command` |
 | **Presenters** | `RichTerminalPresenter`, `ConsolePresenter`, `TablePresenter`, `JsonPresenter` |
 | **Testing & Demo Narration** | `CliNarrator`, `TerminalEvent` |
@@ -130,4 +133,58 @@ cli_query("status", aliases=["st", "health"], help="Check status of a service")(
 
 runtime = bootstrap(packages_to_scan=[__name__])
 cli_app = runtime.get("cli_app")
+```
+
+---
+
+## 6. Standalone Typo-Tolerant CLI (`TyperSuggest`)
+
+`TyperSuggest` is a drop-in replacement for `typer.Typer`. It intercepts mistyped commands and options, presenting suggestions and interactive confirmations without throwing cryptic syntax errors:
+
+```python
+from hexastack_cli.adapters import TyperSuggest
+
+app = TyperSuggest(help="My Resilient Service CLI")
+
+
+@app.command()
+def deploy(environment: str = "staging", force: bool = False):
+    print(f"Deploying to {environment} (force={force})")
+
+
+if __name__ == "__main__":
+    app()
+```
+
+```bash
+$ python cli.py deply
+Unrecognized command 'deply'. Did you mean 'deploy'? [y/N]: y
+Deploying to staging (force=False)
+
+$ python cli.py deploy --frc
+Unrecognized option '--frc'. Did you mean '--force'? [y/N]: y
+Deploying to staging (force=True)
+```
+
+In automated CI environments or redirected streams (`not sys.stdin.isatty()`), `TyperSuggest` prints the suggested correction to `stderr` and exits cleanly with error code `2` without hanging.
+
+---
+
+## 7. Automated Demo Recording & Video Slicing (`CliNarrator`)
+
+```python
+from hexastack_cli.testing import CliNarrator
+
+narrator = CliNarrator(record_video=True)
+narrator.say("Scaffolding microservice...")
+narrator.run("hexastack new web-api billing-service")
+
+# Flush Chapter 1 video & VTT segment
+narrator.checkpoint_segment("ch01-scaffolding")
+
+narrator.say("Applying SQLite database migrations...")
+narrator.run("hexastack db migrate")
+
+# Flush Chapter 2 video & VTT segment
+narrator.checkpoint_segment("ch02-migrations")
 ```
