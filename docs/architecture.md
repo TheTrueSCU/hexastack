@@ -106,6 +106,57 @@ For the full interactive ecosystem architecture diagram and cross-repository con
 
 ---
 
+## 5. Distributed Saga, Transactional Outbox & NATS JetStream Cascade
+
+Hexastack pairs [`hexaflow`](https://github.com/TheTrueSCU/hexaflow) workflows with `hexastack-events` to coordinate distributed multi-service sagas with zero dual-write vulnerabilities:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as Checkout Client
+    participant Saga as Hexaflow Saga Coordinator
+    participant Tracing as OpenTelemetry Tracer
+    participant DB as SQLite / Relational DB
+    participant Outbox as Transactional Outbox
+    participant Relay as Asyncio Outbox Relay
+    participant NATS as NATS JetStream Broker
+    participant Downstream as Inventory / Payment Service
+
+    Client->>Saga: Submit Checkout(OrderPayload)
+    Saga->>Tracing: Start Root Span (trace_id=t-100, span=saga.checkout)
+
+    rect rgb(240, 248, 255)
+        Note over Saga,DB: Step 1: Stage Order & Outbox Event
+        Saga->>DB: BEGIN TRANSACTION
+        Saga->>DB: Insert Order(status=PENDING)
+        Saga->>Outbox: Stage OutboxRecord(OrderCreated, trace_id=t-100)
+        Saga->>DB: COMMIT (Atomic)
+    end
+
+    rect rgb(245, 255, 245)
+        Note over Relay,NATS: Step 2: Asynchronous Outbox Relay to NATS
+        Relay->>Outbox: Fetch Pending Records
+        Relay->>NATS: Publish CloudEvent(type=OrderCreated, trace_id=t-100)
+        NATS-->>Relay: JetStream ACK
+        Relay->>Outbox: Mark PUBLISHED
+    end
+
+    rect rgb(255, 250, 240)
+        Note over NATS,Downstream: Step 3: Consumer Event Dispatch & Compensation
+        NATS->>Downstream: Deliver CloudEvent
+        alt Payment Success
+            Downstream->>Saga: Payment Confirmed -> Saga Completed
+        else Payment Failure
+            Downstream->>Saga: Payment Declined
+            Saga->>Outbox: Stage Compensating Event (OrderCancelled, trace_id=t-100)
+            Relay->>NATS: Publish CloudEvent(type=OrderCancelled)
+            Saga-->>Client: Checkout Failed & Order Compensated
+        end
+    end
+```
+
+---
+
 ## In-Depth Articles
 
 !!! tip "On DEV.to"

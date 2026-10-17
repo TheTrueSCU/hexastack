@@ -238,41 +238,75 @@ def _render_cqrs_tab(
     _render_live_runner(container, pipeline, middlewares)
 
 
+def _render_flag_row(
+    flag_key: str,
+    flag_val: Any,
+    set_flag_fn: Any,
+    log_output: Any,
+) -> None:
+    """Render a single feature flag row with hot-swapping switch or badge."""
+    from nicegui import ui
+
+    with ui.row().classes(
+        "w-full items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700"
+    ):
+        with ui.column().classes("gap-1"):
+            ui.label(flag_key).classes(
+                "font-mono font-medium text-slate-900 dark:text-slate-100"
+            )
+            type_name = type(flag_val).__name__
+            ui.label(f"Type: {type_name}").classes(
+                "text-xs text-slate-600 dark:text-slate-400"
+            )
+
+        if isinstance(flag_val, bool):
+
+            def _on_change(e: Any) -> None:
+                new_val = bool(e.value)
+                if callable(set_flag_fn):
+                    set_flag_fn(flag_key, new_val)
+                    log_output.push(
+                        f"🔄 [HOT-SWAP] Feature flag '{flag_key}' toggled to {new_val}"
+                    )
+                    ui.notify(
+                        f"Flag '{flag_key}' set to {new_val}",
+                        color="green-10",
+                    )
+
+            ui.switch(
+                text="Enabled" if flag_val else "Disabled",
+                value=flag_val,
+                on_change=_on_change,
+            ).classes("text-sm").props(f'aria-label="Toggle {flag_key}"')
+        else:
+            ui.badge(str(flag_val), color="blue-grey").classes("font-mono text-sm")
+
+
 def _render_flags_tab(container: Container) -> None:
-    """Render the feature flags tab panel showing active flags."""
+    """Render the feature flags tab panel showing active flags and hot-swap controls."""
     from nicegui import ui
 
     from hexastack_core.ports.feature_flags import FeatureFlagPort
 
     ui.label("Active Feature Flags").classes("hx-section-heading")
+    ui.label(
+        "Evaluate and hot-swap feature flags live without requiring application restarts."
+    ).classes("hx-subtext")
+
     flags_adapter = (
         container.resolve(FeatureFlagPort) if FeatureFlagPort in container else None
     )
 
     get_all_fn = getattr(flags_adapter, "get_all_flags", None)
+    set_flag_fn = getattr(flags_adapter, "set_flag", None)
+
     if callable(get_all_fn):
         flags_data: dict[str, Any] = get_all_fn()
         if flags_data:
-            flag_rows = [{"flag": k, "enabled": str(v)} for k, v in flags_data.items()]
-            ui.table(
-                columns=[
-                    {
-                        "name": "flag",
-                        "label": "Flag Key",
-                        "field": "flag",
-                        "sortable": True,
-                    },
-                    {
-                        "name": "enabled",
-                        "label": "Status",
-                        "field": "enabled",
-                        "sortable": True,
-                    },
-                ],
-                rows=flag_rows,
-                row_key="flag",
-                pagination={"rowsPerPage": 10},
-            ).classes("w-full")
+            with ui.card().classes("hx-card w-full p-4"):
+                log_output = ui.log(max_lines=10).classes("hx-log-console mb-4")
+                for k, v in flags_data.items():
+                    _render_flag_row(k, v, set_flag_fn, log_output)
         else:
             ui.label("No feature flags currently configured in provider.").classes(
                 "hx-empty-label"
