@@ -120,7 +120,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "hexaqual[all]>=0.9.2",
+    "hexaqual[all]>=0.9.3",
     "hypothesis>=6.168.3",
     "pre-commit>=4.6.2",
     "pytest-cov>=7.1.0",

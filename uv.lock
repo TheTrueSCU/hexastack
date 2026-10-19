@@ -1847,7 +1847,7 @@ wheels = [
 
 [[package]]
 name = "hexaqual"
-version = "0.9.2"
+version = "0.9.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "complexipy" },
@@ -1864,9 +1864,9 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/e3/6f7a3be3bac598dd0a7be5338ae23876842157b799a37ec3460bfe6f48da/hexaqual-0.9.2.tar.gz", hash = "sha256:ce5f6252ef6d0dd0ee8b76a3415fd5b28733c10363d233cabc6167431b718215", size = 6524203, upload-time = "2026-10-19T15:07:11.838Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/ee/09f012a0593e7567114e808eba667762a25d8469b1987255c966c0fb9af5/hexaqual-0.9.3.tar.gz", hash = "sha256:f7cd7dc9ff9d747798a87f7d78d3b9d35e3afd10ebed50998f82a3d36e008185", size = 6524256, upload-time = "2026-10-19T19:26:23.341Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/ea/7e3c05e13ed70485ef83ba01d7bb35cd307e26e7f77b8d5d46064576bcc0/hexaqual-0.9.2-py3-none-any.whl", hash = "sha256:7949f4c2ba4c9246c0a85801a02c1f781f0e18e05a3a97bd000d5e7a1ba04319", size = 289779, upload-time = "2026-10-19T15:07:10.024Z" },
+    { url = "https://files.pythonhosted.org/packages/21/12/209a23f442a58446f5a7a172a7036daf11453a22b80936dbcaa56620b35a/hexaqual-0.9.3-py3-none-any.whl", hash = "sha256:85c5b16e28f6129da992e22fad8f26138a4cf4ccba436eeddfad8c08d438ea54", size = 289845, upload-time = "2026-10-19T19:26:21.347Z" },
 ]
 
 [package.optional-dependencies]
@@ -2788,7 +2788,7 @@ ui = [
 
 [package.metadata]
 requires-dist = [
-    { name = "hexaqual", extras = ["all"], specifier = ">=0.9.2" },
+    { name = "hexaqual", extras = ["all"], specifier = ">=0.9.3" },
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-events", marker = "extra == 'events'", editable = "packages/hexastack_events" },
@@ -2933,7 +2933,7 @@ dev = [
     { name = "fsspec", specifier = ">=2024.1.0" },
     { name = "grpcio-reflection", specifier = ">=1.84.0" },
     { name = "grpcio-tools", specifier = ">=1.84.0" },
-    { name = "hexaqual", extras = ["all"], specifier = ">=0.9.2" },
+    { name = "hexaqual", extras = ["all"], specifier = ">=0.9.3" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "huey", specifier = ">=3.4.0" },
     { name = "hypothesis", specifier = ">=6.168.1" },
