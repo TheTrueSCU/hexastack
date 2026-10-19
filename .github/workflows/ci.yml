@@ -35,9 +35,15 @@ jobs:
         run: cargo install jscpd --locked
 
       - name: Run Quality Gate via Hexaqual
-        uses: TheTrueSCU/hexaqual@1a37ad125f86dacd57616e1c1b3fab56185e50c3 # v0.9.1
+        uses: TheTrueSCU/hexaqual@2036dd94271842fa39a85d38c64cfb395b45b232 # v0.9.2
         with:
           sync-args: "--all-packages --all-extras --all-groups"
+
+      - name: Audit Repository Quality Gates
+        run: uv run hexaqual sanity --audit-gates
+
+      - name: Verify Documentation Consistency (Anti-Drift Linter)
+        run: uv run hexaqual docs drift
 
   buf-governance:
     name: Protobuf Governance (Buf Lint & Breaking)

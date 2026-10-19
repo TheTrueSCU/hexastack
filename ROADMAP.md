@@ -46,9 +46,9 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Hexaflow v0.2.0 Integration**: Upgraded `hexastack-flow` with `TriggerRule.ALL_SUCCESS_OR_SKIPPED` skip propagation and dynamic CLI option binding (`WorkflowCliBinder`).
 - [x] **Hexaqual v0.3.0 Toolchain Dogfooding**: Quality gates upgraded with `hexaqual parity architecture` and dynamic fuzz discovery.
 - [x] **Colocated Fuzz Harnesses**: Relocated coverage-guided and adversarial fuzz harnesses into individual package test suites (`packages/hexastack_logging/tests/fuzz/`, `packages/hexastack_grpc/tests/fuzz/`).
-- [x] **Full Hexagonal Boundary Parity**: Added dedicated architectural boundary enforcement tests across all 17 workspace packages including `hexastack_flow` and `hexastack_ui`.
+- [x] **Full Hexagonal Boundary Parity**: Added dedicated architectural boundary enforcement tests across all 18 workspace packages including `hexastack_flow` and `hexastack_ui`.
 - [x] **Dynamic Monorepo Boundary Enforcement**: Dynamic package discovery in `tests/architecture/test_package_boundaries.py`.
-- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 17 subpackages to `v0.5.0`.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 18 subpackages to `v0.5.0`.
 
 ---
 
@@ -59,7 +59,7 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 - [x] **Hexaqual Composite Action Integration**: Modernized CI quality gate using `TheTrueSCU/hexaqual@v0.4.0` turnkey composite action.
 - [x] **Workflow Engine Upgrade**: Upgraded `hexastack-flow` to `hexaflow>=0.3.0` (dynamic mapping `@wf.map_step`, Mermaid/ASCII DAG exporters).
 - [x] **Quality Toolchain Upgrade**: Upgraded workspace dev toolchain to `hexaqual[all]>=0.4.0`.
-- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 17 subpackages to `v0.6.0`.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 18 subpackages to `v0.6.0`.
 
 ### v0.7.0 (GitHub Template, Zero-Install Codespaces & Scaffolding Modernization) ✅
 - [x] **Official GitHub Template Repository**: Standalone reference starter repository (`TheTrueSCU/hexastack-template`) with 1-click instantiation and automated OpenSSF security controls.

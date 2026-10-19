@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Quality Gate via Hexaqual
-        uses: TheTrueSCU/hexaqual@v0.9.0
+        uses: TheTrueSCU/hexaqual@v0.9.2
         with:
           skip-hooks: hexaqual-agents
           sync-args: "--all-groups"
