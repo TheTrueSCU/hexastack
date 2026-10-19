@@ -30,6 +30,11 @@
    - When writing assertions in tests, assign method return values to variables first (e.g., `res = cache.delete("key"); assert res is True`) to prevent CodeQL *"assert statement with side-effect"* warnings.
    - **Dual-Implementation Oracle Testing**: Production adapters (`SqlAlchemyRepository`, `DiskCacheAdapter`, `InMemoryRateLimiter`, `SqlAlchemyOutboxStorage`, `AsyncioWorkflowEngine`) are cross-evaluated against naive reference oracles via Hypothesis state machines to mathematically prove equivalence ($f_{\text{prod}}(x) \equiv f_{\text{oracle}}(x)$). See [Testing & Dual-Implementation Oracle Rigor](developer-guide/testing.md).
 
+5. **Architectural Decisions & Persistent Invariants**:
+   - All foundational architectural choices, invariants, and rejected alternatives are authoritatively codified in [Architectural Decision Records (`docs/decisions.md`)](decisions.md).
+   - Before proposing architectural deviations, alternative persistence engines, or new adapter paradigms, consult `docs/decisions.md`.
+   - Any new architectural pattern must be documented as an ADR entry before merging code.
+
 ---
 
 ## 2. Developer Tools & Workspace Commands (Hexaqual Suite)
