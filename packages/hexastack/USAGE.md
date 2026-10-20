@@ -41,29 +41,28 @@ Usage: hexastack [OPTIONS] COMMAND [ARGS]...
 │ --help                          Show this message and exit.                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
-│ info     Display installed Hexastack packages and optional dependency        │
-│          statuses.                                                           │
-│ doctor   Display installed Hexastack packages and optional dependency        │
-│          statuses.                                                           │
-│ status   Display installed Hexastack packages and optional dependency        │
-│          statuses.                                                           │
-│ ping     Send a test ping command through the CQRS execution pipeline.       │
-│ init     Initialize a new Hexastack microservice in the current working      │
-│          directory.                                                          │
-│ serve    Launch the Hexastack local development server (requires hexastack). │
-│ dev      Launch concurrent multi-transport dev environment (REST on 8000,    │
-│          gRPC on 50051, Outbox relay).                                       │
-│ ui       Launch the Hexastack DevTools interactive web UI (requires          │
-│          hexastack).                                                         │
-│ load     Execute concurrent load/stress testing scenario using Locust.       │
-│ inspect  Inspect management commands                                         │
-│ demo     Demo management commands                                            │
-│ new      Scaffold a new Hexagonal microservice project.                      │
-│ db       Database migration management (requires hexastack).                 │
-│ mcp      Model Context Protocol (MCP) AI agent tools and server.             │
-│ grpc     High-performance gRPC server management.                            │
-│ profile  Profile CPU performance or memory allocations with interactive      │
-│          flamegraphs.                                                        │
+│ doctor    Run system diagnostics and display installed package/dependency    │
+│           health.                                                            │
+│ init      Initialize a new Hexastack microservice in the current working     │
+│           directory.                                                         │
+│ serve     Launch the Hexastack local development server (requires            │
+│           hexastack).                                                        │
+│ dev       Launch concurrent multi-transport dev environment (REST on 8000,   │
+│           gRPC on 50051, Outbox relay).                                      │
+│ ui        Launch the Hexastack DevTools interactive web UI (requires         │
+│           hexastack).                                                        │
+│ load      Execute concurrent load/stress testing scenario using Locust.      │
+│ inspect   Inspect management commands                                        │
+│ demo      Demo management commands                                           │
+│ new       Scaffold a new Hexagonal microservice project.                     │
+│ scaffold  Project lifecycle and scaffolding tools (new, init).               │
+│ db        Database migration management (requires hexastack).                │
+│ mcp       Model Context Protocol (MCP) AI agent tools and server.            │
+│ grpc      High-performance gRPC server management.                           │
+│ profile   Profile CPU performance or memory allocations with interactive     │
+│           flamegraphs.                                                       │
+│ perf      Performance engineering: profiling, load testing, and              │
+│           microbenchmarks.                                                   │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -276,7 +275,7 @@ Usage: hexastack dev [OPTIONS]
 ```text
 Usage: hexastack doctor [OPTIONS]
 
- Display installed Hexastack packages and optional dependency statuses.
+ Run system diagnostics and display installed package/dependency health.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --output          -o      <str>  Output format: table, json, or plain        │
@@ -433,32 +432,6 @@ Usage: hexastack grpc serve [OPTIONS]
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack info`
-
-```text
-Usage: hexastack info [OPTIONS]
-
- Display installed Hexastack packages and optional dependency statuses.
-
-╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --output          -o      <str>  Output format: table, json, or plain        │
-│                                  (CI/pipe friendly).                         │
-│                                  [default: table]                            │
-│ --input           -i      <str>  Input JSON payload string, file path, or    │
-│                                  '-' for stdin.                              │
-│ --quiet           -q             Quiet mode: suppress decorative terminal    │
-│                                  output.                                     │
-│ --debug                          Enable debug mode and render formatted      │
-│                                  error tracebacks.                           │
-│ --correlation-id          <str>  Explicit correlation ID for request         │
-│                                  tracing.                                    │
-│ --user-id                 <str>  Authenticated user context identifier.      │
-│ --tenant-id               <str>  Tenant isolation identifier for             │
-│                                  multi-tenancy.                              │
-│ --help                           Show this message and exit.                 │
-╰──────────────────────────────────────────────────────────────────────────────╯
-```
-
 ### `hexastack init`
 
 ```text
@@ -513,33 +486,6 @@ Usage: hexastack inspect [OPTIONS] COMMAND [ARGS]...
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ registry  Display registered CQRS commands, queries, and configurations.     │
-│ handlers  Display registered CQRS commands, queries, and configurations.     │
-╰──────────────────────────────────────────────────────────────────────────────╯
-```
-
-#### `hexastack inspect handlers`
-
-```text
-Usage: hexastack inspect handlers [OPTIONS]
-
- Display registered CQRS commands, queries, and configurations.
-
-╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --output          -o      <str>  Output format: table, json, or plain        │
-│                                  (CI/pipe friendly).                         │
-│                                  [default: table]                            │
-│ --input           -i      <str>  Input JSON payload string, file path, or    │
-│                                  '-' for stdin.                              │
-│ --quiet           -q             Quiet mode: suppress decorative terminal    │
-│                                  output.                                     │
-│ --debug                          Enable debug mode and render formatted      │
-│                                  error tracebacks.                           │
-│ --correlation-id          <str>  Explicit correlation ID for request         │
-│                                  tracing.                                    │
-│ --user-id                 <str>  Authenticated user context identifier.      │
-│ --tenant-id               <str>  Tenant isolation identifier for             │
-│                                  multi-tenancy.                              │
-│ --help                           Show this message and exit.                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -961,30 +907,78 @@ Usage: hexastack new web-api [OPTIONS] {name}
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### `hexastack ping`
+### `hexastack perf`
 
 ```text
-Usage: hexastack ping [OPTIONS]
+Usage: hexastack perf [OPTIONS] COMMAND [ARGS]...
 
- Send a test ping command through the CQRS execution pipeline.
+ Performance engineering: profiling, load testing, and microbenchmarks.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --message                 <str>                                              │
-│ --output          -o      <str>  Output format: table, json, or plain        │
-│                                  (CI/pipe friendly).                         │
-│                                  [default: table]                            │
-│ --input           -i      <str>  Input JSON payload string, file path, or    │
-│                                  '-' for stdin.                              │
-│ --quiet           -q             Quiet mode: suppress decorative terminal    │
-│                                  output.                                     │
-│ --debug                          Enable debug mode and render formatted      │
-│                                  error tracebacks.                           │
-│ --correlation-id          <str>  Explicit correlation ID for request         │
-│                                  tracing.                                    │
-│ --user-id                 <str>  Authenticated user context identifier.      │
-│ --tenant-id               <str>  Tenant isolation identifier for             │
-│                                  multi-tenancy.                              │
-│ --help                           Show this message and exit.                 │
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ load     Execute concurrent load/stress testing scenario using Locust.       │
+│ bench    Execute microbenchmarks via hexaqual test bench (pytest-benchmark). │
+│ profile  Profile CPU performance or memory allocations with interactive      │
+│          flamegraphs.                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack perf bench`
+
+```text
+Usage: hexastack perf bench [OPTIONS]
+
+ Execute microbenchmarks via hexaqual test bench (pytest-benchmark).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --package  -p      <str>  Target package(s).                                 │
+│ --all      -a             Run benchmarks across all workspace packages.      │
+│ --smoke                   Smoke mode: run each benchmark once without timing │
+│                           cycles.                                            │
+│ --help                    Show this message and exit.                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack perf load`
+
+```text
+Usage: hexastack perf load [OPTIONS]
+
+ Execute concurrent load/stress testing scenario using Locust.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --host        -h           <str>  Target service host URL.                   │
+│                                   [default: http://127.0.0.1:8000]           │
+│ --users       -u           <int>  Peak number of concurrent virtual users.   │
+│                                   [default: 50]                              │
+│ --spawn-rate  -r           <int>  Rate to spawn users per second.            │
+│                                   [default: 10]                              │
+│ --run-time    -t           <str>  Total benchmark run time (e.g. 15s, 1m).   │
+│                                   [default: 15s]                             │
+│ --locustfile  -f           <str>  Locustfile scenario filepath.              │
+│                                   [default: locustfile.py]                   │
+│ --headless        --web           Run headlessly in CLI without Web UI.      │
+│                                   [default: headless]                        │
+│ --help                            Show this message and exit.                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack perf profile`
+
+```text
+Usage: hexastack perf profile [OPTIONS] COMMAND [ARGS]...
+
+ Profile CPU performance or memory allocations with interactive flamegraphs.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ cpu     Capture CPU flamegraph with py-spy (attach to PID or wrap server     │
+│         command).                                                            │
+│ memory  Generate memory allocation flamegraph using memray.                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -1038,6 +1032,93 @@ Usage: hexastack profile memory [OPTIONS]
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
+### `hexastack scaffold`
+
+```text
+Usage: hexastack scaffold [OPTIONS] COMMAND [ARGS]...
+
+ Project lifecycle and scaffolding tools (new, init).
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ init  Initialize a new Hexastack microservice in the current working         │
+│       directory.                                                             │
+│ new   Scaffold a new Hexagonal microservice project.                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack scaffold init`
+
+```text
+Usage: hexastack scaffold init [OPTIONS]
+
+ Initialize a new Hexastack microservice in the current working directory.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --name          -n                   <str>  Project name (defaults to        │
+│                                             current directory name).         │
+│ --template      -t                   <str>  Project template: minimal,       │
+│                                             web-api, event-driven,           │
+│                                             mcp-agent, enterprise.           │
+│ --db                                 <str>  Database driver: in-memory,      │
+│                                             sqlite, postgres.                │
+│ --interactive   -i                          Prompt with interactive          │
+│                                             questionnaire wizard.            │
+│ --with-release                              Include automated PyPI release & │
+│                                             SBOM workflow                    │
+│                                             (.github/workflows/release.yml,  │
+│                                             CHANGELOG.md).                   │
+│ --with-openssf                              Include OpenSSF security &       │
+│                                             governance starter               │
+│                                             (.github/workflows/scorecard.ym… │
+│                                             SECURITY.md, GOVERNANCE.md).     │
+│ --qual              --no-qual               Include hexastack-qual quality   │
+│                                             governance and scorecard         │
+│                                             adapter.                         │
+│                                             [default: qual]                  │
+│ --agents            --no-agents             Materialize turnkey universal    │
+│                                             .agents/ AI guardrails hub.      │
+│                                             [default: agents]                │
+│ --mutation          --no-mutation           Configure pytest-gremlins        │
+│                                             mutation testing baseline.       │
+│                                             [default: mutation]              │
+│ --sentry            --no-sentry             Configure Sentry error tracking  │
+│                                             & distributed tracing.           │
+│                                             [default: no-sentry]             │
+│ --help                                      Show this message and exit.      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+#### `hexastack scaffold new`
+
+```text
+Usage: hexastack scaffold new [OPTIONS] COMMAND [ARGS]...
+
+ Scaffold a new Hexagonal microservice project.
+
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ web-api          Scaffold a RESTful Web API microservice (FastAPI + UoW +    │
+│                  DevTools UI).                                               │
+│ minimal          Scaffold a lightweight CLI or worker service (Core + CQRS + │
+│                  Logging).                                                   │
+│ event-driven     Scaffold an Event-Driven service with CloudEvents and       │
+│                  Transactional Outbox.                                       │
+│ mcp-agent        Scaffold an AI Model Context Protocol (MCP) server & agent  │
+│                  tools service.                                              │
+│ grpc-service     Scaffold a high-performance gRPC microservice (Protobuf +   │
+│                  Server Reflection).                                         │
+│ graphql-service  Scaffold a GraphQL data-graph gateway microservice          │
+│                  (Strawberry + GraphiQL).                                    │
+│ enterprise       Scaffold a production Enterprise microservice with all      │
+│                  modules enabled.                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
 ### `hexastack serve`
 
 ```text
@@ -1058,32 +1139,6 @@ Usage: hexastack serve [OPTIONS]
 │                                            overlay fabric (defaults to       │
 │                                            'hexastack-demo').                │
 │ --help                                     Show this message and exit.       │
-╰──────────────────────────────────────────────────────────────────────────────╯
-```
-
-### `hexastack status`
-
-```text
-Usage: hexastack status [OPTIONS]
-
- Display installed Hexastack packages and optional dependency statuses.
-
-╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --output          -o      <str>  Output format: table, json, or plain        │
-│                                  (CI/pipe friendly).                         │
-│                                  [default: table]                            │
-│ --input           -i      <str>  Input JSON payload string, file path, or    │
-│                                  '-' for stdin.                              │
-│ --quiet           -q             Quiet mode: suppress decorative terminal    │
-│                                  output.                                     │
-│ --debug                          Enable debug mode and render formatted      │
-│                                  error tracebacks.                           │
-│ --correlation-id          <str>  Explicit correlation ID for request         │
-│                                  tracing.                                    │
-│ --user-id                 <str>  Authenticated user context identifier.      │
-│ --tenant-id               <str>  Tenant isolation identifier for             │
-│                                  multi-tenancy.                              │
-│ --help                           Show this message and exit.                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 

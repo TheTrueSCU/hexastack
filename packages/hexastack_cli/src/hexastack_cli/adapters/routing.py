@@ -307,6 +307,7 @@ def register_cqrs_command(
     presenter: RichTerminalPresenter | None = None,
     console: Console | None = None,
     feature_flag: str | None = None,
+    hidden: bool = False,
 ) -> None:
     """Register a CQRS Command model as a typed CLI sub-command on a Typer application.
 
@@ -325,6 +326,7 @@ def register_cqrs_command(
         presenter: Optional RichTerminalPresenter instance.
         console: Optional rich Console instance.
         feature_flag: Optional feature flag key required for execution.
+        hidden: Whether to hide the command from CLI help documentation.
 
     Returns:
         None.
@@ -343,7 +345,7 @@ def register_cqrs_command(
         console=console,
         feature_flag=feature_flag,
     )
-    app.command(name=cmd_name, help=doc)(runner)
+    app.command(name=cmd_name, help=doc, hidden=hidden)(runner)
 
 
 def register_cqrs_query(
@@ -357,6 +359,7 @@ def register_cqrs_query(
     presenter: RichTerminalPresenter | None = None,
     console: Console | None = None,
     feature_flag: str | None = None,
+    hidden: bool = False,
 ) -> None:
     """Register a CQRS Query model as a typed CLI sub-command on a Typer application.
 
@@ -375,6 +378,7 @@ def register_cqrs_query(
         presenter: Optional RichTerminalPresenter instance.
         console: Optional rich Console instance.
         feature_flag: Optional feature flag key required for execution.
+        hidden: Whether to hide the command from CLI help documentation.
 
     Returns:
         None.
@@ -393,4 +397,4 @@ def register_cqrs_query(
         console=console,
         feature_flag=feature_flag,
     )
-    app.command(name=qry_name, help=doc)(runner)
+    app.command(name=qry_name, help=doc, hidden=hidden)(runner)

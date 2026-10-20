@@ -31,9 +31,9 @@ class InspectGroupDocs:
 
 # Decorate diagnostics domain models with CLI exposure metadata
 cli_query(
-    "info",
-    aliases=["doctor", "status"],
-    help="Display installed Hexastack packages and optional dependency statuses.",
+    "doctor",
+    aliases=["info", "status"],
+    help="Run system diagnostics and display installed package/dependency health.",
 )(GetSystemInfoQuery)
 
 cli_query(
