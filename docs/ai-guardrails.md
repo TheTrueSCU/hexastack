@@ -80,7 +80,7 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 | Tool Command | Purpose |
 |---|---|
 | `uv run hexaqual sanity [-p <pkg>] [-e <example>]` | Fast scoped validator (Ruff, Ty, complexipy, `__all__`, test parity, pytest) with Rich dashboard (`check` or `sanity`). |
-| `uv run hexaqual sanity -a --skip-tests` | Full workspace pre-commit quality check across all 17 packages in ~11s. |
+| `uv run hexaqual sanity -a --skip-tests` | Full workspace pre-commit quality check across all 18 packages in ~11s. |
 | `uv run hexaqual hooks install` | Installs all 5 Git lifecycle hooks (pre-commit, commit-msg, pre-push, post-merge, post-checkout). |
 | `uv run hexaqual hooks check` | Inspects installation status and manager type across all 5 Git hook stages. |
 | `uv run hexaqual agents sync` | Synchronizes universal agent guardrails and root AGENTS.md index. |

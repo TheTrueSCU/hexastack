@@ -25,6 +25,7 @@ def main() -> None:
         cli_module.add_grpc_commands(cli_app)
         cli_module.add_profile_command(cli_app)
         cli_module.add_load_command(cli_app)
+        cli_module.add_perf_commands(cli_app)
         cli_app()
 
     else:

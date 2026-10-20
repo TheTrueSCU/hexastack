@@ -31,21 +31,21 @@ class InspectGroupDocs:
 
 # Decorate diagnostics domain models with CLI exposure metadata
 cli_query(
-    "info",
-    aliases=["doctor", "status"],
-    help="Display installed Hexastack packages and optional dependency statuses.",
+    "doctor",
+    hidden_aliases=["info", "status"],
+    help="Run system diagnostics and display installed package/dependency health.",
 )(GetSystemInfoQuery)
 
 cli_query(
     "registry",
     group="inspect",
-    aliases=["handlers"],
+    hidden_aliases=["handlers"],
     help="Display registered CQRS commands, queries, and configurations.",
 )(InspectRegistryQuery)
 
 cli_command(
     "ping",
     group="demo",
-    aliases=["/ping"],
+    hidden_aliases=["/ping"],
     help="Send a test ping command through the CQRS execution pipeline.",
 )(PingDemoCommand)

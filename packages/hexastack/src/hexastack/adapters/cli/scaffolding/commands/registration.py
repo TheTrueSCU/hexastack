@@ -31,3 +31,12 @@ def add_scaffold_commands(app: typer.Typer) -> None:
     new_app = create_new_app()
     app.add_typer(new_app, name="new")
     add_init_command(app)
+
+    scaffold_app = typer.Typer(
+        name="scaffold",
+        help="Project lifecycle and scaffolding tools (new, init).",
+        no_args_is_help=True,
+    )
+    scaffold_app.add_typer(create_new_app(), name="new")
+    add_init_command(scaffold_app)
+    app.add_typer(scaffold_app, name="scaffold")

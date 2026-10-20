@@ -13,6 +13,7 @@ from hexastack.adapters.cli.devtools.commands.inspect import (
 )
 from hexastack.adapters.cli.devtools.commands.mcp import add_mcp_commands
 from hexastack.adapters.cli.devtools.commands.outbox import add_outbox_commands
+from hexastack.adapters.cli.devtools.commands.perf import add_perf_commands
 from hexastack.adapters.cli.devtools.commands.profiling import (
     add_load_command,
     add_profile_command,
@@ -29,6 +30,7 @@ __all__ = [
     "add_load_command",
     "add_mcp_commands",
     "add_outbox_commands",
+    "add_perf_commands",
     "add_profile_command",
     "add_serve_command",
     "add_ui_commands",

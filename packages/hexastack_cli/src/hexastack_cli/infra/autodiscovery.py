@@ -92,6 +92,7 @@ def _register_model_target(
     meta: CliMetadata,
     cmd_name: str,
     help_text: str | None,
+    hidden: bool,
     pipeline: ExecutionPipeline,
     console: Console | None,
 ) -> None:
@@ -107,6 +108,7 @@ def _register_model_target(
             output_format=meta.output_format,
             console=console,
             feature_flag=meta.feature_flag,
+            hidden=hidden,
         )
     elif meta.kind == "query" and issubclass(obj, Query):
         register_cqrs_query(
@@ -119,7 +121,27 @@ def _register_model_target(
             output_format=meta.output_format,
             console=console,
             feature_flag=meta.feature_flag,
+            hidden=hidden,
         )
+
+
+def _resolve_alias_targets(
+    group: str | Sequence[str] | None,
+    aliases: Sequence[str],
+    help_text: str | None,
+) -> list[tuple[list[str], str, str | None]]:
+    """Resolve (group_parts, cmd_name, help) targets for a sequence of aliases."""
+    primary_group = _normalize_group_path(group)
+    targets: list[tuple[list[str], str, str | None]] = []
+    for alias in aliases:
+        if alias.startswith("/"):
+            targets.append(([], alias.lstrip("/"), help_text))
+        elif any(sep in alias for sep in (".", "/", " ")):
+            parts = _normalize_group_path(alias)
+            targets.append((parts[:-1], parts[-1], help_text))
+        else:
+            targets.append((primary_group, alias, help_text))
+    return targets
 
 
 def _resolve_targets(
@@ -131,16 +153,7 @@ def _resolve_targets(
     targets: list[tuple[list[str], str, str | None]] = [
         (primary_group, primary_name, meta.help)
     ]
-
-    for alias in meta.aliases:
-        if alias.startswith("/"):
-            targets.append(([], alias.lstrip("/"), meta.help))
-        elif any(sep in alias for sep in (".", "/", " ")):
-            parts = _normalize_group_path(alias)
-            targets.append((parts[:-1], parts[-1], meta.help))
-        else:
-            targets.append((primary_group, alias, meta.help))
-
+    targets.extend(_resolve_alias_targets(meta.group, meta.aliases, meta.help))
     return targets
 
 
@@ -205,11 +218,22 @@ def create_cli_visitor(
 
         default_name = _to_kebab_case(obj.__name__)
         targets = _resolve_targets(meta, default_name)
+        hidden = getattr(meta, "hidden", False)
 
         for group_parts, cmd_name, help_text in targets:
             target_app = manager.get_or_create(group_parts)
             _register_model_target(
-                target_app, obj, meta, cmd_name, help_text, pipeline, console
+                target_app, obj, meta, cmd_name, help_text, hidden, pipeline, console
             )
+
+        if meta.hidden_aliases:
+            hidden_targets = _resolve_alias_targets(
+                meta.group, meta.hidden_aliases, meta.help
+            )
+            for group_parts, cmd_name, help_text in hidden_targets:
+                target_app = manager.get_or_create(group_parts)
+                _register_model_target(
+                    target_app, obj, meta, cmd_name, help_text, True, pipeline, console
+                )
 
     return visitor

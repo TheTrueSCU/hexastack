@@ -35,4 +35,5 @@ def test_add_scaffold_commands_mounts_new_and_init():
 
         called_init = mock_add_init.called
         assert called_init is True
-        mock_add_init.assert_called_once_with(app)
+        call_targets = [c.args[0] for c in mock_add_init.call_args_list]
+        assert app in call_targets
