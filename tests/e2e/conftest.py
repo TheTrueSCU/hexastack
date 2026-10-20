@@ -26,7 +26,7 @@ uvicorn.run(app, host="127.0.0.1", port={port}, log_level="warning")
 def devtools_server() -> Generator[str]:
     """Spawn ephemeral background Hexastack FastAPI + NiceGUI server on random open port."""
     server = EphemeralServer(app_factory_code=DEMO_APP_CODE)
-    url = server.start(ready_path="/_devtools")
+    url = server.start(ready_path="/_devtools", timeout=30.0)
     yield f"{url}/_devtools"
     server.stop()
 

@@ -63,7 +63,8 @@ def test_devtools_ui_wcag_accessibility(devtools_server: str, page: Page) -> Non
     critical_violations = [
         v for v in violations_pipeline if v.get("impact") in ("critical", "serious")
     ]
-    assert len(critical_violations) == 0, (
+    crit_count_pipeline = len(critical_violations)
+    assert crit_count_pipeline == 0, (
         f"Accessibility violations on CQRS tab: {critical_violations}"
     )
 
@@ -74,7 +75,8 @@ def test_devtools_ui_wcag_accessibility(devtools_server: str, page: Page) -> Non
     critical_violations_flags = [
         v for v in violations_flags if v.get("impact") in ("critical", "serious")
     ]
-    assert len(critical_violations_flags) == 0, (
+    crit_count_flags = len(critical_violations_flags)
+    assert crit_count_flags == 0, (
         f"Accessibility violations on Feature Flags tab: {critical_violations_flags}"
     )
 
