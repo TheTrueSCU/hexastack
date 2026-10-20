@@ -312,7 +312,7 @@
   - *Hardcoded wall-clock threshold assertions in PR CI*: Rejected due to virtualized GitHub Actions runner CPU sharing causing intermittent false-positive failures.
 - **Enforcement Mechanism**:
   - `hexaqual test bench -p <pkg>` CLI runner.
-  - Microbenchmark test suites colocated in `packages/<pkg>/tests/benchmarks/`.
+  - Microbenchmark test suites colocated in `packages/<pkg>/tests/benchmarks/` (active across `hexastack_cqrs`, `hexastack_core`, `hexastack_events`, and `hexastack_db`).
 
 ---
 

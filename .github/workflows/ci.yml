@@ -300,3 +300,17 @@ jobs:
           done
 
           echo "🎉 All required CI jobs completed successfully (or were cleanly skipped)."
+
+      - name: Install uv
+        if: always()
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: always()
+
+      - name: Render Hexaflow Pipeline DAG & Critical Path to Run Summary
+        if: always()
+        run: |
+          uvx --python 3.13 --from "hexaflow>=0.5.0" hexaflow graph render .github/workflows/ci.yml --summary --critical-path
