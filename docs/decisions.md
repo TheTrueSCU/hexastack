@@ -24,6 +24,7 @@
 | [**ADR-012**](#adr-012-lockstep-monorepo-versioning-across-all-18-subpackages) | Lockstep Monorepo Versioning Across All 18 Subpackages | 2026-08-27 (`v0.1.0`) | **Accepted** | All 18 workspace subpackages bump version in lockstep to avoid dependency matrix hell. |
 | [**ADR-013**](#adr-013-model-context-protocol-mcp-as-first-class-driving-adapter) | Model Context Protocol (MCP) as First-Class Driving Adapter | 2026-09-10 (`v0.4.0`) | **Accepted** | LLM agents drive CQRS handlers via standardized, hardened MCP server bridges. |
 | [**ADR-014**](#adr-014-lifecycle-managed-scaffolding-via-copier-and-devcontainers) | Lifecycle-Managed Scaffolding via Copier and Devcontainers | 2026-10-18 (`v0.9.0`) | **Accepted** | Projects scaffolded via Copier retain answers to enable downstream `copier update`. |
+| [**ADR-015**](#adr-015-first-class-microbenchmarking--framework-overhead-regression-governance) | First-Class Microbenchmarking & Framework Overhead Regression Governance | 2026-10-19 (`v0.9.0`) | **Accepted** | Microbenchmarks execute with zero coverage overhead; skipped during normal runs; smoke mode in PRs. |
 
 ---
 
@@ -287,6 +288,31 @@
 - **Enforcement Mechanism**:
   - Canary drift monitoring workflow: `.github/workflows/canary.yml` in `hexastack-template`.
   - Automated Copier instantiation test journey (`HT-01`).
+
+---
+
+### ADR-015: First-Class Microbenchmarking & Framework Overhead Regression Governance
+
+- **Date & Milestone**: 2026-10-19 (`v0.9.0`)
+- **Status**: Accepted
+- **Context & Problem Statement**:
+  Hexagonal Architecture provides high isolation by routing all operations through abstract ports, adapter dispatchers, dependency injection containers, and middleware pipelines. Without continuous performance governance, internal framework dispatch overhead can silently balloon, diminishing the microsecond performance expected from Python 3.13+ async execution. However, running microbenchmarks under test coverage tools (`--cov`) adds 2x–5x latency overhead that invalidates measurements, and running on noisy shared CI virtualization instances introduces jitter.
+- **Decision**:
+  Codify `pytest-benchmark` as a first-class execution tier orchestrated via `hexaqual test bench`:
+  1. **Zero Coverage Instrumentation Overhead**: Whenever benchmarks are run via `hexaqual test bench` or `-B/--bench`, test coverage is strictly disabled (`--no-cov`).
+  2. **Single-Process Worker Isolation**: Benchmarks automatically enforce `-n 0`, preventing multi-process `pytest-xdist` CPU cache thrashing and conflicting `--benchmark-disable` triggers.
+  3. **Automatic Unit Test Exclusion**: Standard test runs (`hexaqual test run`) automatically inject `--benchmark-skip`, ensuring benchmark iterations never slow down developer unit test cycles.
+  4. **Dual Execution Modes**:
+     - *Local & Dedicated Perf Verification*: Full statistical measurement cycles with baseline diffing (`--save <baseline>` and `--compare`) to audit command bus and cache latencies.
+     - *PR Verification*: Smoke mode (`--smoke` passing `--benchmark-disable`) that executes each benchmark harness once to prove syntactic and architectural validity without asserting wall-clock thresholds in noisy CI environments.
+- **The Invariant ("The Why")**:
+  Architectural indirection must not carry hidden latency taxes. Clean code in Hexastack must remain provably high-performance, with zero coverage-induced distortion and zero CI flakiness.
+- **Alternatives Considered & Rejected**:
+  - *Ad-hoc time.perf_counter() scripts*: Rejected due to lack of statistical confidence intervals, outlier detection, and standardized reporting.
+  - *Hardcoded wall-clock threshold assertions in PR CI*: Rejected due to virtualized GitHub Actions runner CPU sharing causing intermittent false-positive failures.
+- **Enforcement Mechanism**:
+  - `hexaqual test bench -p <pkg>` CLI runner.
+  - Microbenchmark test suites colocated in `packages/<pkg>/tests/benchmarks/`.
 
 ---
 
