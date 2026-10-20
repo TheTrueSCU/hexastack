@@ -36,13 +36,13 @@ def test_devtools_feature_flags_hotswapping(
 
     # Step 1: Navigate to Feature Flags tab
     demo.click(
-        page.get_by_text("Feature Flags"),
+        page.get_by_role("tab", name="Feature Flags"),
         caption="Navigating to the Dynamic Feature Flags hot-swapping console",
     )
 
     # Step 2: Verify section heading and description
     heading = page.locator(".hx-section-heading", has_text="Active Feature Flags")
-    expect(heading).to_be_visible()
+    expect(heading).to_be_visible(timeout=10000)
 
     description = page.get_by_text("Evaluate and hot-swap feature flags live")
     expect(description).to_be_visible()

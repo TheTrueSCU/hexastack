@@ -28,6 +28,8 @@ class CliMetadata:
     output_format: str | None = None
     group: str | Sequence[str] | None = None
     feature_flag: str | None = None
+    hidden: bool = False
+    hidden_aliases: tuple[str, ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -66,10 +68,12 @@ def cli_command(
     *,
     positional: Sequence[str] | str | None = None,
     aliases: Sequence[str] | str | None = None,
+    hidden_aliases: Sequence[str] | str | None = None,
     help: str | None = None,
     output_format: str | None = None,
     group: str | Sequence[str] | None = None,
     feature_flag: str | None = None,
+    hidden: bool = False,
 ) -> Callable[[type[TCommand]], type[TCommand]]:
     """Decorator marking a Command class for automatic CLI command exposure.
 
@@ -77,10 +81,12 @@ def cli_command(
         name: Optional custom CLI command name (defaults to kebab-cased class name).
         positional: Optional field name or list of field names to treat as positional CLI arguments.
         aliases: Optional alias or list of aliases (can be intra-group like 'create' or cross-group like 'account.new').
+        hidden_aliases: Optional alias or list of aliases to register with hidden=True.
         help: Optional help text for the command.
         output_format: Optional presenter output format.
         group: Optional sub-command group name or nested group path (e.g. 'user', 'user.profile').
         feature_flag: Optional feature flag key required to execute the command.
+        hidden: Whether to hide the command from terminal --help displays.
 
     Returns:
         Decorated Command class with attached CLI metadata.
@@ -95,10 +101,12 @@ def cli_command(
             name=name,
             positional=_normalize_tokens(positional),
             aliases=_normalize_tokens(aliases),
+            hidden_aliases=_normalize_tokens(hidden_aliases),
             help=help,
             output_format=output_format,
             group=group,
             feature_flag=feature_flag,
+            hidden=hidden,
         )
         setattr(cls, _CLI_METADATA_ATTR, meta)
         return cls
@@ -137,10 +145,12 @@ def cli_query(
     *,
     positional: Sequence[str] | str | None = None,
     aliases: Sequence[str] | str | None = None,
+    hidden_aliases: Sequence[str] | str | None = None,
     help: str | None = None,
     output_format: str | None = None,
     group: str | Sequence[str] | None = None,
     feature_flag: str | None = None,
+    hidden: bool = False,
 ) -> Callable[[type[TQuery]], type[TQuery]]:
     """Decorator marking a Query class for automatic CLI command exposure.
 
@@ -148,10 +158,12 @@ def cli_query(
         name: Optional custom CLI command name (defaults to kebab-cased class name).
         positional: Optional field name or list of field names to treat as positional CLI arguments.
         aliases: Optional alias or list of aliases (can be intra-group like 'find' or cross-group like 'search.user').
+        hidden_aliases: Optional alias or list of aliases to register with hidden=True.
         help: Optional help text for the command.
         output_format: Optional presenter output format.
         group: Optional sub-command group name or nested group path (e.g. 'user', 'user.profile').
         feature_flag: Optional feature flag key required to execute the command.
+        hidden: Whether to hide the query command from terminal --help displays.
 
     Returns:
         Decorated Query class with attached CLI metadata.
@@ -166,10 +178,12 @@ def cli_query(
             name=name,
             positional=_normalize_tokens(positional),
             aliases=_normalize_tokens(aliases),
+            hidden_aliases=_normalize_tokens(hidden_aliases),
             help=help,
             output_format=output_format,
             group=group,
             feature_flag=feature_flag,
+            hidden=hidden,
         )
         setattr(cls, _CLI_METADATA_ATTR, meta)
         return cls
