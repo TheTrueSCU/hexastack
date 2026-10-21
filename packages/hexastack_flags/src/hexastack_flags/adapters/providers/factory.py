@@ -8,6 +8,8 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import importlib
+import json
+import os
 from typing import Any
 
 import openfeature.api
@@ -101,7 +103,6 @@ def _parse_env_flag_value(val: str) -> Any:
     except ValueError:
         # Value is not a float literal, attempt structured JSON parsing next
         pass
-    import json
 
     try:
         parsed = json.loads(val)
@@ -118,8 +119,6 @@ def _build_env_provider(
     in_memory_flags: dict[str, Any] | None = None,
 ) -> AbstractProvider:
     """Instantiate provider populated from environment variables with optional prefix."""
-    import os
-
     flags_dict: dict[str, Any] = dict(in_memory_flags or {})
     prefix = str(opts.extra.get("prefix", "FEATURE_FLAG_"))
 

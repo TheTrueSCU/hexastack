@@ -1,6 +1,8 @@
+import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from functools import wraps
 from typing import Any, Literal, TypeVar
 
 from hexastack_core.domain import Command, Query
@@ -157,9 +159,6 @@ def feature_flag_route(
     Returns:
         Decorator wrapping the endpoint callable.
     """
-    import inspect
-    from functools import wraps
-
     from fastapi import HTTPException
 
     from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import AsyncIterable, AsyncIterator
 from dataclasses import dataclass
 from typing import Any
@@ -68,7 +69,6 @@ def _encode_sse_item(item: Any) -> bytes:
         return item
     if isinstance(item, str):
         return ServerSentEvent(data=item).encode()
-    import json
 
     return ServerSentEvent(data=json.dumps(item)).encode()
 

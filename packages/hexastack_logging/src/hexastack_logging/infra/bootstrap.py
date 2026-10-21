@@ -1,3 +1,6 @@
+import logging
+import os
+
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
@@ -33,9 +36,6 @@ class LoggingBootstrapper(BootstrapperPort):
             None.
         """
         if LoggingPort not in context.container:
-            import logging
-            import os
-
             from hexastack_logging.adapters.sentry import SentryErrorAdapter
             from hexastack_logging.infra.config import configure_logging
 

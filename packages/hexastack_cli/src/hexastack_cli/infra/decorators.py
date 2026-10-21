@@ -1,5 +1,6 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
+from functools import wraps
 from typing import Any, Literal, TypeVar
 
 from hexastack_core.domain import Command, Query
@@ -209,8 +210,6 @@ def feature_flag_command(
     Returns:
         Decorator wrapping the target callable.
     """
-    from functools import wraps
-
     import typer
 
     from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter

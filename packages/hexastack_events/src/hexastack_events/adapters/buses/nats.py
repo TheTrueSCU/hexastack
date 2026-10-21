@@ -21,6 +21,7 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import asyncio
+import datetime
 import inspect
 import threading
 from collections.abc import Callable
@@ -244,8 +245,6 @@ class NatsJetStreamEventBusAdapter(DistributedEventBusPort):
             class name (as the ``type`` field) and serializes via msgspec for
             sub-millisecond wire encoding.
         """
-        import datetime
-
         envelope = CloudEventEnvelope(
             id=getattr(event, "id", None) or str(id(event)),
             source=self._subject_prefix,

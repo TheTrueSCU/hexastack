@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import importlib.util
 import multiprocessing
@@ -173,8 +174,6 @@ def _start_grpc_server(host: str, port: int) -> None:
 
 
 def _start_outbox_relay(interval: float, batch_size: int) -> None:
-    import asyncio
-
     from hexastack_cqrs.adapters.buses.event.synchronous import SynchronousEventBus
     from hexastack_events.adapters.outbox.asyncio import AsyncioOutboxRelay
     from hexastack_events.adapters.outbox.in_memory import InMemoryOutboxStorage
@@ -195,8 +194,6 @@ def _start_outbox_relay(interval: float, batch_size: int) -> None:
                 await asyncio.sleep(1.0)
         except (asyncio.CancelledError, KeyboardInterrupt):
             relay.stop()
-
-    import contextlib
 
     with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(_run())

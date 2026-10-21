@@ -1,3 +1,4 @@
+import asyncio
 import json
 import sqlite3
 import tempfile
@@ -219,40 +220,28 @@ class AsyncDiskCacheAdapter(AsyncCachePort):
 
     async def clear_async(self) -> None:
         """Clear all entries asynchronously."""
-        import asyncio
-
         await asyncio.to_thread(self._sync_adapter.clear)
 
     async def delete_async(self, key: str) -> bool:
         """Delete a key asynchronously."""
-        import asyncio
-
         return await asyncio.to_thread(self._sync_adapter.delete, key)
 
     async def get_async(self, key: str, default: Any = None) -> Any:
         """Retrieve a cached value asynchronously."""
-        import asyncio
-
         return await asyncio.to_thread(self._sync_adapter.get, key, default)
 
     async def has_async(self, key: str) -> bool:
         """Check if a key exists asynchronously."""
-        import asyncio
-
         return await asyncio.to_thread(self._sync_adapter.has, key)
 
     async def set_async(
         self, key: str, value: Any, ttl_seconds: float | None = None
     ) -> None:
         """Store a key-value pair asynchronously."""
-        import asyncio
-
         await asyncio.to_thread(self._sync_adapter.set, key, value, ttl_seconds)
 
     async def close_async(self) -> None:
         """Close cache handles asynchronously."""
-        import asyncio
-
         await asyncio.to_thread(self._sync_adapter.close)
 
 

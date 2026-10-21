@@ -1,3 +1,4 @@
+import functools
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal, TypeVar
@@ -151,8 +152,6 @@ def feature_flag(
     """
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
-        import functools
-
         from hexastack_core.domain.feature_flags import EvaluationContext
         from hexastack_core.ports.feature_flags import FeatureFlagPort
         from hexastack_cqrs.infra.middleware.feature_flag import (

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import importlib.util
+import shutil
+import subprocess
 from pathlib import Path
 
 import typer
@@ -67,9 +69,6 @@ def add_grpc_commands(app: typer.Typer) -> None:
             ".", "--path", "-p", help="Path to proto files or buf.yaml workspace."
         ),
     ) -> None:
-        import shutil
-        import subprocess
-
         buf_bin = shutil.which("buf")
         if not buf_bin:
             typer.echo(
@@ -99,9 +98,6 @@ def add_grpc_commands(app: typer.Typer) -> None:
             ".", "--path", "-p", help="Path to current proto workspace."
         ),
     ) -> None:
-        import shutil
-        import subprocess
-
         buf_bin = shutil.which("buf")
         if not buf_bin:
             typer.echo(

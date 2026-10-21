@@ -1,3 +1,5 @@
+import asyncio
+import concurrent.futures
 from dataclasses import dataclass
 from typing import Any
 
@@ -84,16 +86,12 @@ class DatabaseBootstrapper(BootstrapperPort):
                     if not is_in_memory:
                         await engine.dispose()
 
-            import asyncio
-
             try:
                 loop = asyncio.get_running_loop()
             except RuntimeError:
                 loop = None
 
             if loop is not None and loop.is_running():
-                import concurrent.futures
-
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                     executor.submit(asyncio.run, _create_all_async()).result()
             else:
@@ -130,7 +128,6 @@ class DatabaseBootstrapper(BootstrapperPort):
                 distance_strategy=db_config.vector.distance_strategy,
             )
             if db_config.auto_create_tables:
-                import asyncio
 
                 async def _create_vector_table_async() -> None:
                     try:
@@ -153,8 +150,6 @@ class DatabaseBootstrapper(BootstrapperPort):
                     loop = None
 
                 if loop is not None and loop.is_running():
-                    import concurrent.futures
-
                     with concurrent.futures.ThreadPoolExecutor(
                         max_workers=1
                     ) as executor:

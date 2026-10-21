@@ -1,3 +1,4 @@
+import importlib.util
 import sys
 from typing import Any
 
@@ -40,8 +41,6 @@ def create_demo_app() -> Any:
     Raises:
         None.
     """
-    import importlib.util
-
     import hexastack.application.diagnostics
 
     current_module = sys.modules[__name__]

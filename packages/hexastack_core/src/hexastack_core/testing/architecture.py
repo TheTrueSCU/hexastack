@@ -6,6 +6,8 @@ Notes/Architectural Intent:
     infra, utils, and testing modules.
 """
 
+import importlib.util
+
 from hexastack_core.domain.exceptions import MissingDependencyError
 
 __all__ = [
@@ -52,8 +54,6 @@ def assert_clean_architecture(
             "pytest-archon is required for assert_clean_architecture. "
             "Install with 'pip install pytest-archon' or 'pip install hexastack[testing]'."
         ) from e
-
-    import importlib.util
 
     restrictions = custom_restrictions or get_layer_restrictions()
     if extra_disallowed:

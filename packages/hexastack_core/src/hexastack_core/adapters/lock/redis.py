@@ -1,3 +1,4 @@
+import asyncio
 import time
 import uuid
 from typing import Any
@@ -150,8 +151,6 @@ class AsyncRedisLockAdapter(AsyncLockPort):
         Returns:
             True if acquired, False otherwise.
         """
-        import asyncio
-
         if self._token is not None:
             raise LockError(
                 f"Lock on key '{self._key}' is already held by this adapter instance."

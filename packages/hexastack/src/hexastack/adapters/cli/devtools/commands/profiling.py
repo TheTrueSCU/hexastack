@@ -8,6 +8,7 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 from pathlib import Path
 
 import typer
@@ -53,7 +54,6 @@ def add_profile_command(app: typer.Typer) -> None:
             raise MissingDependencyError(
                 "py-spy is required for CPU profiling. Install with 'uv add --dev py-spy'."
             )
-        import subprocess
 
         if pid is None:
             typer.echo(
@@ -106,7 +106,6 @@ def add_profile_command(app: typer.Typer) -> None:
             raise MissingDependencyError(
                 "memray is required for Memory profiling. Install with 'uv add --dev memray'."
             )
-        import subprocess
 
         if not Path(bin_file).exists():
             typer.echo(
@@ -156,7 +155,6 @@ def add_load_command(app: typer.Typer) -> None:
             raise MissingDependencyError(
                 "locust is required for load testing. Install with 'uv add --dev locust'."
             )
-        import subprocess
 
         # If default locustfile doesn't exist, create a default in-memory benchmark scenario
         target_locust_path = Path(locustfile)

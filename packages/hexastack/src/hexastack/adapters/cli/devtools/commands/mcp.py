@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 
 import typer
 
@@ -74,8 +75,6 @@ def add_mcp_commands(app: typer.Typer) -> None:
 def _exec_mcp_config(
     client: str, server_name: str, command_override: str | None
 ) -> None:
-    import json
-
     cmd = command_override or "uv"
     args = ["run", "hexastack", "mcp", "run"] if command_override is None else []
     client_key = client.lower().strip()

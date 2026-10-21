@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import importlib.resources
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -375,8 +376,6 @@ def _render_container_tab(container: Container) -> None:
 
 def _render_observability_tab(container: Container) -> None:
     """Render telemetry, structured logging, and Sentry observability status."""
-    import os
-
     from nicegui import ui
 
     from hexastack_core.ports.logging import LoggingPort

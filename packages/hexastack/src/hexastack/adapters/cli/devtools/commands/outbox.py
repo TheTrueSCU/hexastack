@@ -7,6 +7,7 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import asyncio
 import importlib.util
 
 import typer
@@ -51,8 +52,6 @@ def add_outbox_commands(app: typer.Typer) -> None:
             help="Drain pending events once and exit immediately.",
         ),
     ) -> None:
-        import asyncio
-
         from hexastack_cqrs.adapters.buses.event.synchronous import SynchronousEventBus
         from hexastack_events.adapters.outbox.asyncio import AsyncioOutboxRelay
         from hexastack_events.adapters.outbox.in_memory import InMemoryOutboxStorage

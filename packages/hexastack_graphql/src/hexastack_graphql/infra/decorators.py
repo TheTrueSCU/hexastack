@@ -1,4 +1,6 @@
+import inspect
 from collections.abc import Callable
+from functools import wraps
 from typing import Any, cast
 
 import strawberry
@@ -63,9 +65,6 @@ def feature_flag_field(
     Returns:
         Decorator wrapping the GraphQL resolver function.
     """
-    import inspect
-    from functools import wraps
-
     from hexastack_core.domain.feature_flags import EvaluationContext
     from hexastack_graphql.domain.exceptions import GraphQLError
 

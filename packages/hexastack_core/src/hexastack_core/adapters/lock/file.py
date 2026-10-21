@@ -1,3 +1,4 @@
+import asyncio
 from os import PathLike
 from pathlib import Path
 from typing import Any
@@ -128,8 +129,6 @@ class AsyncFileLockAdapter(AsyncLockPort):
         Returns:
             True if acquired, False otherwise.
         """
-        import asyncio
-
         loop = asyncio.get_running_loop()
         future = loop.run_in_executor(
             None, self._sync_adapter.acquire, blocking, timeout
@@ -160,8 +159,6 @@ class AsyncFileLockAdapter(AsyncLockPort):
         Raises:
             LockError: If release fails.
         """
-        import asyncio
-
         try:
             await asyncio.to_thread(self._sync_adapter.release)
         finally:

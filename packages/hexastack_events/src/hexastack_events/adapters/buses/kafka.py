@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import datetime
 import inspect
 import logging
 import threading
@@ -352,8 +353,6 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         Raises:
             EventDeliveryError: If serialization or delivery fails.
         """
-        import datetime
-
         envelope = CloudEventEnvelope(
             id=getattr(event, "id", None)
             or getattr(event, "event_id", None)
@@ -374,8 +373,6 @@ class KafkaDistributedEventBus(DistributedEventBusPort):
         Raises:
             EventDeliveryError: If serialization or delivery fails.
         """
-        import datetime
-
         envelope = CloudEventEnvelope(
             id=getattr(event, "id", None)
             or getattr(event, "event_id", None)

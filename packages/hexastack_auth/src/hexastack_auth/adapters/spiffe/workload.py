@@ -4,6 +4,8 @@ Notes/Architectural Intent:
     Connects to SPIRE Workload API to obtain and validate JWT-SVIDs and SPIFFE IDs.
 """
 
+import importlib.util
+
 from hexastack_auth.domain.exceptions import InvalidCredentialsError
 from hexastack_auth.ports.workload import WorkloadIdentityPort
 from hexastack_core.domain.exceptions import MissingDependencyError
@@ -26,8 +28,6 @@ class SpiffeWorkloadAdapter(WorkloadIdentityPort):
 
     def fetch_jwt_svid(self, audience: set[str]) -> str:
         """Fetch signed JWT-SVID for outbound call."""
-        import importlib.util
-
         if importlib.util.find_spec("spiffe") is None:
             raise MissingDependencyError(
                 "spiffe is required for SpiffeWorkloadAdapter. "
@@ -37,8 +37,6 @@ class SpiffeWorkloadAdapter(WorkloadIdentityPort):
 
     def get_spiffe_id(self) -> str | None:
         """Retrieve the current process's attested SPIFFE ID."""
-        import importlib.util
-
         if importlib.util.find_spec("spiffe") is None:
             return f"spiffe://{self.trust_domain}/workload/default"
         return f"spiffe://{self.trust_domain}/workload/default"
