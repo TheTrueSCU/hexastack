@@ -40,7 +40,7 @@ def add_db_commands(app: typer.Typer) -> None:
             )
 
     def _get_config(migrations_dir: str, url: str | None) -> Any:
-        from hexastack_db.infra.migrations import get_alembic_config
+        from hexastack_db.utils.migrations import get_alembic_config
 
         db_url = url or os.environ.get("DATABASE_URL", "sqlite:///hexastack.db")
         return get_alembic_config(
@@ -55,7 +55,7 @@ def add_db_commands(app: typer.Typer) -> None:
         ),
     ) -> None:
         _require_migrations()
-        from hexastack_db.infra.migrations import init_migrations
+        from hexastack_db.utils.migrations import init_migrations
 
         init_migrations(directory)
 
@@ -72,7 +72,7 @@ def add_db_commands(app: typer.Typer) -> None:
         ),
     ) -> None:
         _require_migrations()
-        from hexastack_db.infra.migrations import run_upgrade
+        from hexastack_db.utils.migrations import run_upgrade
 
         run_upgrade(_get_config(directory, url), revision=revision)
 
@@ -89,7 +89,7 @@ def add_db_commands(app: typer.Typer) -> None:
         ),
     ) -> None:
         _require_migrations()
-        from hexastack_db.infra.migrations import run_check
+        from hexastack_db.utils.migrations import run_check
 
         try:
             run_check(_get_config(directory, url))
@@ -112,7 +112,7 @@ def add_db_commands(app: typer.Typer) -> None:
         ),
     ) -> None:
         _require_migrations()
-        from hexastack_db.infra.migrations import run_revision
+        from hexastack_db.utils.migrations import run_revision
 
         run_revision(
             _get_config(directory, url),
@@ -130,7 +130,7 @@ def add_db_commands(app: typer.Typer) -> None:
         ),
     ) -> None:
         _require_migrations()
-        from hexastack_db.infra.migrations import run_current
+        from hexastack_db.utils.migrations import run_current
 
         run_current(_get_config(directory, url))
 
@@ -144,7 +144,7 @@ def add_db_commands(app: typer.Typer) -> None:
         ),
     ) -> None:
         _require_migrations()
-        from hexastack_db.infra.migrations import run_history
+        from hexastack_db.utils.migrations import run_history
 
         run_history(_get_config(directory, url))
 
@@ -164,6 +164,6 @@ def add_db_commands(app: typer.Typer) -> None:
         ),
     ) -> None:
         _require_migrations()
-        from hexastack_db.infra.migrations import stamp
+        from hexastack_db.utils.migrations import stamp
 
         stamp(_get_config(directory, url), revision)

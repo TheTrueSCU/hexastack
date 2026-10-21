@@ -35,10 +35,9 @@ def add_graphql_commands(app: typer.Typer) -> None:
     def graphql_schema() -> None:
         import strawberry
 
-        import hexastack.application.diagnostics
-        from hexastack_core.infra.bootstrap import bootstrap
+        from hexastack.application.diagnostics.runtime import create_diagnostics_runtime
 
-        runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+        runtime = create_diagnostics_runtime()
         try:
             schema = runtime.container.resolve(strawberry.Schema)
             typer.echo(schema.as_str())

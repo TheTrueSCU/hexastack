@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib.util
 import shutil
 import subprocess
-from pathlib import Path
 
 import typer
 
@@ -120,54 +119,24 @@ def add_grpc_commands(app: typer.Typer) -> None:
 def _exec_grpc_serve(host: str, port: int) -> None:
     import grpc
 
-    import hexastack.application.diagnostics
-    from hexastack_core.infra.bootstrap import bootstrap
+    from hexastack.application.diagnostics.runtime import create_diagnostics_runtime
     from hexastack_grpc.adapters.server import run_grpc_server
 
-    runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+    runtime = create_diagnostics_runtime()
     server = runtime.container.resolve(grpc.Server)
     typer.echo(f"Starting gRPC server on {host}:{port}...")
     run_grpc_server(server, block=True)
 
 
 def _exec_grpc_compile(out_dir: str, proto_file: list[str] | None) -> None:
+    from hexastack.application.diagnostics.runtime import compile_protobuf_stubs
 
-    from hexastack_grpc.infra.compiler import ProtoCompiler
-    from hexastack_grpc.infra.registries.proto import get_proto_registry
-
-    registry = get_proto_registry()
-    entries = registry.entries
-
-    if proto_file:
-        generated = ProtoCompiler.compile_files(
-            proto_files=proto_file,
-            output_dir=Path(out_dir),
+    generated = compile_protobuf_stubs(out_dir=out_dir, proto_files=proto_file)
+    if not generated:
+        typer.echo(
+            "⚠️  No @proto_schema annotations, @proto_file decorators, or .proto files found."
         )
-    elif entries:
-        generated = ProtoCompiler.compile_metadata(
-            entries=entries,
-            output_dir=Path(out_dir),
-        )
-    else:
-        default_proto_dir = Path("protos")
-        if default_proto_dir.exists():
-            found_files = list(default_proto_dir.glob("**/*.proto"))
-            if found_files:
-                generated = ProtoCompiler.compile_files(
-                    proto_files=found_files,
-                    include_dirs=[default_proto_dir],
-                    output_dir=Path(out_dir),
-                )
-            else:
-                typer.echo(
-                    "⚠️  No @proto_schema annotations, @proto_file decorators, or .proto files found."
-                )
-                return
-        else:
-            typer.echo(
-                "⚠️  No @proto_schema annotations, @proto_file decorators, or .proto files found."
-            )
-            return
+        return
 
     typer.echo(
         f"✨ Successfully compiled {len(generated)} protobuf stubs into '{out_dir}':"
@@ -177,23 +146,21 @@ def _exec_grpc_compile(out_dir: str, proto_file: list[str] | None) -> None:
 
 
 def _exec_grpc_list() -> None:
-    from hexastack_grpc.infra.decorators import get_grpc_registry
-    from hexastack_grpc.infra.registries.proto import get_proto_registry
+    from hexastack.application.diagnostics.runtime import get_grpc_capabilities
 
-    proto_reg = get_proto_registry()
-    grpc_reg = get_grpc_registry()
+    entries, services = get_grpc_capabilities()
 
     typer.echo(
         "🔍 [bold cyan]Registered gRPC Services & Protobuf Schemas[/bold cyan]\n"
     )
 
-    if not proto_reg.entries and not grpc_reg._services:
+    if not entries and not services:
         typer.echo("   (No gRPC services or protobuf schemas registered)")
         return
 
-    if proto_reg.entries:
+    if entries:
         typer.echo("📜 [bold]Protobuf Schemas & Models:[/bold]")
-        for entry in proto_reg.entries:
+        for entry in entries:
             src_type = (
                 "inline @proto_schema" if entry.schema else f"file: {entry.file_path}"
             )
@@ -207,9 +174,9 @@ def _exec_grpc_list() -> None:
             )
         typer.echo("")
 
-    if grpc_reg._services:
+    if services:
         typer.echo("⚡ [bold]gRPC Servicers:[/bold]")
-        for svc in grpc_reg._services:
+        for svc in services:
             servicer_name = getattr(svc.servicer, "__name__", str(svc.servicer))
             names = ", ".join(svc.service_names) if svc.service_names else "default"
             typer.echo(f"   • [yellow]{servicer_name}[/yellow] (Services: {names})")

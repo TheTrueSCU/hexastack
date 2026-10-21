@@ -43,18 +43,13 @@ def create_quality_mcp_server(
     Raises:
         AdapterNotAvailableError: If hexastack-mcp is not installed.
     """
-    if not HAS_MCP:
+    if not HAS_MCP or McpServerRegistry is None:
         raise AdapterNotAvailableError(
             extra_name="mcp",
             install_command="pip install 'hexastack-qual[mcp]'",
         )
 
-    if registry is not None:
-        reg = registry
-    else:
-        from hexastack_mcp.infra.registries.server import McpServerRegistry
-
-        reg = McpServerRegistry()
+    reg = registry if registry is not None else McpServerRegistry()
     register_quality_mcp_tools(reg)
     cfg = HexastackMcpConfig(server_name=server_name)
     cnt = container or rodi.Container()

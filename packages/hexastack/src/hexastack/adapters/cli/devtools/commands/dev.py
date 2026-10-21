@@ -164,11 +164,10 @@ def _start_fastapi_server(host: str, port: int) -> None:
 def _start_grpc_server(host: str, port: int) -> None:
     import grpc
 
-    import hexastack.application.diagnostics
-    from hexastack_core.infra.bootstrap import bootstrap
+    from hexastack.application.diagnostics.runtime import create_diagnostics_runtime
     from hexastack_grpc.adapters.server import run_grpc_server
 
-    runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+    runtime = create_diagnostics_runtime()
     server = runtime.container.resolve(grpc.Server)
     run_grpc_server(server, block=True)
 

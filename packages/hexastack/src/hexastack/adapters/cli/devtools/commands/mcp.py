@@ -31,11 +31,10 @@ def add_mcp_commands(app: typer.Typer) -> None:
     def mcp_run() -> None:
         from mcp.server.fastmcp import FastMCP as McpServer
 
-        import hexastack.application.diagnostics
-        from hexastack_core.infra.bootstrap import bootstrap
+        from hexastack.application.diagnostics.runtime import create_diagnostics_runtime
         from hexastack_mcp.adapters.stdio import run_stdio_server
 
-        runtime = bootstrap(packages_to_scan=[hexastack.application.diagnostics])
+        runtime = create_diagnostics_runtime()
         server = runtime.container.resolve(McpServer)
         run_stdio_server(server)
 
@@ -118,31 +117,31 @@ def _exec_mcp_config(
 
 
 def _exec_mcp_list() -> None:
-    from hexastack_mcp.infra.decorators import get_mcp_registry
+    from hexastack.application.diagnostics.runtime import get_mcp_capabilities
 
-    registry = get_mcp_registry()
+    tools, prompts, resources = get_mcp_capabilities()
     typer.echo("🤖 [bold cyan]Model Context Protocol (MCP) Capabilities[/bold cyan]\n")
 
-    typer.echo(f"🔧 [bold]Registered Tools ({len(registry.tools)}):[/bold]")
-    if not registry.tools:
+    typer.echo(f"🔧 [bold]Registered Tools ({len(tools)}):[/bold]")
+    if not tools:
         typer.echo("   (No tools registered)")
     else:
-        for t in registry.tools:
+        for t in tools:
             desc = f" - {t.description}" if t.description else ""
             typer.echo(f"   • [green]{t.name}[/green] ({t.kind}){desc}")
     typer.echo("")
 
-    typer.echo(f"📝 [bold]Prompts ({len(registry.prompts)}):[/bold]")
-    if not registry.prompts:
+    typer.echo(f"📝 [bold]Prompts ({len(prompts)}):[/bold]")
+    if not prompts:
         typer.echo("   (No prompt templates registered)")
     else:
-        for p in registry.prompts:
+        for p in prompts:
             typer.echo(f"   • [yellow]{p.name}[/yellow]: {p.description}")
     typer.echo("")
 
-    typer.echo(f"📦 [bold]Resources ({len(registry.resources)}):[/bold]")
-    if not registry.resources:
+    typer.echo(f"📦 [bold]Resources ({len(resources)}):[/bold]")
+    if not resources:
         typer.echo("   (No resources registered)")
     else:
-        for r in registry.resources:
+        for r in resources:
             typer.echo(f"   • [magenta]{r.name}[/magenta] ({r.uri})")

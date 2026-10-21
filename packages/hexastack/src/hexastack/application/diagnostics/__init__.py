@@ -5,8 +5,18 @@ from hexastack.application.diagnostics.handlers import (
     InspectRegistryHandler,
     PingDemoHandler,
 )
+from hexastack.application.diagnostics.runtime import (
+    compile_protobuf_stubs,
+    create_diagnostics_runtime,
+    get_grpc_capabilities,
+    get_mcp_capabilities,
+)
 
 __all__ = [
+    "compile_protobuf_stubs",
+    "create_diagnostics_runtime",
+    "get_grpc_capabilities",
+    "get_mcp_capabilities",
     "GetSystemInfoHandler",
     "InspectRegistryHandler",
     "PingDemoHandler",
