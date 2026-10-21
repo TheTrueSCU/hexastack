@@ -23,7 +23,7 @@ from hexastack_logging.infra.filters import (
 )
 from hexastack_logging.infra.formatters.console import ConsoleFormatter
 from hexastack_logging.infra.formatters.json import JsonFormatter
-from hexastack_logging.infra.sanitizer import (
+from hexastack_logging.utils.sanitizer import (
     LogSanitizer,
 )
 
