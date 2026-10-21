@@ -22,6 +22,7 @@ from hexastack_cqrs.ports.buses import (
     EventBusPort,
     QueryBusPort,
 )
+from hexastack_cqrs.ports.pipeline import ExecutionPipelinePort
 
 
 class PipelineError(HexastackError):
@@ -48,7 +49,7 @@ class UnregisteredMessageError(PipelineError):
     """
 
 
-class ExecutionPipeline:
+class ExecutionPipeline(ExecutionPipelinePort):
     """End-to-end CQRS execution pipeline integrating buses, registries, and presenters.
 
     Notes/Architectural Intent:
@@ -172,6 +173,22 @@ class ExecutionPipeline:
         raise UnregisteredMessageError(
             f"No Command or Query registered with name '{name}'"
         )
+
+    def get_registered_commands(self) -> dict[str, type[Command]]:
+        """Return a mapping of registered command names to their command classes.
+
+        Returns:
+            Dictionary mapping string names to Command classes.
+        """
+        return dict(self._command_registry.all)
+
+    def get_registered_queries(self) -> dict[str, type[Query[Any]]]:
+        """Return a mapping of registered query names to their query classes.
+
+        Returns:
+            Dictionary mapping string names to Query classes.
+        """
+        return dict(self._query_registry.all)
 
 
 __all__ = [

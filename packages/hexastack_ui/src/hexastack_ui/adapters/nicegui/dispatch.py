@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from hexastack_core.domain import Command, Query
-    from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+    from hexastack_cqrs.ports.pipeline import ExecutionPipelinePort
 
 __all__ = [
     "dispatch_command",
@@ -20,11 +20,11 @@ __all__ = [
 ]
 
 
-async def dispatch_command(pipeline: ExecutionPipeline, command: Command) -> Any:
+async def dispatch_command(pipeline: ExecutionPipelinePort, command: Command) -> Any:
     """Dispatch a CQRS command from a NiceGUI interactive event handler.
 
     Args:
-        pipeline: ExecutionPipeline instance.
+        pipeline: ExecutionPipelinePort instance.
         command: Command instance to execute.
 
     Returns:
@@ -34,7 +34,7 @@ async def dispatch_command(pipeline: ExecutionPipeline, command: Command) -> Any
         Exception: Propagates any handler or middleware execution errors.
 
     Notes/Architectural Intent:
-        Executes a command through the standard ExecutionPipeline,
+        Executes a command through the standard ExecutionPipelinePort,
         transparently awaiting async handler returns or returning synchronous values.
     """
     result = pipeline.execute(command)
@@ -43,11 +43,11 @@ async def dispatch_command(pipeline: ExecutionPipeline, command: Command) -> Any
     return result
 
 
-async def dispatch_query(pipeline: ExecutionPipeline, query: Query) -> Any:
+async def dispatch_query(pipeline: ExecutionPipelinePort, query: Query) -> Any:
     """Dispatch a CQRS query from a NiceGUI interactive event handler or data loader.
 
     Args:
-        pipeline: ExecutionPipeline instance.
+        pipeline: ExecutionPipelinePort instance.
         query: Query instance to execute.
 
     Returns:

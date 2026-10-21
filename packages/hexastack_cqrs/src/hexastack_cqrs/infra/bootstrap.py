@@ -55,6 +55,7 @@ from hexastack_cqrs.ports.buses import (
     EventBusPort,
     QueryBusPort,
 )
+from hexastack_cqrs.ports.pipeline import ExecutionPipelinePort
 
 
 @dataclass(frozen=True, slots=True)
@@ -237,6 +238,7 @@ class CqrsBootstrapper(BootstrapperPort):
             event_bus=evt_bus,
         )
         di.add_instance(pipeline, declared_class=ExecutionPipeline)
+        di.add_instance(pipeline, declared_class=ExecutionPipelinePort)
         context.properties["pipeline"] = pipeline
         context.properties["cqrs_result"] = CqrsBootstrapResult(
             pipeline=pipeline,

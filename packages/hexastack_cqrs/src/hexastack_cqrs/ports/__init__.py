@@ -5,10 +5,12 @@ from hexastack_cqrs.ports.buses import (
     MiddlewarePort,
     QueryBusPort,
 )
+from hexastack_cqrs.ports.pipeline import ExecutionPipelinePort
 
 __all__ = [
     "CommandBusPort",
     "EventBusPort",
+    "ExecutionPipelinePort",
     "HandlerDispatcherPort",
     "MiddlewarePort",
     "QueryBusPort",

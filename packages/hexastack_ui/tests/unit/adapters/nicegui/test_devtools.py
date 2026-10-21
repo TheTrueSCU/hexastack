@@ -1,26 +1,61 @@
 """Unit tests for NiceGUI DevTools dashboard."""
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import MagicMock
 
+import hexaflow
 import pytest
 from fastapi import FastAPI
+from nicegui import Client, core, ui
+from nicegui.page import page
 from rodi import Container
 from starlette.routing import Mount
 
+from hexastack_core.adapters.feature_flags.in_memory import InMemoryFeatureFlagAdapter
 from hexastack_core.domain import Command, Query
-from hexastack_cqrs.infra.pipeline import ExecutionPipeline
-from hexastack_ui.adapters.nicegui.devtools import mount_devtools_dashboard
+from hexastack_core.domain.command import Command as BaseCmd
+from hexastack_core.domain.query import Query as BaseQry
+from hexastack_core.ports.feature_flags import FeatureFlagPort
+from hexastack_core.ports.logging import LoggingPort
+from hexastack_cqrs.infra.middleware.correlation import CorrelationMiddleware
+from hexastack_cqrs.infra.registries.command import CommandRegistry
+from hexastack_cqrs.infra.registries.query import QueryRegistry
+from hexastack_cqrs.ports.buses import CommandBusPort
+from hexastack_cqrs.ports.pipeline import ExecutionPipelinePort
+from hexastack_flow.domain.models import WorkflowExecutionResult
+from hexastack_flow.ports.orchestrator import CqrsWorkflowOrchestratorPort
+from hexastack_ui.adapters.nicegui.devtools import (
+    _build_demo_workflow,
+    _build_mermaid_cqrs,
+    _detect_sentry_presence,
+    _dispatch_ping,
+    _execute_saga_simulation,
+    _render_container_tab,
+    _render_cqrs_messages,
+    _render_cqrs_tab,
+    _render_devtools_content,
+    _render_flags_tab,
+    _render_live_runner,
+    _render_middleware_chain,
+    _render_observability_tab,
+    _render_topology_tab,
+    _render_workflow_mermaid,
+    _render_workflow_tab,
+    _resolve_available_workflows,
+    _resolve_static_dir,
+    _run_sync_safe,
+    generate_topology_mermaid,
+    mount_devtools_dashboard,
+)
 
 
 def test_mount_devtools_dashboard():
     """Verify mount_devtools_dashboard attaches to FastAPI app and page renders."""
-    from nicegui import core
-
     app = FastAPI()
     container = Container()
-    pipeline = MagicMock(spec=ExecutionPipeline)
+    pipeline = MagicMock(spec=ExecutionPipelinePort)
 
     mount_devtools_dashboard(
         app, container=container, pipeline=pipeline, path="/_devtools"
@@ -32,28 +67,6 @@ def test_mount_devtools_dashboard():
 
 def test_render_internal_tabs():
     """Verify internal rendering helpers execute cleanly across container states."""
-    from nicegui import Client
-    from nicegui.page import page
-
-    from hexastack_core.adapters.feature_flags.in_memory import (
-        InMemoryFeatureFlagAdapter,
-    )
-    from hexastack_core.ports.feature_flags import FeatureFlagPort
-    from hexastack_cqrs.infra.middleware.correlation import CorrelationMiddleware
-    from hexastack_cqrs.infra.registries.command import CommandRegistry
-    from hexastack_cqrs.infra.registries.query import QueryRegistry
-    from hexastack_cqrs.ports.buses import CommandBusPort
-    from hexastack_ui.adapters.nicegui.devtools import (
-        _render_container_tab,
-        _render_cqrs_messages,
-        _render_cqrs_tab,
-        _render_flags_tab,
-        _render_live_runner,
-        _render_middleware_chain,
-        _render_topology_tab,
-        _render_workflow_tab,
-    )
-
     client = Client(page("/test-render-tabs"))
     with client.layout.default_slot:
         empty_container = Container()
@@ -69,8 +82,6 @@ def test_render_internal_tabs():
         container = Container()
         cmd_reg = CommandRegistry()
         qry_reg = QueryRegistry()
-        from hexastack_core.domain.command import Command as BaseCmd
-        from hexastack_core.domain.query import Query as BaseQry
 
         class PlainCmd(BaseCmd):
             pass
@@ -92,7 +103,7 @@ def test_render_internal_tabs():
         cmd_bus_mock._middleware = [mw]
         container.add_instance(cmd_bus_mock, declared_class=CommandBusPort)
 
-        pipeline_mock = MagicMock(spec=ExecutionPipeline)
+        pipeline_mock = MagicMock(spec=ExecutionPipelinePort)
         pipeline_mock.execute = MagicMock(return_value="executed-ok")
 
         class AuthTestMiddleware:
@@ -124,9 +135,6 @@ def _find_button_and_click(element):
 @pytest.mark.anyio
 async def test_dispatch_ping_direct():
     """Verify _dispatch_ping handles all resolution branches and log formats."""
-    from hexastack_cqrs.infra.registries.command import CommandRegistry
-    from hexastack_ui.adapters.nicegui.devtools import _dispatch_ping
-
     log_output = MagicMock()
 
     # 1. Pipeline + Registered Ping command
@@ -140,9 +148,9 @@ async def test_dispatch_ping_direct():
     creg.register(PingDemoCommand)
     container.add_instance(creg, declared_class=CommandRegistry)
 
-    pipeline = MagicMock(spec=ExecutionPipeline)
+    pipeline = MagicMock(spec=ExecutionPipelinePort)
     pipeline.execute = MagicMock(return_value="PONG: Direct")
-    container.add_instance(pipeline, declared_class=ExecutionPipeline)
+    container.add_instance(pipeline, declared_class=ExecutionPipelinePort)
 
     class AuthTraceMiddleware:
         pass
@@ -163,7 +171,7 @@ async def test_dispatch_ping_direct():
 
     # 2. Pipeline directly passed, no registered command -> execute_by_name
     log_output.reset_mock()
-    pipeline_direct = MagicMock(spec=ExecutionPipeline)
+    pipeline_direct = MagicMock(spec=ExecutionPipelinePort)
     pipeline_direct.execute_by_name = MagicMock(return_value="PONG: DirectName")
     await _dispatch_ping("hello", Container(), pipeline_direct, [], log_output)
     pipeline_direct.execute_by_name.assert_called_once_with(
@@ -188,7 +196,7 @@ async def test_dispatch_ping_direct():
 
     # 4. Error handling -> error log
     log_output.reset_mock()
-    pipeline_err = MagicMock(spec=ExecutionPipeline)
+    pipeline_err = MagicMock(spec=ExecutionPipelinePort)
     pipeline_err.execute_by_name.side_effect = RuntimeError("DB connection dropped")
     await _dispatch_ping("fail", Container(), pipeline_err, [], log_output)
     assert (
@@ -199,11 +207,6 @@ async def test_dispatch_ping_direct():
 
 def test_render_middleware_chain_elements(monkeypatch):
     """Verify middleware chain chips, icons, and handler badge."""
-    from nicegui import Client, ui
-    from nicegui.page import page
-
-    from hexastack_ui.adapters.nicegui.devtools import _render_middleware_chain
-
     captured_chips: list[dict] = []
     orig_chip = ui.chip
 
@@ -243,13 +246,8 @@ def test_render_middleware_chain_elements(monkeypatch):
 
 def test_render_devtools_content():
     """Verify _render_devtools_content builds all tabs and header."""
-    from nicegui import Client
-    from nicegui.page import page
-
-    from hexastack_ui.adapters.nicegui.devtools import _render_devtools_content
-
     container = Container()
-    pipeline = MagicMock(spec=ExecutionPipeline)
+    pipeline = MagicMock(spec=ExecutionPipelinePort)
 
     client = Client(page("/test-devtools-full"))
     with client.content:
@@ -258,23 +256,6 @@ def test_render_devtools_content():
 
 def test_render_table_structures_and_schemas(monkeypatch):
     """Verify table structures, column definitions, and row formatting across tabs."""
-    from nicegui import Client, ui
-    from nicegui.page import page
-
-    from hexastack_core.adapters.feature_flags.in_memory import (
-        InMemoryFeatureFlagAdapter,
-    )
-    from hexastack_core.domain.command import Command as BaseCmd
-    from hexastack_core.domain.query import Query as BaseQry
-    from hexastack_core.ports.feature_flags import FeatureFlagPort
-    from hexastack_cqrs.infra.registries.command import CommandRegistry
-    from hexastack_cqrs.infra.registries.query import QueryRegistry
-    from hexastack_ui.adapters.nicegui.devtools import (
-        _render_container_tab,
-        _render_cqrs_messages,
-        _render_flags_tab,
-    )
-
     captured_tables: list[dict] = []
     orig_table = ui.table
 
@@ -411,9 +392,6 @@ def test_render_table_structures_and_schemas(monkeypatch):
 @pytest.mark.anyio
 async def test_dispatch_ping_validation_error():
     """Verify _dispatch_ping catches validation error and logs error message."""
-    from hexastack_cqrs.infra.registries.command import CommandRegistry
-    from hexastack_ui.adapters.nicegui.devtools import _dispatch_ping
-
     log_output = MagicMock()
     container = Container()
     creg = CommandRegistry()
@@ -425,8 +403,8 @@ async def test_dispatch_ping_validation_error():
     creg.register(PingStrictCommand)
     container.add_instance(creg, declared_class=CommandRegistry)
 
-    pipeline = MagicMock(spec=ExecutionPipeline)
-    container.add_instance(pipeline, declared_class=ExecutionPipeline)
+    pipeline = MagicMock(spec=ExecutionPipelinePort)
+    container.add_instance(pipeline, declared_class=ExecutionPipelinePort)
 
     # Passing string "not_a_number" causes model_validate to fail for int field
     await _dispatch_ping("not_a_number", container, None, [], log_output)
@@ -439,8 +417,6 @@ async def test_dispatch_ping_validation_error():
 
 def test_generate_topology_mermaid_empty():
     """Verify generate_topology_mermaid handles empty container cleanly."""
-    from hexastack_ui.adapters.nicegui.devtools import generate_topology_mermaid
-
     empty_container = Container()
     mermaid_code = generate_topology_mermaid(empty_container)
 
@@ -459,11 +435,6 @@ def test_generate_topology_mermaid_empty():
 
 def test_generate_topology_mermaid_populated():
     """Verify generate_topology_mermaid links middlewares, messages, and ports."""
-    from hexastack_cqrs.infra.registries.command import CommandRegistry
-    from hexastack_cqrs.infra.registries.query import QueryRegistry
-    from hexastack_cqrs.ports.buses import CommandBusPort
-    from hexastack_ui.adapters.nicegui.devtools import generate_topology_mermaid
-
     container = Container()
     cmd_reg = CommandRegistry()
     qry_reg = QueryRegistry()
@@ -532,10 +503,6 @@ def test_generate_topology_mermaid_populated():
 
 def test_generate_topology_mermaid_thresholds():
     """Verify generate_topology_mermaid handles large registries and port fallbacks."""
-    from hexastack_cqrs.infra.registries.command import CommandRegistry
-    from hexastack_cqrs.infra.registries.query import QueryRegistry
-    from hexastack_ui.adapters.nicegui.devtools import generate_topology_mermaid
-
     container = Container()
     cmd_reg = CommandRegistry()
     qry_reg = QueryRegistry()
@@ -580,15 +547,6 @@ def test_generate_topology_mermaid_thresholds():
 
 def test_observability_tab_and_sentry_topology():
     """Verify observability tab renders Sentry health card and topology links Sentry."""
-    from nicegui import Client
-    from nicegui.page import page
-
-    from hexastack_core.ports.logging import LoggingPort
-    from hexastack_ui.adapters.nicegui.devtools import (
-        _render_observability_tab,
-        generate_topology_mermaid,
-    )
-
     client = Client(page("/test-render-obs"))
     with client.layout.default_slot:
         empty_c = Container()
@@ -641,11 +599,6 @@ def test_observability_tab_and_sentry_topology():
 
 def test_render_workflow_tab_success():
     """Verify _render_workflow_tab renders DAG visualizer and saga simulator."""
-    from nicegui import Client, ui
-    from nicegui.page import page
-
-    from hexastack_ui.adapters.nicegui.devtools import _render_workflow_tab
-
     client = Client(page("/test-workflow-tab"))
     with client.layout.default_slot:
         container = Container()
@@ -665,16 +618,6 @@ def test_render_workflow_tab_success():
 
 def test_render_workflow_tab_with_orchestrator():
     """Verify _render_workflow_tab when CqrsWorkflowOrchestratorPort is present."""
-    from datetime import UTC, datetime
-    from unittest.mock import MagicMock
-
-    from nicegui import Client, ui
-    from nicegui.page import page
-
-    from hexastack_flow.domain.models import WorkflowExecutionResult
-    from hexastack_flow.ports.orchestrator import CqrsWorkflowOrchestratorPort
-    from hexastack_ui.adapters.nicegui.devtools import _render_workflow_tab
-
     mock_orch = MagicMock(spec=CqrsWorkflowOrchestratorPort)
     mock_orch.render.return_value = "flowchart TD\n  step1-->step2"
     now = datetime.now(UTC)
@@ -710,11 +653,6 @@ def test_render_workflow_tab_with_orchestrator():
 
 def test_render_workflow_tab_missing_hexaflow(monkeypatch):
     """Verify _render_workflow_tab renders fallback notice when hexaflow is absent."""
-    from nicegui import Client
-    from nicegui.page import page
-
-    from hexastack_ui.adapters.nicegui.devtools import _render_workflow_tab
-
     monkeypatch.setattr(
         "hexastack_ui.adapters.nicegui.devtools.optional_dependency",
         lambda name: None,
@@ -733,18 +671,6 @@ def test_workflow_visual_controls_and_helpers():
         Validates layout direction switching, critical path toggling, reset handler,
         and simulation progress tracking without mutating production state.
     """
-    import hexaflow
-    from nicegui import Client, ui
-    from nicegui.page import page
-
-    from hexastack_ui.adapters.nicegui.devtools import (
-        _build_demo_workflow,
-        _execute_saga_simulation,
-        _render_workflow_mermaid,
-        _render_workflow_tab,
-        _resolve_available_workflows,
-    )
-
     demo_wf = _build_demo_workflow(hexaflow)
     name = getattr(demo_wf, "name", "")
     assert name == "order_saga"
@@ -817,3 +743,189 @@ def test_workflow_visual_controls_and_helpers():
     has_cp = len(cp_switches) == 1
     assert has_cp is True
     cp_switches[0].set_value(True)
+
+
+@pytest.mark.anyio
+async def test_devtools_with_execution_pipeline_port():
+    """Verify devtools dashboard, CQRS tab, ping, and mermaid with ExecutionPipelinePort."""
+
+    @dataclass(frozen=True)
+    class TestPingCommand(Command):
+        message: str = ""
+
+    @dataclass(frozen=True)
+    class TestPingQuery(Query[str]):
+        query_id: str = ""
+
+    mock_port = MagicMock(spec=ExecutionPipelinePort)
+    mock_port.get_registered_commands.return_value = {
+        "TestPingCommand": TestPingCommand
+    }
+    mock_port.get_registered_queries.return_value = {"TestPingQuery": TestPingQuery}
+    mock_port.execute.return_value = "PONG: Port"
+
+    container = Container()
+    container.add_instance(mock_port, declared_class=ExecutionPipelinePort)
+
+    # 1. Render CQRS messages with port in container
+    client = Client(page("/test-cqrs-port"))
+    with client.layout.default_slot:
+        _render_cqrs_messages(container)
+
+    # 2. Test ping dispatch via port
+    log_output = MagicMock()
+    await _dispatch_ping("hello port", container, mock_port, [], log_output)
+    mock_port.execute.assert_called_once()
+    assert any("✅ [SUCCESS]" in call[0][0] for call in log_output.push.call_args_list)
+
+    # 3. Test mermaid generation via port
+    lines: list[str] = []
+    has_cqrs, cmds, qrys = _build_mermaid_cqrs(container, lines)
+    assert has_cqrs is True
+    assert "TestPingCommand" in cmds
+    assert "TestPingQuery" in qrys
+
+    # 4. Test fallback to execute_by_name when no ping class registered
+    mock_port_fallback = MagicMock(spec=ExecutionPipelinePort)
+    mock_port_fallback.get_registered_commands.return_value = {}
+    mock_port_fallback.execute_by_name.return_value = "PONG: Name"
+    container_fallback = Container()
+    container_fallback.add_instance(
+        mock_port_fallback, declared_class=ExecutionPipelinePort
+    )
+    log_output_fallback = MagicMock()
+    await _dispatch_ping(
+        "hello fallback",
+        container_fallback,
+        mock_port_fallback,
+        [],
+        log_output_fallback,
+    )
+    mock_port_fallback.execute_by_name.assert_called_once()
+
+
+def test_resolve_static_dir_and_sentry_env(monkeypatch: pytest.MonkeyPatch):
+    """Verify _resolve_static_dir and sentry environment fallback logic."""
+    static_dir = _resolve_static_dir()
+    assert static_dir is None or static_dir.is_dir()
+
+    monkeypatch.setenv(
+        "SENTRY_DSN", "https://abcdef1234567890abcdef1234567890@sentry.io/12345"
+    )
+    container = Container()
+    client = Client(page("/test-sentry-card-env"))
+    with client.layout.default_slot:
+        _render_observability_tab(container)
+
+    has_sentry = _detect_sentry_presence(container, ["SentryLoggingAdapter"])
+    assert has_sentry is True
+
+
+@pytest.mark.anyio
+async def test_devtools_pipeline_subclass_resolution_and_exceptions():
+    """Verify pipeline subclass lookup and resilience against registry errors."""
+
+    class CustomPipeline(ExecutionPipelinePort):
+        def execute(
+            self,
+            instance: Any,
+            output_format: str | None = None,
+        ) -> Any:
+            return "executed"
+
+        def execute_by_name(
+            self,
+            name: str,
+            payload: dict[str, Any],
+            output_format: str | None = None,
+        ) -> Any:
+            return "executed_by_name"
+
+        def get_registered_commands(self) -> dict[str, type[Command]]:
+            raise RuntimeError("commands unavailable")
+
+        def get_registered_queries(self) -> dict[str, type[Query[Any]]]:
+            raise RuntimeError("queries unavailable")
+
+    custom_pipeline = CustomPipeline()
+    container = Container()
+    container.add_instance(custom_pipeline, declared_class=CustomPipeline)
+
+    client = Client(page("/test-custom-pipeline"))
+    with client.layout.default_slot:
+        _render_cqrs_messages(container)
+
+    lines: list[str] = []
+    has_cqrs, cmds, qrys = _build_mermaid_cqrs(container, lines)
+    assert has_cqrs is False
+    assert len(cmds) == 0
+    assert len(qrys) == 0
+
+    log_output = MagicMock()
+    await _dispatch_ping("ping", container, None, [], log_output)
+    assert any("✅ [SUCCESS]" in call[0][0] for call in log_output.push.call_args_list)
+
+    # Test broken CommandRegistry / QueryRegistry
+    container_broken = Container()
+
+    class BrokenCmdRegistry:
+        @property
+        def all(self) -> dict[str, Any]:
+            raise RuntimeError("broken cmd all")
+
+    class BrokenQryRegistry:
+        @property
+        def all(self) -> dict[str, Any]:
+            raise RuntimeError("broken qry all")
+
+    BrokenCmdRegistry.__name__ = "CommandRegistry"
+    BrokenQryRegistry.__name__ = "QueryRegistry"
+
+    cmd_broken = BrokenCmdRegistry()
+    qry_broken = BrokenQryRegistry()
+    container_broken.add_instance(cmd_broken, declared_class=BrokenCmdRegistry)
+    container_broken.add_instance(qry_broken, declared_class=BrokenQryRegistry)
+
+    with client.layout.default_slot:
+        _render_cqrs_messages(container_broken)
+    _build_mermaid_cqrs(container_broken, lines)
+
+
+@pytest.mark.anyio
+async def test_simulation_branches_and_sync_safe(monkeypatch: pytest.MonkeyPatch):
+    """Verify simulation non-completed status, failure logging, and sync safe worker."""
+    # 1. Non-COMPLETED status
+    mock_orch = MagicMock()
+    mock_orch.simulate.return_value = MagicMock(
+        status="FAILED", completed_steps=["step_fail"], outputs={"error": "aborted"}
+    )
+    log_output = MagicMock()
+    wf_mock = MagicMock()
+    wf_mock.name = "failing_workflow"
+
+    completed = _execute_saga_simulation(mock_orch, wf_mock, log_output)
+    assert completed == ["step_fail"]
+    assert any("⚠️ [WARNING]" in call[0][0] for call in log_output.push.call_args_list)
+
+    # 2. Simulation exception
+    mock_orch_err = MagicMock()
+    mock_orch_err.simulate.side_effect = RuntimeError("Simulation engine crashed")
+    log_output.reset_mock()
+    completed_err = _execute_saga_simulation(mock_orch_err, wf_mock, log_output)
+    assert completed_err == []
+    assert any("❌ [ERROR]" in call[0][0] for call in log_output.push.call_args_list)
+
+    # 3. _run_sync_safe within running event loop
+    def simple_sync_add(a: int, b: int) -> int:
+        return a + b
+
+    result = _run_sync_safe(simple_sync_add, 10, 20)
+    assert result == 30
+
+    # 4. _resolve_static_dir fallback on exception
+    monkeypatch.setattr(
+        "importlib.resources.files",
+        MagicMock(side_effect=ModuleNotFoundError("package not found")),
+    )
+    fallback_dir = _resolve_static_dir()
+    assert fallback_dir is None or fallback_dir.is_dir()

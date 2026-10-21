@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 from rodi import Container
 
 from hexastack_core.utils.imports import optional_dependency
-from hexastack_cqrs.infra.pipeline import ExecutionPipeline
+from hexastack_cqrs.ports.pipeline import ExecutionPipelinePort
 from hexastack_ui.adapters.nicegui.page import check_nicegui_installed, mount_ui_app
 
 if TYPE_CHECKING:
@@ -56,36 +56,146 @@ def _resolve_static_dir() -> Path | None:
     return fallback if fallback.is_dir() else None
 
 
+def _resolve_pipeline_from_container(
+    container: Container,
+) -> ExecutionPipelinePort | None:
+    """Resolve an ExecutionPipelinePort from a DI container, checking port and subclasses.
+
+    Args:
+        container: Dependency injection container to inspect.
+
+    Returns:
+        ExecutionPipelinePort instance if registered or resolvable, else None.
+
+    Raises:
+        None.
+
+    Notes/Architectural Intent:
+        Inspects declared port first, followed by introspecting registered types in
+        the container to support concrete subclasses without hardcoded infra imports.
+    """
+    if ExecutionPipelinePort in container:
+        return container.resolve(ExecutionPipelinePort)
+    for cls in getattr(container, "_map", {}):
+        if isinstance(cls, type) and issubclass(cls, ExecutionPipelinePort):
+            return container.resolve(cls)
+    return None
+
+
+def _extract_cqrs_from_pipeline(
+    pipeline: ExecutionPipelinePort,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Extract registered commands and queries from an ExecutionPipelinePort."""
+    cmds: dict[str, Any] = {}
+    qrys: dict[str, Any] = {}
+    try:
+        res_cmds = pipeline.get_registered_commands()
+        if isinstance(res_cmds, dict):
+            cmds = res_cmds
+    except Exception:
+        pass
+    try:
+        res_qrys = pipeline.get_registered_queries()
+        if isinstance(res_qrys, dict):
+            qrys = res_qrys
+    except Exception:
+        pass
+    return cmds, qrys
+
+
+def _extract_cqrs_from_container(
+    container: Container,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Extract registered commands and queries by introspecting container registries."""
+    cmds: dict[str, Any] = {}
+    qrys: dict[str, Any] = {}
+    for reg_cls in getattr(container, "_map", {}):
+        cls_name = getattr(reg_cls, "__name__", "")
+        if cls_name == "CommandRegistry" and reg_cls in container:
+            try:
+                creg = container.resolve(reg_cls)
+                cmds = getattr(creg, "all", {})
+            except Exception:
+                pass
+        elif cls_name == "QueryRegistry" and reg_cls in container:
+            try:
+                qreg = container.resolve(reg_cls)
+                qrys = getattr(qreg, "all", {})
+            except Exception:
+                pass
+    return cmds, qrys
+
+
+def _extract_registered_cqrs(
+    container: Container,
+    pipeline: ExecutionPipelinePort | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Extract registered commands and queries from pipeline or container fallback.
+
+    Args:
+        container: Dependency injection container.
+        pipeline: Optional ExecutionPipelinePort instance.
+
+    Returns:
+        Tuple of (commands_dict, queries_dict).
+
+    Raises:
+        None.
+
+    Notes/Architectural Intent:
+        Queries ExecutionPipelinePort first for registered message schemas. If absent,
+        falls back to inspecting CommandRegistry and QueryRegistry in the container
+        without directly importing concrete infra classes.
+    """
+    pipe = pipeline or _resolve_pipeline_from_container(container)
+    if pipe is not None:
+        cmds, qrys = _extract_cqrs_from_pipeline(pipe)
+        if cmds or qrys:
+            return cmds, qrys
+    return _extract_cqrs_from_container(container)
+
+
+def _find_ping_command(
+    container: Container,
+    pipeline: ExecutionPipelinePort | None,
+) -> type[Any] | None:
+    """Find a registered Command type with 'ping' in its name.
+
+    Args:
+        container: Dependency injection container.
+        pipeline: ExecutionPipelinePort instance if available.
+
+    Returns:
+        Command class if found, otherwise None.
+
+    Raises:
+        None.
+
+    Notes/Architectural Intent:
+        Supports dynamic DevTools ping command discovery across varying application models.
+    """
+    cmds, _ = _extract_registered_cqrs(container, pipeline)
+    for name, cls in cmds.items():
+        if "ping" in str(name).lower():
+            return cls
+    return None
+
+
 def _render_cqrs_messages(container: Container) -> None:
     """Render table of registered CQRS message contracts."""
     from nicegui import ui
 
-    from hexastack_cqrs.infra.registries.command import CommandRegistry
-    from hexastack_cqrs.infra.registries.query import QueryRegistry
-
     ui.label("Registered CQRS Commands & Queries").classes("hx-section-heading")
 
-    cmd_reg = (
-        container.resolve(CommandRegistry) if CommandRegistry in container else None
-    )
-    qry_reg = container.resolve(QueryRegistry) if QueryRegistry in container else None
+    cmds, qrys = _extract_registered_cqrs(container)
+    commands_list = [
+        {"type": "Command", "name": getattr(k, "__name__", str(k))}
+        for k in cmds.values()
+    ]
+    queries_list = [
+        {"type": "Query", "name": getattr(k, "__name__", str(k))} for k in qrys.values()
+    ]
 
-    commands_list = (
-        [
-            {"type": "Command", "name": getattr(k, "__name__", str(k))}
-            for k in cmd_reg.all.values()
-        ]
-        if cmd_reg
-        else []
-    )
-    queries_list = (
-        [
-            {"type": "Query", "name": getattr(k, "__name__", str(k))}
-            for k in qry_reg.all.values()
-        ]
-        if qry_reg
-        else []
-    )
     cqrs_rows = commands_list + queries_list
 
     if cqrs_rows:
@@ -147,7 +257,7 @@ def _render_middleware_chain(middlewares: list[Any]) -> None:
 async def _dispatch_ping(
     ping_value: str,
     container: Container,
-    pipeline: ExecutionPipeline | None,
+    pipeline: ExecutionPipelinePort | None,
     middlewares: list[Any],
     log_output: Any,
 ) -> None:
@@ -159,32 +269,17 @@ async def _dispatch_ping(
         )
 
     try:
-        active_pipeline = pipeline
-        if active_pipeline is None and ExecutionPipeline in container:
-            active_pipeline = container.resolve(ExecutionPipeline)
-
+        active_pipeline = pipeline or _resolve_pipeline_from_container(container)
         if active_pipeline is not None:
-            cmd_cls = None
-            from hexastack_cqrs.infra.registries.command import (
-                CommandRegistry,
-            )
-
-            if CommandRegistry in container:
-                creg = container.resolve(CommandRegistry)
-                for name, cls in creg.all.items():
-                    if "ping" in name.lower():
-                        cmd_cls = cls
-                        break
-
+            cmd_cls = _find_ping_command(container, active_pipeline)
             if cmd_cls is not None:
                 cmd_instance = cmd_cls.model_validate({"message": ping_value})
                 res = active_pipeline.execute(cmd_instance)
-                log_output.push(f"✅ [SUCCESS] Result: {res}")
             else:
                 res = active_pipeline.execute_by_name(
                     "PingDemoCommand", {"message": ping_value}
                 )
-                log_output.push(f"✅ [SUCCESS] Result: {res}")
+            log_output.push(f"✅ [SUCCESS] Result: {res}")
         else:
             log_output.push(
                 "⚠️ [WARNING] ExecutionPipeline instance not directly bound."
@@ -195,7 +290,7 @@ async def _dispatch_ping(
 
 def _render_live_runner(
     container: Container,
-    pipeline: ExecutionPipeline | None,
+    pipeline: ExecutionPipelinePort | None,
     middlewares: list[Any],
 ) -> None:
     """Render interactive test runner card for ping command dispatch."""
@@ -227,7 +322,7 @@ def _render_live_runner(
 
 
 def _render_cqrs_tab(
-    container: Container, pipeline: ExecutionPipeline | None = None
+    container: Container, pipeline: ExecutionPipelinePort | None = None
 ) -> None:
     """Render the CQRS tab panel showing registered messages, middleware pipeline, and live runner."""
     from hexastack_cqrs.ports.buses import CommandBusPort
@@ -477,27 +572,22 @@ def _build_mermaid_cqrs(
 ) -> tuple[bool, list[str], list[str]]:
     """Append CQRS message nodes and links to Mermaid lines.
 
+    Args:
+        container: Dependency injection container.
+        lines: Output list of Mermaid lines.
+
     Returns:
         Tuple of (has_cqrs, cmd_names, qry_names).
+
+    Raises:
+        None.
+
+    Notes/Architectural Intent:
+        Renders Mermaid CQRS subgraphs for commands and queries discovered via pipeline or container.
     """
-    from hexastack_cqrs.infra.registries.command import CommandRegistry
-    from hexastack_cqrs.infra.registries.query import QueryRegistry
-
-    cmd_reg = (
-        container.resolve(CommandRegistry) if CommandRegistry in container else None
-    )
-    qry_reg = container.resolve(QueryRegistry) if QueryRegistry in container else None
-
-    cmd_names = (
-        [getattr(k, "__name__", str(k)) for k in cmd_reg.all.values()]
-        if cmd_reg
-        else []
-    )
-    qry_names = (
-        [getattr(k, "__name__", str(k)) for k in qry_reg.all.values()]
-        if qry_reg
-        else []
-    )
+    cmds, qrys = _extract_registered_cqrs(container)
+    cmd_names = [getattr(k, "__name__", str(k)) for k in cmds.values()]
+    qry_names = [getattr(k, "__name__", str(k)) for k in qrys.values()]
 
     has_cqrs = False
     if cmd_names:
@@ -596,7 +686,7 @@ def _build_mermaid_ports(
 
 def generate_topology_mermaid(
     container: Container,
-    pipeline: ExecutionPipeline | None = None,
+    pipeline: ExecutionPipelinePort | None = None,
 ) -> str:
     """Generate a Mermaid diagram representing runtime resource interconnects.
 
@@ -605,7 +695,7 @@ def generate_topology_mermaid(
 
     Args:
         container: Application dependency injection container.
-        pipeline: Optional CQRS execution pipeline instance.
+        pipeline: Optional CQRS execution pipeline port instance.
 
     Returns:
         Mermaid syntax string (graph LR).
@@ -632,7 +722,7 @@ def generate_topology_mermaid(
 
 
 def _render_topology_tab(
-    container: Container, pipeline: ExecutionPipeline | None = None
+    container: Container, pipeline: ExecutionPipelinePort | None = None
 ) -> None:
     """Render resource interconnect topology graph tab using Mermaid."""
     from nicegui import ui
@@ -999,7 +1089,7 @@ def _render_workflow_tab(container: Container) -> None:
 
 def _render_devtools_content(
     container: Container,
-    pipeline: ExecutionPipeline | None,
+    pipeline: ExecutionPipelinePort | None,
     title: str,
 ) -> None:
     """Render the full DevTools dashboard UI components."""
@@ -1046,7 +1136,7 @@ def _render_devtools_content(
 def mount_devtools_dashboard(
     app: FastAPI,
     container: Container,
-    pipeline: ExecutionPipeline | None = None,
+    pipeline: ExecutionPipelinePort | None = None,
     *,
     path: str = "/_devtools",
     title: str = "Hexastack DevTools",
@@ -1056,7 +1146,7 @@ def mount_devtools_dashboard(
     Args:
         app: Target FastAPI application.
         container: Application rodi.Container instance.
-        pipeline: Optional ExecutionPipeline instance.
+        pipeline: Optional ExecutionPipelinePort instance.
         path: URL path where the dashboard is mounted (default '/_devtools').
         title: Dashboard page title.
 
