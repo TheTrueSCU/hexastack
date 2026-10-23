@@ -28,8 +28,32 @@ def test_create_diagnostics_runtime():
 def test_compile_protobuf_stubs_empty(tmp_path: Path):
     """Verify compile_protobuf_stubs handles empty proto files and returns empty list."""
     out_dir = str(tmp_path / "gen_grpc")
-    generated = compile_protobuf_stubs(out_dir=out_dir, proto_files=None)
-    assert isinstance(generated, list)
+    with patch(
+        "hexastack_grpc.infra.registries.proto.get_proto_registry"
+    ) as mock_get_reg:
+        mock_reg = mock_get_reg.return_value
+        mock_reg.entries = []
+        generated = compile_protobuf_stubs(out_dir=out_dir, proto_files=None)
+        assert generated == []
+
+
+def test_compile_protobuf_stubs_with_registry(tmp_path: Path):
+    """Verify compile_protobuf_stubs compiles metadata when entries exist in registry."""
+    out_dir = str(tmp_path / "gen_grpc")
+    with (
+        patch(
+            "hexastack_grpc.infra.registries.proto.get_proto_registry"
+        ) as mock_get_reg,
+        patch(
+            "hexastack_grpc.infra.compiler.ProtoCompiler.compile_metadata",
+            return_value=[Path(out_dir) / "stub_pb2.py"],
+        ) as mock_compile,
+    ):
+        mock_reg = mock_get_reg.return_value
+        mock_reg.entries = ["dummy_entry"]
+        generated = compile_protobuf_stubs(out_dir=out_dir, proto_files=None)
+        assert len(generated) == 1
+        mock_compile.assert_called_once()
 
 
 def test_compile_protobuf_stubs_with_files(tmp_path: Path):
