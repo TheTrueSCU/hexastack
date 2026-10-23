@@ -107,7 +107,7 @@ description = "{config.description}"
 readme = "README.md"
 requires-python = "{config.python_version}"
 dependencies = [
-    "hexastack{extras_str}>=0.9.0",
+    "hexastack{extras_str}>=0.10.0",
     "pydantic-settings>=2.0.0",
 ]
 
@@ -211,7 +211,7 @@ def render_precommit() -> str:
         exclude: ^(\.venv|docs|_build)/
 
   - repo: https://github.com/TheTrueSCU/hexaqual
-    rev: v0.9.0
+    rev: v0.9.6
     hooks:
       - id: hexaqual-sanity
       - id: hexaqual-architecture

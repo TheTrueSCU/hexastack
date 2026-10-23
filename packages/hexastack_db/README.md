@@ -170,7 +170,7 @@ ef_construction = 64
 from sqlalchemy.orm import Mapped, mapped_column
 from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
-from hexastack_db.infra.mixins import HexastackBase, UuidPrimaryKeyMixin, TimestampMixin
+from hexastack_db.utils.mixins import HexastackBase, UuidPrimaryKeyMixin, TimestampMixin
 from hexastack_db.infra.registries.metadata import register_metadata
 from hexastack_db.adapters.repository import SqlAlchemyRepository
 

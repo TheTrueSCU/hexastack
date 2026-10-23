@@ -3,7 +3,7 @@ from typing import Any
 from hypothesis import given
 from hypothesis import strategies as st
 
-from hexastack_logging.infra.sanitizer import LogSanitizer
+from hexastack_logging.utils.sanitizer import LogSanitizer
 
 # Strategy producing arbitrary JSON-like recursive trees
 json_primitives = st.one_of(

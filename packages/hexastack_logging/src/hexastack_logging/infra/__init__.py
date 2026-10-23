@@ -14,7 +14,6 @@ from hexastack_logging.infra.formatters import (
     ConsoleFormatter,
     JsonFormatter,
 )
-from hexastack_logging.infra.sanitizer import LogSanitizer
 
 __all__ = [
     "AsyncQueueConfig",
@@ -24,7 +23,6 @@ __all__ = [
     "FileLoggingConfig",
     "HexastackLoggingConfig",
     "JsonFormatter",
-    "LogSanitizer",
     "LogSanitizerConfig",
     "LogSanitizerFilter",
     "register_logging_config",

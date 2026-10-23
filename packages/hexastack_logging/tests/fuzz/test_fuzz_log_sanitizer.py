@@ -20,9 +20,9 @@ except ImportError:
 
 if atheris is not None:
     with atheris.instrument_imports():
-        from hexastack_logging.infra.sanitizer import LogSanitizer
+        from hexastack_logging.utils.sanitizer import LogSanitizer
 else:
-    from hexastack_logging.infra.sanitizer import LogSanitizer
+    from hexastack_logging.utils.sanitizer import LogSanitizer
 
 
 _MAX_ALLOWED_DURATION_SECONDS = 0.05  # 50ms ReDoS threshold per input

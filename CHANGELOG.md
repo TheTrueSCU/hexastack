@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## v0.10.0 (2026-10-22)
+
+### Highlights & Features
+* **Strict Hexagonal Boundary Purity & Infrastructure Decoupling (ADR-001)**:
+  - Eliminated legacy backward-compatibility shims in `hexastack_db.infra` and `hexastack_logging.infra`.
+  - Relocated pure ORM entities and database utilities (`HexastackBase`, `UuidPrimaryKeyMixin`, `TimestampMixin`, migration runners) strictly to `hexastack_db.utils.mixins` and `hexastack_db.utils.migrations`.
+  - Relocated `LogSanitizer` strictly to `hexastack_logging.utils.sanitizer`.
+  - Enforced zero `adapters -> infra` import violations across all 18 monorepo packages.
+* **Decoupled DevTools Presentation Architecture (`hexastack-cqrs`, `hexastack-ui`)**:
+  - Added `ExecutionPipelinePort` abstract port protocol in `hexastack_cqrs.ports.pipeline`.
+  - Decoupled NiceGUI DevTools UI and command dispatcher from concrete `cqrs.infra` pipeline context.
+  - Decoupled umbrella diagnostic entrypoints via `RuntimeDiagnostics` in `hexastack.application.diagnostics`.
+* **Microbenchmarking Governance Tier (ADR-015)**:
+  - Integrated `pytest-benchmark` governance harness across DB and Events packages to mathematically audit and prevent framework overhead regressions.
+  - Added `hexastack perf` CLI command group.
+* **Ecosystem Engine Synchronization (`hexaflow>=0.5.1`, `hexaqual>=0.9.6`)**:
+  - Upgraded workflow engine to `hexaflow>=0.5.1` with support for time-travel rewind and step simulation fallbacks.
+  - Upgraded governance and release toolchain to `hexaqual>=0.9.6`.
+* **Security & Vulnerability Remediation**:
+  - Fully remediated all surfaced dependency advisories across `certifi>=2026.10.19`, `gitpython>=3.2.1`, `opentelemetry-api>=1.45.1`, and `virtualenv>=21.14.12`.
+* **Unified Workspace Lockstep Versioning (v0.10.0)**: Synchronized version bump across root workspace and all 18 subpackages (`hexastack`, `hexastack_ai`, `hexastack_auth`, `hexastack_cli`, `hexastack_core`, `hexastack_cqrs`, `hexastack_db`, `hexastack_events`, `hexastack_fastapi`, `hexastack_flags`, `hexastack_flow`, `hexastack_graphql`, `hexastack_grpc`, `hexastack_logging`, `hexastack_mcp`, `hexastack_otel`, `hexastack_qual`, `hexastack_ui`).
+
 ## v0.9.0 (2026-10-17)
 
 ### Highlights & Features
