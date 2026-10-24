@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## v0.10.1 (2026-10-24)
+
+### Highlights & Features
+* **Python 3.12+ Universal Support Matrix**:
+  - Broadened `requires-python` from `>=3.13` to `>=3.12` across root and all 18 workspace subpackages, officially supporting Python 3.12, 3.13, 3.14, and 3.15.
+  - Added native multi-version testing orchestration matrix via `noxfile.py` with `uv` virtual environments (`venv_backend="uv"`).
+  - Updated CI test matrix to run across Python 3.12 and 3.13.
+  - Updated documentation badges, index, and quickstarts to Python 3.12+.
+* **Decoupled Testing Engine (`hexaqual.adapters.testing`)**:
+  - Eliminated circular dependencies across the `hexa-` family by relocating `CliNarrator`, `TerminalEvent`, and `render_cli_demo_video` to upstream `hexaqual.adapters.testing`.
+* **Ecosystem Engine Synchronization (`hexaflow>=0.5.2`, `hexaqual>=0.9.7`)**:
+  - Upgraded workflow DAG engine to `hexaflow>=0.5.2`.
+  - Upgraded quality, boundary, and release engineering toolsuite to `hexaqual>=0.9.7`.
+* **Security & Vulnerability Remediation**:
+  - Upgraded dependencies resolving surfaced CVEs across `brotli>=1.2.1`, `filelock>=4.2.4`, and `setuptools>=84.2.1`.
+* **Unified Workspace Lockstep Versioning (v0.10.1)**: Synchronized version bump across all 18 subpackages (`hexastack`, `hexastack_ai`, `hexastack_auth`, `hexastack_cli`, `hexastack_core`, `hexastack_cqrs`, `hexastack_db`, `hexastack_events`, `hexastack_fastapi`, `hexastack_flags`, `hexastack_flow`, `hexastack_graphql`, `hexastack_grpc`, `hexastack_logging`, `hexastack_mcp`, `hexastack_otel`, `hexastack_qual`, `hexastack_ui`).
+
 ## v0.10.0 (2026-10-22)
 
 ### Highlights & Features
