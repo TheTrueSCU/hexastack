@@ -296,7 +296,7 @@
 - **Date & Milestone**: 2026-10-19 (`v0.9.0`)
 - **Status**: Accepted
 - **Context & Problem Statement**:
-  Hexagonal Architecture provides high isolation by routing all operations through abstract ports, adapter dispatchers, dependency injection containers, and middleware pipelines. Without continuous performance governance, internal framework dispatch overhead can silently balloon, diminishing the microsecond performance expected from Python 3.13+ async execution. However, running microbenchmarks under test coverage tools (`--cov`) adds 2x–5x latency overhead that invalidates measurements, and running on noisy shared CI virtualization instances introduces jitter.
+  Hexagonal Architecture provides high isolation by routing all operations through abstract ports, adapter dispatchers, dependency injection containers, and middleware pipelines. Without continuous performance governance, internal framework dispatch overhead can silently balloon, diminishing the microsecond performance expected from Python 3.12+ async execution. However, running microbenchmarks under test coverage tools (`--cov`) adds 2x–5x latency overhead that invalidates measurements, and running on noisy shared CI virtualization instances introduces jitter.
 - **Decision**:
   Codify `pytest-benchmark` as a first-class execution tier orchestrated via `hexaqual test bench`:
   1. **Zero Coverage Instrumentation Overhead**: Whenever benchmarks are run via `hexaqual test bench` or `-B/--bench`, test coverage is strictly disabled (`--no-cov`).

@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 from hexaflow import Workflow, WorkflowStatus
+from hexaqual.adapters.testing.narrator import CliNarrator
 
-from hexastack_cli.testing.narrator import CliNarrator
 from tests.e2e.tutorials.workflows.todo_tutorial import (
     create_todo_tutorial_workflow,
 )

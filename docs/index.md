@@ -1,8 +1,8 @@
 # Hexastack
 
-> **Production-grade Hexagonal Architecture (Ports & Adapters) monorepo framework for Python 3.13+.**
+> **Production-grade Hexagonal Architecture (Ports & Adapters) monorepo framework for Python 3.12+.**
 
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Architecture](https://img.shields.io/badge/architecture-hexagonal-emerald.svg)](architecture.md)
 
 ---

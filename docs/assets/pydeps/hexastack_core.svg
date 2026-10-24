@@ -52,7 +52,7 @@
 <!-- filelock -->
 <g id="node3" class="node">
 <title>filelock</title><style>.edge>path:hover{stroke-width:8}</style>
-<polygon fill="#a2b653" stroke="black" points="1910.34,-1104.46 1907.34,-1108.46 1886.34,-1108.46 1883.34,-1104.46 1856.34,-1104.46 1856.34,-1068.46 1910.34,-1068.46 1910.34,-1104.46"/>
+<polygon fill="#a6c040" stroke="black" points="1910.34,-1104.46 1907.34,-1108.46 1886.34,-1108.46 1883.34,-1104.46 1856.34,-1104.46 1856.34,-1068.46 1910.34,-1068.46 1910.34,-1104.46"/>
 <text text-anchor="middle" x="1883.34" y="-1083.96" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">filelock</text>
 </g>
 <!-- hexastack_core_adapters_lock_file -->
@@ -68,7 +68,7 @@
 <g id="edge3" class="edge">
 <title>filelock&#45;&gt;hexastack_core_adapters_lock_file</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M1889.9,-1068.17C1898.54,-1046.56 1915.03,-1008.96 1935.34,-980.47 1949.29,-960.89 2067.64,-840.25 2087.34,-826.47 2117.94,-805.07 2155.95,-787.49 2186.9,-775.1"/>
-<polygon fill="#a2b653" stroke="black" points="2188.24,-778.33 2196.27,-771.42 2185.68,-771.82 2188.24,-778.33"/>
+<polygon fill="#a6c040" stroke="black" points="2188.24,-778.33 2196.27,-771.42 2185.68,-771.82 2188.24,-778.33"/>
 </g>
 <!-- fsspec -->
 <g id="node4" class="node">

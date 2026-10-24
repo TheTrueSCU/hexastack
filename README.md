@@ -2,14 +2,14 @@
 
 # Hexastack
 
-> High-performance, modular Hexagonal Architecture & CQRS Framework for Python 3.13+.
+> High-performance, modular Hexagonal Architecture & CQRS Framework for Python 3.12+.
 
 [![Use this template](https://img.shields.io/badge/GitHub-Use%20this%20template-2ea44f?logo=github)](https://github.com/TheTrueSCU/hexastack-template/generate)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack-template)
 [![CI](https://github.com/TheTrueSCU/hexastack/actions/workflows/ci.yml/badge.svg)](https://github.com/TheTrueSCU/hexastack/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![PyPI: hexastack](https://img.shields.io/pypi/v/hexastack.svg)](https://pypi.org/project/hexastack/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 [![Powers Hexaqueue](https://img.shields.io/badge/powers-hexaqueue-blue.svg)](https://dopplereffect.us/hexaqueue/)
@@ -267,7 +267,7 @@ The fastest path to evaluate Hexastack with zero local prerequisites:
   ```bash
   gh repo create my-service --template TheTrueSCU/hexastack-template --public --clone
   ```
-- Or launch immediately in your browser via [**GitHub Codespaces**](https://codespaces.new/TheTrueSCU/hexastack-template) with pre-wired Python 3.13, NiceGUI DevTools, and FastAPI.
+- Or launch immediately in your browser via [**GitHub Codespaces**](https://codespaces.new/TheTrueSCU/hexastack-template) with pre-wired Python 3.12, NiceGUI DevTools, and FastAPI.
 
 ### Option B: Interactive CLI Scaffolding
 Scaffold customized microservices with your choice of transports, databases, and governance adapters:

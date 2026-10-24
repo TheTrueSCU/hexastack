@@ -5,8 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from hexaflow import Workflow
-
-from hexastack_cli.testing.narrator import CliNarrator
+from hexaqual.adapters.testing.narrator import CliNarrator
 
 
 def _serialize_artifacts(seg: dict[str, Any]) -> dict[str, str]:

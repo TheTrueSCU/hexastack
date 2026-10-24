@@ -1,7 +1,7 @@
 [project]
 name = "hexastack-workspace"
 version = "0.10.0"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "hexastack[all]",
     "openfeature-provider-flagd>=0.5.2",
@@ -61,7 +61,7 @@ dev = [
     "fsspec>=2024.1.0",
     "grpcio-reflection>=1.84.0",
     "grpcio-tools>=1.84.0",
-    "hexaqual[all]>=0.9.6",
+    "hexaqual[all]>=0.9.7",
     "httpx>=0.28.1",
     "huey>=3.4.0",
     "hypothesis>=6.168.1",

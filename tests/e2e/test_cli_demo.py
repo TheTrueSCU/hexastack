@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 import typer
+from hexaqual.adapters.testing.narrator import CliNarrator
 
 from hexastack.adapters.cli.scaffolding.commands import add_scaffold_commands
-from hexastack_cli.testing.narrator import CliNarrator
 
 
 @pytest.mark.demo

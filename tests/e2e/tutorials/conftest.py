@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 import typer
 from hexaflow import Workflow
+from hexaqual.adapters.testing.narrator import CliNarrator
 
 import hexastack.adapters.cli as cli_module
 import hexastack.application.diagnostics as diag_module
@@ -27,7 +28,6 @@ from hexastack.adapters.cli.devtools.commands import (
     add_ui_commands,
 )
 from hexastack.adapters.cli.scaffolding.commands import add_scaffold_commands
-from hexastack_cli.testing.narrator import CliNarrator
 from hexastack_core.infra.bootstrap import bootstrap
 
 

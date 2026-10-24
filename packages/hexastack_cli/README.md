@@ -34,7 +34,6 @@
 hexastack_cli/
 ├── domain/          # CliContext, OutputFormat enum
 ├── adapters/        # Rich presenters, Typer command runners, TyperSuggest
-├── testing/         # CliNarrator, TerminalEvent (demo video & VTT recorder)
 └── infra/           # create_cli_app, CliBootstrapper (order=40), @cli_command, @cli_query, @cli_group, @feature_flag_command
 ```
 
@@ -172,8 +171,10 @@ In automated CI environments or redirected streams (`not sys.stdin.isatty()`), `
 
 ## 7. Automated Demo Recording & Video Slicing (`CliNarrator`)
 
+> Automated narrative terminal recording and Playwright demo video rendering is provided by [`hexaqual.adapters.testing`](https://github.com/TheTrueSCU/hexaqual).
+
 ```python
-from hexastack_cli.testing import CliNarrator
+from hexaqual.adapters.testing import CliNarrator
 
 narrator = CliNarrator(record_video=True)
 narrator.say("Scaffolding microservice...")
