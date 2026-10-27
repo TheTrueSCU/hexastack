@@ -14,6 +14,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+debug = [
+    "snoop>=0.6.0",
+]
 filelock = [
     "filelock>=3.16.0",
 ]
