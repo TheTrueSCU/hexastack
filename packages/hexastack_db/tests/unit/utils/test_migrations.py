@@ -1,10 +1,10 @@
-import importlib.util
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.testing import require_extra
 from hexastack_db.domain.config import HexastackDatabaseConfig
 from hexastack_db.utils.migrations import (
     _env_py_template,
@@ -19,9 +19,7 @@ from hexastack_db.utils.migrations import (
     stamp,
 )
 
-# Skip entire module if alembic is not installed
-alembic_installed = importlib.util.find_spec("alembic") is not None
-pytestmark = pytest.mark.skipif(not alembic_installed, reason="alembic not installed")
+pytestmark = require_extra("alembic")
 
 
 def _make_config(tmp_path: Path):
