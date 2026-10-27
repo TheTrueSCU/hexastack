@@ -7,7 +7,6 @@ Notes/Architectural Intent:
 """
 
 import contextlib
-import importlib.util
 import json
 from datetime import UTC
 from typing import Any
@@ -20,7 +19,7 @@ from hexaflow.domain.state import (
 )
 from hexaflow.ports.storage import WorkflowStateStorePort
 
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils.imports import require_dependency
 
 __all__ = [
     "SqlAlchemyWorkflowStore",
@@ -45,11 +44,12 @@ class SqlAlchemyWorkflowStore(WorkflowStateStorePort):
         Raises:
             MissingDependencyError: If sqlalchemy is not installed.
         """
-        if importlib.util.find_spec("sqlalchemy") is None:
-            raise MissingDependencyError(
-                "sqlalchemy is required to use SqlAlchemyWorkflowStore. "
-                "Install via 'pip install hexastack-flow[db]'."
-            )
+        require_dependency(
+            "sqlalchemy",
+            extra="db",
+            package="hexastack-flow",
+            feature_name="SqlAlchemyWorkflowStore",
+        )
 
         from sqlalchemy import (
             Column,

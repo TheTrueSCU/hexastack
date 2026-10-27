@@ -188,10 +188,9 @@ def test_step_checkpoint_crud(sqlite_store: SqlAlchemyWorkflowStore) -> None:
 def test_missing_sqlalchemy_dependency() -> None:
     """Ensure MissingDependencyError is raised when sqlalchemy is not installed."""
     with (
-        patch(
-            "hexastack_flow.adapters.storage.sqlalchemy.importlib.util.find_spec",
-            return_value=None,
+        patch("importlib.import_module", side_effect=ImportError("No sqlalchemy")),
+        pytest.raises(
+            MissingDependencyError, match="Optional dependency 'sqlalchemy' is required"
         ),
-        pytest.raises(MissingDependencyError, match="sqlalchemy is required"),
     ):
         SqlAlchemyWorkflowStore(None)
