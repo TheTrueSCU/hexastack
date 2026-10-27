@@ -15,6 +15,10 @@ from hexastack_core.adapters.clock import (
     FrozenClock,
     InMemoryClock,
 )
+from hexastack_core.adapters.identity import (
+    HashidsAdapter,
+    InMemoryIdObfuscator,
+)
 from hexastack_core.adapters.leader_election import (
     AsyncSingleProcessLeaderElection,
     SingleProcessLeaderElection,
@@ -60,9 +64,11 @@ __all__ = [
     "AsyncInMemoryUnitOfWork",
     "AsyncSingleProcessLeaderElection",
     "FrozenClock",
+    "HashidsAdapter",
     "InMemoryCache",
     "InMemoryCircuitBreaker",
     "InMemoryClock",
+    "InMemoryIdObfuscator",
     "InMemoryLlmProvider",
     "InMemoryLock",
     "InMemoryLogger",

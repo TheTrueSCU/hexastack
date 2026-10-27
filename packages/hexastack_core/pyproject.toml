@@ -20,6 +20,9 @@ filelock = [
 fsspec = [
     "fsspec>=2024.1.0",
 ]
+identity = [
+    "hashids>=1.3.1",
+]
 redis = [
     "redis[hiredis]>=5.0.0",
 ]

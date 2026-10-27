@@ -11,6 +11,7 @@ from hexastack_core.ports.circuit_breaker import (
     CircuitState,
 )
 from hexastack_core.ports.clock import ClockPort
+from hexastack_core.ports.identity import IdObfuscatorPort
 from hexastack_core.ports.leader_election import (
     AsyncLeaderElectionPort,
     LeaderElectionPort,
@@ -52,6 +53,7 @@ __all__ = [
     "CircuitState",
     "ClockPort",
     "Extras",
+    "IdObfuscatorPort",
     "LeaderElectionPort",
     "LlmProviderPort",
     "LockPort",

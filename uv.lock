@@ -2079,6 +2079,15 @@ wheels = [
 ]
 
 [[package]]
+name = "hashids"
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/a2/6f38b1de47b41ad0420047ad03b0b8cd5d6572271a3e9c2ab70e373fe63a/hashids-1.3.1.tar.gz", hash = "sha256:6c3dc775e65efc2ce2c157a65acb776d634cb814598f406469abef00ae3f635c", size = 7884, upload-time = "2020-07-26T21:47:24.138Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6e/46/ffdf25b1f6dbb1ce588ccb818e983df9e3d30594679f5a08c865a59cead7/hashids-1.3.1-py2.py3-none-any.whl", hash = "sha256:8bddd1acba501bfc9306e7e5a99a1667f4f2cacdc20cbd70bcc5ddfa5147c94c", size = 6556, upload-time = "2020-07-26T21:47:22.41Z" },
+]
+
+[[package]]
 name = "hexaflow"
 version = "0.5.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2219,6 +2228,9 @@ huey = [
     { name = "hexastack-cqrs", extra = ["huey"] },
     { name = "hexastack-events", extra = ["huey"] },
 ]
+identity = [
+    { name = "hexastack-core", extra = ["identity"] },
+]
 janus = [
     { name = "hexastack-events", extra = ["janus"] },
 ]
@@ -2356,6 +2368,7 @@ requires-dist = [
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["fsspec"], marker = "extra == 'fsspec'", editable = "packages/hexastack_core" },
+    { name = "hexastack-core", extras = ["identity"], marker = "extra == 'identity'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["redis"], marker = "extra == 'redis'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["ssh"], marker = "extra == 'all'", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["ssh"], marker = "extra == 'ssh'", editable = "packages/hexastack_core" },
@@ -2433,7 +2446,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "identity", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2566,6 +2579,9 @@ filelock = [
 fsspec = [
     { name = "fsspec" },
 ]
+identity = [
+    { name = "hashids" },
+]
 redis = [
     { name = "redis", extra = ["hiredis"] },
 ]
@@ -2588,6 +2604,7 @@ requires-dist = [
     { name = "faker", marker = "extra == 'testing'", specifier = ">=33.0.0" },
     { name = "filelock", marker = "extra == 'filelock'", specifier = ">=3.16.0" },
     { name = "fsspec", marker = "extra == 'fsspec'", specifier = ">=2024.1.0" },
+    { name = "hashids", marker = "extra == 'identity'", specifier = ">=1.3.1" },
     { name = "hypothesis", marker = "extra == 'testing'", specifier = ">=6.100.0" },
     { name = "inline-snapshot", marker = "extra == 'testing'", specifier = ">=0.35.4" },
     { name = "pydantic", specifier = ">=2.13.4" },
@@ -2596,7 +2613,7 @@ requires-dist = [
     { name = "rodi", specifier = ">=2.1.0" },
     { name = "valkey", extras = ["libvalkey"], marker = "extra == 'valkey'", specifier = ">=6.0.0" },
 ]
-provides-extras = ["filelock", "fsspec", "redis", "ssh", "testing", "valkey"]
+provides-extras = ["filelock", "fsspec", "identity", "redis", "ssh", "testing", "valkey"]
 
 [[package]]
 name = "hexastack-cqrs"
@@ -3119,6 +3136,7 @@ dev = [
     { name = "fsspec" },
     { name = "grpcio-reflection" },
     { name = "grpcio-tools" },
+    { name = "hashids" },
     { name = "hexaqual", extra = ["all"] },
     { name = "httpx" },
     { name = "huey" },
@@ -3183,6 +3201,7 @@ dev = [
     { name = "fsspec", specifier = ">=2024.1.0" },
     { name = "grpcio-reflection", specifier = ">=1.84.0" },
     { name = "grpcio-tools", specifier = ">=1.84.0" },
+    { name = "hashids", specifier = ">=1.3.1" },
     { name = "hexaqual", extras = ["all"], specifier = ">=0.9.10" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "huey", specifier = ">=3.4.0" },
