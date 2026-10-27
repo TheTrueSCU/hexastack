@@ -21,7 +21,10 @@ from hexastack_events.adapters.sinks import (
     dlt_outbox_source,
 )
 from hexastack_events.adapters.streams import InMemoryStreamAdapter
-from hexastack_events.adapters.tasks import InMemoryTaskQueueAdapter
+from hexastack_events.adapters.tasks import (
+    HexaqueueTaskQueueAdapter,
+    InMemoryTaskQueueAdapter,
+)
 
 __all__ = [
     "AsyncioOutboxRelay",
@@ -32,6 +35,7 @@ __all__ = [
     "DltEventSink",
     "DltProjectionConsumer",
     "from_cloudevent",
+    "HexaqueueTaskQueueAdapter",
     "HueyOutboxRelay",
     "InMemoryDistributedEventBus",
     "InMemoryOutboxStorage",

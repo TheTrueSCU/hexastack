@@ -79,6 +79,9 @@ graphql = [
 grpc = [
     "hexastack-grpc",
 ]
+hexaqueue = [
+    "hexastack-events[hexaqueue]",
+]
 huey = [
     "hexastack-cqrs[huey]",
     "hexastack-events[huey]",

@@ -2267,6 +2267,9 @@ graphql = [
 grpc = [
     { name = "hexastack-grpc" },
 ]
+hexaqueue = [
+    { name = "hexastack-events", extra = ["hexaqueue"] },
+]
 huey = [
     { name = "hexastack-cqrs", extra = ["huey"] },
     { name = "hexastack-events", extra = ["huey"] },
@@ -2437,6 +2440,7 @@ requires-dist = [
     { name = "hexastack-events", extras = ["apprise"], marker = "extra == 'apprise'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["dlt"], marker = "extra == 'dlt'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_events" },
+    { name = "hexastack-events", extras = ["hexaqueue"], marker = "extra == 'hexaqueue'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["huey"], marker = "extra == 'huey'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["janus"], marker = "extra == 'janus'", editable = "packages/hexastack_events" },
     { name = "hexastack-events", extras = ["kafka"], marker = "extra == 'kafka'", editable = "packages/hexastack_events" },
@@ -2497,7 +2501,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "apprise", "auth", "cli", "db", "debug", "devtools", "diagnostics", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "identity", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "pointers", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "debug", "devtools", "diagnostics", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "hexaqueue", "huey", "identity", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "pointers", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2786,6 +2790,9 @@ filelock = [
     { name = "filelock" },
     { name = "hexastack-core", extra = ["filelock"] },
 ]
+hexaqueue = [
+    { name = "httpx" },
+]
 huey = [
     { name = "huey" },
 ]
@@ -2816,6 +2823,7 @@ requires-dist = [
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-core", extras = ["filelock"], marker = "extra == 'filelock'", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
+    { name = "httpx", marker = "extra == 'hexaqueue'", specifier = ">=0.27.0" },
     { name = "huey", marker = "extra == 'huey'", specifier = ">=3.3.4" },
     { name = "janus", marker = "extra == 'janus'", specifier = ">=2.0.0" },
     { name = "msgspec", specifier = ">=0.19.0" },
@@ -2824,7 +2832,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.10.0" },
     { name = "sqlalchemy", marker = "extra == 'sql'", specifier = ">=2.0.0" },
 ]
-provides-extras = ["apprise", "dlt", "filelock", "huey", "janus", "kafka", "msgspec", "nats", "sql"]
+provides-extras = ["apprise", "dlt", "filelock", "hexaqueue", "huey", "janus", "kafka", "msgspec", "nats", "sql"]
 
 [[package]]
 name = "hexastack-fastapi"
