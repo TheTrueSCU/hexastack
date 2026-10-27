@@ -81,6 +81,7 @@ grpc = [
 ]
 hexaqueue = [
     "hexastack-events[hexaqueue]",
+    "hexastack-flow[hexaqueue]",
 ]
 huey = [
     "hexastack-cqrs[huey]",

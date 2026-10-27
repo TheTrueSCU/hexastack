@@ -2269,6 +2269,7 @@ grpc = [
 ]
 hexaqueue = [
     { name = "hexastack-events", extra = ["hexaqueue"] },
+    { name = "hexastack-flow", extra = ["hexaqueue"] },
 ]
 huey = [
     { name = "hexastack-cqrs", extra = ["huey"] },
@@ -2460,6 +2461,7 @@ requires-dist = [
     { name = "hexastack-flow", marker = "extra == 'flow'", editable = "packages/hexastack_flow" },
     { name = "hexastack-flow", extras = ["db"], marker = "extra == 'db'", editable = "packages/hexastack_flow" },
     { name = "hexastack-flow", extras = ["events"], marker = "extra == 'events'", editable = "packages/hexastack_flow" },
+    { name = "hexastack-flow", extras = ["hexaqueue"], marker = "extra == 'hexaqueue'", editable = "packages/hexastack_flow" },
     { name = "hexastack-flow", extras = ["otel"], marker = "extra == 'otel'", editable = "packages/hexastack_flow" },
     { name = "hexastack-graphql", marker = "extra == 'all'", editable = "packages/hexastack_graphql" },
     { name = "hexastack-graphql", marker = "extra == 'graphql'", editable = "packages/hexastack_graphql" },
@@ -2917,6 +2919,7 @@ all = [
     { name = "hexastack-db" },
     { name = "hexastack-events" },
     { name = "hexastack-otel" },
+    { name = "httpx" },
     { name = "sqlalchemy" },
 ]
 db = [
@@ -2925,6 +2928,9 @@ db = [
 ]
 events = [
     { name = "hexastack-events" },
+]
+hexaqueue = [
+    { name = "httpx" },
 ]
 otel = [
     { name = "hexastack-otel" },
@@ -2937,11 +2943,12 @@ requires-dist = [
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "hexastack-db", marker = "extra == 'db'", editable = "packages/hexastack_db" },
     { name = "hexastack-events", marker = "extra == 'events'", editable = "packages/hexastack_events" },
-    { name = "hexastack-flow", extras = ["db", "events", "otel"], marker = "extra == 'all'", editable = "packages/hexastack_flow" },
+    { name = "hexastack-flow", extras = ["db", "events", "hexaqueue", "otel"], marker = "extra == 'all'", editable = "packages/hexastack_flow" },
     { name = "hexastack-otel", marker = "extra == 'otel'", editable = "packages/hexastack_otel" },
+    { name = "httpx", marker = "extra == 'hexaqueue'", specifier = ">=0.27.0" },
     { name = "sqlalchemy", marker = "extra == 'db'", specifier = ">=2.0.0" },
 ]
-provides-extras = ["db", "events", "otel", "all"]
+provides-extras = ["db", "events", "hexaqueue", "otel", "all"]
 
 [[package]]
 name = "hexastack-graphql"

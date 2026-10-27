@@ -22,11 +22,14 @@ db = [
 events = [
     "hexastack-events",
 ]
+hexaqueue = [
+    "httpx>=0.27.0",
+]
 otel = [
     "hexastack-otel",
 ]
 all = [
-    "hexastack-flow[db,events,otel]",
+    "hexastack-flow[db,events,hexaqueue,otel]",
 ]
 
 [project.entry-points."hexastack.bootstrappers"]
