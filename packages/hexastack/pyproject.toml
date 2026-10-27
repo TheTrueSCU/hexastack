@@ -185,6 +185,7 @@ testing = [
     "playwright>=1.49.0",
     "pytest-archon>=0.0.7",
     "schemathesis>=3.39.0",
+    "time-machine>=2.16.0",
 ]
 textual = [
     "hexastack-ui[textual]",

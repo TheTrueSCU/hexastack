@@ -6,6 +6,7 @@ from hexastack_auth.domain.exceptions import (
     InvalidTokenError,
 )
 from hexastack_auth.domain.models import Identity
+from hexastack_core.testing.clock import freeze_time
 
 
 def test_jwt_algorithm_mismatch(sample_identity: Identity):
@@ -161,7 +162,15 @@ def test_jwt_ttl_variations_and_expiry(sample_identity: Identity):
     with pytest.raises(TokenExpiredError, match="JWT token expired"):
         adapter.verify_token(token_expired)
 
-    # 4. Signing failure raises AuthError
+    # 4. Time travel expiration verification
+    with freeze_time(1_700_000_000.0) as traveller:
+        token_active = adapter.create_token(sample_identity, ttl=300)
+        assert adapter.verify_token(token_active).user_id == sample_identity.user_id
+        traveller.shift(301.0)
+        with pytest.raises(TokenExpiredError, match="JWT token expired"):
+            adapter.verify_token(token_active)
+
+    # 5. Signing failure raises AuthError
     bad_adapter = JwtSecurityAdapter(
         secret_key="secret-key-1234567890-thirty-two-bytes-key",
         algorithm="UNSUPPORTED_ALG",

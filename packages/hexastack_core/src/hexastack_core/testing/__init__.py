@@ -2,6 +2,9 @@ from hexastack_core.testing.architecture import (
     assert_clean_architecture,
     get_layer_restrictions,
 )
+from hexastack_core.testing.clock import (
+    freeze_time,
+)
 from hexastack_core.testing.flags import (
     require_extra,
     require_feature,
@@ -32,6 +35,7 @@ __all__ = [
     "create_test_runtime",
     "faker_strategy",
     "flag_scope",
+    "freeze_time",
     "generate_synthetic_payload",
     "get_layer_restrictions",
     "isolate_registries",

@@ -161,7 +161,39 @@ The reference oracle should be trivially simple (e.g. pure Python `list` or `dic
 
 ---
 
-## 5. Developer Commands (Hexaqual Suite)
+## 5. Deterministic Time Travel & Clock Mocking (`time-machine`)
+
+Testing time-sensitive operations (cache TTLs, sliding-window rate limiters, token expiration, lease renewals) with `time.sleep` or ad-hoc monkey-patching introduces nondeterminism, test flakiness, and slowdowns across parallel `pytest-xdist` workers.
+
+Hexastack integrates **`time-machine`** via [`hexastack_core.testing.freeze_time`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/testing/clock.py) for C-level clock manipulation without event loop drift:
+
+```python
+from hexastack_core.testing import freeze_time
+
+# Synchronous context manager with manual time travel
+with freeze_time(1_700_000_000.0) as traveller:
+    cache.set("session:token", "abc", ttl_seconds=60)
+    assert cache.has("session:token") is True
+
+    # Advance the virtual clock instantaneously by 61 seconds
+    traveller.shift(61.0)
+    assert cache.has("session:token") is False
+
+# Function decorator
+@freeze_time(1_700_000_000.0)
+def test_token_expiration():
+    ...
+
+# Asynchronous context manager
+@pytest.mark.anyio
+async def test_async_workflow_timeout():
+    async with freeze_time(1_700_000_000.0) as traveller:
+        ...
+```
+
+---
+
+## 6. Developer Commands (Hexaqual Suite)
 
 Execute testing workflows using the `hexaqual test` toolsuite:
 

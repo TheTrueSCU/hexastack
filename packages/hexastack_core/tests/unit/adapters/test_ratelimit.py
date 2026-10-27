@@ -4,6 +4,7 @@ from hexastack_core.adapters.ratelimit import (
     InMemoryRateLimiter,
     _parse_rate_limit,
 )
+from hexastack_core.testing.clock import freeze_time
 
 
 def test_parse_rate_limit():
@@ -54,9 +55,7 @@ def test_parse_rate_limit():
         _parse_rate_limit("10/decade")
 
 
-def test_in_memory_rate_limiter_hits_and_resets(monkeypatch: pytest.MonkeyPatch):
-    import time
-
+def test_in_memory_rate_limiter_hits_and_resets():
     limiter = InMemoryRateLimiter()
 
     key = "user:123"
@@ -64,35 +63,33 @@ def test_in_memory_rate_limiter_hits_and_resets(monkeypatch: pytest.MonkeyPatch)
 
     assert limiter.get_reset_window(key, limit) == 0
 
-    current_time = 1000.0
-    monkeypatch.setattr(time, "time", lambda: current_time)
+    with freeze_time(1000.0) as traveller:
+        res1 = limiter.hit(key, limit)
+        assert res1 is True
+        res2 = limiter.hit(key, limit)
+        assert res2 is True
+        res3 = limiter.hit(key, limit)
+        assert res3 is True
+        # 4th hit exceeds 3/second
+        res4 = limiter.hit(key, limit)
+        assert res4 is False
 
-    res1 = limiter.hit(key, limit)
-    assert res1 is True
-    res2 = limiter.hit(key, limit)
-    assert res2 is True
-    res3 = limiter.hit(key, limit)
-    assert res3 is True
-    # 4th hit exceeds 3/second
-    res4 = limiter.hit(key, limit)
-    assert res4 is False
+        reset_window = limiter.get_reset_window(key, limit)
+        assert reset_window == 1
 
-    reset_window = limiter.get_reset_window(key, limit)
-    assert reset_window == 1
+        # Advance time past sliding window (1.1s later)
+        traveller.shift(1.1)
+        # Old hits are evicted, hit allowed
+        res5 = limiter.hit(key, limit)
+        assert res5 is True
+        assert len(limiter._hits[key]) == 1
 
-    # Advance time past sliding window (1.1s later)
-    current_time = 1001.1
-    # Old hits are evicted, hit allowed
-    res5 = limiter.hit(key, limit)
-    assert res5 is True
-    assert len(limiter._hits[key]) == 1
+        # Reset for different key is allowed
+        res_other = limiter.hit("user:456", limit)
+        assert res_other is True
 
-    # Reset for different key is allowed
-    res_other = limiter.hit("user:456", limit)
-    assert res_other is True
-
-    # Clear specific key
-    limiter.clear(key)
+        # Clear specific key
+        limiter.clear(key)
     assert key not in limiter._hits
     res_cleared = limiter.hit(key, limit)
     assert res_cleared is True

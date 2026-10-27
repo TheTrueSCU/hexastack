@@ -1,5 +1,4 @@
 import tempfile
-import time
 
 import pytest
 
@@ -7,6 +6,7 @@ from hexastack_core.adapters.cache.disk import (
     AsyncDiskCacheAdapter,
     DiskCacheAdapter,
 )
+from hexastack_core.testing.clock import freeze_time
 
 
 def test_disk_cache_adapter_sync_lifecycle():
@@ -29,12 +29,13 @@ def test_disk_cache_adapter_sync_lifecycle():
         deleted2 = cache.delete("user:1")
         assert deleted2 is False
 
-        # TTL expiration
-        cache.set("temp:key", "value", ttl_seconds=0.1)
-        assert cache.has("temp:key") is True
-        time.sleep(0.15)
-        assert cache.has("temp:key") is False
-        assert cache.get("temp:key") is None
+        # TTL expiration with deterministic time travel
+        with freeze_time(1_000.0) as traveller:
+            cache.set("temp:key", "value", ttl_seconds=60)
+            assert cache.has("temp:key") is True
+            traveller.shift(61.0)
+            assert cache.has("temp:key") is False
+            assert cache.get("temp:key") is None
 
         # Clear
         cache.set("k1", "v1")
