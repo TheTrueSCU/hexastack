@@ -8,12 +8,11 @@ Requires: pip install hexastack-db[migrations]
 
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from hexastack_core.domain.exceptions import MissingDependencyError
 from hexastack_core.utils.fs import atomic_write_text
+from hexastack_core.utils.imports import require_dependency
 from hexastack_db.domain.config import HexastackDatabaseConfig
 
 if TYPE_CHECKING:
@@ -113,11 +112,12 @@ def _require_alembic() -> None:
     Raises:
         MissingDependencyError: If alembic is not installed.
     """
-    if importlib.util.find_spec("alembic") is None:
-        raise MissingDependencyError(
-            "alembic is required for migration support. "
-            "Install via 'pip install hexastack-db[migrations]'."
-        )
+    require_dependency(
+        "alembic",
+        extra="migrations",
+        package="hexastack-db",
+        feature_name="database migrations",
+    )
 
 
 def get_alembic_config(

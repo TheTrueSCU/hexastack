@@ -131,8 +131,10 @@ def test_migration_commands_dispatch(tmp_path: Path):
 
 def test_require_alembic_missing():
     with (
-        patch("importlib.util.find_spec", return_value=None),
-        pytest.raises(MissingDependencyError, match="alembic is required"),
+        patch("importlib.import_module", side_effect=ImportError("No alembic")),
+        pytest.raises(
+            MissingDependencyError, match="Optional dependency 'alembic' is required"
+        ),
     ):
         _require_alembic()
 
@@ -147,7 +149,9 @@ def test_run_check_and_missing_alembic(tmp_path: Path):
         mock_check.assert_called_once_with(cfg)
 
     with (
-        patch("importlib.util.find_spec", return_value=None),
-        pytest.raises(MissingDependencyError, match="alembic is required"),
+        patch("importlib.import_module", side_effect=ImportError("No alembic")),
+        pytest.raises(
+            MissingDependencyError, match="Optional dependency 'alembic' is required"
+        ),
     ):
         _require_alembic()

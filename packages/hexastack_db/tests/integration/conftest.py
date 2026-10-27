@@ -1,9 +1,8 @@
-import importlib
-import importlib.util
 from collections.abc import Generator
-from typing import Any
 
 import pytest
+
+from hexastack_core.utils.imports import optional_dependency
 
 
 @pytest.fixture(scope="session")
@@ -16,19 +15,18 @@ def postgres_url() -> Generator[str]:
         falls back to in-memory SQLite with full schema creation.
     """
     has_docker = False
-    spec_tc = importlib.util.find_spec("testcontainers")
-    spec_dk = importlib.util.find_spec("docker")
-    if spec_tc is not None and spec_dk is not None:
+    docker_module = optional_dependency("docker")
+    tc_pg = optional_dependency("testcontainers.postgres")
+
+    if docker_module is not None and tc_pg is not None:
         try:
-            docker_module = importlib.import_module("docker")
             client = docker_module.from_env()
             client.ping()
             has_docker = True
         except Exception:
             has_docker = False
 
-    if has_docker:
-        tc_pg: Any = importlib.import_module("testcontainers.postgres")
+    if has_docker and tc_pg is not None:
         container = tc_pg.PostgresContainer("postgres:16-alpine")
         with container as postgres:
             yield postgres.get_connection_url()
