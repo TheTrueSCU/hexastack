@@ -1,4 +1,3 @@
-import importlib.util
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -7,6 +6,7 @@ from hexastack_core.domain.exceptions import (
     HexastackError,
     MissingDependencyError,
 )
+from hexastack_core.testing import require_extra
 from hexastack_core.utils.context import (
     UserContext,
     correlation_id_ctx,
@@ -79,10 +79,11 @@ def test_structlog_adapter_all_methods_and_mock():
     user_ctx.reset(user_token)
 
 
-def test_structlog_adapter_default_constructor():
-    if importlib.util.find_spec("structlog") is not None:
-        adapter = StructlogAdapter()
-        assert adapter._logger is not None
+@require_extra("structlog")
+def test_structlog_adapter_default_constructor() -> None:
+    adapter = StructlogAdapter()
+    logger = adapter._logger
+    assert logger is not None
 
 
 def test_structlog_adapter_missing_dependency():

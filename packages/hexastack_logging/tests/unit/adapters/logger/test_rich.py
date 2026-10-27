@@ -1,4 +1,3 @@
-import importlib.util
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -7,6 +6,7 @@ from hexastack_core.domain.exceptions import (
     HexastackError,
     MissingDependencyError,
 )
+from hexastack_core.testing import require_extra
 from hexastack_core.utils.context import (
     correlation_id_ctx,
     set_correlation_id,
@@ -54,10 +54,11 @@ def test_rich_logger_all_methods_and_console_mock():
     correlation_id_ctx.reset(corr_token)
 
 
-def test_rich_logger_default_constructor():
-    if importlib.util.find_spec("rich") is not None:
-        logger = RichLogger()
-        assert logger._console is not None
+@require_extra("rich")
+def test_rich_logger_default_constructor() -> None:
+    logger = RichLogger()
+    console = logger._console
+    assert console is not None
 
 
 def test_rich_logger_missing_dependency():
