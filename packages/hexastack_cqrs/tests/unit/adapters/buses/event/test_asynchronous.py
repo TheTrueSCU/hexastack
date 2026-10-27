@@ -19,8 +19,10 @@ class OrderCreated(Event):
 def test_huey_event_bus_missing_dependency():
     huey = MemoryHuey()
     with (
-        patch("importlib.util.find_spec", return_value=None),
-        pytest.raises(MissingDependencyError, match="huey is required"),
+        patch("importlib.import_module", side_effect=ImportError("No huey")),
+        pytest.raises(
+            MissingDependencyError, match="Optional dependency 'huey' is required"
+        ),
     ):
         HueyEventBus(huey=huey)
 

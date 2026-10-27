@@ -1,10 +1,9 @@
-import importlib.util
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any
 
 from hexastack_core.domain import Event, Generic
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils.imports import require_dependency
 from hexastack_cqrs.ports.buses import EventBusPort, MiddlewarePort
 
 if TYPE_CHECKING:
@@ -34,11 +33,12 @@ class HueyEventBus(EventBusPort):
         Raises:
             MissingDependencyError: If huey package is not installed.
         """
-        if importlib.util.find_spec("huey") is None:
-            raise MissingDependencyError(
-                "huey is required to use HueyEventBus. "
-                "Install via 'pip install hexastack-cqrs[huey]'."
-            )
+        require_dependency(
+            "huey",
+            extra="huey",
+            package="hexastack-cqrs",
+            feature_name="HueyEventBus",
+        )
 
         self._huey = huey
         self._middleware = list(middleware) if middleware is not None else []
