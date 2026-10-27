@@ -22,14 +22,16 @@ def test_spiffe_workload_adapter_errors_and_fetch():
     adapter = SpiffeWorkloadAdapter(trust_domain="custom.org")
 
     # 1. Normal fetch when spiffe is installed
-    with patch("importlib.util.find_spec", return_value=MagicMock()):
+    with patch("importlib.import_module", return_value=MagicMock()):
         token = adapter.fetch_jwt_svid(audience={"svc"})
         assert token == "dummy-jwt-svid"
 
     # 2. When spiffe is not found
     with (
-        patch("importlib.util.find_spec", return_value=None),
-        pytest.raises(MissingDependencyError),
+        patch("importlib.import_module", side_effect=ImportError("No spiffe")),
+        pytest.raises(
+            MissingDependencyError, match="Optional dependency 'spiffe' is required"
+        ),
     ):
         adapter.fetch_jwt_svid(audience={"svc"})
 
