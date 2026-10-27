@@ -175,10 +175,10 @@ def test_fastapi_graphql_router_mounting():
 
 def test_require_fastapi_missing():
     with (
-        patch("importlib.util.find_spec", return_value=None),
+        patch("importlib.import_module", side_effect=ImportError("No fastapi")),
         pytest.raises(
             MissingDependencyError,
-            match="fastapi is required for FastAPI GraphQL integration. Install via 'pip install hexastack-graphql\\[fastapi\\]'.",
+            match="Optional dependency 'fastapi' is required for FastAPI GraphQL integration",
         ) as exc_info,
     ):
         _require_fastapi()

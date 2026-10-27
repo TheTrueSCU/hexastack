@@ -1,4 +1,3 @@
-import importlib.util
 from dataclasses import dataclass
 from typing import Any
 
@@ -7,6 +6,7 @@ import strawberry
 from hexastack_core.infra.bootstrap import BootstrapContext
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_core.utils.imports import optional_dependency
 from hexastack_graphql.infra.autodiscovery import create_graphql_visitor
 from hexastack_graphql.infra.config import (
     HexastackGraphQLConfig,
@@ -72,7 +72,7 @@ class GraphQLBootstrapper(BootstrapperPort):
 
         # 3. Mount onto FastAPI app if available and configured
         router = None
-        if cfg.auto_mount_fastapi and importlib.util.find_spec("fastapi") is not None:
+        if cfg.auto_mount_fastapi and optional_dependency("fastapi") is not None:
             fastapi_app = context.properties.get("app")
             if fastapi_app is not None:
                 from hexastack_graphql.adapters.fastapi import (

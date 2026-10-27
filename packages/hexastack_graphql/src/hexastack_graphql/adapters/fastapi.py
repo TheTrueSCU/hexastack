@@ -1,10 +1,9 @@
-import importlib.util
 from typing import Any
 
 import strawberry
 from rodi import Container
 
-from hexastack_core.domain.exceptions import MissingDependencyError
+from hexastack_core.utils.imports import require_dependency
 from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
 from hexastack_graphql.domain.context import GraphQLContext
 
@@ -20,11 +19,12 @@ def _require_fastapi() -> None:
     Raises:
         MissingDependencyError: If fastapi is not installed.
     """
-    if importlib.util.find_spec("fastapi") is None:
-        raise MissingDependencyError(
-            "fastapi is required for FastAPI GraphQL integration. "
-            "Install via 'pip install hexastack-graphql[fastapi]'."
-        )
+    require_dependency(
+        "fastapi",
+        extra="fastapi",
+        package="hexastack-graphql",
+        feature_name="FastAPI GraphQL integration",
+    )
 
 
 def create_graphql_router(
