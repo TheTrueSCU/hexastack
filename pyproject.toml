@@ -69,6 +69,7 @@ dev = [
     "import-linter>=2.15",
     "inline-snapshot>=0.35.4",
     "janus>=2.0.0",
+    "jsonpointer>=3.0.0",
     "libcst>=1.9.0",
     "limits>=5.8.0",
     "locust>=2.46.6",

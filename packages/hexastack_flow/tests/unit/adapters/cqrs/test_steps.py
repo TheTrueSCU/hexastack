@@ -17,6 +17,7 @@ from hexastack_flow.adapters.cqrs.steps import (
     QueryStep,
     as_command_step,
     as_query_step,
+    resolve_context_pointer,
 )
 
 
@@ -131,3 +132,36 @@ def test_as_query_step_validation() -> None:
     mock_bus = MagicMock(spec=QueryBusPort)
     with pytest.raises(ValueError, match="Step name must not be empty"):
         as_query_step("", lambda ctx: DummyQuery(order_id="1"), mock_bus)
+
+
+def test_resolve_context_pointer() -> None:
+    """Validate resolve_context_pointer extracts nested inputs and metadata."""
+    ctx = StepContext(
+        run_id="run-42",
+        stage_name="execution",
+        step_name="process_payment",
+        inputs={
+            "user": {"id": 101, "email": "dev@hexastack.org"},
+            "items": ["book", "coffee"],
+        },
+        metadata={"tenant": "acme_corp"},
+    )
+
+    # 1. Direct inputs traversal
+    user_id = resolve_context_pointer(ctx, "/user/id")
+    assert user_id == 101
+
+    item_first = resolve_context_pointer(ctx, "/items/0")
+    assert item_first == "book"
+
+    # 2. Explicit /inputs traversal
+    email = resolve_context_pointer(ctx, "/inputs/user/email")
+    assert email == "dev@hexastack.org"
+
+    # 3. Metadata traversal
+    tenant = resolve_context_pointer(ctx, "/metadata/tenant")
+    assert tenant == "acme_corp"
+
+    # 4. Fallback default
+    fallback = resolve_context_pointer(ctx, "/nonexistent/path", default="missing")
+    assert fallback == "missing"

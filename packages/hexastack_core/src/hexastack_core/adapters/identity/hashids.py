@@ -9,11 +9,7 @@ Notes/Architectural Intent:
 from collections.abc import Sequence
 
 from hexastack_core.ports.identity import IdObfuscatorPort
-
-try:
-    from hashids import Hashids
-except ImportError:
-    Hashids = None  # type: ignore[assignment,misc]
+from hexastack_core.utils.imports import require_dependency
 
 
 class HashidsAdapter(IdObfuscatorPort):
@@ -33,15 +29,15 @@ class HashidsAdapter(IdObfuscatorPort):
             alphabet: Optional custom character set for generated tokens.
 
         Raises:
-            ImportError: If the 'hashids' package is not installed.
+            MissingDependencyError: If the 'hashids' package is not installed.
             ValueError: If min_length is negative.
         """
-        if Hashids is None:
-            msg = (
-                "The 'hashids' package is required to use HashidsAdapter. "
-                "Install it with 'pip install hexastack-core[identity]'."
-            )
-            raise ImportError(msg)
+        hashids_mod = require_dependency(
+            "hashids",
+            extra="identity",
+            package="hexastack-core",
+            feature_name="HashidsAdapter",
+        )
 
         if min_length < 0:
             msg = f"min_length must be non-negative, got {min_length}"
@@ -58,7 +54,7 @@ class HashidsAdapter(IdObfuscatorPort):
         if alphabet is not None:
             kwargs["alphabet"] = alphabet
 
-        self._hasher = Hashids(**kwargs)  # type: ignore[arg-type]
+        self._hasher = hashids_mod.Hashids(**kwargs)
 
     def encode(self, number: int) -> str:
         """Encode an integer into an obfuscated token.

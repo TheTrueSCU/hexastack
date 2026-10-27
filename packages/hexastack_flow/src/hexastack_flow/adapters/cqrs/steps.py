@@ -13,6 +13,8 @@ from hexaflow.domain.models import StepDefinition
 from hexaflow.domain.state import StepContext
 
 from hexastack_core.domain import Command, Query
+from hexastack_core.domain.exceptions import PointerResolutionError
+from hexastack_core.domain.pointers import resolve_pointer
 from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
 from hexastack_flow.domain.models import CqrsStepMetadata
 
@@ -21,6 +23,7 @@ __all__ = [
     "as_query_step",
     "CommandStep",
     "QueryStep",
+    "resolve_context_pointer",
 ]
 
 
@@ -198,3 +201,41 @@ def as_query_step(
         timeout_seconds=timeout_seconds,
         metadata=metadata,
     )
+
+
+def resolve_context_pointer(
+    ctx: StepContext,
+    pointer: str,
+    default: Any = None,
+) -> Any:
+    """Resolve an RFC 6901 pointer against a runtime StepContext.
+
+    Args:
+        ctx: Runtime StepContext provided by hexaflow engine.
+        pointer: RFC 6901 pointer string (e.g. '/inputs/user_id' or '/user/id').
+        default: Fallback value returned if the pointer cannot be resolved.
+
+    Returns:
+        Resolved value from inputs or metadata.
+
+    Raises:
+        PointerResolutionError: If pointer resolution fails and default is not provided.
+
+    Notes/Architectural Intent:
+        Enables declarative step input plumbing by extracting nested parameters
+        from previous steps or workflow arguments via standard RFC 6901 syntax.
+    """
+    inputs_dict = ctx.inputs or {}
+    if not pointer.startswith("/inputs") and not pointer.startswith("/metadata"):
+        try:
+            return resolve_pointer(inputs_dict, pointer)
+        except PointerResolutionError:
+            pass
+
+    root = {
+        "inputs": inputs_dict,
+        "metadata": ctx.metadata or {},
+        "run_id": ctx.run_id,
+        "step_name": ctx.step_name,
+    }
+    return resolve_pointer(root, pointer, default=default)

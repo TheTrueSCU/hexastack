@@ -124,6 +124,9 @@ pgvector = [
 postgresql = [
     "hexastack-db[postgresql]",
 ]
+pointers = [
+    "hexastack-core[pointers]",
+]
 profiling = [
     "locust>=2.46.6",
     "memray>=1.20.0",

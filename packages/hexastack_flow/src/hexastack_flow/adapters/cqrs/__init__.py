@@ -10,6 +10,7 @@ from hexastack_flow.adapters.cqrs.steps import (
     QueryStep,
     as_command_step,
     as_query_step,
+    resolve_context_pointer,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "CommandStep",
     "CqrsWorkflowRunner",
     "QueryStep",
+    "resolve_context_pointer",
 ]

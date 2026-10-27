@@ -12,6 +12,7 @@ from hypothesis import strategies as st
 
 from hexastack_core.adapters.identity.hashids import HashidsAdapter
 from hexastack_core.adapters.identity.in_memory import InMemoryIdObfuscator
+from hexastack_core.exceptions import MissingDependencyError
 
 
 def test_hashids_adapter_basic_roundtrip() -> None:
@@ -109,13 +110,13 @@ def test_hashids_adapter_invalid_min_length_raises() -> None:
 
 
 def test_hashids_adapter_missing_package(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test that missing hashids library raises helpful ImportError."""
-    import hexastack_core.adapters.identity.hashids as hashids_mod
+    """Test that missing hashids library raises helpful MissingDependencyError."""
+    import sys
 
-    monkeypatch.setattr(hashids_mod, "Hashids", None)
+    monkeypatch.setitem(sys.modules, "hashids", None)
 
-    with pytest.raises(ImportError, match="hexastack-core\\[identity\\]"):
-        hashids_mod.HashidsAdapter()
+    with pytest.raises(MissingDependencyError, match="hexastack-core\\[identity\\]"):
+        HashidsAdapter()
 
 
 @given(

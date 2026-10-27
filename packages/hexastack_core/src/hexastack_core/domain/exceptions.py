@@ -73,6 +73,15 @@ class StorageNotFoundError(StorageError, NotFoundError):
     """Domain exception raised when a requested storage object or path does not exist."""
 
 
+class PointerResolutionError(HexastackError):
+    """Domain exception raised when RFC 6901 JSON pointer evaluation or traversal fails.
+
+    Notes/Architectural Intent:
+        Standardizes pointer resolution failures across configuration overrides,
+        DAG step data passing, and JSON patch operations.
+    """
+
+
 __all__ = [
     "AuthenticationError",
     "CircuitBreakerError",
@@ -86,6 +95,7 @@ __all__ = [
     "MissingDependencyError",
     "NotFoundError",
     "PermissionDeniedError",
+    "PointerResolutionError",
     "StorageError",
     "StorageNotFoundError",
     "UnitOfWorkError",
