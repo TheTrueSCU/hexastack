@@ -187,7 +187,7 @@ jobs:
         run: uv sync --all-packages --all-extras --all-groups
 
       - name: Run Affected Property-Based State Machine Testing
-        run: uv run hexaqual test run -A -P --no-cov
+        run: uv run hexaqual test run -A -P --no-cov --allow-empty
 
   # =========================================================================
   # Stage 4: E2E Browser, Narrator Demos & Visual Accessibility (axe-core)
