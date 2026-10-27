@@ -98,6 +98,7 @@ dev = [
     "ruff>=0.16.6",
     "schemathesis>=4.28.0",
     "slowapi>=0.1.10",
+    "stackprinter>=0.2.11",
     "time-machine>=2.16.0",
     "ty>=0.0.84",
     "vulture>=2.16",

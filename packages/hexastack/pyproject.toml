@@ -35,6 +35,9 @@ db = [
 devtools = [
     "hexastack-ui[devtools]",
 ]
+diagnostics = [
+    "hexastack-logging[diagnostics]",
+]
 dlt = [
     "hexastack-events[dlt]",
 ]

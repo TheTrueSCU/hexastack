@@ -2186,6 +2186,9 @@ db = [
 devtools = [
     { name = "hexastack-ui", extra = ["devtools"] },
 ]
+diagnostics = [
+    { name = "hexastack-logging", extra = ["diagnostics"] },
+]
 dlt = [
     { name = "hexastack-events", extra = ["dlt"] },
 ]
@@ -2420,6 +2423,7 @@ requires-dist = [
     { name = "hexastack-grpc", extras = ["reflection"], marker = "extra == 'reflection'", editable = "packages/hexastack_grpc" },
     { name = "hexastack-logging", editable = "packages/hexastack_logging" },
     { name = "hexastack-logging", extras = ["all", "sentry"], marker = "extra == 'all'", editable = "packages/hexastack_logging" },
+    { name = "hexastack-logging", extras = ["diagnostics"], marker = "extra == 'diagnostics'", editable = "packages/hexastack_logging" },
     { name = "hexastack-logging", extras = ["loguru"], marker = "extra == 'loguru'", editable = "packages/hexastack_logging" },
     { name = "hexastack-logging", extras = ["rich"], marker = "extra == 'rich'", editable = "packages/hexastack_logging" },
     { name = "hexastack-logging", extras = ["sentry"], marker = "extra == 'sentry'", editable = "packages/hexastack_logging" },
@@ -2452,7 +2456,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "identity", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "pointers", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
+provides-extras = ["ai", "apprise", "auth", "cli", "db", "devtools", "diagnostics", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "graphql", "grpc", "huey", "identity", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "pointers", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -2952,7 +2956,11 @@ dependencies = [
 all = [
     { name = "loguru" },
     { name = "rich" },
+    { name = "stackprinter" },
     { name = "structlog" },
+]
+diagnostics = [
+    { name = "stackprinter" },
 ]
 loguru = [
     { name = "loguru" },
@@ -2975,10 +2983,12 @@ requires-dist = [
     { name = "rich", marker = "extra == 'all'", specifier = ">=13.0.0" },
     { name = "rich", marker = "extra == 'rich'", specifier = ">=13.0.0" },
     { name = "sentry-sdk", marker = "extra == 'sentry'", specifier = ">=2.0.0" },
+    { name = "stackprinter", marker = "extra == 'all'", specifier = ">=0.2.11" },
+    { name = "stackprinter", marker = "extra == 'diagnostics'", specifier = ">=0.2.11" },
     { name = "structlog", marker = "extra == 'all'", specifier = ">=24.0.0" },
     { name = "structlog", marker = "extra == 'structlog'", specifier = ">=24.0.0" },
 ]
-provides-extras = ["loguru", "rich", "structlog", "all", "sentry"]
+provides-extras = ["diagnostics", "loguru", "rich", "structlog", "all", "sentry"]
 
 [[package]]
 name = "hexastack-mcp"
@@ -3185,6 +3195,7 @@ dev = [
     { name = "ruff" },
     { name = "schemathesis" },
     { name = "slowapi" },
+    { name = "stackprinter" },
     { name = "time-machine" },
     { name = "ty" },
     { name = "vulture" },
@@ -3252,6 +3263,7 @@ dev = [
     { name = "ruff", specifier = ">=0.16.6" },
     { name = "schemathesis", specifier = ">=4.28.0" },
     { name = "slowapi", specifier = ">=0.1.10" },
+    { name = "stackprinter", specifier = ">=0.2.11" },
     { name = "time-machine", specifier = ">=2.16.0" },
     { name = "ty", specifier = ">=0.0.84" },
     { name = "vulture", specifier = ">=2.16" },
@@ -7115,6 +7127,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e4/be/0123026f719d1a7936f214a88b553bb5701e04ff2511147c1dab0c5035eb/sse_starlette-3.5.0.tar.gz", hash = "sha256:75de713aa8a9441513cc283220826da079d982770965b951e9437720e8bafdb2", size = 36794, upload-time = "2026-09-28T17:48:14.7Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/e4/cdda14023c316d71493bc54fdffc3dd006631b88866145c9d3cc33e0f1df/sse_starlette-3.5.0-py3-none-any.whl", hash = "sha256:3e6e1070df3f0f5d9cea81496de92dbb72f6721871d99748ece67441dd8b7997", size = 17407, upload-time = "2026-09-28T17:48:13.228Z" },
+]
+
+[[package]]
+name = "stackprinter"
+version = "0.2.13"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/fe/df1f85d63a26839bc58aee52005d3806d89bf719cc035931016f2d1247cd/stackprinter-0.2.13.tar.gz", hash = "sha256:6532f2473675927e38e0241212a341549c5d1329446d2b771bb9b1db8ecfca8e", size = 31520, upload-time = "2026-04-17T07:09:54.762Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/1e/4e0a83c46b6b7362104252561166557c21ffc00bfaf7a54b607e8fc639c3/stackprinter-0.2.13-py3-none-any.whl", hash = "sha256:3def92f858183501db773882a368f5dcd66b1fcad0a14923ab3d7b1fe758f3d2", size = 29550, upload-time = "2026-04-17T07:09:53.649Z" },
 ]
 
 [[package]]

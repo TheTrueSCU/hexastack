@@ -18,6 +18,7 @@ _DEFAULT_MASKED_KEYS = {
     "ssn",
     "token",
 }
+DEFAULT_MASKED_KEYS = frozenset(_DEFAULT_MASKED_KEYS)
 
 _DEFAULT_PATTERNS = [
     r"Bearer\s+[A-Za-z0-9\-\._~\+\/]+=*",
@@ -155,5 +156,6 @@ class LogSanitizer:
 
 
 __all__ = [
+    "DEFAULT_MASKED_KEYS",
     "LogSanitizer",
 ]

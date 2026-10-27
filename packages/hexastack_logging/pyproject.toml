@@ -13,12 +13,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+diagnostics = ["stackprinter>=0.2.11"]
 loguru = ["loguru>=0.7.0"]
 rich = ["rich>=13.0.0"]
 structlog = ["structlog>=24.0.0"]
 all = [
     "loguru>=0.7.0",
     "rich>=13.0.0",
+    "stackprinter>=0.2.11",
     "structlog>=24.0.0",
 ]
 sentry = [
