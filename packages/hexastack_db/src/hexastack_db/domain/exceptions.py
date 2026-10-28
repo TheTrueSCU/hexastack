@@ -19,6 +19,26 @@ class DatabaseConnectionError(DatabaseError):
     """
 
 
+class ColumnarQueryError(DatabaseError):
+    """Exception raised during zero-copy columnar projection or export execution.
+
+    Notes/Architectural Intent:
+        Wraps low-level Polars, PyArrow, or database cursor extraction failures
+        into domain persistence errors.
+    """
+
+    def __init__(self, message: str, query: str | None = None) -> None:
+        """Initialize ColumnarQueryError with optional query string.
+
+        Args:
+            message: Error description.
+            query: Optional SQL query string that caused the failure.
+        """
+        self.query = query
+        suffix = f" [query={query}]" if query else ""
+        super().__init__(f"{message}{suffix}")
+
+
 class EntityNotFoundError(DatabaseError):
     """Exception raised when a requested database entity cannot be found by ID or filter.
 
@@ -57,6 +77,7 @@ class UniqueConstraintViolationError(DatabaseError):
 
 
 __all__ = [
+    "ColumnarQueryError",
     "DatabaseConnectionError",
     "DatabaseError",
     "EntityNotFoundError",

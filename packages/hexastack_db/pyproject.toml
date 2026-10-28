@@ -30,6 +30,11 @@ duckdb = [
     "duckdb>=1.0.0",
     "pyarrow>=14.0.0",
 ]
+analytics = [
+    "connectorx>=0.4.0",
+    "polars>=1.0.0",
+    "pyarrow>=14.0.0",
+]
 migrations = [
     "alembic>=1.13.0",
 ]
@@ -37,8 +42,10 @@ all = [
     "aiosqlite>=0.20.0",
     "alembic>=1.13.0",
     "asyncpg>=0.30.0",
+    "connectorx>=0.4.0",
     "duckdb>=1.0.0",
     "pgvector>=0.3.0",
+    "polars>=1.0.0",
     "psycopg[binary]>=3.2.0",
     "pyarrow>=14.0.0",
 ]
@@ -63,6 +70,7 @@ containers = ["hexastack_db"]
 layers = [
     "infra",
     "adapters",
+    "ports",
     "domain",
 ]
 

@@ -18,6 +18,9 @@ dependencies = [
 ai = [
     "hexastack-ai",
 ]
+analytics = [
+    "hexastack-db[analytics]",
+]
 apprise = [
     "hexastack-events[apprise]",
 ]

@@ -1,3 +1,9 @@
+from hexastack_db.adapters.analytics import (
+    PolarsColumnarAdapter,
+)
+from hexastack_db.adapters.arrow_query import (
+    ArrowQueryHandler,
+)
 from hexastack_db.adapters.duckdb import (
     AsyncDuckDbRepository,
     DuckDbRepository,
@@ -17,6 +23,7 @@ from hexastack_db.adapters.vector import (
 )
 
 __all__ = [
+    "ArrowQueryHandler",
     "AsyncDuckDbRepository",
     "AsyncPgVectorStoreAdapter",
     "AsyncSqlAlchemyRepository",
@@ -24,6 +31,7 @@ __all__ = [
     "create_vector_table",
     "DuckDbRepository",
     "PgVectorStoreAdapter",
+    "PolarsColumnarAdapter",
     "SqlAlchemyRepository",
     "SqlAlchemyUnitOfWork",
 ]
