@@ -17,6 +17,10 @@ from hexastack_ai.adapters.memory.qdrant import (
     QdrantVectorMemoryAdapter,
 )
 from hexastack_ai.adapters.pydantic_ai import PydanticAiAgentAdapter
+from hexastack_ai.adapters.tokens import (
+    LocalTokenizerAdapter,
+    TokenTelemetryHook,
+)
 
 __all__ = [
     "AsyncInMemoryVectorMemoryAdapter",
@@ -26,8 +30,10 @@ __all__ = [
     "create_mcp_client_tool",
     "InMemoryVectorMemoryAdapter",
     "LiteLlmAdapter",
+    "LocalTokenizerAdapter",
     "PgVectorMemoryAdapter",
     "PydanticAiAgentAdapter",
     "QdrantVectorMemoryAdapter",
     "SemanticVectorCache",
+    "TokenTelemetryHook",
 ]

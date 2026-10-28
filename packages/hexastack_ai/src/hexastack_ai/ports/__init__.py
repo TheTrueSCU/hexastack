@@ -6,10 +6,14 @@ from hexastack_ai.ports.memory import (
     SemanticCachePort,
     VectorMemoryPort,
 )
+from hexastack_ai.ports.tokens import (
+    TokenizerPort,
+)
 
 __all__ = [
     "AsyncSemanticCachePort",
     "AsyncVectorMemoryPort",
     "SemanticCachePort",
+    "TokenizerPort",
     "VectorMemoryPort",
 ]

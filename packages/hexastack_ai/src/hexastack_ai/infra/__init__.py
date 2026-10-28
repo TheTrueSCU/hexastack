@@ -12,6 +12,9 @@ from hexastack_ai.infra.config import (
     PydanticAiDialectConfig,
     register_ai_config,
 )
+from hexastack_ai.infra.tokens import (
+    TokenBudgetManager,
+)
 from hexastack_ai.infra.tools import (
     create_cqrs_agent,
     create_tool_for_message,
@@ -28,4 +31,5 @@ __all__ = [
     "PydanticAiDialectConfig",
     "register_ai_config",
     "SemanticQueryCacheMiddleware",
+    "TokenBudgetManager",
 ]

@@ -45,9 +45,59 @@ class AgentExecutionError(AiError):
     """Exception raised when an agent loop or tool execution fails."""
 
 
+class TokenLimitExceededError(AiError):
+    """Exception raised when token budget or context window limits are exceeded.
+
+    Notes/Architectural Intent:
+        Prevents outbound LLM requests from failing upstream at provider APIs with
+        context-length errors by failing fast locally.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        current_tokens: int,
+        max_tokens: int,
+        model: str | None = None,
+    ) -> None:
+        """Initialize TokenLimitExceededError with token counts and model context.
+
+        Args:
+            message: Error description.
+            current_tokens: Current token count exceeding the budget.
+            max_tokens: Maximum allowed token limit.
+            model: Optional model identifier.
+        """
+        self.current_tokens = current_tokens
+        self.max_tokens = max_tokens
+        self.model = model
+        suffix = f" [current={current_tokens}, max={max_tokens}, model={model}]"
+        super().__init__(f"{message}{suffix}")
+
+
+class TokenizerNotFoundError(AiError):
+    """Exception raised when a tokenizer cannot be resolved for a model.
+
+    Notes/Architectural Intent:
+        Signals missing tokenizer configurations or unsupported model encodings
+        during local token counting.
+    """
+
+    def __init__(self, model_or_encoding: str) -> None:
+        """Initialize TokenizerNotFoundError with target model or encoding.
+
+        Args:
+            model_or_encoding: The model name or encoding identifier that could not be resolved.
+        """
+        self.model_or_encoding = model_or_encoding
+        super().__init__(f"No suitable tokenizer found for: '{model_or_encoding}'")
+
+
 __all__ = [
     "AgentExecutionError",
     "AiError",
     "LlmProviderError",
     "StructuredOutputParsingError",
+    "TokenizerNotFoundError",
+    "TokenLimitExceededError",
 ]
