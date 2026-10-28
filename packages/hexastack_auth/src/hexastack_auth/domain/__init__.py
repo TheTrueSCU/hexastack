@@ -1,11 +1,30 @@
+from hexastack_auth.domain.commands import (
+    AuthenticateUserQuery,
+    OAuthLoginCommand,
+    RegisterUserCommand,
+    RequestPasswordResetCommand,
+    ResetPasswordCommand,
+    UpdateUserRoleCommand,
+    VerifyEmailCommand,
+)
+from hexastack_auth.domain.config import (
+    HexastackAuthConfig,
+    OpaConfig,
+    OpenFgaConfig,
+    SpiffeConfig,
+)
 from hexastack_auth.domain.exceptions import (
+    AccountInactiveError,
     AuthError,
     InsufficientPermissionsError,
     InvalidCredentialsError,
     InvalidTokenError,
     InvalidWebhookSignatureError,
+    OAuthProviderError,
     PasswordHashError,
     TokenExpiredError,
+    UserAlreadyExistsError,
+    UserNotFoundError,
     WebhookReplayError,
 )
 from hexastack_auth.domain.models import (
@@ -13,17 +32,44 @@ from hexastack_auth.domain.models import (
     Identity,
     TokenPayload,
 )
+from hexastack_auth.domain.user import (
+    OAuthAccount,
+    OAuthUserInfo,
+    TokenType,
+    User,
+    VerificationToken,
+)
 
 __all__ = [
+    "AccountInactiveError",
     "AnonymousIdentity",
+    "AuthenticateUserQuery",
     "AuthError",
+    "HexastackAuthConfig",
     "Identity",
     "InsufficientPermissionsError",
     "InvalidCredentialsError",
     "InvalidTokenError",
     "InvalidWebhookSignatureError",
+    "OAuthAccount",
+    "OAuthLoginCommand",
+    "OAuthProviderError",
+    "OAuthUserInfo",
+    "OpaConfig",
+    "OpenFgaConfig",
     "PasswordHashError",
+    "RegisterUserCommand",
+    "RequestPasswordResetCommand",
+    "ResetPasswordCommand",
+    "SpiffeConfig",
     "TokenExpiredError",
     "TokenPayload",
+    "TokenType",
+    "UpdateUserRoleCommand",
+    "User",
+    "UserAlreadyExistsError",
+    "UserNotFoundError",
+    "VerificationToken",
+    "VerifyEmailCommand",
     "WebhookReplayError",
 ]

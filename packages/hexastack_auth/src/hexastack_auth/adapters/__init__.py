@@ -1,13 +1,28 @@
 from hexastack_auth.adapters.grpc import AuthServerInterceptor
+from hexastack_auth.adapters.handlers import UserLifecycleHandlers
 from hexastack_auth.adapters.in_memory import (
     InMemoryPasswordHasher,
     InMemorySecurityService,
 )
 from hexastack_auth.adapters.jwt import JwtSecurityAdapter
+from hexastack_auth.adapters.oauth import (
+    BaseOAuthProvider,
+    GenericOidcProvider,
+    GitHubOAuthProvider,
+    GoogleOAuthProvider,
+)
 from hexastack_auth.adapters.opa import OpaPolicyAdapter
 from hexastack_auth.adapters.openfga import OpenFgaPolicyAdapter
-from hexastack_auth.adapters.password import Pbkdf2PasswordHasher
+from hexastack_auth.adapters.password import (
+    Argon2PasswordHasher,
+    BcryptPasswordHasher,
+    Pbkdf2PasswordHasher,
+)
 from hexastack_auth.adapters.spiffe import SpiffeWorkloadAdapter
+from hexastack_auth.adapters.user_repository import (
+    InMemoryTokenStore,
+    InMemoryUserRepository,
+)
 from hexastack_auth.adapters.webhook import (
     GitHubWebhookVerifier,
     HmacSha256Verifier,
@@ -17,11 +32,19 @@ from hexastack_auth.adapters.webhook import (
 )
 
 __all__ = [
+    "Argon2PasswordHasher",
     "AuthServerInterceptor",
+    "BaseOAuthProvider",
+    "BcryptPasswordHasher",
+    "GenericOidcProvider",
+    "GitHubOAuthProvider",
     "GitHubWebhookVerifier",
+    "GoogleOAuthProvider",
     "HmacSha256Verifier",
     "InMemoryPasswordHasher",
     "InMemorySecurityService",
+    "InMemoryTokenStore",
+    "InMemoryUserRepository",
     "JwtSecurityAdapter",
     "OpaPolicyAdapter",
     "OpenFgaPolicyAdapter",
@@ -30,4 +53,5 @@ __all__ = [
     "StandardWebhooksVerifier",
     "StripeWebhookVerifier",
     "SvixWebhookVerifier",
+    "UserLifecycleHandlers",
 ]

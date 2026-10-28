@@ -1,10 +1,25 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 from rodi import Container
 
-from hexastack_auth.adapters.fastapi import require_policy, require_relation
+from hexastack_auth.adapters.fastapi import (
+    create_auth_router,
+    create_oauth_router,
+    require_policy,
+    require_relation,
+)
+from hexastack_auth.adapters.handlers import UserLifecycleHandlers
+from hexastack_auth.adapters.jwt import JwtSecurityAdapter
+from hexastack_auth.adapters.oauth import GoogleOAuthProvider
+from hexastack_auth.adapters.password import Pbkdf2PasswordHasher
+from hexastack_auth.adapters.user_repository import (
+    InMemoryTokenStore,
+    InMemoryUserRepository,
+)
+from hexastack_auth.domain.exceptions import OAuthProviderError
+from hexastack_auth.domain.user import OAuthUserInfo
 from hexastack_auth.ports.policy import AuthorizationPolicyPort
 from hexastack_core.utils.context import (
     UserContext,
@@ -181,3 +196,187 @@ def test_fastapi_require_relation_custom_status_code_and_detail():
     res = client.get("/workspace/ws-99")
     assert res.status_code == 404
     assert res.json()["detail"] == "Workspace not found or access denied."
+
+
+def test_create_auth_router_complete_lifecycle():
+    user_repo = InMemoryUserRepository()
+    token_store = InMemoryTokenStore()
+    hasher = Pbkdf2PasswordHasher(iterations=10_000)
+    handlers = UserLifecycleHandlers(
+        user_repository=user_repo,
+        token_store=token_store,
+        password_hasher=hasher,
+    )
+    jwt_adapter = JwtSecurityAdapter(secret_key="unit-test-secret-key-32-bytes-long!")
+
+    router = create_auth_router(
+        handlers=handlers,
+        jwt_adapter=jwt_adapter,
+        cookie_name="test_session",
+    )
+
+    app = FastAPI()
+    app.include_router(router)
+    client = TestClient(app)
+
+    # 1. Register new user
+    reg_payload = {
+        "email": "user@example.com",
+        "password": "Password123!",  # pragma: allowlist secret
+    }
+    res_reg = client.post("/auth/register", json=reg_payload)
+    assert res_reg.status_code == 201
+    user_data = res_reg.json()
+    assert user_data["email"] == "user@example.com"
+    assert user_data["is_verified"] is False
+    assert user_data["is_active"] is True
+
+    # 2. Duplicate registration -> 409 Conflict
+    res_dup = client.post("/auth/register", json=reg_payload)
+    assert res_dup.status_code == 409
+
+    # 3. Invalid payload (password < 8 chars) -> 422
+    res_invalid_req = client.post(
+        "/auth/register",
+        json={
+            "email": "bad@example.com",
+            "password": "short",  # pragma: allowlist secret
+        },
+    )
+    assert res_invalid_req.status_code == 422
+
+    # 4. Login -> 200 with JWT and Cookie
+    login_payload = {
+        "email": "user@example.com",
+        "password": "Password123!",  # pragma: allowlist secret
+    }
+    res_login = client.post("/auth/login", json=login_payload)
+    assert res_login.status_code == 200
+    token_data = res_login.json()
+    assert "access_token" in token_data
+    assert "test_session" in res_login.cookies
+
+    # 5. Login with invalid password -> 401
+    bad_login = {
+        "email": "user@example.com",
+        "password": "WrongPassword!",  # pragma: allowlist secret
+    }
+    res_bad_login = client.post("/auth/login", json=bad_login)
+    assert res_bad_login.status_code == 401
+
+    # 6. Verify email
+    # Extract verification token directly from token_store for deterministic test
+    token_obj = next(iter(token_store._tokens.values()))
+    res_verify = client.post("/auth/verify", json={"token": token_obj.token})
+    assert res_verify.status_code == 200
+    verified_data = res_verify.json()
+    assert verified_data["is_verified"] is True
+
+    # 7. Verify with invalid token -> 400
+    res_bad_verify = client.post(
+        "/auth/verify", json={"token": "invalid_or_consumed_token"}
+    )
+    assert res_bad_verify.status_code == 400
+
+    # 8. Forgot password -> 200
+    res_forgot = client.post(
+        "/auth/forgot-password", json={"email": "user@example.com"}
+    )
+    assert res_forgot.status_code == 200
+    assert res_forgot.json()["status"] == "ok"
+
+    # 9. Reset password
+    reset_token_obj = next(
+        t for t in token_store._tokens.values() if t.token_type == "password_reset"
+    )
+    res_reset = client.post(
+        "/auth/reset-password",
+        json={
+            "token": reset_token_obj.token,
+            "new_password": "NewSecretPassword123!",  # pragma: allowlist secret
+        },
+    )
+    assert res_reset.status_code == 200
+
+    # 10. Login with new password
+    res_new_login = client.post(
+        "/auth/login",
+        json={
+            "email": "user@example.com",
+            "password": "NewSecretPassword123!",  # pragma: allowlist secret
+        },
+    )
+    assert res_new_login.status_code == 200
+
+    # 11. Inactive account -> 403 Forbidden
+    persisted = user_repo.get_by_email("user@example.com")
+    assert persisted is not None
+    persisted.is_active = False
+    user_repo.save(persisted)
+
+    res_inactive = client.post(
+        "/auth/login",
+        json={
+            "email": "user@example.com",
+            "password": "NewSecretPassword123!",  # pragma: allowlist secret
+        },
+    )
+    assert res_inactive.status_code == 403
+
+
+def test_create_oauth_router_flow():
+    user_repo = InMemoryUserRepository()
+    token_store = InMemoryTokenStore()
+    handlers = UserLifecycleHandlers(user_repository=user_repo, token_store=token_store)
+    jwt_adapter = JwtSecurityAdapter(secret_key="unit-test-secret-key-32-bytes-long!")
+
+    provider = GoogleOAuthProvider(
+        client_id="mock_client_id",
+        client_secret="mock_client_secret",  # pragma: allowlist secret
+    )
+
+    router = create_oauth_router(
+        oauth_provider=provider,
+        handlers=handlers,
+        jwt_adapter=jwt_adapter,
+        redirect_uri="http://localhost:8000/auth/oauth/callback",
+    )
+
+    app = FastAPI()
+    app.include_router(router)
+    client = TestClient(app, follow_redirects=False)
+
+    # 1. Authorize redirect
+    res_auth = client.get("/auth/oauth/google/authorize")
+    assert res_auth.status_code == 307
+    location = res_auth.headers.get("location", "")
+    assert location.startswith("https://accounts.google.com/o/oauth2/v2/auth")
+    assert "client_id=mock_client_id" in location
+
+    # 2. Callback success
+    mock_user_info = OAuthUserInfo(
+        provider="google",
+        account_id="google-sub-42",
+        email="oauth_dev@example.com",
+        name="OAuth Dev",
+    )
+    provider.exchange_code = AsyncMock(return_value=mock_user_info)  # type: ignore[method-assign]
+
+    res_callback = client.get("/auth/oauth/google/callback?code=valid_code&state=xyz")
+    assert res_callback.status_code == 200
+    token_data = res_callback.json()
+    assert "access_token" in token_data
+
+    # Verify user was created in repository
+    user = user_repo.get_by_email("oauth_dev@example.com")
+    assert user is not None
+    assert user.is_verified is True
+    assert len(user.oauth_accounts) == 1
+
+    # 3. Callback error from OAuth provider
+    provider.exchange_code = AsyncMock(
+        side_effect=OAuthProviderError("google", "Token exchange error")
+    )  # type: ignore[method-assign]
+    res_err = client.get("/auth/oauth/google/callback?code=bad_code")
+    assert res_err.status_code == 400
+    assert "Token exchange error" in res_err.json()["detail"]

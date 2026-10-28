@@ -21,6 +21,9 @@ ai = [
 analytics = [
     "hexastack-db[analytics]",
 ]
+argon2 = [
+    "hexastack-auth[argon2]",
+]
 apprise = [
     "hexastack-events[apprise]",
 ]
@@ -30,6 +33,9 @@ async = [
 ]
 auth = [
     "hexastack-auth",
+]
+bcrypt = [
+    "hexastack-auth[bcrypt]",
 ]
 cli = [
     "hexastack-cli",
@@ -226,7 +232,7 @@ ziti = [
 
 all = [
     "hexastack-ai[all]",
-    "hexastack-auth",
+    "hexastack-auth[all]",
     "hexastack-cli",
     "hexastack-core[ssh]",
     "hexastack-db[all]",

@@ -73,13 +73,86 @@ class WebhookReplayError(AuthenticationError, AuthError):
     """
 
 
+class UserAlreadyExistsError(AuthError):
+    """Exception raised when registering a user with an already registered email.
+
+    Notes/Architectural Intent:
+        Prevents duplicate user accounts and signals registration conflict.
+    """
+
+    def __init__(self, email: str) -> None:
+        """Initialize with conflicting email.
+
+        Args:
+            email: Conflicting email address.
+        """
+        self.email = email
+        super().__init__(f"User with email '{email}' already exists.")
+
+
+class UserNotFoundError(AuthError):
+    """Exception raised when a requested user cannot be found by ID or email.
+
+    Notes/Architectural Intent:
+        Provides clear domain diagnostics when querying nonexistent user records.
+    """
+
+    def __init__(self, identifier: str) -> None:
+        """Initialize with user identifier.
+
+        Args:
+            identifier: User ID or email searched.
+        """
+        self.identifier = identifier
+        super().__init__(f"User '{identifier}' not found.")
+
+
+class AccountInactiveError(AuthError):
+    """Exception raised when an inactive or deactivated user attempts authentication.
+
+    Notes/Architectural Intent:
+        Enforces user deactivation state across login and credential checks.
+    """
+
+    def __init__(self, user_id: str) -> None:
+        """Initialize with deactivated user ID.
+
+        Args:
+            user_id: Deactivated user identifier.
+        """
+        self.user_id = user_id
+        super().__init__(f"Account for user '{user_id}' is deactivated.")
+
+
+class OAuthProviderError(AuthError):
+    """Exception raised when an upstream OAuth2/OIDC provider interaction fails.
+
+    Notes/Architectural Intent:
+        Encapsulates token exchange or user-info retrieval failures from external IdPs.
+    """
+
+    def __init__(self, provider: str, message: str) -> None:
+        """Initialize with provider name and failure message.
+
+        Args:
+            provider: Identity provider name (e.g. 'google', 'github').
+            message: Descriptive failure message.
+        """
+        self.provider = provider
+        super().__init__(f"OAuth2 provider '{provider}' error: {message}")
+
+
 __all__ = [
+    "AccountInactiveError",
     "AuthError",
     "InsufficientPermissionsError",
     "InvalidCredentialsError",
     "InvalidTokenError",
     "InvalidWebhookSignatureError",
+    "OAuthProviderError",
     "PasswordHashError",
     "TokenExpiredError",
+    "UserAlreadyExistsError",
+    "UserNotFoundError",
     "WebhookReplayError",
 ]
