@@ -31,6 +31,14 @@ class UnauthorizedAccessError(HexastackError):
     pass
 
 
+class InvalidWebhookSignatureError(HexastackError):
+    pass
+
+
+class WebhookReplayError(HexastackError):
+    pass
+
+
 class ForbiddenActionError(HexastackError):
     pass
 
@@ -90,6 +98,20 @@ def _build_app(*error_routes: tuple) -> tuple[FastAPI, TestClient]:
             401,
             "UnauthorizedAccessError",
         ),
+        (
+            InvalidWebhookSignatureError,
+            "/webhook-invalid",
+            "Signature mismatch",
+            401,
+            "InvalidWebhookSignatureError",
+        ),
+        (
+            WebhookReplayError,
+            "/webhook-replay",
+            "Timestamp expired",
+            401,
+            "WebhookReplayError",
+        ),
         (ForbiddenActionError, "/forbidden", "No access", 403, "ForbiddenActionError"),
         (PayloadValidationError, "/val", "Bad payload", 422, "PayloadValidationError"),
         (GenericDomainError, "/generic", "Something broke", 400, "GenericDomainError"),
@@ -98,6 +120,8 @@ def _build_app(*error_routes: tuple) -> tuple[FastAPI, TestClient]:
         "not_found",
         "conflict",
         "unauthorized",
+        "webhook_invalid_signature",
+        "webhook_replay",
         "forbidden",
         "validation",
         "generic_400",

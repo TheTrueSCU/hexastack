@@ -15,15 +15,15 @@ _ROUTE_METADATA_ATTR = "__hexastack_route__"
 
 @dataclass(frozen=True)
 class RouteMetadata:
-    """Metadata describing an HTTP endpoint binding for a Command or Query.
+    """Metadata describing an HTTP endpoint binding for a Command, Query, or Webhook.
 
     Notes/Architectural Intent:
         Carries routing parameters attached by decorators for automated endpoint registration,
-        including optional feature flag gating and rate limiting.
+        including optional feature flag gating, rate limiting, and webhook verification.
     """
 
     path: str
-    kind: Literal["command", "query"]
+    kind: Literal["command", "query", "webhook"]
     method: str = "POST"
     status_code: int = 200
     output_format: str | None = None
@@ -31,6 +31,8 @@ class RouteMetadata:
     tags: tuple[str | Enum, ...] | None = None
     feature_flag: str | None = None
     rate_limit: str | None = None
+    verifier: Any | None = None
+    secret: str | Callable[[], str] | None = None
 
 
 __all__ = [
@@ -38,6 +40,7 @@ __all__ = [
     "api_query",
     "feature_flag_route",
     "RouteMetadata",
+    "webhook_receiver",
 ]
 
 
@@ -204,5 +207,61 @@ def feature_flag_route(
             return fn(*args, **kwargs)
 
         return sync_wrapped
+
+    return decorator
+
+
+def webhook_receiver(
+    path: str,
+    *,
+    verifier: Any,
+    secret: str | Callable[[], str],
+    method: str = "POST",
+    status_code: int = 200,
+    output_format: str | None = None,
+    summary: str | None = None,
+    tags: list[str | Enum] | None = None,
+    feature_flag: str | None = None,
+    rate_limit: str | None = None,
+) -> Callable[[type[TCommand]], type[TCommand]]:
+    """Decorator marking a Command class as an authenticated webhook receiver endpoint.
+
+    Args:
+        path: URL path for the webhook route.
+        verifier: WebhookSignatureVerifierPort instance (e.g. GitHubWebhookVerifier, StripeWebhookVerifier).
+        secret: Webhook shared secret string or zero-argument callable returning secret.
+        method: HTTP method (defaults to 'POST').
+        status_code: Success HTTP status code (defaults to 200).
+        output_format: Optional presenter format.
+        summary: Optional OpenAPI summary.
+        tags: Optional OpenAPI tags.
+        feature_flag: Optional feature flag key required for endpoint execution.
+        rate_limit: Optional rate limit string (e.g. '60/minute').
+
+    Returns:
+        Class decorator returning the decorated Command class.
+
+    Notes/Architectural Intent:
+        Binds inbound webhook signature verification directly to CQRS Commands,
+        ensuring raw body preservation for bit-accurate cryptographic hash checks
+        prior to deserialization and pipeline dispatch.
+    """
+
+    def decorator(cls: type[TCommand]) -> type[TCommand]:
+        meta = RouteMetadata(
+            path=path,
+            kind="webhook",
+            method=method,
+            status_code=status_code,
+            output_format=output_format,
+            summary=summary or f"Webhook receiver for {cls.__name__}",
+            tags=tuple(tags) if tags else None,
+            feature_flag=feature_flag,
+            rate_limit=rate_limit,
+            verifier=verifier,
+            secret=secret,
+        )
+        setattr(cls, _ROUTE_METADATA_ATTR, meta)
+        return cls
 
     return decorator

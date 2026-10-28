@@ -8,9 +8,18 @@ from hexastack_auth.adapters.opa import OpaPolicyAdapter
 from hexastack_auth.adapters.openfga import OpenFgaPolicyAdapter
 from hexastack_auth.adapters.password import Pbkdf2PasswordHasher
 from hexastack_auth.adapters.spiffe import SpiffeWorkloadAdapter
+from hexastack_auth.adapters.webhook import (
+    GitHubWebhookVerifier,
+    HmacSha256Verifier,
+    StandardWebhooksVerifier,
+    StripeWebhookVerifier,
+    SvixWebhookVerifier,
+)
 
 __all__ = [
     "AuthServerInterceptor",
+    "GitHubWebhookVerifier",
+    "HmacSha256Verifier",
     "InMemoryPasswordHasher",
     "InMemorySecurityService",
     "JwtSecurityAdapter",
@@ -18,4 +27,7 @@ __all__ = [
     "OpenFgaPolicyAdapter",
     "Pbkdf2PasswordHasher",
     "SpiffeWorkloadAdapter",
+    "StandardWebhooksVerifier",
+    "StripeWebhookVerifier",
+    "SvixWebhookVerifier",
 ]

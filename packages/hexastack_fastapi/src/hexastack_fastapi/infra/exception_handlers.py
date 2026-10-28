@@ -33,7 +33,14 @@ def _infer_status_code(exc: HexastackError) -> int:
     if any(k in exc_name for k in ("permission", "forbidden", "accessdenied")):
         return 403
     if any(
-        k in exc_name for k in ("unauthorized", "unauthenticated", "invalidcredential")
+        k in exc_name
+        for k in (
+            "invalidcredential",
+            "signature",
+            "unauthenticated",
+            "unauthorized",
+            "webhook",
+        )
     ):
         return 401
     if "validation" in exc_name:

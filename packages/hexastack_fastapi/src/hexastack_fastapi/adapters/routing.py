@@ -3,7 +3,7 @@ from collections.abc import Callable
 from enum import Enum
 from typing import Annotated, Any, cast
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from hexastack_core.domain import Command, Query
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
@@ -176,6 +176,71 @@ class CqrsRouter(APIRouter):
             response_class=EventSourceResponse,
         )
 
+    def add_webhook[TCommand: Command](
+        self,
+        path: str,
+        command_cls: type[TCommand],
+        *,
+        verifier: Any,
+        secret: str | Callable[[], str],
+        method: str = "POST",
+        status_code: int = 200,
+        output_format: str | None = None,
+        summary: str | None = None,
+        tags: list[str | Enum] | None = None,
+        feature_flag: str | None = None,
+        rate_limit: str | None = None,
+    ) -> None:
+        """Register an authenticated webhook receiver endpoint for a domain Command.
+
+        Args:
+            path: URL path for the route.
+            command_cls: Pydantic Command model class.
+            verifier: WebhookSignatureVerifierPort or duck-typed signature verifier.
+            secret: Shared secret string or zero-argument callable returning secret.
+            method: HTTP method (defaults to 'POST').
+            status_code: Success HTTP status code (defaults to 200).
+            output_format: Optional presenter format (e.g. 'json').
+            summary: Optional OpenAPI summary string.
+            tags: Optional OpenAPI tags list.
+            feature_flag: Optional feature flag key required for endpoint execution.
+            rate_limit: Optional rate limit string (e.g. '10/minute').
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+
+        Notes/Architectural Intent:
+            Binds inbound webhook signature verification directly to CQRS Commands,
+            ensuring raw body preservation for bit-accurate cryptographic hash checks
+            prior to deserialization and pipeline dispatch.
+        """
+        endpoint = _create_webhook_endpoint(
+            command_cls, verifier, secret, output_format
+        )
+        dependencies = []
+        if feature_flag:
+            from hexastack_fastapi.adapters.dependencies import require_feature
+
+            dependencies.append(Depends(require_feature(feature_flag)))
+        if rate_limit:
+            from hexastack_fastapi.adapters.dependencies import require_rate_limit
+
+            dependencies.append(Depends(require_rate_limit(rate_limit)))
+
+        self.add_api_route(
+            path=path,
+            endpoint=endpoint,
+            methods=[method.upper()],
+            status_code=status_code,
+            summary=summary or f"Webhook receiver for {command_cls.__name__}",
+            tags=tags,
+            dependencies=dependencies if dependencies else None,
+            response_model=None,
+        )
+
 
 __all__ = [
     "CqrsRouter",
@@ -319,3 +384,53 @@ def _create_streaming_query_endpoint(
     ]
     cast("Any", post_stream_endpoint).__signature__ = sig.replace(parameters=params)
     return post_stream_endpoint
+
+
+def _create_webhook_endpoint(
+    command_cls: type[Command],
+    verifier: Any,
+    secret: str | Callable[[], str],
+    output_format: str | None,
+) -> Callable[..., Any]:
+    """Dynamically construct a typed FastAPI webhook receiver endpoint."""
+
+    async def endpoint(
+        request: Request,
+        pipeline: Annotated[ExecutionPipeline, Depends(get_pipeline)],
+    ) -> Any:
+        raw_body = await request.body()
+        resolved_secret = secret() if callable(secret) else secret
+        try:
+            is_valid = verifier.verify(raw_body, request.headers, resolved_secret)
+            if is_valid is False:
+                raise HTTPException(status_code=401, detail="Invalid webhook signature")
+        except HTTPException:
+            raise
+        except Exception as exc:
+            exc_name = exc.__class__.__name__.lower()
+            if any(
+                k in exc_name
+                for k in ("invalid", "replay", "signature", "unauthorized", "webhook")
+            ):
+                raise HTTPException(status_code=401, detail=str(exc)) from exc
+            raise
+
+        cmd = command_cls.model_validate_json(raw_body) if raw_body else command_cls()
+        return pipeline.execute(cmd, output_format=output_format)
+
+    sig = inspect.signature(endpoint)
+    params = [
+        inspect.Parameter(
+            "request",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=Request,
+        ),
+        inspect.Parameter(
+            "pipeline",
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            annotation=ExecutionPipeline,
+            default=Depends(get_pipeline),
+        ),
+    ]
+    cast("Any", endpoint).__signature__ = sig.replace(parameters=params)
+    return endpoint

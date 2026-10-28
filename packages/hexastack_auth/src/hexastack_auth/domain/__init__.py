@@ -3,8 +3,10 @@ from hexastack_auth.domain.exceptions import (
     InsufficientPermissionsError,
     InvalidCredentialsError,
     InvalidTokenError,
+    InvalidWebhookSignatureError,
     PasswordHashError,
     TokenExpiredError,
+    WebhookReplayError,
 )
 from hexastack_auth.domain.models import (
     AnonymousIdentity,
@@ -19,7 +21,9 @@ __all__ = [
     "InsufficientPermissionsError",
     "InvalidCredentialsError",
     "InvalidTokenError",
+    "InvalidWebhookSignatureError",
     "PasswordHashError",
     "TokenExpiredError",
     "TokenPayload",
+    "WebhookReplayError",
 ]

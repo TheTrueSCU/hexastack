@@ -55,11 +55,31 @@ class PasswordHashError(AuthError):
     """
 
 
+class InvalidWebhookSignatureError(AuthenticationError, AuthError):
+    """Exception raised when an inbound webhook signature header fails cryptographic verification.
+
+    Notes/Architectural Intent:
+        Extends AuthenticationError to trigger 401 Unauthorized at HTTP boundaries
+        when incoming webhooks fail HMAC or vendor signature validity checks.
+    """
+
+
+class WebhookReplayError(AuthenticationError, AuthError):
+    """Exception raised when an inbound webhook timestamp exceeds allowable replay tolerance.
+
+    Notes/Architectural Intent:
+        Prevents replay attacks by rejecting webhooks whose signed timestamp is too old or
+        drifted into the future.
+    """
+
+
 __all__ = [
     "AuthError",
     "InsufficientPermissionsError",
     "InvalidCredentialsError",
     "InvalidTokenError",
+    "InvalidWebhookSignatureError",
     "PasswordHashError",
     "TokenExpiredError",
+    "WebhookReplayError",
 ]

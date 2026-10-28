@@ -439,3 +439,119 @@ def test_cqrs_router_streaming_query():
     assert res_post.status_code == 200
     assert "text/event-stream" in res_post.headers["content-type"]
     assert 'data: {"step": 1, "status": "running"}\n\n' in res_post.text
+
+
+class InboundWebhookCommand(Command):
+    event_type: str = "default_event"
+    payload_id: str = "none"
+
+
+class WebhookDTO(Generic):
+    event_type: str
+    status: str
+
+
+def test_cqrs_router_webhook_registration_and_execution():
+    handler_reg = HandlerRegistry()
+    presenter_reg = PresenterRegistry()
+
+    handler_reg.register(
+        InboundWebhookCommand,
+        lambda cmd: WebhookDTO(event_type=cmd.event_type, status="processed"),
+    )
+
+    class WebhookJsonPresenter(PresenterPort):
+        def present(self, instance: Generic) -> Any:
+            if isinstance(instance, WebhookDTO):
+                return {"event": instance.event_type, "status": instance.status}
+            return None
+
+    presenter_reg.register(WebhookDTO, "json", WebhookJsonPresenter())
+
+    pipeline = ExecutionPipeline(
+        command_bus=SynchronousCommandBus(handler_registry=handler_reg),
+        query_bus=SynchronousQueryBus(handler_registry=handler_reg),
+        event_bus=SynchronousEventBus(),
+        command_registry=CommandRegistry(),
+        query_registry=QueryRegistry(),
+        handler_registry=handler_reg,
+        presenter_registry=presenter_reg,
+    )
+
+    class MockVerifier:
+        def verify(self, payload: bytes, headers: dict, secret: str) -> bool:
+            if secret != "expected_secret":  # pragma: allowlist secret
+                return False
+            sig = headers.get("x-signature")
+            if sig == "fail_raise":
+
+                class CustomInvalidSignatureError(Exception):
+                    pass
+
+                raise CustomInvalidSignatureError("Corrupted signature")
+            return sig == "valid_token"
+
+    router = CqrsRouter(prefix="/webhooks")
+    router.add_webhook(
+        "/receiver",
+        InboundWebhookCommand,
+        verifier=MockVerifier(),
+        secret="expected_secret",  # pragma: allowlist secret
+        status_code=202,
+        output_format="json",
+        summary="Inbound Webhook Receiver",
+    )
+    router.add_webhook(
+        "/receiver-callable-secret",
+        InboundWebhookCommand,
+        verifier=MockVerifier(),
+        secret=lambda: "expected_secret",  # pragma: allowlist secret
+        status_code=200,
+    )
+
+    app = FastAPI()
+    app.state.pipeline = pipeline
+    app.include_router(router)
+
+    client = TestClient(app)
+
+    # 1. Valid signature with JSON payload
+    res_valid = client.post(
+        "/webhooks/receiver",
+        json={"event_type": "payment.succeeded", "payload_id": "pay_123"},
+        headers={"x-signature": "valid_token"},
+    )
+    assert res_valid.status_code == 202
+    assert res_valid.json() == {"event": "payment.succeeded", "status": "processed"}
+
+    # 2. Invalid signature returns 401
+    res_invalid = client.post(
+        "/webhooks/receiver",
+        json={"event_type": "payment.succeeded", "payload_id": "pay_123"},
+        headers={"x-signature": "bad_token"},
+    )
+    assert res_invalid.status_code == 401
+
+    # 3. Exception in verifier indicating signature error maps to 401
+    res_exc = client.post(
+        "/webhooks/receiver",
+        json={"event_type": "payment.succeeded", "payload_id": "pay_123"},
+        headers={"x-signature": "fail_raise"},
+    )
+    assert res_exc.status_code == 401
+
+    # 4. Callable secret resolution
+    res_callable = client.post(
+        "/webhooks/receiver-callable-secret",
+        json={"event_type": "callable.event", "payload_id": "call_456"},
+        headers={"x-signature": "valid_token"},
+    )
+    assert res_callable.status_code == 200
+
+    # 5. Empty payload executes default command values
+    res_empty = client.post(
+        "/webhooks/receiver-callable-secret",
+        content=b"",
+        headers={"x-signature": "valid_token"},
+    )
+    assert res_empty.status_code == 200

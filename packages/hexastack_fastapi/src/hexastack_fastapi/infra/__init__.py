@@ -15,6 +15,7 @@ from hexastack_fastapi.infra.decorators import (
     RouteMetadata,
     api_command,
     api_query,
+    webhook_receiver,
 )
 from hexastack_fastapi.infra.exception_handlers import (
     register_exception_handlers,
@@ -40,4 +41,5 @@ __all__ = [
     "RequestLoggingConfig",
     "RequestLoggingHttpMiddleware",
     "RouteMetadata",
+    "webhook_receiver",
 ]

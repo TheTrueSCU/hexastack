@@ -101,5 +101,24 @@ def create_route_visitor(router: CqrsRouter) -> DiscoveryVisitor:
                 feature_flag=meta.feature_flag,
                 rate_limit=meta.rate_limit,
             )
+        elif (
+            meta.kind == "webhook"
+            and meta.secret is not None
+            and isinstance(obj, type)
+            and issubclass(obj, Command)
+        ):
+            router.add_webhook(
+                path=meta.path,
+                command_cls=obj,
+                verifier=meta.verifier,
+                secret=meta.secret,
+                method=meta.method,
+                status_code=meta.status_code,
+                output_format=meta.output_format,
+                summary=meta.summary,
+                tags=tags,
+                feature_flag=meta.feature_flag,
+                rate_limit=meta.rate_limit,
+            )
 
     return visitor

@@ -6,6 +6,7 @@ from hexastack_fastapi.infra.decorators import (
     RouteMetadata,
     api_command,
     api_query,
+    webhook_receiver,
 )
 
 
@@ -213,3 +214,63 @@ async def test_feature_flag_route_decorator_async_fallback_no_req():
         return "async-val-ok"
 
     assert await async_allowed_handler() == "async-val-ok"
+
+
+def test_webhook_receiver_decorator_attaches_metadata():
+    class DummyVerifier:
+        def verify(self, payload: bytes, headers: dict, secret: str) -> bool:
+            return True
+
+    verifier = DummyVerifier()
+
+    @webhook_receiver(
+        "/webhooks/stripe",
+        verifier=verifier,
+        secret="whsec_test",  # pragma: allowlist secret
+        method="POST",
+        status_code=200,
+        output_format="json",
+        summary="Stripe incoming events",
+        tags=["Webhooks"],
+        feature_flag="webhooks.enabled",
+        rate_limit="100/minute",
+    )
+    class StripeWebhookCommand(Command):
+        event_id: str
+
+    meta: RouteMetadata = getattr(StripeWebhookCommand, _ROUTE_METADATA_ATTR)
+    assert meta.path == "/webhooks/stripe"
+    assert meta.kind == "webhook"
+    assert meta.verifier is verifier
+    assert meta.secret == "whsec_test"  # pragma: allowlist secret
+    assert meta.method == "POST"
+    assert meta.status_code == 200
+    assert meta.output_format == "json"
+    assert meta.summary == "Stripe incoming events"
+    assert meta.tags == ("Webhooks",)
+    assert meta.feature_flag == "webhooks.enabled"
+    assert meta.rate_limit == "100/minute"
+
+
+def test_webhook_receiver_decorator_defaults():
+    class DummyVerifier:
+        def verify(self, payload: bytes, headers: dict, secret: str) -> bool:
+            return True
+
+    @webhook_receiver(
+        "/webhooks/github",
+        verifier=DummyVerifier(),
+        secret=lambda: "secret_from_callable",  # pragma: allowlist secret
+    )
+    class GitHubWebhookCommand(Command):
+        pass
+
+    meta: RouteMetadata = getattr(GitHubWebhookCommand, _ROUTE_METADATA_ATTR)
+    assert meta.path == "/webhooks/github"
+    assert meta.kind == "webhook"
+    assert meta.summary == "Webhook receiver for GitHubWebhookCommand"
+    assert meta.method == "POST"
+    assert meta.status_code == 200
+    assert callable(meta.secret)
+    resolved_secret = meta.secret()
+    assert resolved_secret == "secret_from_callable"  # pragma: allowlist secret
