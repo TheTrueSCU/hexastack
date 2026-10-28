@@ -21,6 +21,10 @@ ai = [
 apprise = [
     "hexastack-events[apprise]",
 ]
+async = [
+    "hexastack-core[async]",
+    "hexastack-cqrs[async]",
+]
 auth = [
     "hexastack-auth",
 ]

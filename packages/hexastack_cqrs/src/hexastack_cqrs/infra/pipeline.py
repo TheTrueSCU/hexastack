@@ -1,7 +1,12 @@
+import inspect
 from typing import Any
 
 from hexastack_core.domain import Command, Event, Generic, HexastackError, Query
 from hexastack_core.infra import ExceptionRegistry
+from hexastack_core.utils.concurrency import (
+    asyncify,
+    is_coroutine_callable,
+)
 from hexastack_cqrs.adapters.buses.command.synchronous import (
     SynchronousCommandBus,
 )
@@ -167,6 +172,95 @@ class ExecutionPipeline(ExecutionPipelinePort):
         if matches:
             cls = matches[0]
             return self.execute(
+                cls.model_validate(payload), output_format=output_format
+            )
+
+        raise UnregisteredMessageError(
+            f"No Command or Query registered with name '{name}'"
+        )
+
+    async def execute_async(
+        self,
+        instance: Generic,
+        output_format: str | None = None,
+    ) -> Any:
+        """Asynchronously execute a Generic instance without blocking the active event loop.
+
+        Args:
+            instance: Command, Query, Event, or Generic instance to execute.
+            output_format: Optional format string for presenter (e.g. 'json', 'html').
+
+        Returns:
+            The presented result, raw execution result, or None for events.
+
+        Raises:
+            Exception: Propagates unhandled exceptions if unmapped by exception registry.
+
+        Notes/Architectural Intent:
+            Checks whether the registered handler is an asynchronous coroutine callable.
+            If async, invokes and awaits it natively on the event loop. If synchronous, offloads
+            execution to a worker thread via `asyncify`, ensuring non-blocking event-loop operation
+            with ambient context variable preservation.
+        """
+        handler = self._handler_registry.get(type(instance))
+        if handler is not None and is_coroutine_callable(handler):
+            try:
+                coro_or_res = self.execute(instance, output_format=None)
+                if inspect.iscoroutine(coro_or_res):
+                    raw_result = await coro_or_res
+                else:
+                    raw_result = coro_or_res
+
+                if output_format is not None and isinstance(raw_result, Generic):
+                    presented = self._presenter_registry.present(
+                        raw_result, output_format, reraise=False
+                    )
+                    return presented if presented is not None else raw_result
+
+                return raw_result
+            except Exception as exc:
+                if self._exception_registry is not None and (
+                    error_data := self._exception_registry.handle(exc, reraise=False)
+                ):
+                    return error_data
+                raise
+
+        return await asyncify(self.execute)(instance, output_format=output_format)
+
+    async def execute_by_name_async(
+        self,
+        name: str,
+        payload: dict[str, Any],
+        output_format: str | None = None,
+    ) -> Any:
+        """Asynchronously instantiate and execute a registered Command or Query.
+
+        Args:
+            name: Registered class name identifier.
+            payload: Parameter dictionary to validate into the message model.
+            output_format: Optional presenter format string.
+
+        Returns:
+            The presented or raw execution result.
+
+        Raises:
+            AmbiguousMessageError: If name is registered in multiple type registries.
+            UnregisteredMessageError: If name is not registered in any type registry.
+        """
+        matches = [
+            reg.get(name)
+            for reg in (self._command_registry, self._query_registry)
+            if name in reg
+        ]
+
+        if len(matches) > 1:
+            raise AmbiguousMessageError(
+                f"Ambiguous message name '{name}': registered in multiple type registries."
+            )
+
+        if matches:
+            cls = matches[0]
+            return await self.execute_async(
                 cls.model_validate(payload), output_format=output_format
             )
 

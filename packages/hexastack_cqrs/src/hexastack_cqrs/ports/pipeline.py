@@ -53,6 +53,56 @@ class ExecutionPipelinePort(ABC):
             PipelineError: If resolution or execution fails.
         """
 
+    async def execute_async(
+        self,
+        instance: Generic,
+        output_format: str | None = None,
+    ) -> Any:
+        """Asynchronously execute a Generic instance without blocking the active event loop.
+
+        Args:
+            instance: Command, Query, Event, or Generic instance to execute.
+            output_format: Optional target format ('json', 'dict', 'text', etc.).
+
+        Returns:
+            The presented or raw response data.
+
+        Raises:
+            PipelineError: If resolution, validation, or handler execution fails.
+
+        Notes/Architectural Intent:
+            Offloads synchronous command/query handlers to worker threads with full context
+            variable propagation via asyncify, while directly awaiting asynchronous coroutine handlers.
+        """
+        from hexastack_core.utils.concurrency import asyncify
+
+        return await asyncify(self.execute)(instance, output_format=output_format)
+
+    async def execute_by_name_async(
+        self,
+        name: str,
+        payload: dict[str, Any],
+        output_format: str | None = None,
+    ) -> Any:
+        """Asynchronously instantiate and execute a registered Command or Query.
+
+        Args:
+            name: Registered class name identifier.
+            payload: Parameter dictionary to validate into the message model.
+            output_format: Optional presenter format string.
+
+        Returns:
+            The presented or raw execution result.
+
+        Raises:
+            PipelineError: If resolution or execution fails.
+        """
+        from hexastack_core.utils.concurrency import asyncify
+
+        return await asyncify(self.execute_by_name)(
+            name, payload, output_format=output_format
+        )
+
     @abstractmethod
     def get_registered_commands(self) -> dict[str, type[Command]]:
         """Return a mapping of registered command names to their command classes.

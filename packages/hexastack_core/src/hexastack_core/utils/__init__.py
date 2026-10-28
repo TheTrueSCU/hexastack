@@ -1,3 +1,10 @@
+from hexastack_core.utils.concurrency import (
+    asyncify,
+    create_task_group,
+    is_coroutine_callable,
+    runnify,
+    syncify,
+)
 from hexastack_core.utils.context import (
     UserContext,
     correlation_id_ctx,
@@ -23,19 +30,24 @@ from hexastack_core.utils.imports import (
 )
 
 __all__ = [
+    "asyncify",
     "atomic_write_bytes",
     "atomic_write_text",
     "correlation_id_ctx",
+    "create_task_group",
     "get_correlation_id",
     "get_snoop_tracer",
     "get_user_context",
+    "is_coroutine_callable",
     "is_snoop_available",
     "new_correlation_id",
     "optional_dependency",
     "require_dependency",
+    "runnify",
     "set_correlation_id",
     "set_user_context",
     "snoop_tracer",
+    "syncify",
     "user_ctx",
     "UserContext",
 ]

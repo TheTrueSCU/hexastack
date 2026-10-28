@@ -15,6 +15,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+async = [
+    "hexastack-core[async]",
+]
 huey = [
     "huey>=3.3.4",
 ]

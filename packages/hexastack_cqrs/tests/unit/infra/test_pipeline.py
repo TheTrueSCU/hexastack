@@ -354,3 +354,96 @@ def test_pipeline_middleware_onion_ordering():
         "mw2_end",
         "mw1_end",
     ]
+
+
+@pytest.mark.anyio
+async def test_pipeline_execute_async_sync_handler() -> None:
+    """Verify execute_async runs synchronous handler in worker thread and formats output."""
+    handler_reg = HandlerRegistry()
+    presenter_reg = PresenterRegistry()
+
+    handler_reg.register(
+        CreateUser, lambda cmd: UserDTO(user_id=cmd.user_id, name=cmd.name)
+    )
+    presenter_reg.register(UserDTO, "json", JsonUserPresenter())
+
+    pipeline = ExecutionPipeline(
+        handler_registry=handler_reg,
+        presenter_registry=presenter_reg,
+    )
+
+    res = await pipeline.execute_async(
+        CreateUser(user_id="u101", name="AsyncSyncUser"), output_format="json"
+    )
+    assert res == {"id": "u101", "fullName": "AsyncSyncUser"}
+
+
+@pytest.mark.anyio
+async def test_pipeline_execute_async_native_coroutine_handler() -> None:
+    """Verify execute_async natively awaits an async coroutine handler."""
+    handler_reg = HandlerRegistry()
+
+    class AsyncCommand(Command):
+        val: int
+
+    async def async_handler(cmd: AsyncCommand) -> str:
+        return f"async_result_{cmd.val * 2}"
+
+    handler_reg.register(AsyncCommand, async_handler)
+    pipeline = ExecutionPipeline(handler_registry=handler_reg)
+
+    res = await pipeline.execute_async(AsyncCommand(val=21))
+    assert res == "async_result_42"
+
+
+@pytest.mark.anyio
+async def test_pipeline_execute_by_name_async() -> None:
+    """Verify execute_by_name_async resolves and executes command asynchronously."""
+    cmd_reg = CommandRegistry()
+    cmd_reg.register_by_name(CreateUser, "CreateUserCommand")
+
+    handler_reg = HandlerRegistry()
+    handler_reg.register(
+        CreateUser, lambda cmd: UserDTO(user_id=cmd.user_id, name=cmd.name)
+    )
+
+    presenter_reg = PresenterRegistry()
+    presenter_reg.register(UserDTO, "json", JsonUserPresenter())
+
+    pipeline = ExecutionPipeline(
+        handler_registry=handler_reg,
+        command_registry=cmd_reg,
+        presenter_registry=presenter_reg,
+    )
+
+    res = await pipeline.execute_by_name_async(
+        "CreateUserCommand",
+        {"user_id": "u202", "name": "ByNameUser"},
+        output_format="json",
+    )
+    assert res == {"id": "u202", "fullName": "ByNameUser"}
+
+
+@pytest.mark.anyio
+async def test_pipeline_execute_async_exception_mapping() -> None:
+    """Verify execute_async maps exceptions using ExceptionRegistry."""
+    handler_reg = HandlerRegistry()
+
+    class CustomError(Exception):
+        pass
+
+    def _failing(cmd: CreateUser) -> None:
+        raise CustomError("mapped_failure")
+
+    handler_reg.register(CreateUser, _failing)
+
+    exc_reg = ExceptionRegistry()
+    exc_reg.register(CustomError, lambda e: {"error": str(e), "code": 500})
+
+    pipeline = ExecutionPipeline(
+        handler_registry=handler_reg,
+        exception_registry=exc_reg,
+    )
+
+    res = await pipeline.execute_async(CreateUser(user_id="u303", name="FailUser"))
+    assert res == {"error": "mapped_failure", "code": 500}

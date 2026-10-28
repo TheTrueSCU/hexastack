@@ -422,7 +422,7 @@
 <!-- hexastack_cqrs_ports_pipeline -->
 <g id="node40" class="node">
 <title>hexastack_cqrs_ports_pipeline</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#d0b824" stroke="black" cx="896.07" cy="-1090.05" rx="67.35" ry="28.98"/>
+<ellipse fill="#bfa821" stroke="black" cx="896.07" cy="-1090.05" rx="67.35" ry="28.98"/>
 <text text-anchor="middle" x="896.07" y="-1098.55" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">hexastack_cqrs.</text>
 <text text-anchor="middle" x="896.07" y="-1087.55" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">ports.</text>
 <text text-anchor="middle" x="896.07" y="-1076.55" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">pipeline</text>
@@ -1162,13 +1162,13 @@
 <title>hexastack_cqrs_ports_pipeline&#45;&gt;hexastack_cqrs_infra_pipeline</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M944.28,-1069.52C1073.46,-1015.66 1417.02,-861.7 1407.07,-751.58"/>
 <path fill="none" stroke="black" d="M1407.07,-749.58C1412.16,-720.35 1333.87,-520.13 1312.07,-500 1282.54,-472.72 1031.99,-409.38 916.71,-381.31"/>
-<polygon fill="#d0b824" stroke="black" points="917.52,-377.91 906.98,-378.95 915.87,-384.71 917.52,-377.91"/>
+<polygon fill="#bfa821" stroke="black" points="917.52,-377.91 906.98,-378.95 915.87,-384.71 917.52,-377.91"/>
 </g>
 <!-- hexastack_cqrs_ports_pipeline&#45;&gt;hexastack_cqrs_ports -->
 <g id="edge135" class="edge">
 <title>hexastack_cqrs_ports_pipeline&#45;&gt;hexastack_cqrs_ports</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M851.85,-1067.98C826.99,-1056.14 796.03,-1041.39 771.04,-1029.49"/>
-<polygon fill="#d0b824" stroke="black" points="772.32,-1026.22 761.79,-1025.08 769.31,-1032.54 772.32,-1026.22"/>
+<polygon fill="#bfa821" stroke="black" points="772.32,-1026.22 761.79,-1025.08 769.31,-1032.54 772.32,-1026.22"/>
 </g>
 <!-- huey -->
 <g id="node41" class="node">
