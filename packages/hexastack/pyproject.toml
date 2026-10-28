@@ -77,6 +77,9 @@ flow = [
 fsspec = [
     "hexastack-core[fsspec]",
 ]
+granian = [
+    "hexastack-fastapi[granian]",
+]
 graphql = [
     "hexastack-graphql",
 ]

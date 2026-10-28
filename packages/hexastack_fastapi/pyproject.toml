@@ -21,6 +21,9 @@ auth = [
 docs = [
     "zensical>=0.0.56",
 ]
+granian = [
+    "granian>=1.6.0",
+]
 ratelimit = [
     "limits>=5.8.0",
     "slowapi>=0.1.10",

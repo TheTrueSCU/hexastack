@@ -37,6 +37,18 @@ def add_serve_command(app: typer.Typer) -> None:
         reload: bool = typer.Option(
             True, "--reload/--no-reload", help="Enable live reloading."
         ),
+        engine: str = typer.Option(
+            "uvicorn",
+            "--engine",
+            "-e",
+            help="ASGI server engine to execute ('uvicorn' or 'granian').",
+        ),
+        workers: int | None = typer.Option(
+            None,
+            "--workers",
+            "-w",
+            help="Number of worker processes (defaults to 1 or CPU core count).",
+        ),
         ziti_identity: str | None = typer.Option(
             None,
             "--ziti-identity",
@@ -49,12 +61,6 @@ def add_serve_command(app: typer.Typer) -> None:
             help="OpenZiti service name to bind on overlay fabric (defaults to 'hexastack-demo').",
         ),
     ) -> None:
-        if importlib.util.find_spec("uvicorn") is None:
-            raise MissingDependencyError(
-                "uvicorn is required to run the local server. "
-                "Install via 'pip install hexastack[web]' or 'pip install uvicorn[standard]'."
-            )
-
         if (
             importlib.util.find_spec("fastapi") is None
             or importlib.util.find_spec("hexastack_fastapi") is None
@@ -65,6 +71,10 @@ def add_serve_command(app: typer.Typer) -> None:
             )
 
         if ziti_identity is not None:
+            if engine.lower() != "uvicorn":
+                raise typer.BadParameter(
+                    f"OpenZiti overlay requires 'uvicorn' engine (got '{engine}')."
+                )
             from rich.console import Console
 
             from hexastack_fastapi.adapters.openziti import (
@@ -97,18 +107,14 @@ def add_serve_command(app: typer.Typer) -> None:
                 adapter.run_uvicorn(demo_app, reload=False)
             return
 
-        import uvicorn
+        from hexastack_fastapi.adapters.server import run_server
 
-        if reload:
-            uvicorn.run(
-                "hexastack.adapters.fastapi:create_demo_app",
-                factory=True,
-                host=host,
-                port=port,
-                reload=True,
-            )
-        else:
-            from hexastack.adapters.fastapi import create_demo_app
-
-            demo_app = create_demo_app()
-            uvicorn.run(demo_app, host=host, port=port, reload=False)
+        run_server(
+            "hexastack.adapters.fastapi:create_demo_app",
+            engine=engine,
+            host=host,
+            port=port,
+            reload=reload,
+            workers=workers,
+            factory=True,
+        )

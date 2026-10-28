@@ -1132,6 +1132,12 @@ Usage: hexastack serve [OPTIONS]
 │ --port           -p                 <int>  Bind port number. [default: 8000] │
 │ --reload             --no-reload           Enable live reloading.            │
 │                                            [default: reload]                 │
+│ --engine         -e                 <str>  ASGI server engine to execute     │
+│                                            ('uvicorn' or 'granian').         │
+│                                            [default: uvicorn]                │
+│ --workers        -w                 <int>  Number of worker processes        │
+│                                            (defaults to 1 or CPU core        │
+│                                            count).                           │
 │ --ziti-identity  -z                 <str>  Path to enrolled OpenZiti         │
 │                                            identity JSON to host as          │
 │                                            zero-trust dark microservice.     │
