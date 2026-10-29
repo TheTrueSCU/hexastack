@@ -13,8 +13,7 @@ from hexastack_qual.adapters.mcp.tools import register_quality_mcp_tools
 from hexastack_qual.domain.exceptions import AdapterNotAvailableError
 
 try:
-    import rodi
-
+    from hexastack_core.infra.container import create_container
     from hexastack_mcp.adapters.stdio import run_stdio_async
     from hexastack_mcp.domain.config import HexastackMcpConfig
     from hexastack_mcp.infra.registries.server import McpServerRegistry
@@ -35,7 +34,7 @@ def create_quality_mcp_server(
     Args:
         registry: Optional pre-configured McpServerRegistry.
         server_name: Name of the FastMCP server.
-        container: Optional rodi.Container for dependency injection.
+        container: Optional ContainerPort for dependency injection.
 
     Returns:
         Built FastMCP server instance.
@@ -52,7 +51,7 @@ def create_quality_mcp_server(
     reg = registry if registry is not None else McpServerRegistry()
     register_quality_mcp_tools(reg)
     cfg = HexastackMcpConfig(server_name=server_name)
-    cnt = container or rodi.Container()
+    cnt = container if container is not None else create_container()
     return reg.build_server(config=cfg, container=cnt)
 
 

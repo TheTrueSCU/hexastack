@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 
-from rodi import Container
-
 from hexastack_core.adapters.circuit_breaker import InMemoryCircuitBreaker
 from hexastack_core.adapters.logging import StandardLogger
 from hexastack_core.infra.bootstrap import (
@@ -286,7 +284,7 @@ __all__ = [
 def bootstrap_cqrs(
     config_path: str | Path | None = None,
     packages_to_scan: list[str | ModuleType] | None = None,
-    container: Container | None = None,
+    container: ContainerPort | None = None,
     bootstrappers: list[BootstrapperPort] | None = None,
 ) -> CqrsBootstrapResult:
     """Convenience helper to bootstrap application and extract CQRS runtime context.
@@ -294,7 +292,7 @@ def bootstrap_cqrs(
     Args:
         config_path: Optional path to TOML configuration file.
         packages_to_scan: Optional list of packages to scan.
-        container: Optional rodi Container.
+        container: Optional dependency injection ContainerPort.
         bootstrappers: Optional list of extra bootstrappers.
 
     Returns:

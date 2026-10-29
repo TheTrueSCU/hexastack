@@ -101,3 +101,15 @@ def _reset_hermetic_contextvars():
     finally:
         correlation_id_ctx.reset(token_cid)
         user_ctx.reset(token_user)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_hermetic_sentry_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ensure SENTRY_DSN is cleared by default to prevent tests from leaking live network calls.
+
+    Notes/Architectural Intent:
+        Prevents ambient environment variables from .env or developer workstations from
+        accidentally routing test exceptions to live Sentry ingest endpoints. Individual
+        tests that verify Sentry configuration can still explicitly override SENTRY_DSN.
+    """
+    monkeypatch.setenv("SENTRY_DSN", "")

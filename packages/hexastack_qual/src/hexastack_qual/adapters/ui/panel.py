@@ -25,7 +25,7 @@ def render_quality_panel(container: Any | None = None) -> None:
     """Render interactive Quality & Governance panel in DevTools console.
 
     Args:
-        container: Optional dependency injection container (rodi.Container).
+        container: Optional dependency injection container (ContainerPort).
 
     Raises:
         AdapterNotAvailableError: If nicegui is not installed.
