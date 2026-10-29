@@ -92,8 +92,35 @@ This document outlines the strategic priorities, upcoming milestones, and archit
 
 ---
 
-## 🚀 Active Milestone: v0.10.0 (Edge Profiles, Voice Pipelines & Multi-Python Matrix)
-- [ ] **WASM / MicroPython Lightweight Core**: Edge deployment compilation profile (Issue #81).
+### v0.10.0 (Hexagonal Boundary Purity, DevTools Decoupling & Microbenchmarking) ✅
+- [x] **Strict Hexagonal Boundary Purity & Infrastructure Decoupling (ADR-001)**: Eliminated legacy backward-compatibility shims, relocated ORM entities to `hexastack_db.utils.mixins`, and enforced zero `adapters -> infra` import violations.
+- [x] **Decoupled DevTools Presentation Architecture (`hexastack-cqrs`, `hexastack-ui`)**: Added `ExecutionPipelinePort` abstract port, decoupling NiceGUI DevTools UI and command dispatcher from concrete `cqrs.infra` pipeline context.
+- [x] **Microbenchmarking Governance Tier (ADR-015)**: Integrated `pytest-benchmark` governance harness across DB and Events packages to mathematically audit and prevent framework overhead regressions (`hexastack perf`).
+- [x] **Workflow & Governance Engine Synchronization**: Upgraded to `hexaflow>=0.5.1` with time-travel rewind and step simulation fallbacks, and `hexaqual>=0.9.6`.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 18 subpackages to `v0.10.0`.
+
+---
+
+### v0.10.1 (Universal Python Matrix, Decoupled Testing Engine & Engine Synchronization) ✅
+- [x] **Python 3.12+ Universal Support Matrix**: Broadened `requires-python` from `>=3.13` to `>=3.12` across root and all 18 workspace subpackages, adding native multi-version testing orchestration via `noxfile.py` with `uv` virtual environments.
+- [x] **Decoupled Testing Engine (`hexaqual.adapters.testing`)**: Relocated `CliNarrator`, `TerminalEvent`, and `render_cli_demo_video` to upstream `hexaqual.adapters.testing`.
+- [x] **Ecosystem Engine Synchronization**: Upgraded workflow DAG engine to `hexaflow>=0.5.2` and quality toolchain to `hexaqual>=0.9.7`.
+- [x] **Security & Vulnerability Remediation**: Remediated CVEs across `brotli>=1.2.1`, `filelock>=4.2.4`, and `setuptools>=84.2.1`.
+- [x] **Lockstep Version Synchronization**: Synchronized patch version bump across root workspace and all 18 subpackages to `v0.10.1`.
+
+---
+
+### v0.11.0 (WASM & Edge Micro-Runtime, Interactive Sandboxes & Protocol Neutrality) ✅
+- [x] **WASM & Embedded Edge Micro-Runtime Profile (ADR-016, Issue #81)**: Pure-Python zero-C-extension `MicroContainer`, cooperative async runtime detection (`EdgeExecutionProfile`), and <1MB footprint on Pyodide/MicroPython.
+- [x] **Interactive In-Docs Browser Sandboxes & Pyodide WASM (Issue #128)**: Tier 1 instant (<1ms) client-side simulated terminal widget with live Pyodide WebAssembly Python 3.12 runner embedded directly into Zensical docs (`sandbox-terminals.md`, `financial-ledger.md`), plus Tier 2 Killercoda scenario playgrounds (`sandboxes/killercoda/`).
+- [x] **Universal Container Protocol Neutrality & Decoupling**: Eliminated concrete `from rodi import Container` coupling across all presentation, orchestration, and tool adapters, standardizing on `ContainerPort` and `create_container()` factory.
+- [x] **Hermetic Sentry Telemetry & Smart Filtering**: Monorepo-wide autouse fixture `_isolate_hermetic_sentry_environment` in root `conftest.py` and `hexastack-template`, plus `default_before_send` event filter in `hexastack-logging` dropping `/sentry-crash` and test events.
+- [x] **Multi-Repo Federation & Ecosystem Alignment**: Federated cross-repo indexing across `thetruescu-hall` (`hexastack`, `hexastack-template`, `hexaqueue`, `hexaflow`, `hexaqual`) via `ivar`, with 100% test parity on `hexastack-template`.
+- [x] **Lockstep Version Synchronization**: Synchronized minor version bump across root workspace and all 18 subpackages to `v0.11.0`.
+
+---
+
+## 🚀 Active Milestone: v0.12.0 (Voice Pipelines, Prefect Orchestrator Adapter & Enterprise Mesh)
 - [ ] **Voice & WebRTC Audio Pipeline**: Real-time conversational audio bridge (`hexastack-ui[voice]`).
-- [ ] **Prefect Orchestrator Adapter**: `PrefectOrchestratorAdapter` behind the `hexastack-flow` orchestrator port as an optional extra (`hexastack-flow[prefect]`), leveraging Prefect task result caching and pluggable task runners (thread/process/Dask/Ray), with dual-implementation oracle tests against the asyncio engine. *(Airflow, Luigi, Dagster, and joblib evaluated and deferred; joblib's memoization is covered by Prefect caching.)*
-- [ ] **Nox Multi-Environment Matrix Orchestration**: Hermetic local test runner via `noxfile.py` with `uv` backend (`nox-uv`), automating clean-room multi-Python matrix verification (Python 3.11, 3.12, 3.13), lower/upper dependency bounds qualification, and isolated wheel packaging tests across the 4-repo ecosystem (`hexastack`, `hexaqual`, `hexaflow`, `hexaqueue`).
+- [ ] **Prefect Orchestrator Adapter**: `PrefectOrchestratorAdapter` behind the `hexastack-flow` orchestrator port as an optional extra (`hexastack-flow[prefect]`), leveraging Prefect task result caching and pluggable task runners (thread/process/Dask/Ray), with dual-implementation oracle tests against the asyncio engine.
+- [ ] **OpenTelemetry Distributed Context Propagation**: Turnkey trace propagation and span linking across CQRS bus, distributed event brokers, and HTTP/gRPC gateways.

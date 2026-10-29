@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## v0.11.0 (2026-10-29)
+
+### Highlights & Features
+* **WASM & Embedded Edge Micro-Runtime Profile (ADR-016, Issue #81)**:
+  - Added pure-Python zero-C-extension `MicroContainer` with singleton, transient, and scoped lifecycle resolution without compiled dependencies or `contextvars` requirements.
+  - Added `EdgeExecutionProfile` and `detect_runtime()` in `hexastack-cqrs` for cooperative async runtime detection across CPython, Pyodide, WASI, and MicroPython.
+  - Enabled identical Domain Entities, Commands, Queries, and Events to run unchanged across cloud servers and browser/embedded edge runtimes with <1MB footprint.
+* **Interactive In-Docs Browser Sandboxes & Pyodide WASM (Issue #128)**:
+  - Implemented Tier 1 instant (<1ms) client-side interactive terminal sandbox with pre-configured command chips and command-line execution embedded directly into Zensical documentation (`docs/developer-guide/sandbox-terminals.md`, `docs/tutorials/financial-ledger.md`).
+  - Added dynamic in-browser Pyodide WebAssembly runtime loader (`https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js`) enabling live execution of Python 3.12 commands directly inside documentation pages.
+  - Scaffolded Tier 2 Killercoda scenario playgrounds for CLI scaffolding (`sandboxes/killercoda/scaffolding-playground`) and double-entry financial ledger invariants (`sandboxes/killercoda/financial-ledger-playground`).
+* **Universal Container Protocol Neutrality & Decoupling**:
+  - Eliminated concrete `from rodi import Container` coupling across all presentation, orchestration, and tool adapters (`hexastack-cqrs`, `hexastack-ui`, `hexastack-fastapi`, `hexastack-grpc`, `hexastack-graphql`, `hexastack-mcp`, `hexastack-qual`), standardizing on `ContainerPort` and `create_container()` factory.
+  - Seamlessly interoperates between `RodiContainer` in standard environments and `MicroContainer` in edge/WASM environments.
+* **Hermetic Sentry Telemetry & Smart Filtering**:
+  - Added monorepo-wide autouse test isolation fixture `_isolate_hermetic_sentry_environment` in root `conftest.py` and `hexastack-template` enforcing `SENTRY_DSN=""` across test suites.
+  - Added `default_before_send` event filter in `hexastack-logging` automatically dropping simulated crash endpoints (`/sentry-crash`, `-crash` suffix routes) and synthetic test-tagged events (`test: true` in tags or extra metadata).
+* **Multi-Repo Federation & Ecosystem Alignment**:
+  - Federated cross-repo indexing across `thetruescu-hall` (`hexastack`, `hexastack-template`, `hexaqueue`, `hexaflow`, `hexaqual`) via `ivar`.
+  - Upgraded `hexastack-template` with hermetic test isolation and verified 100% test parity.
+  - Triage and merge of all open Dependabot PRs across actions and dependencies.
+* **Unified Workspace Lockstep Versioning (v0.11.0)**: Synchronized version bump across all 18 subpackages (`hexastack`, `hexastack_ai`, `hexastack_auth`, `hexastack_cli`, `hexastack_core`, `hexastack_cqrs`, `hexastack_db`, `hexastack_events`, `hexastack_fastapi`, `hexastack_flags`, `hexastack_flow`, `hexastack_graphql`, `hexastack_grpc`, `hexastack_logging`, `hexastack_mcp`, `hexastack_otel`, `hexastack_qual`, `hexastack_ui`).
+
 ## v0.10.1 (2026-10-24)
 
 ### Highlights & Features
