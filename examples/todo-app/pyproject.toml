@@ -17,16 +17,16 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "complexipy>=7.0.1",
-    "hypothesis>=6.170.0",
+    "complexipy>=8.1.0",
+    "hypothesis>=6.170.9",
     "import-linter>=2.15",
     "pre-commit>=4.7.0",
     "pytest>=8.0.0",
     "pytest-cov>=7.1.0",
     "pytest-randomly>=5.0.0",
     "pytest-xdist>=3.8.0",
-    "ruff>=0.17.1",
-    "ty>=0.0.88",
+    "ruff>=0.17.2",
+    "ty>=0.0.91",
 ]
 
 [tool.complexipy]
