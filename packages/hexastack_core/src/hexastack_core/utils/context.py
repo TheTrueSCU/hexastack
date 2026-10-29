@@ -15,8 +15,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
-from hexastack_core.ports.context import ContextVarPort, TokenPort
-
 T = TypeVar("T")
 
 
@@ -203,7 +201,6 @@ def set_user_context(user: UserContext | None) -> Token[UserContext | None]:
 
 __all__ = [
     "ContextVar",
-    "ContextVarPort",
     "correlation_id_ctx",
     "correlation_scope",
     "create_context_var",
@@ -213,7 +210,6 @@ __all__ = [
     "set_correlation_id",
     "set_user_context",
     "Token",
-    "TokenPort",
     "user_ctx",
     "UserContext",
 ]

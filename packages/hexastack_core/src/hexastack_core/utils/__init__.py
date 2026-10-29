@@ -7,9 +7,7 @@ from hexastack_core.utils.concurrency import (
 )
 from hexastack_core.utils.context import (
     ContextVar,
-    ContextVarPort,
     Token,
-    TokenPort,
     UserContext,
     correlation_id_ctx,
     correlation_scope,
@@ -49,7 +47,6 @@ __all__ = [
     "atomic_write_bytes",
     "atomic_write_text",
     "ContextVar",
-    "ContextVarPort",
     "correlation_id_ctx",
     "correlation_scope",
     "create_context_var",
@@ -75,7 +72,6 @@ __all__ = [
     "supports_threads",
     "syncify",
     "Token",
-    "TokenPort",
     "user_ctx",
     "UserContext",
 ]
