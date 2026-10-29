@@ -42,7 +42,7 @@ We evaluated four candidate architectures across latency, resource footprints, s
 - **Trade-offs**: Ongoing infrastructure hosting costs and operational monitoring of container lifecycles and rogue network egress.
 
 ### C. Client-Side WebAssembly (Pyodide + ADR-016 Edge Profile)
-- **How It Works**: Leveraging the [`WASM & Embedded Edge Profile`](edge-profile.md) ([ADR-016](../decisions.md#adr-016-wasm--embedded-edge-execution-profile)), Hexastack domain models, commands, queries, and [`MicroContainer`](edge-profile.md#3-seamless-dependency-injection-create_container) compile into WebAssembly using Pyodide directly in the reader's browser.
+- **How It Works**: Leveraging the [`WASM & Embedded Edge Profile`](edge-profile.md) ([ADR-016](../decisions.md#adr-016-wasm-embedded-edge-execution-profile)), Hexastack domain models, commands, queries, and [`MicroContainer`](edge-profile.md) compile into WebAssembly using Pyodide directly in the reader's browser.
 - **Strengths**: **Instantaneous zero-latency interaction (<1ms)**; **zero backend hosting costs**; completely offline-capable; impervious to remote code execution risks since execution is confined to the browser's JavaScript sandbox.
 - **Trade-offs**: Limited to single-threaded synchronous and cooperative async execution; cannot bind public TCP listening ports (e.g. real gRPC servers).
 

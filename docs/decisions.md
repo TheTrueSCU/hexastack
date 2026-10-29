@@ -10,22 +10,22 @@
 
 | ADR ID | Title | Date / Milestone | Status | Key Invariant |
 |---|---|---|---|---|
-| [**ADR-001**](#adr-001-strict-hexagonal-layer-boundaries--import-linter-enforcement) | Strict Hexagonal Layer Boundaries & Import-Linter Enforcement | 2026-09-03 (`v0.3.0`) | **Accepted** | `domain/` has 0 external dependencies; enforced via `import-linter`. |
+| [**ADR-001**](#adr-001-strict-hexagonal-layer-boundaries-import-linter-enforcement) | Strict Hexagonal Layer Boundaries & Import-Linter Enforcement | 2026-09-03 (`v0.3.0`) | **Accepted** | `domain/` has 0 external dependencies; enforced via `import-linter`. |
 | [**ADR-002**](#adr-002-dynamic-inversion-of-control-via-rodi-and-visitor-scanning) | Dynamic IoC via `rodi` and Single-Pass Visitor Scanning | 2026-08-27 (`v0.1.0`) | **Accepted** | No global singletons or module state; pure composable container DI. |
 | [**ADR-003**](#adr-003-multi-transport-universal-cqrs-bus-with-protocol-neutrality) | Multi-Transport Universal CQRS Bus with Protocol Neutrality | 2026-08-27 (`v0.1.0`) | **Accepted** | Single `@command_handler` serves REST, gRPC, GraphQL, MCP, and CLI. |
-| [**ADR-004**](#adr-004-dual-implementation-oracle-testing--hypothesis-state-fuzzing) | Dual-Implementation Oracle Testing & Hypothesis State Fuzzing | 2026-09-05 (`v0.3.1`) | **Accepted** | Stateful adapters cross-evaluated against naive Python oracles ($f_{\text{prod}} \equiv f_{\text{oracle}}$). |
-| [**ADR-005**](#adr-005-decoupled-quality--governance-tooling-via-standalone-hexaqual) | Decoupled Quality & Governance Tooling via Standalone `hexaqual` | 2026-09-14 (`v0.5.0`) | **Accepted** | Developer tools isolated into standalone `hexaqual` dev dependency. |
+| [**ADR-004**](#adr-004-dual-implementation-oracle-testing-hypothesis-state-fuzzing) | Dual-Implementation Oracle Testing & Hypothesis State Fuzzing | 2026-09-05 (`v0.3.1`) | **Accepted** | Stateful adapters cross-evaluated against naive Python oracles ($f_{\text{prod}} \equiv f_{\text{oracle}}$). |
+| [**ADR-005**](#adr-005-decoupled-quality-governance-tooling-via-standalone-hexaqual) | Decoupled Quality & Governance Tooling via Standalone `hexaqual` | 2026-09-14 (`v0.5.0`) | **Accepted** | Developer tools isolated into standalone `hexaqual` dev dependency. |
 | [**ADR-006**](#adr-006-distributed-saga-orchestration-via-hexaflow-dag-engine) | Distributed Saga Orchestration via Hexaflow DAG Engine | 2026-09-10 (`v0.4.0`) | **Accepted** | Multi-step workflows pair forward steps with backward `on_failure` compensations. |
-| [**ADR-007**](#adr-007-ambient-context-propagation-for-distributed-tracing--tenancy) | Ambient Context Propagation for Distributed Tracing & Tenancy | 2026-08-27 (`v0.1.0`) | **Accepted** | Context variables propagate spans and correlation IDs without signature pollution. |
-| [**ADR-008**](#adr-008-zero-trust-dark-microservice-hosting-via-openziti--zrok) | Zero-Trust Dark Microservice Hosting via OpenZiti & zrok | 2026-09-28 (`v0.6.0`) | **Accepted** | Services can bind dark overlay networks without public inbound listening ports. |
-| [**ADR-009**](#adr-009-chapterized-visual-narration--sliced-demo-generation) | Chapterized Visual Narration & Sliced Demo Generation | 2026-10-15 (`v0.9.0`) | **Accepted** | `CliNarrator.checkpoint_segment()` and Hexaflow DAGs slice tutorial demos into chapters. |
+| [**ADR-007**](#adr-007-ambient-context-propagation-for-distributed-tracing-tenancy) | Ambient Context Propagation for Distributed Tracing & Tenancy | 2026-08-27 (`v0.1.0`) | **Accepted** | Context variables propagate spans and correlation IDs without signature pollution. |
+| [**ADR-008**](#adr-008-zero-trust-dark-microservice-hosting-via-openziti-zrok) | Zero-Trust Dark Microservice Hosting via OpenZiti & zrok | 2026-09-28 (`v0.6.0`) | **Accepted** | Services can bind dark overlay networks without public inbound listening ports. |
+| [**ADR-009**](#adr-009-chapterized-visual-narration-sliced-demo-generation) | Chapterized Visual Narration & Sliced Demo Generation | 2026-10-15 (`v0.9.0`) | **Accepted** | `CliNarrator.checkpoint_segment()` and Hexaflow DAGs slice tutorial demos into chapters. |
 | [**ADR-010**](#adr-010-typo-tolerant-non-interactive-safe-cli-via-typersuggest) | Typo-Tolerant, Non-Interactive Safe CLI via `TyperSuggest` | 2026-10-17 (`v0.9.0`) | **Accepted** | Levenshtein suggestion with negative number immunity and non-interactive CI fallback. |
 | [**ADR-011**](#adr-011-strict-wcag-21-aa-ui-accessibility-invariants-via-axe-core) | Strict WCAG 2.1 AA UI Accessibility Invariants via `axe-core` | 2026-09-22 (`v0.6.0`) | **Accepted** | NiceGUI DevTools console must pass Playwright + `axe-core` with 0 critical/serious errors. |
 | [**ADR-012**](#adr-012-lockstep-monorepo-versioning-across-all-18-subpackages) | Lockstep Monorepo Versioning Across All 18 Subpackages | 2026-08-27 (`v0.1.0`) | **Accepted** | All 18 workspace subpackages bump version in lockstep to avoid dependency matrix hell. |
 | [**ADR-013**](#adr-013-model-context-protocol-mcp-as-first-class-driving-adapter) | Model Context Protocol (MCP) as First-Class Driving Adapter | 2026-09-10 (`v0.4.0`) | **Accepted** | LLM agents drive CQRS handlers via standardized, hardened MCP server bridges. |
 | [**ADR-014**](#adr-014-lifecycle-managed-scaffolding-via-copier-and-devcontainers) | Lifecycle-Managed Scaffolding via Copier and Devcontainers | 2026-10-18 (`v0.9.0`) | **Accepted** | Projects scaffolded via Copier retain answers to enable downstream `copier update`. |
-| [**ADR-015**](#adr-015-first-class-microbenchmarking--framework-overhead-regression-governance) | First-Class Microbenchmarking & Framework Overhead Regression Governance | 2026-10-19 (`v0.9.0`) | **Accepted** | Microbenchmarks execute with zero coverage overhead; skipped during normal runs; smoke mode in PRs. |
-| [**ADR-016**](#adr-016-wasm--embedded-edge-execution-profile) | WASM & Embedded Edge Execution Profile | 2026-10-28 (`v0.10.1`) | **Accepted** | Pure-Python zero-C-extension `MicroContainer`, cooperative async, and <1MB footprint on Pyodide/MicroPython. |
+| [**ADR-015**](#adr-015-first-class-microbenchmarking-framework-overhead-regression-governance) | First-Class Microbenchmarking & Framework Overhead Regression Governance | 2026-10-19 (`v0.9.0`) | **Accepted** | Microbenchmarks execute with zero coverage overhead; skipped during normal runs; smoke mode in PRs. |
+| [**ADR-016**](#adr-016-wasm-embedded-edge-execution-profile) | WASM & Embedded Edge Execution Profile | 2026-10-28 (`v0.11.0`) | **Accepted** | Pure-Python zero-C-extension `MicroContainer`, cooperative async, and <1MB footprint on Pyodide/MicroPython. |
 
 ---
 
@@ -319,7 +319,7 @@
 
 ### ADR-016: WASM & Embedded Edge Execution Profile
 
-- **Date & Milestone**: 2026-10-28 (`v0.10.1`, Issue #81)
+- **Date & Milestone**: 2026-10-28 (`v0.11.0`, Issue #81)
 - **Status**: Accepted
 - **Context & Problem Statement**:
   As modern microservices extend into browser sandboxes (Pyodide), serverless edge workers (Cloudflare Workers, Fastly Compute, WASI), and IoT embedded devices (MicroPython), traditional Python backend frameworks fail due to heavy reliance on compiled C-extensions, multi-threaded worker pools (`asyncio.to_thread`), and multi-megabyte memory footprints. Furthermore, runtimes like MicroPython lack `contextvars` (PEP 567), causing ambient context and dependency injection containers (like `rodi`) to crash or exceed memory limits.
