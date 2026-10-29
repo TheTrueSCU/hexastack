@@ -6,7 +6,6 @@ from types import ModuleType
 from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import BaseModel
-from rodi import Container
 
 from hexastack_core.infra.autodiscovery import (
     DiscoveryVisitor,
@@ -14,6 +13,7 @@ from hexastack_core.infra.autodiscovery import (
 )
 from hexastack_core.infra.decorators import ConfigMetadata, ExceptionMetadata
 from hexastack_core.infra.registries.config import ConfigRegistry
+from hexastack_core.ports.container import ContainerPort
 from hexastack_cqrs.infra.decorators import (
     HandlerMetadata,
     PresenterMetadata,
@@ -47,7 +47,7 @@ def _register_exception(
     obj: Any,
     meta: ExceptionMetadata,
     pipeline: ExecutionPipeline,
-    container: Container | None,
+    container: ContainerPort | None,
 ) -> None:
     """Register discovered domain exception handler."""
     if pipeline._exception_registry is not None:
@@ -59,7 +59,7 @@ def _register_handler(
     obj: Any,
     meta: HandlerMetadata,
     pipeline: ExecutionPipeline,
-    container: Container | None,
+    container: ContainerPort | None,
 ) -> None:
     """Register discovered command, query, or event handler."""
     handler_fn = _resolve_callable(obj, container)
@@ -79,7 +79,7 @@ def _register_presenter(
     obj: Any,
     meta: PresenterMetadata,
     pipeline: ExecutionPipeline,
-    container: Container | None,
+    container: ContainerPort | None,
 ) -> None:
     """Register discovered CQRS presenter instance."""
     presenter_inst: PresenterPort
@@ -98,7 +98,7 @@ def _register_presenter(
 
 
 def _resolve_callable(
-    obj: Any, container: Container | None = None
+    obj: Any, container: ContainerPort | None = None
 ) -> Callable[..., Any]:
     """Resolve a callable handler from a function or class object."""
     if inspect.isclass(obj):
@@ -115,7 +115,7 @@ def _resolve_callable(
 def autodiscover_cqrs(
     packages_or_modules: Sequence[str | ModuleType],
     pipeline: ExecutionPipeline,
-    container: Container | None = None,
+    container: ContainerPort | None = None,
     config_registry: ConfigRegistry | None = None,
 ) -> None:
     """Scan packages and register discovered CQRS handlers, presenters, and config sections.
@@ -142,7 +142,7 @@ def autodiscover_cqrs(
 
 def create_cqrs_visitor(
     pipeline: ExecutionPipeline,
-    container: Container | None = None,
+    container: ContainerPort | None = None,
     config_registry: ConfigRegistry | None = None,
 ) -> DiscoveryVisitor:
     """Create a DiscoveryVisitor callback for single-pass CQRS component registration.

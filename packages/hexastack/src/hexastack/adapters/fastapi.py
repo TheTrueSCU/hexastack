@@ -42,22 +42,10 @@ def create_demo_app() -> Any:
         None.
     """
     import hexastack.application.diagnostics
-
-    current_module = sys.modules[__name__]
-    result = bootstrap(
-        packages_to_scan=[
-            hexastack.application.diagnostics,
-            current_module,
-        ],
-    )
-    app = result.get("app")
-
-    # Automatically register demo feature flags for interactive DevTools exploration
-    from rodi import InstanceResolver
-
     from hexastack_core.adapters.feature_flags.in_memory import (
         InMemoryFeatureFlagAdapter,
     )
+    from hexastack_core.infra.container import create_container
     from hexastack_core.ports.feature_flags import FeatureFlagPort
 
     demo_flags = InMemoryFeatureFlagAdapter(
@@ -68,7 +56,18 @@ def create_demo_app() -> Any:
             "features.rate_limiting": True,
         }
     )
-    result.container._map[FeatureFlagPort] = InstanceResolver(demo_flags)
+    container = create_container()
+    container.add_instance(demo_flags, declared_class=FeatureFlagPort)
+
+    current_module = sys.modules[__name__]
+    result = bootstrap(
+        container=container,
+        packages_to_scan=[
+            hexastack.application.diagnostics,
+            current_module,
+        ],
+    )
+    app = result.get("app")
 
     # Automatically mount NiceGUI DevTools dashboard if hexastack-ui installed
     if app is not None and importlib.util.find_spec("hexastack_ui") is not None:

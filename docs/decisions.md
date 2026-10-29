@@ -25,6 +25,7 @@
 | [**ADR-013**](#adr-013-model-context-protocol-mcp-as-first-class-driving-adapter) | Model Context Protocol (MCP) as First-Class Driving Adapter | 2026-09-10 (`v0.4.0`) | **Accepted** | LLM agents drive CQRS handlers via standardized, hardened MCP server bridges. |
 | [**ADR-014**](#adr-014-lifecycle-managed-scaffolding-via-copier-and-devcontainers) | Lifecycle-Managed Scaffolding via Copier and Devcontainers | 2026-10-18 (`v0.9.0`) | **Accepted** | Projects scaffolded via Copier retain answers to enable downstream `copier update`. |
 | [**ADR-015**](#adr-015-first-class-microbenchmarking--framework-overhead-regression-governance) | First-Class Microbenchmarking & Framework Overhead Regression Governance | 2026-10-19 (`v0.9.0`) | **Accepted** | Microbenchmarks execute with zero coverage overhead; skipped during normal runs; smoke mode in PRs. |
+| [**ADR-016**](#adr-016-wasm--embedded-edge-execution-profile) | WASM & Embedded Edge Execution Profile | 2026-10-28 (`v0.10.1`) | **Accepted** | Pure-Python zero-C-extension `MicroContainer`, cooperative async, and <1MB footprint on Pyodide/MicroPython. |
 
 ---
 
@@ -313,6 +314,31 @@
 - **Enforcement Mechanism**:
   - `hexaqual test bench -p <pkg>` CLI runner.
   - Microbenchmark test suites colocated in `packages/<pkg>/tests/benchmarks/` (active across `hexastack_cqrs`, `hexastack_core`, `hexastack_events`, and `hexastack_db`).
+
+---
+
+### ADR-016: WASM & Embedded Edge Execution Profile
+
+- **Date & Milestone**: 2026-10-28 (`v0.10.1`, Issue #81)
+- **Status**: Accepted
+- **Context & Problem Statement**:
+  As modern microservices extend into browser sandboxes (Pyodide), serverless edge workers (Cloudflare Workers, Fastly Compute, WASI), and IoT embedded devices (MicroPython), traditional Python backend frameworks fail due to heavy reliance on compiled C-extensions, multi-threaded worker pools (`asyncio.to_thread`), and multi-megabyte memory footprints. Furthermore, runtimes like MicroPython lack `contextvars` (PEP 567), causing ambient context and dependency injection containers (like `rodi`) to crash or exceed memory limits.
+- **Decision**:
+  Establish a first-class, zero-C-extension **WASM & Embedded Edge Profile** in `hexastack-core` and `hexastack-cqrs`:
+  1. **Runtime & Capabilities Detection**: `hexastack_core.utils.runtime` provides zero-overhead introspection (`RuntimeProfile`, `is_wasm()`, `is_micropython()`, `is_edge()`, `supports_threads()`, `get_memory_footprint()`).
+  2. **Universal Container Port & MicroContainer**: Abstract `ContainerPort` protocol allows `create_container()` to dynamically yield `rodi.Container` in cloud/server environments or ultra-lightweight `MicroContainer` (<10KB footprint, single-pass constructor reflection) in edge/WASM runtimes without external dependencies.
+  3. **Universal Ambient Context Port & Fallback**: `ContextVarPort` and `TokenPort` decouple correlation scopes and user contexts from C-extension `contextvars`, falling back gracefully to pure-Python in-memory storage on micro-runtimes.
+  4. **Cooperative Concurrency Fallback**: `asyncify` automatically falls back to cooperative in-loop dispatch when `supports_threads()` is False, eliminating `RuntimeError: no threads available` in WASM sandboxes.
+  5. **Turnkey Edge Pipeline Facade**: `hexastack_cqrs.infra.edge.EdgeExecutionProfile` and `create_edge_pipeline()` provide sub-millisecond in-process command, query, and event dispatch under <1MB memory footprint.
+- **The Invariant ("The Why")**:
+  The same Hexastack domain models, commands, queries, and handlers must run unmodified across high-concurrency cloud servers, browser client-side sandboxes, and embedded IoT edge runtimes.
+- **Alternatives Considered & Rejected**:
+  - *Conditional preprocessor branches / separate codebases*: Rejected because maintaining a parallel fork of Hexastack for edge runtimes creates maintenance fragmentation and version drift.
+  - *Requiring microthreads / pthreads in WASM*: Rejected because standard browser Pyodide and basic WASI runs without shared memory threads enabled.
+- **Enforcement Mechanism**:
+  - `ContainerPort` and `ContextVarPort` protocol conformance unit tests.
+  - Scoped sanity checks in `hexastack_core` and `hexastack_cqrs`.
+  - Platform simulation tests validating Emscripten, WASI, and MicroPython behavior.
 
 ---
 

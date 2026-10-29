@@ -1,8 +1,8 @@
 from typing import Any
 
 import strawberry
-from rodi import Container
 
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.utils.imports import require_dependency
 from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
 from hexastack_graphql.domain.context import GraphQLContext
@@ -29,7 +29,7 @@ def _require_fastapi() -> None:
 
 def create_graphql_router(
     schema: strawberry.Schema,
-    container: Container,
+    container: ContainerPort,
     *,
     command_bus: CommandBusPort | None = None,
     query_bus: QueryBusPort | None = None,
@@ -93,7 +93,7 @@ def create_graphql_router(
 def mount_graphql_router(
     app: Any,
     schema: strawberry.Schema,
-    container: Container,
+    container: ContainerPort,
     *,
     path: str = "/graphql",
     graphiql: bool = True,

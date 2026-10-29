@@ -83,6 +83,16 @@ def asyncify[**P, R](
             limiter=limiter,
         )
 
+    from hexastack_core.utils.runtime import supports_threads
+
+    if not supports_threads():
+
+        @functools.wraps(function)
+        async def _cooperative_fallback(*args: P.args, **kwargs: P.kwargs) -> R:
+            return function(*args, **kwargs)
+
+        return _cooperative_fallback
+
     @functools.wraps(function)
     async def _async_fallback(*args: P.args, **kwargs: P.kwargs) -> R:
         ctx = contextvars.copy_context()

@@ -3,8 +3,8 @@ from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from rodi import Container
 
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.utils.context import get_correlation_id
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
 
 
 def create_health_router(
-    container: Container | None = None,
+    container: ContainerPort | None = None,
     config: Any | None = None,
     health_path: str = "/health",
     ready_path: str = "/ready",

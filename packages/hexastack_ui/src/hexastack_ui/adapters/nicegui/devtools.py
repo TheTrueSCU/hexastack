@@ -15,8 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from rodi import Container
-
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.utils.imports import optional_dependency
 from hexastack_cqrs.ports.pipeline import ExecutionPipelinePort
 from hexastack_ui.adapters.nicegui.page import check_nicegui_installed, mount_ui_app
@@ -57,7 +56,7 @@ def _resolve_static_dir() -> Path | None:
 
 
 def _resolve_pipeline_from_container(
-    container: Container,
+    container: ContainerPort,
 ) -> ExecutionPipelinePort | None:
     """Resolve an ExecutionPipelinePort from a DI container, checking port and subclasses.
 
@@ -104,7 +103,7 @@ def _extract_cqrs_from_pipeline(
 
 
 def _extract_cqrs_from_container(
-    container: Container,
+    container: ContainerPort,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Extract registered commands and queries by introspecting container registries."""
     cmds: dict[str, Any] = {}
@@ -127,7 +126,7 @@ def _extract_cqrs_from_container(
 
 
 def _extract_registered_cqrs(
-    container: Container,
+    container: ContainerPort,
     pipeline: ExecutionPipelinePort | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Extract registered commands and queries from pipeline or container fallback.
@@ -156,7 +155,7 @@ def _extract_registered_cqrs(
 
 
 def _find_ping_command(
-    container: Container,
+    container: ContainerPort,
     pipeline: ExecutionPipelinePort | None,
 ) -> type[Any] | None:
     """Find a registered Command type with 'ping' in its name.
@@ -181,7 +180,7 @@ def _find_ping_command(
     return None
 
 
-def _render_cqrs_messages(container: Container) -> None:
+def _render_cqrs_messages(container: ContainerPort) -> None:
     """Render table of registered CQRS message contracts."""
     from nicegui import ui
 
@@ -256,7 +255,7 @@ def _render_middleware_chain(middlewares: list[Any]) -> None:
 
 async def _dispatch_ping(
     ping_value: str,
-    container: Container,
+    container: ContainerPort,
     pipeline: ExecutionPipelinePort | None,
     middlewares: list[Any],
     log_output: Any,
@@ -289,7 +288,7 @@ async def _dispatch_ping(
 
 
 def _render_live_runner(
-    container: Container,
+    container: ContainerPort,
     pipeline: ExecutionPipelinePort | None,
     middlewares: list[Any],
 ) -> None:
@@ -322,7 +321,7 @@ def _render_live_runner(
 
 
 def _render_cqrs_tab(
-    container: Container, pipeline: ExecutionPipelinePort | None = None
+    container: ContainerPort, pipeline: ExecutionPipelinePort | None = None
 ) -> None:
     """Render the CQRS tab panel showing registered messages, middleware pipeline, and live runner."""
     from hexastack_cqrs.ports.buses import CommandBusPort
@@ -378,7 +377,7 @@ def _render_flag_row(
             ui.badge(str(flag_val), color="blue-grey").classes("font-mono text-sm")
 
 
-def _render_flags_tab(container: Container) -> None:
+def _render_flags_tab(container: ContainerPort) -> None:
     """Render the feature flags tab panel showing active flags and hot-swap controls."""
     from nicegui import ui
 
@@ -413,7 +412,7 @@ def _render_flags_tab(container: Container) -> None:
         ).classes("hx-empty-label")
 
 
-def _render_container_tab(container: Container) -> None:
+def _render_container_tab(container: ContainerPort) -> None:
     """Render the DI container tab panel showing registered services."""
     from nicegui import ui
 
@@ -469,7 +468,7 @@ def _render_container_tab(container: Container) -> None:
         )
 
 
-def _render_observability_tab(container: Container) -> None:
+def _render_observability_tab(container: ContainerPort) -> None:
     """Render telemetry, structured logging, and Sentry observability status."""
     from nicegui import ui
 
@@ -544,7 +543,7 @@ def _render_observability_tab(container: Container) -> None:
                 )
 
 
-def _build_mermaid_middlewares(container: Container, lines: list[str]) -> None:
+def _build_mermaid_middlewares(container: ContainerPort, lines: list[str]) -> None:
     """Append middleware chain nodes and links to Mermaid lines."""
     from hexastack_cqrs.ports.buses import CommandBusPort
 
@@ -568,7 +567,7 @@ def _build_mermaid_middlewares(container: Container, lines: list[str]) -> None:
 
 
 def _build_mermaid_cqrs(
-    container: Container, lines: list[str]
+    container: ContainerPort, lines: list[str]
 ) -> tuple[bool, list[str], list[str]]:
     """Append CQRS message nodes and links to Mermaid lines.
 
@@ -611,7 +610,7 @@ def _build_mermaid_cqrs(
     return has_cqrs, cmd_names, qry_names
 
 
-def _detect_sentry_presence(container: Container, service_names: list[str]) -> bool:
+def _detect_sentry_presence(container: ContainerPort, service_names: list[str]) -> bool:
     """Check if Sentry adapter or logging integration is present in container."""
     if any("Sentry" in s for s in service_names):
         return True
@@ -643,7 +642,7 @@ def _append_storage_mermaid(
 
 
 def _build_mermaid_ports(
-    container: Container,
+    container: ContainerPort,
     lines: list[str],
     cmd_names: list[str],
     qry_names: list[str],
@@ -685,7 +684,7 @@ def _build_mermaid_ports(
 
 
 def generate_topology_mermaid(
-    container: Container,
+    container: ContainerPort,
     pipeline: ExecutionPipelinePort | None = None,
 ) -> str:
     """Generate a Mermaid diagram representing runtime resource interconnects.
@@ -722,7 +721,7 @@ def generate_topology_mermaid(
 
 
 def _render_topology_tab(
-    container: Container, pipeline: ExecutionPipelinePort | None = None
+    container: ContainerPort, pipeline: ExecutionPipelinePort | None = None
 ) -> None:
     """Render resource interconnect topology graph tab using Mermaid."""
     from nicegui import ui
@@ -778,7 +777,7 @@ def _build_demo_workflow(hexaflow_mod: Any) -> Any:
 
 
 def _resolve_available_workflows(
-    container: Container,
+    container: ContainerPort,
     orchestrator: Any,
     hexaflow_mod: Any,
 ) -> dict[str, Any]:
@@ -812,7 +811,7 @@ def _resolve_available_workflows(
     return workflows
 
 
-def _resolve_orchestrator(container: Container) -> Any | None:
+def _resolve_orchestrator(container: ContainerPort) -> Any | None:
     """Resolve workflow orchestrator port from DI container if registered.
 
     Args:
@@ -971,7 +970,7 @@ def _execute_saga_simulation(
         return []
 
 
-def _render_workflow_tab(container: Container) -> None:
+def _render_workflow_tab(container: ContainerPort) -> None:
     """Render interactive workflow DAG visualizer and saga simulation panel.
 
     Args:
@@ -1088,7 +1087,7 @@ def _render_workflow_tab(container: Container) -> None:
 
 
 def _render_devtools_content(
-    container: Container,
+    container: ContainerPort,
     pipeline: ExecutionPipelinePort | None,
     title: str,
 ) -> None:
@@ -1135,7 +1134,7 @@ def _render_devtools_content(
 
 def mount_devtools_dashboard(
     app: FastAPI,
-    container: Container,
+    container: ContainerPort,
     pipeline: ExecutionPipelinePort | None = None,
     *,
     path: str = "/_devtools",
@@ -1145,7 +1144,7 @@ def mount_devtools_dashboard(
 
     Args:
         app: Target FastAPI application.
-        container: Application rodi.Container instance.
+        container: Application ContainerPort instance.
         pipeline: Optional ExecutionPipelinePort instance.
         path: URL path where the dashboard is mounted (default '/_devtools').
         title: Dashboard page title.

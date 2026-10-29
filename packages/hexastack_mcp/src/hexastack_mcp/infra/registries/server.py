@@ -8,9 +8,9 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP as McpServer
 from mcp.server.transport_security import TransportSecuritySettings
-from rodi import Container
 
 from hexastack_core.domain.command import Command
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.utils.inspection import inspect_model_parameters
 from hexastack_cqrs.ports.buses import (
     CommandBusPort,
@@ -49,7 +49,7 @@ class McpServerRegistry:
         self,
         target_cls: type[Any],
         kind: str,
-        container: Container,
+        container: ContainerPort,
         read_only_tool: bool = False,
         server_read_only: bool = False,
     ) -> Callable[..., Any]:
@@ -121,7 +121,7 @@ class McpServerRegistry:
         instance: Any,
         target_cls: type[Any],
         kind: str,
-        container: Container,
+        container: ContainerPort,
     ) -> Any:
         """Resolve bus from container and dispatch command/query instance."""
         if kind == "command" or issubclass(target_cls, Command):
@@ -158,7 +158,7 @@ class McpServerRegistry:
     def _mount_tools(
         self,
         server: McpServer,
-        container: Container,
+        container: ContainerPort,
         config: HexastackMcpConfig | None = None,
     ) -> None:
         """Register all tool wrappers onto McpServer instance.
@@ -261,7 +261,7 @@ class McpServerRegistry:
     def build_server(
         self,
         config: HexastackMcpConfig,
-        container: Container,
+        container: ContainerPort,
     ) -> McpServer:
         """Construct and populate an McpServer instance from registered elements.
 

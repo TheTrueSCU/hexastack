@@ -12,6 +12,12 @@ from hexastack_core.infra.config import (
     HexastackConfigError,
     HexastackCoreConfig,
 )
+from hexastack_core.infra.container import (
+    CannotResolveException,
+    ContainerException,
+    MicroContainer,
+    create_container,
+)
 from hexastack_core.infra.decorators import (
     ConfigMetadata,
     ExceptionMetadata,
@@ -33,10 +39,13 @@ __all__ = [
     "bootstrap",
     "BootstrapContext",
     "BootstrapResult",
+    "CannotResolveException",
     "config_section",
     "ConfigMetadata",
     "ConfigRegistry",
     "ConfigRegistryError",
+    "ContainerException",
+    "create_container",
     "DiscoveryVisitor",
     "exception_handler",
     "ExceptionMetadata",
@@ -49,5 +58,6 @@ __all__ = [
     "HexastackConfig",
     "HexastackConfigError",
     "HexastackCoreConfig",
+    "MicroContainer",
     "scan_modules",
 ]

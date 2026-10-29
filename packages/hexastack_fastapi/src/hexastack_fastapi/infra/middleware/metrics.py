@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import time
 
-from rodi import Container
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from hexastack_core.domain.feature_flags import EvaluationContext
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_core.ports.metrics import MetricsPort
 from hexastack_fastapi.infra.config import HexastackFastApiConfig
@@ -25,7 +25,7 @@ class HttpMetricsMiddleware:
         self,
         app: ASGIApp,
         config: HexastackFastApiConfig | None = None,
-        container: Container | None = None,
+        container: ContainerPort | None = None,
         metrics: MetricsPort | None = None,
         flags: FeatureFlagPort | None = None,
     ) -> None:

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Response
-from rodi import Container
 
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.ports.metrics import MetricsPort
 
 
-def create_metrics_router(container: Container | None = None) -> APIRouter:
+def create_metrics_router(container: ContainerPort | None = None) -> APIRouter:
     """Create a FastAPI APIRouter mounting the /metrics Prometheus scraper endpoint.
 
     Args:

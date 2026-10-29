@@ -6,7 +6,6 @@ from types import ModuleType
 from typing import Any
 
 from pydantic import BaseModel
-from rodi import Container
 
 from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
 from hexastack_core.infra.autodiscovery import (
@@ -14,8 +13,10 @@ from hexastack_core.infra.autodiscovery import (
     scan_modules,
 )
 from hexastack_core.infra.config import HexastackConfig
+from hexastack_core.infra.container import create_container
 from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 
 
@@ -28,7 +29,7 @@ class BootstrapContext:
         feature flag evaluation, and module scanning metadata for single-pass multi-subsystem discovery.
     """
 
-    container: Container
+    container: ContainerPort
     config: HexastackConfig | None
     config_registry: ConfigRegistry
     packages_to_scan: list[str | ModuleType] | None = None
@@ -84,7 +85,7 @@ class BootstrapResult:
         CLI, and test execution environments.
     """
 
-    container: Container
+    container: ContainerPort
     config: HexastackConfig | None
     config_registry: ConfigRegistry
     bootstrappers: list[BootstrapperPort]
@@ -150,8 +151,8 @@ def bootstrap(
     config_path: str | Path | None = None,
     bootstrappers: list[BootstrapperPort] | None = None,
     auto_discover: bool = True,
-    container: Container | None = None,
-    configure_container: Callable[[Container], None] | None = None,
+    container: ContainerPort | None = None,
+    configure_container: Callable[[ContainerPort], None] | None = None,
     packages_to_scan: list[str | ModuleType] | None = None,
 ) -> BootstrapResult:
     """Bootstrap a complete Hexastack application runtime through modular extensions.
@@ -164,14 +165,14 @@ def bootstrap(
         config_path: Optional path to a TOML configuration file.
         bootstrappers: Optional explicit list of BootstrapperPort extensions.
         auto_discover: If True, discovers installed extensions via entry points.
-        container: Optional pre-configured rodi Container instance.
+        container: Optional pre-configured ContainerPort instance.
         configure_container: Optional user hook to customize container bindings.
         packages_to_scan: Optional list of packages or modules to scan for decorators.
 
     Returns:
         BootstrapResult containing configured container, config, and properties.
     """
-    di = container or Container()
+    di = container or create_container()
 
     # 1. Collect & deduplicate bootstrappers
     sorted_bootstrappers = _collect_and_sort_bootstrappers(bootstrappers, auto_discover)

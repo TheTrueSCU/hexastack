@@ -9,11 +9,11 @@ Notes/Architectural Intent:
 from collections.abc import Sequence
 from typing import Any
 
-from rodi import Container
-
 from hexastack_core.adapters.feature_flags.in_memory import InMemoryFeatureFlagAdapter
 from hexastack_core.infra.bootstrap import BootstrapResult, bootstrap
+from hexastack_core.infra.container import create_container
 from hexastack_core.ports.bootstrap import BootstrapperPort
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 
 __all__ = [
@@ -33,7 +33,7 @@ class TestRuntime:
         flags: InMemoryFeatureFlagAdapter,
     ) -> None:
         self.result = bootstrap_result
-        self.container: Container = bootstrap_result.container
+        self.container: ContainerPort = bootstrap_result.container
         self.flags: InMemoryFeatureFlagAdapter = flags
 
     def resolve(self, service_type: type[Any]) -> Any:
@@ -48,7 +48,7 @@ def create_test_runtime(
     instances: dict[type[Any], Any] | None = None,
     bootstrappers: Sequence[BootstrapperPort] | None = None,
     auto_discover: bool = False,
-    container: Container | None = None,
+    container: ContainerPort | None = None,
 ) -> TestRuntime:
     """Boot an isolated Hexastack test runtime configured with in-memory adapters.
 
@@ -58,13 +58,13 @@ def create_test_runtime(
         instances: Pre-configured service instances to register into the test DI container.
         bootstrappers: Optional custom bootstrappers to include.
         auto_discover: Whether to auto-discover entrypoint bootstrappers (defaults to False in tests).
-        container: Optional existing rodi Container instance.
+        container: Optional existing ContainerPort instance.
 
     Returns:
         TestRuntime instance containing the configured container and feature flag double.
     """
     flags = InMemoryFeatureFlagAdapter(flags=flag_overrides or {})
-    di = container or Container()
+    di = container or create_container()
     di.add_instance(flags, declared_class=FeatureFlagPort)
 
     if instances:

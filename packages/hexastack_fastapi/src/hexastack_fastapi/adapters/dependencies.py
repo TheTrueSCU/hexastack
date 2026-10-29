@@ -1,7 +1,6 @@
 from typing import Any
 
 from fastapi import HTTPException, Request, status
-from rodi import Container
 
 from hexastack_core.adapters.feature_flags.config import ConfigFeatureFlagAdapter
 from hexastack_core.adapters.feature_flags.in_memory import InMemoryFeatureFlagAdapter
@@ -10,6 +9,7 @@ from hexastack_core.domain.exceptions import (
     MissingDependencyError,
 )
 from hexastack_core.domain.feature_flags import EvaluationContext
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.ports.feature_flags import FeatureFlagPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 
@@ -87,7 +87,7 @@ def create_test_client(
     return TestClient(app, **test_client_kwargs)
 
 
-def get_container(request: Request) -> Container:
+def get_container(request: Request) -> ContainerPort:
     """FastAPI dependency provider resolving the active rodi Container instance.
 
     Notes/Architectural Intent:
@@ -103,7 +103,7 @@ def get_container(request: Request) -> Container:
         DependencyResolutionError: If Container has not been attached to app.state.
     """
     container = getattr(request.app.state, "container", None)
-    if container is None or not isinstance(container, Container):
+    if container is None or not isinstance(container, ContainerPort):
         raise DependencyResolutionError(
             "rodi.Container is not configured on request.app.state.container."
         )
@@ -124,7 +124,7 @@ def get_feature_flags(request: Request) -> FeatureFlagPort:
         The FeatureFlagPort instance.
     """
     container = getattr(request.app.state, "container", None)
-    if isinstance(container, Container) and FeatureFlagPort in container:
+    if isinstance(container, ContainerPort) and FeatureFlagPort in container:
         return container.resolve(FeatureFlagPort)
     return ConfigFeatureFlagAdapter()
 
@@ -149,7 +149,7 @@ def get_pipeline(request: Request) -> ExecutionPipeline:
         return pipeline
 
     container = getattr(request.app.state, "container", None)
-    if isinstance(container, Container) and ExecutionPipeline in container:
+    if isinstance(container, ContainerPort) and ExecutionPipeline in container:
         return container.resolve(ExecutionPipeline)
 
     raise DependencyResolutionError(
@@ -206,7 +206,7 @@ def get_rate_limiter(request: Request) -> Any | None:
         return limiter
 
     container = getattr(request.app.state, "container", None)
-    if isinstance(container, Container):
+    if isinstance(container, ContainerPort):
         from hexastack_core.ports.ratelimit import RateLimiterPort
 
         if RateLimiterPort in container:

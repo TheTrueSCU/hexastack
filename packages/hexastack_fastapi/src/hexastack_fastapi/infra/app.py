@@ -2,9 +2,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from rodi import Container
 
 from hexastack_core.infra.registries.exception import ExceptionRegistry
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_fastapi.adapters.docs import mount_zensical_docs
@@ -31,7 +31,7 @@ __all__ = [
 
 def create_fastapi_app(
     config: HexastackFastApiConfig | None = None,
-    container: Container | None = None,
+    container: ContainerPort | None = None,
     pipeline: ExecutionPipeline | None = None,
     exception_registry: ExceptionRegistry | None = None,
 ) -> FastAPI:

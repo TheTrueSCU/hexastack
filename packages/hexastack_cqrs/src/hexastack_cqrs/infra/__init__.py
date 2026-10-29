@@ -33,6 +33,10 @@ from hexastack_cqrs.infra.decorators import (
     presenter,
     query_handler,
 )
+from hexastack_cqrs.infra.edge import (
+    EdgeExecutionProfile,
+    create_edge_pipeline,
+)
 from hexastack_cqrs.infra.middleware import (
     AsyncCircuitBreakerMiddleware,
     CircuitBreakerMiddleware,
@@ -84,6 +88,8 @@ __all__ = [
     "CqrsBootstrapResult",
     "CqrsMiddlewareConfig",
     "create_cqrs_visitor",
+    "create_edge_pipeline",
+    "EdgeExecutionProfile",
     "event_listener",
     "exception_handler",
     "ExceptionMetadata",

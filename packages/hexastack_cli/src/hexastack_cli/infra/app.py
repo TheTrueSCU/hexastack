@@ -1,11 +1,11 @@
 import typer
 from rich.console import Console
-from rodi import Container
 
 from hexastack_cli.adapters.presenter import RichTerminalPresenter
 from hexastack_cli.adapters.suggest import TyperSuggest
 from hexastack_cli.infra.config import HexastackCliConfig
 from hexastack_core.domain import Generic
+from hexastack_core.ports.container import ContainerPort
 from hexastack_cqrs.infra.pipeline import ExecutionPipeline
 from hexastack_cqrs.infra.registries.presenter import PresenterRegistry
 
@@ -16,7 +16,7 @@ __all__ = [
 
 def create_cli_app(
     config: HexastackCliConfig | None = None,
-    container: Container | None = None,
+    container: ContainerPort | None = None,
     pipeline: ExecutionPipeline | None = None,
     console: Console | None = None,
 ) -> typer.Typer:

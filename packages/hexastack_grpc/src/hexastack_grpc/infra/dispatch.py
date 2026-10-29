@@ -1,10 +1,9 @@
 import inspect
 from typing import Any
 
-from rodi import Container
-
 from hexastack_core.domain.command import Command
 from hexastack_core.domain.query import Query
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.utils.inspection import extract_dto_fields
 from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
 
@@ -21,7 +20,7 @@ __all__ = [
 def dispatch_rpc_command[C: Command, R](
     request: Any,
     command_cls: type[C],
-    container: Container,
+    container: ContainerPort,
     **extra_kwargs: Any,
 ) -> R:
     """Instantiate and dispatch a Command from a gRPC protobuf request.
@@ -48,7 +47,7 @@ def dispatch_rpc_command[C: Command, R](
 async def dispatch_rpc_command_async[C: Command, R](
     request: Any,
     command_cls: type[C],
-    container: Container,
+    container: ContainerPort,
     **extra_kwargs: Any,
 ) -> R:
     """Asynchronously instantiate and dispatch a Command from a gRPC request."""
@@ -65,7 +64,7 @@ async def dispatch_rpc_command_async[C: Command, R](
 def dispatch_rpc_query[Q: Query, R](
     request: Any,
     query_cls: type[Q],
-    container: Container,
+    container: ContainerPort,
     **extra_kwargs: Any,
 ) -> R:
     """Instantiate and dispatch a Query from a gRPC protobuf request.
@@ -89,7 +88,7 @@ def dispatch_rpc_query[Q: Query, R](
 async def dispatch_rpc_query_async[Q: Query, R](
     request: Any,
     query_cls: type[Q],
-    container: Container,
+    container: ContainerPort,
     **extra_kwargs: Any,
 ) -> R:
     """Asynchronously instantiate and dispatch a Query from a gRPC request."""
@@ -106,7 +105,7 @@ async def dispatch_rpc_query_async[Q: Query, R](
 async def dispatch_rpc_stream_query[Q: Query, R](
     request: Any,
     query_cls: type[Q],
-    container: Container,
+    container: ContainerPort,
     **extra_kwargs: Any,
 ) -> Any:
     """Instantiate and execute a streaming query returning an async generator of responses.
@@ -139,7 +138,7 @@ async def dispatch_rpc_stream_query[Q: Query, R](
 async def dispatch_rpc_bidirectional_stream[C: Command, R](
     requests_iterator: Any,
     command_cls: type[C],
-    container: Container,
+    container: ContainerPort,
     **extra_kwargs: Any,
 ) -> Any:
     """Stream incoming client requests into Command dispatches, yielding output responses.

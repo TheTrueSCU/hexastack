@@ -19,6 +19,7 @@ from hexastack_core.infra.registries.exception import ExceptionRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
 from hexastack_core.ports.cache import AsyncCachePort, CachePort
 from hexastack_core.ports.circuit_breaker import CircuitBreakerPort
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_core.ports.unit_of_work import UnitOfWorkPort
 from hexastack_cqrs.adapters.buses.command.synchronous import (
@@ -67,7 +68,7 @@ class CqrsBootstrapResult:
     """
 
     pipeline: ExecutionPipeline
-    container: Container
+    container: ContainerPort
     config: HexastackConfig | None
     config_registry: ConfigRegistry
     exception_registry: ExceptionRegistry

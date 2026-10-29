@@ -1,9 +1,9 @@
 import time
 
-from rodi import Container
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from hexastack_core.adapters.logging.standard import StandardLogger
+from hexastack_core.ports.container import ContainerPort
 from hexastack_core.ports.logging import LoggingPort
 from hexastack_fastapi.infra.config import HexastackFastApiConfig
 
@@ -20,7 +20,7 @@ class RequestLoggingHttpMiddleware:
         self,
         app: ASGIApp,
         config: HexastackFastApiConfig | None = None,
-        container: Container | None = None,
+        container: ContainerPort | None = None,
         logger: LoggingPort | None = None,
     ) -> None:
         """Initialize request logging middleware.

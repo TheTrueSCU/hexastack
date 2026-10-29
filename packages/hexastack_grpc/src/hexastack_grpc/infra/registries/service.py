@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import grpc
-from rodi import Container
 
+from hexastack_core.ports.container import ContainerPort
 from hexastack_grpc.domain.exceptions import ServiceRegistrationError
 from hexastack_grpc.infra.config import HexastackGrpcConfig
 
@@ -49,7 +49,7 @@ class GrpcServiceRegistry:
     def _resolve_servicer_instance(
         self,
         servicer_val: Any,
-        container: Container | None,
+        container: ContainerPort | None,
     ) -> Any:
         """Resolve or instantiate servicer instance."""
         if not isinstance(servicer_val, type):
@@ -65,7 +65,7 @@ class GrpcServiceRegistry:
         self,
         config: HexastackGrpcConfig,
         interceptors: Sequence[grpc.ServerInterceptor] | None = None,
-        container: Container | None = None,
+        container: ContainerPort | None = None,
     ) -> grpc.Server:
         """Construct and populate a grpc.Server instance with registered servicers.
 
