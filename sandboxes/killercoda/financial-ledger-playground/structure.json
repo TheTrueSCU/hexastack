@@ -1,0 +1,32 @@
+{
+    "title": "Double-Entry Financial Ledger & Domain Invariants",
+    "description": "Interactively post balanced double-entry transactions and observe mathematical domain invariant enforcement.",
+    "difficulty": "Intermediate",
+    "time": "10-15 minutes",
+    "details": {
+        "steps": [
+            {
+                "title": "The Double-Entry Invariant",
+                "text": "step1.md"
+            },
+            {
+                "title": "Posting Balanced Transactions",
+                "text": "step2.md"
+            },
+            {
+                "title": "Observing Invariant Rejection",
+                "text": "step3.md"
+            }
+        ],
+        "intro": {
+            "text": "intro.md"
+        },
+        "finish": {
+            "text": "finish.md"
+        }
+    },
+    "environment": {
+        "uilayout": "terminal-split",
+        "imageid": "ubuntu"
+    }
+}

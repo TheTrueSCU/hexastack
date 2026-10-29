@@ -1,6 +1,12 @@
 # Tutorial 1: Building a To-Do Microservice with Hexastack
 
+[![Interactive Scaffolding Sandbox](https://img.shields.io/badge/Killercoda-Interactive_Scaffolding_Sandbox-purple?logo=linux&logoColor=white)](https://killercoda.com/TheTrueSCU/scenario/scaffolding-playground)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack)
+
 Welcome to the foundational tutorial for **Hexastack**!
+
+> [!TIP] **Try It in Your Browser**
+> You can step through this chapter interactively without installing Python locally by launching the **[Hexastack Scaffolding Sandbox on Killercoda](https://killercoda.com/TheTrueSCU/scenario/scaffolding-playground)**.
 
 In this guide, you will learn how to build a clean, production-grade To-Do microservice strictly following **Hexagonal Architecture (Ports & Adapters)** and **CQRS (Command-Query Responsibility Segregation)**.
 

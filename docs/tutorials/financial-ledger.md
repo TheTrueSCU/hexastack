@@ -1,6 +1,13 @@
 # Tutorial 8: Double-Entry Financial Ledger & Mathematical Invariants
 
+[![Interactive Ledger Sandbox](https://img.shields.io/badge/Killercoda-Interactive_Ledger_Sandbox-purple?logo=linux&logoColor=white)](https://killercoda.com/TheTrueSCU/scenario/financial-ledger-playground)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack)
+
 In this tutorial, you will explore the **Financial Ledger Service** (`examples/financial-ledger`), a reference architecture demonstrating how **Hexastack** enforces **strict consistency**, **double-entry invariants**, and **pure domain isolation** for mission-critical financial systems.
+
+> [!TIP] **Interactive Terminal Sandbox Available**
+> Test posting balanced transactions and triggering invariant violations directly in your browser:
+> Launch the **[Interactive Financial Ledger Sandbox](https://killercoda.com/TheTrueSCU/scenario/financial-ledger-playground)** on Killercoda or explore the technical [Sandbox Architecture Report](../developer-guide/sandbox-terminals.md).
 
 By the end of this guide, you will understand:
 

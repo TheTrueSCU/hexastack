@@ -1,0 +1,32 @@
+{
+    "title": "Hexastack CLI Scaffolding & Architecture Playground",
+    "description": "Interactively scaffold a new hexagonal microservice, add CQRS commands, and verify architectural invariants.",
+    "difficulty": "Beginner",
+    "time": "10-15 minutes",
+    "details": {
+        "steps": [
+            {
+                "title": "Scaffolding a New Service",
+                "text": "step1.md"
+            },
+            {
+                "title": "Adding CQRS Commands & Adapters",
+                "text": "step2.md"
+            },
+            {
+                "title": "Validating Quality Gates & Test Symmetry",
+                "text": "step3.md"
+            }
+        ],
+        "intro": {
+            "text": "intro.md"
+        },
+        "finish": {
+            "text": "finish.md"
+        }
+    },
+    "environment": {
+        "uilayout": "terminal-split",
+        "imageid": "ubuntu"
+    }
+}

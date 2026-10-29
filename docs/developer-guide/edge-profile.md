@@ -14,7 +14,7 @@ Standard Python microservice frameworks fail in these environments because they 
 - PEP 567 `contextvars` modules, which are absent in MicroPython.
 - Heavy container footprints that exceed embedded memory limits (e.g. 512KB–4MB RAM).
 
-Hexastack provides a turnkey **WASM & Embedded Edge Profile** ([`ADR-016`](file:///home/rjdw/Projects/hexastack/docs/decisions.md#adr-016-wasm--embedded-edge-execution-profile)) that allows the exact same Commands, Queries, Events, and Domain Entities to run without modification across cloud and edge.
+Hexastack provides a turnkey **WASM & Embedded Edge Profile** ([`ADR-016`](../decisions.md#adr-016-wasm--embedded-edge-execution-profile)) that allows the exact same Commands, Queries, Events, and Domain Entities to run without modification across cloud and edge.
 
 ```mermaid
 flowchart TD

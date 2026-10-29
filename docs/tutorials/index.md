@@ -1,8 +1,17 @@
 # 🎓 Hexastack Tutorials & Guides
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TheTrueSCU/hexastack)
+[![Interactive Scaffolding Sandbox](https://img.shields.io/badge/Killercoda-Scaffolding_Sandbox-purple?logo=linux&logoColor=white)](https://killercoda.com/TheTrueSCU/scenario/scaffolding-playground)
+[![Financial Ledger Sandbox](https://img.shields.io/badge/Killercoda-Ledger_Sandbox-purple?logo=linux&logoColor=white)](https://killercoda.com/TheTrueSCU/scenario/financial-ledger-playground)
+[![Sandbox Architecture](https://img.shields.io/badge/Evaluation-Sandbox_Terminals-blue)](../developer-guide/sandbox-terminals.md)
 
 Explore hands-on, step-by-step tutorials demonstrating how to build robust, modular, and strictly partitioned microservices using **Hexastack**. All tutorials and runnable microservice examples are pre-configured to run directly in your browser with zero setup.
+
+> [!TIP] **Interactive Browser Terminal Sandboxes**
+> Test Hexastack commands without installing Python locally:
+> - **[Launch CLI Scaffolding Playground](https://killercoda.com/TheTrueSCU/scenario/scaffolding-playground)**: Scaffold microservices and run `hexaqual sanity` live in an interactive container.
+> - **[Launch Financial Ledger Playground](https://killercoda.com/TheTrueSCU/scenario/financial-ledger-playground)**: Dispatch double-entry transactions and test invariant violations live.
+> - Read the technical [Sandbox Terminals Evaluation & Architecture Report](../developer-guide/sandbox-terminals.md) to learn how container sandboxing, TryCLI, and WebAssembly profiles work.
 
 ---
 
