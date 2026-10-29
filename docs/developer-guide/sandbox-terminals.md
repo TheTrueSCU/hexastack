@@ -80,6 +80,39 @@ flowchart TD
 2. **Tier 2 (Killercoda Scenarios)**: Provided via 1-click launch badges at the top of multi-chapter tutorials for full terminal walkthroughs with automated check scripts.
 3. **Tier 3 (GitHub Codespaces)**: Provided for developers who want a complete, persistent cloud IDE with NiceGUI devtools dashboards and gRPC services.
 
+### Live Tier 1 Interactive Sandbox Terminal
+
+Try the live in-browser terminal widget below — test scaffolding, inspect the ADR-016 WASM microkernel, or dispatch financial ledger transactions:
+
+<div class="hexastack-terminal-container" role="region" aria-label="Hexastack Interactive Sandbox Terminal">
+  <div class="hexastack-terminal-header">
+    <div class="hexastack-terminal-controls">
+      <span class="hexastack-terminal-dot red" aria-hidden="true"></span>
+      <span class="hexastack-terminal-dot yellow" aria-hidden="true"></span>
+      <span class="hexastack-terminal-dot green" aria-hidden="true"></span>
+      <span class="hexastack-terminal-title">Hexastack Sandbox</span>
+    </div>
+    <div>
+      <span class="hexastack-terminal-engine-badge">Instant Simulation (&lt;1ms)</span>
+    </div>
+  </div>
+  <div class="hexastack-terminal-chips" role="toolbar" aria-label="Preset Terminal Commands">
+    <button class="hexastack-terminal-chip" data-command="hexastack --help">hexastack --help</button>
+    <button class="hexastack-terminal-chip" data-command="hexastack new billing-service">hexastack new billing-service</button>
+    <button class="hexastack-terminal-chip" data-command="hexastack edge status">hexastack edge status</button>
+    <button class="hexastack-terminal-chip" data-command='dispatch PostTransaction --debit "Cash:500.00" --credit "AR:500.00"'>dispatch (Balanced)</button>
+    <button class="hexastack-terminal-chip danger" data-command='dispatch PostTransaction --debit "Cash:500.00" --credit "AR:400.00"'>dispatch (Unbalanced Violation)</button>
+    <button class="hexastack-terminal-chip" data-command="clear">clear</button>
+  </div>
+  <div class="hexastack-terminal-screen" tabindex="0" role="log" aria-live="polite" aria-label="Terminal Output"></div>
+  <div class="hexastack-terminal-input-bar">
+    <span class="hexastack-terminal-prompt" aria-hidden="true">hexastack &gt;</span>
+    <input type="text" class="hexastack-terminal-input" placeholder="Type a command or click a chip above..." aria-label="Hexastack terminal command prompt" autocomplete="off" spellcheck="false" />
+    <button class="hexastack-terminal-btn hexastack-terminal-run-btn" aria-label="Execute command">Run</button>
+    <button class="hexastack-terminal-btn hexastack-terminal-pyodide-btn" aria-label="Load live Pyodide WebAssembly runtime">⚡ Load Pyodide WASM</button>
+  </div>
+</div>
+
 ---
 
 ## 5. Prototype Scenario Specifications

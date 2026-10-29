@@ -93,6 +93,37 @@ class JournalTransaction:
                 )
 ```
 
+### Try It Live in the In-Browser Sandbox Terminal
+
+Execute balanced and unbalanced transactions right here without installing anything:
+
+<div class="hexastack-terminal-container" role="region" aria-label="Financial Ledger Interactive Sandbox Terminal">
+  <div class="hexastack-terminal-header">
+    <div class="hexastack-terminal-controls">
+      <span class="hexastack-terminal-dot red" aria-hidden="true"></span>
+      <span class="hexastack-terminal-dot yellow" aria-hidden="true"></span>
+      <span class="hexastack-terminal-dot green" aria-hidden="true"></span>
+      <span class="hexastack-terminal-title">Financial Ledger Sandbox</span>
+    </div>
+    <div>
+      <span class="hexastack-terminal-engine-badge">Instant Simulation (&lt;1ms)</span>
+    </div>
+  </div>
+  <div class="hexastack-terminal-chips" role="toolbar" aria-label="Preset Ledger Commands">
+    <button class="hexastack-terminal-chip" data-command='dispatch PostTransaction --debit "Cash:500.00" --credit "AR:500.00"'>dispatch Balanced ($500.00)</button>
+    <button class="hexastack-terminal-chip danger" data-command='dispatch PostTransaction --debit "Cash:500.00" --credit "AR:400.00"'>dispatch Unbalanced (Violates Invariant)</button>
+    <button class="hexastack-terminal-chip" data-command="hexastack edge status">hexastack edge status</button>
+    <button class="hexastack-terminal-chip" data-command="clear">clear</button>
+  </div>
+  <div class="hexastack-terminal-screen" tabindex="0" role="log" aria-live="polite" aria-label="Terminal Output"></div>
+  <div class="hexastack-terminal-input-bar">
+    <span class="hexastack-terminal-prompt" aria-hidden="true">hexastack &gt;</span>
+    <input type="text" class="hexastack-terminal-input" placeholder="dispatch PostTransaction --debit ... --credit ..." aria-label="Financial ledger terminal command prompt" autocomplete="off" spellcheck="false" />
+    <button class="hexastack-terminal-btn hexastack-terminal-run-btn" aria-label="Execute command">Run</button>
+    <button class="hexastack-terminal-btn hexastack-terminal-pyodide-btn" aria-label="Load live Pyodide WebAssembly runtime">⚡ Load Pyodide WASM</button>
+  </div>
+</div>
+
 ---
 
 ## 2. CQRS Commands, Handlers & Inverted Ports

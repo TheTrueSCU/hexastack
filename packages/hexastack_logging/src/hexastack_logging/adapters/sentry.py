@@ -3,8 +3,61 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
+from typing import Any
 
 from hexastack_core.ports.logging import Extras, LoggingPort
+
+
+def default_before_send(
+    event: Any,
+    hint: Any,
+) -> Any:
+    """Filter out synthetic test events and simulated crash routes before Sentry ingestion.
+
+    Args:
+        event: Sentry event dictionary.
+        hint: Sentry diagnostic hint dictionary containing exception info.
+
+    Returns:
+        The filtered event dictionary, or None if the event should be dropped.
+
+    Notes/Architectural Intent:
+        Prevents synthetic test routes (e.g. '/sentry-crash') and test-tagged executions
+        from consuming ingestion quota or triggering false-positive alerts.
+    """
+    del hint  # Unused diagnostic hint
+
+    if not isinstance(event, dict):
+        return event
+
+    # Inspect request URL if present
+    req = event.get("request")
+    if isinstance(req, dict):
+        url = str(req.get("url", ""))
+        if url.endswith("-crash") or "/sentry-crash" in url:
+            return None
+
+    # Inspect transaction name if present
+    transaction = str(event.get("transaction", ""))
+    if transaction.endswith("-crash") or "/sentry-crash" in transaction:
+        return None
+
+    # Inspect event tags
+    tags = event.get("tags")
+    if isinstance(tags, dict):
+        path = str(tags.get("path", ""))
+        if path.endswith("-crash") or "/sentry-crash" in path:
+            return None
+        if tags.get("test") in (True, "true", "True"):
+            return None
+
+    # Inspect event extra metadata
+    extra = event.get("extra")
+    if isinstance(extra, dict) and extra.get("test") in (True, "true", "True"):
+        return None
+
+    return event
 
 
 class SentryErrorAdapter(LoggingPort):
@@ -22,6 +75,7 @@ class SentryErrorAdapter(LoggingPort):
         release: str | None = None,
         sample_rate: float = 1.0,
         inner_logger: LoggingPort | None = None,
+        before_send: Callable[..., Any] | None = None,
     ) -> None:
         """Initialize SentryErrorAdapter.
 
@@ -31,11 +85,13 @@ class SentryErrorAdapter(LoggingPort):
             release: Application version or commit SHA.
             sample_rate: Error sampling rate (0.0 to 1.0).
             inner_logger: Optional underlying LoggingPort to delegate standard logging to.
+            before_send: Optional custom Sentry event filtering callback. Defaults to default_before_send.
         """
         self.inner_logger = inner_logger
         self.dsn = dsn
         self.environment = environment
         self.release = release
+        self.before_send: Callable[..., Any] = before_send or default_before_send
         self._sentry_initialized = False
 
         if dsn:
@@ -47,6 +103,7 @@ class SentryErrorAdapter(LoggingPort):
                     environment=environment,
                     release=release,
                     sample_rate=sample_rate,
+                    before_send=self.before_send,
                 )
                 self._sentry_initialized = True
             except ImportError:
@@ -147,5 +204,6 @@ class SentryErrorAdapter(LoggingPort):
 
 
 __all__ = [
+    "default_before_send",
     "SentryErrorAdapter",
 ]

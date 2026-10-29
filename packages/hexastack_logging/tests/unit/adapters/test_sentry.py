@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from hexastack_core.adapters.logging import InMemoryLogger
-from hexastack_logging.adapters.sentry import SentryErrorAdapter
+from hexastack_logging.adapters.sentry import (
+    SentryErrorAdapter,
+    default_before_send,
+)
 
 
 def test_sentry_error_adapter_delegation() -> None:
@@ -79,6 +82,7 @@ def test_sentry_error_adapter_with_mocked_sdk(monkeypatch) -> None:
         environment="production",
         release="1.0.0",
         sample_rate=0.5,
+        before_send=adapter.before_send,
     )
 
     err = RuntimeError("test-error")
@@ -90,3 +94,44 @@ def test_sentry_error_adapter_with_mocked_sdk(monkeypatch) -> None:
     mock_scope.reset_mock()
     adapter.critical("critical failure")
     mock_sentry.capture_message.assert_called_with("critical failure", level="fatal")
+
+
+def test_default_before_send_filter() -> None:
+    """Verify default_before_send drops test events and crash endpoints."""
+    # Normal event passes through
+    valid_event = {
+        "message": "hello",
+        "request": {"url": "https://api.example.com/items"},
+    }
+    filtered_valid = default_before_send(valid_event, {})
+    assert filtered_valid == valid_event
+
+    # Crash URL in request
+    crash_url_event = {"request": {"url": "https://api.example.com/sentry-crash"}}
+    filtered_crash_url = default_before_send(crash_url_event, {})
+    assert filtered_crash_url is None
+
+    # -crash URL suffix
+    suffix_crash_event = {"request": {"url": "https://api.example.com/panic-crash"}}
+    filtered_suffix = default_before_send(suffix_crash_event, {})
+    assert filtered_suffix is None
+
+    # Transaction ending in -crash
+    crash_txn_event = {"transaction": "GET /api/v1/sentry-crash"}
+    filtered_txn = default_before_send(crash_txn_event, {})
+    assert filtered_txn is None
+
+    # Tags path ending in -crash
+    crash_tag_event = {"tags": {"path": "/sentry-crash"}}
+    filtered_tag = default_before_send(crash_tag_event, {})
+    assert filtered_tag is None
+
+    # Test tag
+    test_tag_event = {"tags": {"test": "true"}}
+    filtered_test_tag = default_before_send(test_tag_event, {})
+    assert filtered_test_tag is None
+
+    # Test extra
+    test_extra_event = {"extra": {"test": True}}
+    filtered_test_extra = default_before_send(test_extra_event, {})
+    assert filtered_test_extra is None

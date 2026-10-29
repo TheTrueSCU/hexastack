@@ -2,6 +2,8 @@
 site_name = "Hexastack"
 site_description = "The Enterprise Hexagonal Architecture Monorepo Framework for Python"
 site_url = "https://dopplereffect.us/hexastack/"
+extra_javascript = ["assets/static/terminal.js"]
+extra_css = ["assets/static/terminal.css"]
 
 nav = [
     { "Overview" = "index.md" },

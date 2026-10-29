@@ -4,9 +4,13 @@ from hexastack_logging.adapters.logger import (
     StructlogAdapter,
     StructuredLogger,
 )
-from hexastack_logging.adapters.sentry import SentryErrorAdapter
+from hexastack_logging.adapters.sentry import (
+    SentryErrorAdapter,
+    default_before_send,
+)
 
 __all__ = [
+    "default_before_send",
     "LoguruAdapter",
     "RichLogger",
     "SentryErrorAdapter",
