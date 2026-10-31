@@ -7,6 +7,8 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from hexastack_qual.domain.models import PrHealthSummary
 from hexastack_qual.ports.diagnostics import PrDiagnosticPort
@@ -41,3 +43,19 @@ def test_concrete_diagnostics_satisfies_contract() -> None:
 
     assert summary.pr_number == 99
     assert len(impact) == 1
+
+
+def test_pr_diagnostic_port_is_abstract() -> None:
+    """Verify that PrDiagnosticPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(PrDiagnosticPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        PrDiagnosticPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_pr_diagnostic_port_abstract_methods() -> None:
+    """Verify abstract methods on PrDiagnosticPort."""
+    expected = {"get_pr_health", "get_test_impact"}
+    abstracts = PrDiagnosticPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

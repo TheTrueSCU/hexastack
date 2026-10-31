@@ -1,3 +1,4 @@
+import inspect
 from typing import Any
 
 import pytest
@@ -230,3 +231,48 @@ def test_tracing_port_abstract():
 
     with pytest.raises(TypeError):
         IncompleteTracing6()  # ty: ignore[call-non-callable]
+
+
+def test_span_port_is_abstract() -> None:
+    """Verify that SpanPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(SpanPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        SpanPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_span_port_abstract_methods() -> None:
+    """Verify abstract methods on SpanPort."""
+    expected = {
+        "end",
+        "record_exception",
+        "set_attribute",
+        "set_attributes",
+        "set_status",
+    }
+    abstracts = SpanPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
+
+
+def test_tracing_port_is_abstract() -> None:
+    """Verify that TracingPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(TracingPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        TracingPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_tracing_port_abstract_methods() -> None:
+    """Verify abstract methods on TracingPort."""
+    expected = {
+        "extract_context",
+        "get_current_span",
+        "inject_context",
+        "shutdown",
+        "start_span",
+        "trace_scope",
+    }
+    abstracts = TracingPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

@@ -1,5 +1,8 @@
+import inspect
 from collections.abc import Sequence
 from typing import Any
+
+import pytest
 
 from hexastack_ai.domain.tokens import ChatMessage, PruneStrategy
 from hexastack_ai.ports.tokens import TokenizerPort
@@ -69,3 +72,24 @@ def test_tokenizer_port_dummy_implementation():
 
     cost = tokenizer.estimate_cost(100, 100, "any-model")
     assert round(cost, 5) == 0.002
+
+
+def test_tokenizer_port_is_abstract() -> None:
+    """Verify that TokenizerPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(TokenizerPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        TokenizerPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_tokenizer_port_abstract_methods() -> None:
+    """Verify abstract methods on TokenizerPort."""
+    expected = {
+        "count_messages_tokens",
+        "count_tokens",
+        "estimate_cost",
+        "prune_messages",
+    }
+    abstracts = TokenizerPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

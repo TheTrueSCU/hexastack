@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 
 from hexastack_core.adapters.circuit_breaker import (
@@ -53,3 +55,49 @@ def test_circuit_state_enum() -> None:
     assert CircuitState.CLOSED == "closed"
     assert CircuitState.OPEN == "open"
     assert CircuitState.HALF_OPEN == "half_open"
+
+
+def test_circuit_breaker_port_is_abstract() -> None:
+    """Verify that CircuitBreakerPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(CircuitBreakerPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        CircuitBreakerPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_circuit_breaker_port_abstract_methods() -> None:
+    """Verify abstract methods on CircuitBreakerPort."""
+    expected = {
+        "allow_execution",
+        "call",
+        "record_failure",
+        "record_success",
+        "reset",
+        "state",
+    }
+    abstracts = CircuitBreakerPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
+
+
+def test_async_circuit_breaker_port_is_abstract() -> None:
+    """Verify that AsyncCircuitBreakerPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(AsyncCircuitBreakerPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        AsyncCircuitBreakerPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_async_circuit_breaker_port_abstract_methods() -> None:
+    """Verify abstract methods on AsyncCircuitBreakerPort."""
+    expected = {
+        "allow_execution_async",
+        "call_async",
+        "record_failure_async",
+        "record_success_async",
+        "reset_async",
+        "state_async",
+    }
+    abstracts = AsyncCircuitBreakerPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

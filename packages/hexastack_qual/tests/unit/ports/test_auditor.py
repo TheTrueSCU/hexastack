@@ -7,6 +7,8 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from hexastack_qual.domain.models import (
     ComplexityMetric,
@@ -73,3 +75,25 @@ def test_concrete_auditor_satisfies_contract() -> None:
     assert statements == []
     assert fixed == 0
     assert sanity.is_healthy is True
+
+
+def test_quality_auditor_port_is_abstract() -> None:
+    """Verify that QualityAuditorPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(QualityAuditorPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        QualityAuditorPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_quality_auditor_port_abstract_methods() -> None:
+    """Verify abstract methods on QualityAuditorPort."""
+    expected = {
+        "audit_complexity",
+        "audit_parity",
+        "audit_statements",
+        "fix_statements",
+        "run_sanity",
+    }
+    abstracts = QualityAuditorPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

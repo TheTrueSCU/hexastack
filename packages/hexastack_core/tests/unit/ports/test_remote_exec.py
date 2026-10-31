@@ -5,6 +5,8 @@ Notes/Architectural Intent:
     and that RemoteExecutionPort enforces abstract method implementation.
 """
 
+import inspect
+
 import pytest
 
 from hexastack_core.ports.remote_exec import RemoteExecResult, RemoteExecutionPort
@@ -39,3 +41,19 @@ def test_remote_execution_port_cannot_be_instantiated_directly() -> None:
     """Validate that RemoteExecutionPort is an abstract ABC requiring implementation."""
     with pytest.raises(TypeError):
         RemoteExecutionPort()  # ty: ignore[call-non-callable]
+
+
+def test_remote_execution_port_is_abstract() -> None:
+    """Verify that RemoteExecutionPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(RemoteExecutionPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        RemoteExecutionPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_remote_execution_port_abstract_methods() -> None:
+    """Verify abstract methods on RemoteExecutionPort."""
+    expected = {"download_file", "run", "stream_output", "upload_file"}
+    abstracts = RemoteExecutionPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

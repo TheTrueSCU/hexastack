@@ -7,6 +7,8 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from hexastack_qual.domain.models import MutantReport
 from hexastack_qual.ports.mutator import MutationInspectorPort
@@ -44,3 +46,19 @@ def test_concrete_mutator_satisfies_contract() -> None:
 
     assert inspect_res.mutation_score == 100.0
     assert run_res.mutation_score == 100.0
+
+
+def test_mutation_inspector_port_is_abstract() -> None:
+    """Verify that MutationInspectorPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(MutationInspectorPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        MutationInspectorPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_mutation_inspector_port_abstract_methods() -> None:
+    """Verify abstract methods on MutationInspectorPort."""
+    expected = {"inspect_surviving_mutants", "run_mutation_testing"}
+    abstracts = MutationInspectorPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

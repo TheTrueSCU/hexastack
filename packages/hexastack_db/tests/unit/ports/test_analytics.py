@@ -1,8 +1,10 @@
+import inspect
 from collections.abc import Sequence
 from typing import Any
 
 import polars as pl
 import pyarrow as pa
+import pytest
 
 from hexastack_db.domain.analytics import (
     ColumnarExportFormat,
@@ -94,3 +96,26 @@ async def test_dummy_polars_projection_port():
 
     exported_async = await port.export_async("SELECT * FROM items", format="json")
     assert exported_async.format == "json"
+
+
+def test_polars_projection_port_is_abstract() -> None:
+    """Verify that PolarsProjectionPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(PolarsProjectionPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        PolarsProjectionPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_polars_projection_port_abstract_methods() -> None:
+    """Verify abstract methods on PolarsProjectionPort."""
+    expected = {
+        "execute_arrow",
+        "execute_arrow_async",
+        "execute_polars",
+        "execute_polars_async",
+        "export",
+        "export_async",
+    }
+    abstracts = PolarsProjectionPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

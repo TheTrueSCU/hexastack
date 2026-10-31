@@ -1,3 +1,7 @@
+import inspect
+
+import pytest
+
 from hexastack_auth.domain.user import OAuthUserInfo, User, VerificationToken
 from hexastack_auth.ports.user import (
     OAuthProviderPort,
@@ -104,3 +108,69 @@ async def test_dummy_user_ports():
     assert "state=st" in url
     info = await prov.exchange_code("code", "http://callback")
     assert info.email == "user@dummy.com"
+
+
+def test_user_repository_port_is_abstract() -> None:
+    """Verify that UserRepositoryPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(UserRepositoryPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        UserRepositoryPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_user_repository_port_abstract_methods() -> None:
+    """Verify abstract methods on UserRepositoryPort."""
+    expected = {
+        "delete",
+        "delete_async",
+        "get_by_email",
+        "get_by_email_async",
+        "get_by_id",
+        "get_by_id_async",
+        "get_by_oauth",
+        "get_by_oauth_async",
+        "save",
+        "save_async",
+    }
+    abstracts = UserRepositoryPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
+
+
+def test_token_store_port_is_abstract() -> None:
+    """Verify that TokenStorePort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(TokenStorePort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        TokenStorePort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_token_store_port_abstract_methods() -> None:
+    """Verify abstract methods on TokenStorePort."""
+    expected = {
+        "consume_token",
+        "consume_token_async",
+        "get_token",
+        "get_token_async",
+        "store_token",
+        "store_token_async",
+    }
+    abstracts = TokenStorePort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
+
+
+def test_o_auth_provider_port_is_abstract() -> None:
+    """Verify that OAuthProviderPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(OAuthProviderPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        OAuthProviderPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_o_auth_provider_port_abstract_methods() -> None:
+    """Verify abstract methods on OAuthProviderPort."""
+    expected = {"exchange_code", "get_authorization_url", "name"}
+    abstracts = OAuthProviderPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

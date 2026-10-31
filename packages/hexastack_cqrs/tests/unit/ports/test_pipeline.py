@@ -1,4 +1,7 @@
+import inspect
 from typing import Any
+
+import pytest
 
 from hexastack_core.domain import Command, Generic, Query
 from hexastack_cqrs.ports.pipeline import ExecutionPipelinePort
@@ -69,3 +72,11 @@ def test_execution_pipeline_port_abstract_methods():
     assert "execute_by_name" in abstracts
     assert "get_registered_commands" in abstracts
     assert "get_registered_queries" in abstracts
+
+
+def test_execution_pipeline_port_is_abstract() -> None:
+    """Verify that ExecutionPipelinePort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(ExecutionPipelinePort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        ExecutionPipelinePort()  # ty: ignore[call-non-callable] # type: ignore[abstract]

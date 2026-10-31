@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 
 from hexastack_core.adapters.leader_election import (
@@ -33,3 +35,49 @@ async def test_async_leader_election_port_instantiation():
     assert await obj.get_leader() == "async-node-1"
     await obj.step_down()
     assert await obj.is_leader() is False
+
+
+def test_leader_election_port_is_abstract() -> None:
+    """Verify that LeaderElectionPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(LeaderElectionPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        LeaderElectionPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_leader_election_port_abstract_methods() -> None:
+    """Verify abstract methods on LeaderElectionPort."""
+    expected = {
+        "acquire_leadership",
+        "get_leader",
+        "is_leader",
+        "on_leadership_change",
+        "renew_leadership",
+        "step_down",
+    }
+    abstracts = LeaderElectionPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
+
+
+def test_async_leader_election_port_is_abstract() -> None:
+    """Verify that AsyncLeaderElectionPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(AsyncLeaderElectionPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        AsyncLeaderElectionPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_async_leader_election_port_abstract_methods() -> None:
+    """Verify abstract methods on AsyncLeaderElectionPort."""
+    expected = {
+        "acquire_leadership",
+        "get_leader",
+        "is_leader",
+        "on_leadership_change",
+        "renew_leadership",
+        "step_down",
+    }
+    abstracts = AsyncLeaderElectionPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

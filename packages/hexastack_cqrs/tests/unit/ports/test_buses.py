@@ -1,3 +1,4 @@
+import inspect
 from typing import Any
 
 import pytest
@@ -76,3 +77,67 @@ def test_abstract_bus_ports_cannot_be_instantiated_directly():
 
     assert isinstance(CallableMiddleware(), MiddlewarePort)
     assert not isinstance(object(), MiddlewarePort)
+
+
+def test_handler_dispatcher_port_is_abstract() -> None:
+    """Verify that HandlerDispatcherPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(HandlerDispatcherPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        HandlerDispatcherPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_handler_dispatcher_port_abstract_methods() -> None:
+    """Verify abstract methods on HandlerDispatcherPort."""
+    expected = {"handle"}
+    abstracts = HandlerDispatcherPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
+
+
+def test_command_bus_port_is_abstract() -> None:
+    """Verify that CommandBusPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(CommandBusPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        CommandBusPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_command_bus_port_abstract_methods() -> None:
+    """Verify abstract methods on CommandBusPort."""
+    expected = {"dispatch"}
+    abstracts = CommandBusPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
+
+
+def test_event_bus_port_is_abstract() -> None:
+    """Verify that EventBusPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(EventBusPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        EventBusPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_event_bus_port_abstract_methods() -> None:
+    """Verify abstract methods on EventBusPort."""
+    expected = {"publish"}
+    abstracts = EventBusPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
+
+
+def test_query_bus_port_is_abstract() -> None:
+    """Verify that QueryBusPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(QueryBusPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        QueryBusPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_query_bus_port_abstract_methods() -> None:
+    """Verify abstract methods on QueryBusPort."""
+    expected = {"dispatch"}
+    abstracts = QueryBusPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

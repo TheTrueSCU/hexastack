@@ -8,6 +8,8 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from hexastack_qual.domain.models import (
     OpenSsfAuditSummary,
@@ -125,3 +127,23 @@ class TestOpenSsfAuditorPortContract:
 __all__ = [
     "TestOpenSsfAuditorPortContract",
 ]
+
+
+def test_open_ssf_auditor_port_is_abstract() -> None:
+    """Verify that OpenSsfAuditorPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(OpenSsfAuditorPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        OpenSsfAuditorPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_open_ssf_auditor_port_abstract_methods() -> None:
+    """Verify abstract methods on OpenSsfAuditorPort."""
+    expected = {
+        "audit_openssf",
+        "check_openssf_compliance",
+        "generate_openssf_checklist",
+    }
+    abstracts = OpenSsfAuditorPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0

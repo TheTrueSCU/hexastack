@@ -5,6 +5,7 @@ Notes/Architectural Intent:
     on subclasses.
 """
 
+import inspect
 from typing import Any
 
 import pytest
@@ -184,3 +185,19 @@ async def test_orchestrator_aclose() -> None:
     await orch.aclose()
     closed = getattr(orch, "closed", False)
     assert closed is True
+
+
+def test_cqrs_workflow_orchestrator_port_is_abstract() -> None:
+    """Verify that CqrsWorkflowOrchestratorPort cannot be instantiated directly and is abstract."""
+    is_abs = inspect.isabstract(CqrsWorkflowOrchestratorPort)
+    assert is_abs is True
+    with pytest.raises(TypeError, match="Can't instantiate abstract class"):
+        CqrsWorkflowOrchestratorPort()  # ty: ignore[call-non-callable] # type: ignore[abstract]
+
+
+def test_cqrs_workflow_orchestrator_port_abstract_methods() -> None:
+    """Verify abstract methods on CqrsWorkflowOrchestratorPort."""
+    expected = {"abort", "close", "execute", "render", "resume", "rewind", "simulate"}
+    abstracts = CqrsWorkflowOrchestratorPort.__abstractmethods__
+    diff = expected.difference(abstracts)
+    assert len(diff) == 0
