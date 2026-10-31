@@ -1,13 +1,20 @@
-import importlib.util
+import contextlib
 import sys
 from typing import Any
 
+import hexastack.application.diagnostics
 from hexastack.domain.diagnostics import (
     GetSystemInfoQuery,
     InspectRegistryQuery,
     PingDemoCommand,
 )
+from hexastack_core.adapters.feature_flags.in_memory import (
+    InMemoryFeatureFlagAdapter,
+)
 from hexastack_core.infra.bootstrap import bootstrap
+from hexastack_core.infra.container import create_container
+from hexastack_core.ports.feature_flags import FeatureFlagPort
+from hexastack_core.utils.imports import optional_dependency
 from hexastack_fastapi.infra.decorators import (
     api_command,
     api_query,
@@ -41,13 +48,6 @@ def create_demo_app() -> Any:
     Raises:
         None.
     """
-    import hexastack.application.diagnostics
-    from hexastack_core.adapters.feature_flags.in_memory import (
-        InMemoryFeatureFlagAdapter,
-    )
-    from hexastack_core.infra.container import create_container
-    from hexastack_core.ports.feature_flags import FeatureFlagPort
-
     demo_flags = InMemoryFeatureFlagAdapter(
         {
             "features.beta_ui": True,
@@ -70,18 +70,18 @@ def create_demo_app() -> Any:
     app = result.get("app")
 
     # Automatically mount NiceGUI DevTools dashboard if hexastack-ui installed
-    if app is not None and importlib.util.find_spec("hexastack_ui") is not None:
-        try:
-            from hexastack_ui.adapters.nicegui import mount_devtools_dashboard
-
-            mount_devtools_dashboard(
+    ui_module = optional_dependency("hexastack_ui.adapters.nicegui")
+    if (
+        app is not None
+        and ui_module is not None
+        and hasattr(ui_module, "mount_devtools_dashboard")
+    ):
+        with contextlib.suppress(Exception):
+            ui_module.mount_devtools_dashboard(
                 app,
                 container=result.container,
                 pipeline=result.properties.get("pipeline"),
                 path="/_devtools",
             )
-        except Exception:
-            # DevTools mounting is optional and non-critical; pass silently on failure
-            pass
 
     return app
