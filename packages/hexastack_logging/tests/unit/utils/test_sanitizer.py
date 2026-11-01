@@ -138,3 +138,133 @@ def test_log_sanitizer_traceback():
     scrubbed_tb = sanitizer.sanitize_traceback(tb)
     assert "secret-token-xyz-123" not in scrubbed_tb
     assert "***REDACTED***" in scrubbed_tb
+
+
+def test_log_sanitizer_csp_and_cloud_credentials():
+    sanitizer = LogSanitizer()
+
+    # 1. AWS Access Key ID and Secret Access Key
+    fake_aki = "".join(["AKIA", "IOSFODNN7EXAMPLE"])
+    fake_sak = "".join(["wJalrXUtnFEMI/", "K7MDENG/bPxRfiCYEXAMPLEKEY"])
+    aws_msg = f"Deploying with {fake_aki} and aws_secret_access_key='{fake_sak}'"
+    scrubbed_aws = sanitizer.sanitize_string(aws_msg)
+    assert fake_aki not in scrubbed_aws
+    assert fake_sak not in scrubbed_aws
+    assert "***REDACTED***" in scrubbed_aws
+
+    # 2. GCP API Key
+    fake_gcp = "".join(
+        ["AIza", "SyD-1234567890abcdefghijklmnopqrst"]  # pragma: allowlist secret
+    )
+    gcp_msg = f"Google Maps API call failed with key {fake_gcp}"
+    scrubbed_gcp = sanitizer.sanitize_string(gcp_msg)
+    assert fake_gcp not in scrubbed_gcp
+    assert "***REDACTED***" in scrubbed_gcp
+
+    # 3. OCI Tenancy OCID and API Fingerprint
+    fake_ocid = "".join(["ocid1.tenancy.oc1..", "aaaaaaaaba3pvsnwdop4odjhkeoi"])
+    fake_fp = ":".join(
+        [
+            "12",
+            "34",
+            "56",
+            "78",
+            "90",
+            "ab",
+            "cd",
+            "ef",
+            "12",
+            "34",
+            "56",
+            "78",
+            "90",
+            "ab",
+            "cd",
+            "ef",
+        ]
+    )
+    oci_msg = f"Connecting to tenancy {fake_ocid} with fingerprint {fake_fp}"
+    scrubbed_oci = sanitizer.sanitize_string(oci_msg)
+    assert fake_ocid not in scrubbed_oci
+    assert fake_fp not in scrubbed_oci
+    assert "***REDACTED***" in scrubbed_oci
+
+    # 4. GitHub Personal Access Token
+    fake_ghp = "".join(
+        ["ghp_", "1234567890abcdefghijklmnopqrstuvwxyzAB"]  # pragma: allowlist secret
+    )
+    gh_msg = f"Pushing to remote with token {fake_ghp}"
+    scrubbed_gh = sanitizer.sanitize_string(gh_msg)
+    assert fake_ghp not in scrubbed_gh
+    assert "***REDACTED***" in scrubbed_gh
+
+    # 5. Inline PEM Private Key Block (dynamically joined to prevent detect-private-key false positive)
+    pem_begin = "".join(["-----", "BEGIN RSA ", "PRIVATE KEY-----"])
+    pem_end = "".join(["-----", "END RSA ", "PRIVATE KEY-----"])
+    pem_body = "".join(
+        [
+            "MIIEowIBAAKCAQEA0Y",
+            "1234567890abcdefghijklmnopqrstuvwxyz",  # pragma: allowlist secret
+        ]
+    )
+    pem_msg = f"Loaded key:\n{pem_begin}\n{pem_body}\n{pem_end}\nStatus: Ready"
+    scrubbed_pem = sanitizer.sanitize_string(pem_msg)
+    assert pem_body not in scrubbed_pem
+    assert pem_begin not in scrubbed_pem
+    assert "***REDACTED***" in scrubbed_pem
+
+    # 6. Azure Account Key
+    fake_az = "".join(
+        [
+            "abcdefghijklmnopqrstuvwxyz0123456789+/",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn012==",  # pragma: allowlist secret
+        ]
+    )
+    az_msg = f"Storage error with AccountKey={fake_az}"
+    scrubbed_az = sanitizer.sanitize_string(az_msg)
+    assert fake_az not in scrubbed_az
+    assert "***REDACTED***" in scrubbed_az
+
+    # 7. Dictionary with CSP and cloud key names
+    csp_dict = {
+        "access_key_id": "".join(
+            ["AKIA", "1111111111EXAMPLE"]
+        ),  # pragma: allowlist secret
+        "secret_access_key": "raw-dummy-key-12345",  # pragma: allowlist secret
+        "tenancy_ocid": "".join(["ocid1.tenancy.oc1..", "test"]),
+        "user_ocid": "".join(["ocid1.user.oc1..", "testuser"]),
+        "fingerprint": ":".join(
+            [
+                "aa",
+                "bb",
+                "cc",
+                "dd",
+                "ee",
+                "ff",
+                "00",
+                "11",
+                "22",
+                "33",
+                "44",
+                "55",
+                "66",
+                "77",
+                "88",
+                "99",
+            ]
+        ),
+        "client_secret": "dummy-azure-secret",  # pragma: allowlist secret
+        "service_account_json": '{"type": "service_account"}',  # pragma: allowlist secret
+        "webhook_secret": "whsec_abcdef123456",  # pragma: allowlist secret
+        "normal_key": "safe_value",
+    }
+    sanitized_dict = sanitizer.sanitize_dict(csp_dict)
+    assert sanitized_dict["access_key_id"] == "***REDACTED***"
+    assert sanitized_dict["secret_access_key"] == "***REDACTED***"
+    assert sanitized_dict["tenancy_ocid"] == "***REDACTED***"
+    assert sanitized_dict["user_ocid"] == "***REDACTED***"
+    assert sanitized_dict["fingerprint"] == "***REDACTED***"
+    assert sanitized_dict["client_secret"] == "***REDACTED***"
+    assert sanitized_dict["service_account_json"] == "***REDACTED***"
+    assert sanitized_dict["webhook_secret"] == "***REDACTED***"
+    assert sanitized_dict["normal_key"] == "safe_value"

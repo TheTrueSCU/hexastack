@@ -4,25 +4,67 @@ from typing import Any
 from pydantic import BaseModel
 
 _DEFAULT_MASKED_KEYS = {
+    "access_key_id",
     "access_token",
     "api_key",
+    "api_token",
+    "auth_token",
     "authorization",
     "bearer",
     "card_number",
+    "client_secret",
+    "connection_string",
     "credit_card",
     "cvv",
+    "fingerprint",
+    "id_token",
+    "key_content",
+    "key_file",
     "password",
     "private_key",
+    "private_key_id",
     "refresh_token",
     "secret",
+    "secret_access_key",
+    "service_account_file",
+    "service_account_json",
+    "session_token",
+    "shared_access_key",
     "ssn",
+    "tenancy_ocid",
     "token",
+    "user_ocid",
+    "webhook_secret",
 }
 DEFAULT_MASKED_KEYS = frozenset(_DEFAULT_MASKED_KEYS)
 
 _DEFAULT_PATTERNS = [
+    # Authorization & Bearer tokens
     r"Bearer\s+[A-Za-z0-9\-\._~\+\/]+=*",
+    # Credit Card Numbers
     r"\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b",
+    # Private Key PEM blocks (RSA, DSA, EC, OPENSSH, etc.)
+    r"-----BEGIN (?:[A-Z0-9_-]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9_-]+ )?PRIVATE KEY-----",
+    # AWS Access Key IDs (AKIA, ASIA, etc.)
+    r"\b(?:AKIA|ASIA|ABIA|ACCA)[0-9A-Z]{16}\b",
+    # AWS Secret Access Keys in key-value context
+    r"(?i)(?:aws_secret_access_key|secret_access_key|secret_key)\s*[:=]\s*['\"]?[A-Za-z0-9/+=]{40}['\"]?",
+    # Google Cloud API Key
+    r"\bAIza[0-9A-Za-z\-_]{30,40}\b",
+    # Google OAuth Tokens
+    r"\bya29\.[0-9A-Za-z-_]+\b",
+    # GitHub Tokens (Personal Access, OAuth, App, Fine-Grained)
+    r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36,255}\b",
+    r"\bgithub_pat_[A-Za-z0-9_]{82}\b",
+    # Slack Webhooks & Bot Tokens
+    r"https://hooks\.slack\.com/services/T[0-9A-Z]{8,12}/B[0-9A-Z]{8,12}/[0-9A-Za-z]{24}",
+    r"\bxox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,32}\b",
+    # Oracle Cloud (OCI) OCIDs
+    r"\bocid1\.(?:user|tenancy|instance|compartment|volume)\.oc1\.[a-z0-9\.]+\b",
+    # OCI API Key Fingerprint
+    r"\b(?:[0-9a-f]{2}:){15}[0-9a-f]{2}\b",
+    # Azure Shared Access Signatures and Account Keys
+    r"(?i)(?:sig|AccountKey)=[A-Za-z0-9%+/=]{43,88}",
 ]
 
 
