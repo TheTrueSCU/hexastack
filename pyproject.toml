@@ -63,6 +63,7 @@ dev = [
     "grpcio-tools>=1.84.0",
     "hashids>=1.3.1",
     "hexaqual[all]>=0.9.10",
+    "hexaqueue>=0.7.0",
     "httpx>=0.28.1",
     "huey>=3.4.0",
     "hypothesis>=6.168.1",
@@ -141,6 +142,7 @@ format-command = "uv run ruff format --stdin-filename {filename} -"
 
 [tool.pytest.ini_options]
 addopts = "-n auto --import-mode=importlib --ignore=examples --ignore=tests/e2e --cov=packages --cov-fail-under=90 --cov-report=term-missing:skip-covered"
+consider_namespace_packages = true
 markers = [
     "e2e: End-to-end browser and UI tests (run with uv run pytest tests/e2e)",
     "demo: Feature demo recording test (run with RECORD_DEMO=1 uv run pytest tests/e2e -m demo)",
@@ -254,3 +256,18 @@ ignore_names = [
     "original_node",
     "Huey",
 ]
+
+[tool.hexaqueue]
+server_url = "http://127.0.0.1:8000"
+slices = 4
+slicer = "round-robin"
+fallback = true
+mode = "subprocess"
+
+[tool.hexaqueue.profiles.ci]
+server_url = "http://127.0.0.1:8000"
+slices = 32
+local_slices = 2
+remote_slices = "auto"
+fallback = true
+ssh_user = "hexaqueue-ci"
