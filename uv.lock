@@ -2408,7 +2408,7 @@ all = [
 
 [[package]]
 name = "hexaqueue"
-version = "0.8.1"
+version = "0.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-cli" },
@@ -2425,9 +2425,9 @@ dependencies = [
     { name = "hexaqueue-workflow" },
     { name = "pytest-hexaqueue" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/de/6b/05ec4a160485c8c34ab511d05849ad15e4d97a3eda48add3f7d645c43221/hexaqueue-0.8.1.tar.gz", hash = "sha256:d11a24faa6e96aea4bc6aae733daeb59a36848abb1277c35d7f8f4ea996407cd", size = 4248, upload-time = "2026-11-04T20:37:19.522Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/08/9a0ff48b28ae05e628fb0cd5348726db7eea782f311687d785525077ed5e/hexaqueue-0.8.2.tar.gz", hash = "sha256:43253d6547b7ed48a7514db055fe71c31fa0367e785800a99ad525ec65f143aa", size = 4248, upload-time = "2026-11-04T21:46:31.814Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/19/84/380ca1882cbaeeab1ef0e3c3392b03603c7b6635340026b28cb0691fb4ec/hexaqueue-0.8.1-py3-none-any.whl", hash = "sha256:8df6cb23faa919a7083d950662a9f2d6e2eb2a001b79f638dba2b97b206f13fd", size = 5041, upload-time = "2026-11-04T20:37:04.419Z" },
+    { url = "https://files.pythonhosted.org/packages/df/e1/dbd941b98663de8cddd66010a490389f6b0c38772bf70ac68ba17088b627/hexaqueue-0.8.2-py3-none-any.whl", hash = "sha256:25d19eb12390c7d2f6457efb8570a67e6520c9127f8b5d96c421167d3b3acf12", size = 5041, upload-time = "2026-11-04T21:46:18.483Z" },
 ]
 
 [[package]]
@@ -3744,7 +3744,7 @@ dev = [
     { name = "alembic" },
     { name = "asyncer" },
     { name = "asyncssh" },
-    { name = "atheris", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "atheris", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
     { name = "complexipy" },
     { name = "deptry" },
     { name = "detect-secrets" },
@@ -3816,7 +3816,7 @@ dev = [
     { name = "alembic", specifier = ">=1.19.1" },
     { name = "asyncer", specifier = ">=0.0.18" },
     { name = "asyncssh", specifier = ">=2.17.0" },
-    { name = "atheris", marker = "sys_platform == 'darwin' or sys_platform == 'linux'", specifier = ">=3.1.0" },
+    { name = "atheris", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or sys_platform == 'darwin'", specifier = ">=3.1.0" },
     { name = "complexipy", specifier = ">=7.0.1" },
     { name = "deptry", specifier = ">=0.25.1" },
     { name = "detect-secrets", specifier = ">=1.5.0" },
@@ -3832,7 +3832,7 @@ dev = [
     { name = "grpcio-tools", specifier = ">=1.84.0" },
     { name = "hashids", specifier = ">=1.3.1" },
     { name = "hexaqual", extras = ["all"], specifier = ">=0.9.10" },
-    { name = "hexaqueue", specifier = ">=0.8.1" },
+    { name = "hexaqueue", specifier = ">=0.8.2" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "huey", specifier = ">=3.4.0" },
     { name = "hypothesis", specifier = ">=6.168.1" },
