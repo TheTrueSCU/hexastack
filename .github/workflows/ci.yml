@@ -99,10 +99,10 @@ jobs:
 
       - name: Probe Hexaqueue Cloud Fleet
         id: probe
-        uses: TheTrueSCU/hexaqueue@v0.8.0
+        uses: TheTrueSCU/hexaqueue@v0.8.1
         with:
           cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
-          version: ">=0.8.0"
+          version: ">=0.8.1"
           probe-only: "true"
           step-summary: "true"
 
@@ -141,10 +141,10 @@ jobs:
 
       - name: Connect to Hexaqueue Cluster (Cloud Execution)
         if: needs.cluster-probe.outputs.cluster_ready == 'true'
-        uses: TheTrueSCU/hexaqueue@v0.8.0
+        uses: TheTrueSCU/hexaqueue@v0.8.1
         with:
           cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
-          version: ">=0.8.0"
+          version: ">=0.8.1"
           auto-tunnel: "true"
           step-summary: "false"
 
