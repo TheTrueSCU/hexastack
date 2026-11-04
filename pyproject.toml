@@ -266,8 +266,9 @@ mode = "subprocess"
 
 [tool.hexaqueue.profiles.ci]
 server_url = "http://127.0.0.1:8000"
+host = "129.146.115.79"
+ssh_user = "hexaqueue-ci"
 slices = 32
 local_slices = 2
 remote_slices = "auto"
 fallback = true
-ssh_user = "hexaqueue-ci"
