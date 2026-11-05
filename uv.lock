@@ -2408,7 +2408,7 @@ all = [
 
 [[package]]
 name = "hexaqueue"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-cli" },
@@ -2425,14 +2425,14 @@ dependencies = [
     { name = "hexaqueue-workflow" },
     { name = "pytest-hexaqueue" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/87/58/09fbd09ed70de4e8b1f750f96fe2a088a7da8567990e5ce0e5723667e034/hexaqueue-0.8.3.tar.gz", hash = "sha256:375a393dc83ab8f7aaaa8400a8152d3293a86c98ba33a04a4b5947d0eefd472d", size = 4248, upload-time = "2026-11-05T05:14:09.802Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9e/54/2132db93bcdaaaf5b26dfb1817d5afcce480adc790db2884a519cba15b57/hexaqueue-0.8.4.tar.gz", hash = "sha256:87bd80268bc5b6f9e64c13e9eb5f3b6e62263a1b4b20ee33dd3ccd0c9e095d9a", size = 4247, upload-time = "2026-11-05T06:19:05.4Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/95/c41a1b26fad8de4edff927b5391db69e0bd971899cdae1c4cf0e6bf0e63b/hexaqueue-0.8.3-py3-none-any.whl", hash = "sha256:8f4c5dffb12787a465eff7bb27f3e6a0f9a205c5ab6a68eb48af09729e9df544", size = 5042, upload-time = "2026-11-05T05:13:51.799Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/c1/c87b151296f7d311730ef1d1a2b9425dedc1d963690fddca0c227d0d2d59/hexaqueue-0.8.4-py3-none-any.whl", hash = "sha256:b80676294dfa0723713017622eb12b34acc7da294be407893cf761078e64d235", size = 5041, upload-time = "2026-11-05T06:18:51.346Z" },
 ]
 
 [[package]]
 name = "hexaqueue-cli"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-core" },
@@ -2447,14 +2447,14 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/1d/1681bc6c2485a329d687bdb1d3ef157b89f509a3ac6ccf64b9da0b39b3b6/hexaqueue_cli-0.8.3.tar.gz", hash = "sha256:f0ef520a1a6e7d9592d592a11b55e3f985a4d5058365780196a218387c523de1", size = 43129, upload-time = "2026-11-05T05:14:10.683Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/fd/f66f9460028cb2ce4e8c59d27dcef02ef292ac959cee6c803edb69689ee4/hexaqueue_cli-0.8.4.tar.gz", hash = "sha256:cf99b0179b651d2bd2f798b02c4a291d12a8273acbce067cddeb2fe5ee2ed78f", size = 43120, upload-time = "2026-11-05T06:19:07.065Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3e/4e/c9eec2d3fb8d38c151185cec1e3ca6c2743a6d4e06155988ec0db18dfb20/hexaqueue_cli-0.8.3-py3-none-any.whl", hash = "sha256:3f86519a472301194d48ccb4c37c9d715fb98043636ea3dff423f2d828b49072", size = 54744, upload-time = "2026-11-05T05:13:53.245Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/4b/9a60db2649230f6cd08b2b2b27f856d67d79830ab4be14d531a0835cde7a/hexaqueue_cli-0.8.4-py3-none-any.whl", hash = "sha256:0a7de7ee314210ff452ec2df1dfc89e11d95d77fe863dceff646e7bc0d231d70", size = 54744, upload-time = "2026-11-05T06:18:52.449Z" },
 ]
 
 [[package]]
 name = "hexaqueue-collateral"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-core" },
@@ -2463,14 +2463,14 @@ dependencies = [
     { name = "hexastack-events" },
     { name = "hexastack-fastapi" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/72/194e3d2e7a20db6bb84e000be2b0ea033c4b03706bc7b7e4196d0e9eb942/hexaqueue_collateral-0.8.3.tar.gz", hash = "sha256:d84f85e0812482aab2591962c525810746a872145147da43a003f98976c0f8f3", size = 10586, upload-time = "2026-11-05T05:14:11.613Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/e6/22b1a825e837764e82e5260c5e4e686ca300e246cc04bf583559f0ff5236/hexaqueue_collateral-0.8.4.tar.gz", hash = "sha256:47f17226f2189b80f45a308d1b05bf491873185337d651bb83c3f0892295d7f9", size = 10587, upload-time = "2026-11-05T06:19:08.042Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/b6/0d1b8a531d08725295787920528cae0cc800bfb32d4c00ab34e6ec5153c0/hexaqueue_collateral-0.8.3-py3-none-any.whl", hash = "sha256:0d876b13e601a187b6a25c8c161dcc1016ed600039927f072052ba9d3a806e44", size = 14207, upload-time = "2026-11-05T05:13:54.324Z" },
+    { url = "https://files.pythonhosted.org/packages/67/9a/d037d5fc90b74553461cc596451f4a42ab9abef8a39edd859ee78595301f/hexaqueue_collateral-0.8.4-py3-none-any.whl", hash = "sha256:e9a974df36c5699300ce312f3edcd1b74e19c123905dbac509a9ad64e1cfa315", size = 14206, upload-time = "2026-11-05T06:18:53.466Z" },
 ]
 
 [[package]]
 name = "hexaqueue-core"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -2479,14 +2479,14 @@ dependencies = [
     { name = "hypothesis" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/55/e4/645f9985a3f92f34dd72677fb892357c4dab480efc0f198a89bd4f698785/hexaqueue_core-0.8.3.tar.gz", hash = "sha256:c6e46e85f83d37e76675e173a72b6401feee87a86f4bdea1cf6534bc7afcd63c", size = 123077, upload-time = "2026-11-05T05:14:12.416Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/5c/9bab50b33d1a9a974ff79348fbdd514f3fe5295e816f8326dbe374a7ad57/hexaqueue_core-0.8.4.tar.gz", hash = "sha256:840bda90c8700408a2f80784b217e3f7b05b997335bd24c6f54957d266876aa2", size = 123100, upload-time = "2026-11-05T06:19:08.636Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/5d/11a9079448df87893b5721c75d573f5d3e981e8b3e71aa23b2b3cb86ecd7/hexaqueue_core-0.8.3-py3-none-any.whl", hash = "sha256:f201308da605bec8d62578e6dcbdb5abaa5a983643d1360504e1673f761cde5d", size = 165519, upload-time = "2026-11-05T05:13:55.596Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/56/1ffef375b0c717a41b5346ba6b857407ace3be6683565a9f6ce37e3084f0/hexaqueue_core-0.8.4-py3-none-any.whl", hash = "sha256:2e5fec42291651285f70dbcbd9b3bee4d6016f6dfc5fd3857cb81fcbb78ab8eb", size = 165518, upload-time = "2026-11-05T06:18:54.371Z" },
 ]
 
 [[package]]
 name = "hexaqueue-dashboard"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-core" },
@@ -2498,14 +2498,14 @@ dependencies = [
     { name = "hexastack-fastapi" },
     { name = "hexastack-grpc" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c8/24/8d991daf9dd51ea2daeaaa5e6e8acdc288ae8522c05b3aeac4827e25bb2f/hexaqueue_dashboard-0.8.3.tar.gz", hash = "sha256:6d6197caa2322fc7b5da37f7e506364c069b6956c20066732b462bfb1f83dd91", size = 7572, upload-time = "2026-11-05T05:14:13.924Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/80/d3/baf97a71b877257c20fe0fa007e0627276465fb4c807da343e4c34f8bf96/hexaqueue_dashboard-0.8.4.tar.gz", hash = "sha256:c13edf2530d7b63ccef65d3a91bb75cc24485dbef0b65b655f92c8c1092bf582", size = 7573, upload-time = "2026-11-05T06:19:09.384Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/23/907abc649bf5cec8449003d436a78a170d7a647dc2e4bfb296524d643b4a/hexaqueue_dashboard-0.8.3-py3-none-any.whl", hash = "sha256:1a9075523ba77e9391200f0931aeb38a744ef44c3595327dadce0942dafd9a1d", size = 10010, upload-time = "2026-11-05T05:13:57.071Z" },
+    { url = "https://files.pythonhosted.org/packages/46/cc/f9f19eb1bddc00e03670e19b95a97bfd9b0ac981024c48f4fd3d1441978f/hexaqueue_dashboard-0.8.4-py3-none-any.whl", hash = "sha256:330f06a3fcde49943146cb04a6a684c70ffeed0c6df1694aabc58f49f96aefe3", size = 10012, upload-time = "2026-11-05T06:18:55.552Z" },
 ]
 
 [[package]]
 name = "hexaqueue-github-runner"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -2514,38 +2514,38 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/16/5c/0b844a74d0398cb252a549c9f2602f6941a7a0eb7c1a94aab0af6524121a/hexaqueue_github_runner-0.8.3.tar.gz", hash = "sha256:34f1faf6687148f98220cb82cd2234696c20898b2b80d97696e2cadcb65ae451", size = 19720, upload-time = "2026-11-05T05:14:14.868Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/e0/ce8c8b69c602b8a1981b1b790532993f3eb1e69cb583259a51cad33baf48/hexaqueue_github_runner-0.8.4.tar.gz", hash = "sha256:4cb86baa03285580fe85163d02c6b8cd79f4ec3dba20a1f41a37a1fda8318ccf", size = 19719, upload-time = "2026-11-05T06:19:09.955Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/8b/be0966c4b43b9249356332e490e9c22ae6d0b8d4db11388175caabc13b2e/hexaqueue_github_runner-0.8.3-py3-none-any.whl", hash = "sha256:e375edcb8d9bfc24f83d99bc846b0a3a2bc7d7c7b16ca0c39f066df6fa8b5194", size = 28007, upload-time = "2026-11-05T05:13:58.417Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/3f/6aa9c37ad6ec338d14c62cd26f95f0d2e5d01372cb0a93215a4722982bdf/hexaqueue_github_runner-0.8.4-py3-none-any.whl", hash = "sha256:97f0d95bd968e07859957813fc0205d55a467c1804538df620c3973a50aa3bed", size = 28008, upload-time = "2026-11-05T06:18:56.487Z" },
 ]
 
 [[package]]
 name = "hexaqueue-gitlab-runner"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/b2/9a723f460dc9a37d7fbe37596ab4c2b31c614eaf9ed761dd02d67956ee91/hexaqueue_gitlab_runner-0.8.3.tar.gz", hash = "sha256:81dd67fb89c0e8c437a5de6c461a824e8a875e7197e8ef90768c2645709600e1", size = 1534, upload-time = "2026-11-05T05:14:15.535Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/ad/97eef6918bb4feeb58a77b9f06558f1d53e20eed9e6890d50d4e85a8988b/hexaqueue_gitlab_runner-0.8.4.tar.gz", hash = "sha256:d806e38e84202978815346d1cf024c466db50c7dfca77f1fef2d58db71702939", size = 1535, upload-time = "2026-11-05T06:19:10.753Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/5f/865f4f3233109d9bf930558f1fc12e0cccda6df17d88b418321c1e4d79a1/hexaqueue_gitlab_runner-0.8.3-py3-none-any.whl", hash = "sha256:775ebe2706a0ffbc0e6d53081b376a4fe341b5ecac087625d8641b04207ecbc2", size = 2021, upload-time = "2026-11-05T05:13:59.993Z" },
+    { url = "https://files.pythonhosted.org/packages/84/ba/a6678bd7501b94c56c51a445b8124a6bb8ca987b0af0e78530d138d03ee1/hexaqueue_gitlab_runner-0.8.4-py3-none-any.whl", hash = "sha256:7decb0556ffd87cb11b34be045662747f996b5cd464ba141a1b7c6c2a9d0d242", size = 2021, upload-time = "2026-11-05T06:18:57.448Z" },
 ]
 
 [[package]]
 name = "hexaqueue-kueue"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/86/4d/913f7279feda4d9ea1816e1e38aef71b105dc12251125f8f959efcd39faf/hexaqueue_kueue-0.8.3.tar.gz", hash = "sha256:4f85daf8fca8ec5d2b79d61d72f5c8b5b25e18de7ee5c1c80e2bac9ce05e4a70", size = 1504, upload-time = "2026-11-05T05:14:16.147Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/84/cd/856a3ef7090a074967d8a16edfd06deddfcfb9a61d5fe839e204568f16c1/hexaqueue_kueue-0.8.4.tar.gz", hash = "sha256:b54abceb07b76ab7b659b3f6b963f1fce8aadd319aeb722660e471bc40d060ba", size = 1505, upload-time = "2026-11-05T06:19:11.31Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/4a/fed36f4859dc9210bdf95bb4d634b1d44ba26122b250be4c11fb49b1ffb5/hexaqueue_kueue-0.8.3-py3-none-any.whl", hash = "sha256:d89093786783d565a1a7863c887d68b98ca4a0bcd85b1890ebd42d047f17f4cb", size = 1899, upload-time = "2026-11-05T05:14:00.831Z" },
+    { url = "https://files.pythonhosted.org/packages/25/11/5815140b09fcf84142cc1bd72e476519bfe0ee1a4c6dcd5a7d3ebfe46ea0/hexaqueue_kueue-0.8.4-py3-none-any.whl", hash = "sha256:b4dfc6f6a8367ddd3b9a77b22a016c0f6f564220b0e8cc5e51477bead0db995e", size = 1899, upload-time = "2026-11-05T06:18:58.453Z" },
 ]
 
 [[package]]
 name = "hexaqueue-monitor"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-core" },
@@ -2553,14 +2553,14 @@ dependencies = [
     { name = "hexastack-events" },
     { name = "hexastack-otel" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/aa/04/4ff7870451689c39901006fb697208a388a418b5f04305b18b49c0d72f99/hexaqueue_monitor-0.8.3.tar.gz", hash = "sha256:ae0f4e44c618855b2a2986540a83fb6ba24655ae13f409a34df3f6e0606b095c", size = 9279, upload-time = "2026-11-05T05:14:16.798Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/8a/cd7ca88c9b2a085eff3d373dfc3c732a123968fa32f699096aae18ea670c/hexaqueue_monitor-0.8.4.tar.gz", hash = "sha256:304f4767a26968893eef401ef61b3188e2dd128945036bd188708406f4b965c2", size = 9278, upload-time = "2026-11-05T06:19:11.896Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/13/b39d3a873b840b8505fc5b80110e4970062527e3ec4e3988c4f178302114/hexaqueue_monitor-0.8.3-py3-none-any.whl", hash = "sha256:6c6be84c9b1752d24e87fd3f637217102d7124d54445a54d093673297a9054b6", size = 13716, upload-time = "2026-11-05T05:14:01.904Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/55/191f786792619db30604acb4239aae7a3aa70a4d20e1f1650abfbe4afc1f/hexaqueue_monitor-0.8.4-py3-none-any.whl", hash = "sha256:e5c22f0d857239c6df76235ba1ffaaf0715b0fa400a763c0d8a2c3e9ce0b8db4", size = 13716, upload-time = "2026-11-05T06:18:59.32Z" },
 ]
 
 [[package]]
 name = "hexaqueue-scanner"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-core" },
@@ -2569,14 +2569,14 @@ dependencies = [
     { name = "hexastack-events" },
     { name = "hexastack-logging" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/35/35/30bb36260eb9890e2da34e2d2d82d795e12b2a2bdd94e7dd5206a22148b3/hexaqueue_scanner-0.8.3.tar.gz", hash = "sha256:80150684fe5001e4e7b443be8df9e464d6b55351ab1a81f53d604e8b23223406", size = 15806, upload-time = "2026-11-05T05:14:17.473Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/79/42/b643c3341a8330df84a492ccecc0887c229c5d48e93c73ccad6dc052ac97/hexaqueue_scanner-0.8.4.tar.gz", hash = "sha256:c4c408ce1aea98317dd54e3bd51f533ab0ae989241f3339a474f582f052d2915", size = 15813, upload-time = "2026-11-05T06:19:12.469Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8f/8f/413a5dc05d10df14ac1ce4c83161eb3752f4df99823ce820e60f131d9855/hexaqueue_scanner-0.8.3-py3-none-any.whl", hash = "sha256:7b23a5676c64476d02cb34877cd3eb05db294c176cd401d99fa8d335eac284a9", size = 23102, upload-time = "2026-11-05T05:14:02.942Z" },
+    { url = "https://files.pythonhosted.org/packages/31/bb/ec713e1537dbbc7f962c305d268b02e63d58d99521267d8428a1fb7752fa/hexaqueue_scanner-0.8.4-py3-none-any.whl", hash = "sha256:11a933f1f24697498d79ca738ca9bfe576488f00da4a5b9e7bce3a5e721e7ed9", size = 23103, upload-time = "2026-11-05T06:19:00.382Z" },
 ]
 
 [[package]]
 name = "hexaqueue-server"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "greenlet" },
@@ -2595,14 +2595,14 @@ dependencies = [
     { name = "polars" },
     { name = "pyarrow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/27/d4/205a1eeebedc0e02cd82e40da203604875f8ec3ec2daf327557d30da966c/hexaqueue_server-0.8.3.tar.gz", hash = "sha256:659a366bfa215524028cb647af034f9f9e6007485c5610e63a3d479bdd20c5d7", size = 73407, upload-time = "2026-11-05T05:14:18.227Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/54/b5c5888f38755ec03e905aeef171b6745fd0f7ad61fa24a0d76531778fbd/hexaqueue_server-0.8.4.tar.gz", hash = "sha256:83afe9c1a59d4dabb6b8e5d71ff060bebef3c7a3964e24d4c2a00aedf567abb5", size = 73429, upload-time = "2026-11-05T06:19:13.178Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f1/c1/4e755c4dc4c5ad72606ed2de24b3e3d9783e5603bc158ebdeac4c763dab6/hexaqueue_server-0.8.3-py3-none-any.whl", hash = "sha256:81a0817f2f9d6f0e3e232a5295afab82f5376eff76468a3d6cffcb1717fab7f4", size = 99391, upload-time = "2026-11-05T05:14:04.113Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/ea/be3f867a6bfba0ea9bd1e87ce4dd90497acc056283f996f7541f25fa4a21/hexaqueue_server-0.8.4-py3-none-any.whl", hash = "sha256:59bfbb1407da0eb91b144dd4edcf5a3fb1020cbb2fc7dbaa3b67c427c780c9bd", size = 99414, upload-time = "2026-11-05T06:19:01.313Z" },
 ]
 
 [[package]]
 name = "hexaqueue-worker"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-collateral" },
@@ -2612,14 +2612,14 @@ dependencies = [
     { name = "hexastack-grpc" },
     { name = "hexastack-logging" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/52/b8/7aaee42d033e09da0fe650fad6767c361fe4ddd67bbab881178e2e65ccf0/hexaqueue_worker-0.8.3.tar.gz", hash = "sha256:37b6a30424aa5edfc5d1115ab774cd40123b1e8f62e26aac7423b92bb82f8456", size = 36168, upload-time = "2026-11-05T05:14:18.994Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/67/a93d45753c6ec947b55cdde5b85f5359514a4127f915fa3d64423054a71b/hexaqueue_worker-0.8.4.tar.gz", hash = "sha256:a0e6b6a4d0847073e8879eb8249ceb01a720be62745257962924d8e6b1a0da8c", size = 36165, upload-time = "2026-11-05T06:19:13.86Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/1c/82db3c5d94f1b45755c727560dafc5be464c1fb837195845ee1feae65a6e/hexaqueue_worker-0.8.3-py3-none-any.whl", hash = "sha256:ec3031a719b38e479da7abc05665c5e8d6a62202f329998c8fc8b1a07e088527", size = 51193, upload-time = "2026-11-05T05:14:06.546Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/65/acdf093263e8793df7ea1de4b933adadd1924c87a7155ad17560b0a0c594/hexaqueue_worker-0.8.4-py3-none-any.whl", hash = "sha256:857e364c2606c08ebff715f8dc1109bc9bbbc8a48b59f6676d4bbb5e80ff894f", size = 51192, upload-time = "2026-11-05T06:19:02.601Z" },
 ]
 
 [[package]]
 name = "hexaqueue-workflow"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaflow" },
@@ -2630,14 +2630,14 @@ dependencies = [
     { name = "hexastack-grpc" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e6/10/2c173ad4f628185baa968a138a19d7dc219956f0161c6c02fe215db009ae/hexaqueue_workflow-0.8.3.tar.gz", hash = "sha256:33904dd5fb435980df9a0032444001004df1ddff7a49f936ecedd61b742a5201", size = 22669, upload-time = "2026-11-05T05:14:19.727Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/18/da/8d681e6f638309a55c0c6442544e6e2b01ad82283323fcb79233e7f44609/hexaqueue_workflow-0.8.4.tar.gz", hash = "sha256:b0b4e2607ceb3dd272cb0049552b56309325c5848d0d7fee570cf0f939e3915c", size = 22668, upload-time = "2026-11-05T06:19:14.52Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/25/38/33d525abccbb36b88d59a6a7e35725173f902f6c2631312db3cd91b1abf8/hexaqueue_workflow-0.8.3-py3-none-any.whl", hash = "sha256:9de3bbc10aa519483bc1af787579bcf9b13750272739dd6d73fe1c940b71af55", size = 30524, upload-time = "2026-11-05T05:14:07.851Z" },
+    { url = "https://files.pythonhosted.org/packages/21/41/8cb5e76a0ce6f6a82764a13e15aec686568348f033a2524c9687eb4179a2/hexaqueue_workflow-0.8.4-py3-none-any.whl", hash = "sha256:ceddd5460e4ff16aaab8200630f89811541654ce7db9e0e8fc56d01e6061519b", size = 30525, upload-time = "2026-11-05T06:19:03.568Z" },
 ]
 
 [[package]]
 name = "hexastack"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack" }
 dependencies = [
     { name = "hexastack-core" },
@@ -2991,7 +2991,7 @@ provides-extras = ["ai", "analytics", "argon2", "apprise", "async", "auth", "bcr
 
 [[package]]
 name = "hexastack-ai"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_ai" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3036,7 +3036,7 @@ provides-extras = ["mcp", "qdrant", "all"]
 
 [[package]]
 name = "hexastack-auth"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_auth" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3108,7 +3108,7 @@ provides-extras = ["argon2", "bcrypt", "fastapi", "grpc", "opa", "openfga", "spi
 
 [[package]]
 name = "hexastack-cli"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_cli" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3136,7 +3136,7 @@ provides-extras = ["testing"]
 
 [[package]]
 name = "hexastack-core"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_core" }
 dependencies = [
     { name = "pydantic" },
@@ -3202,7 +3202,7 @@ provides-extras = ["async", "debug", "filelock", "fsspec", "identity", "pointers
 
 [[package]]
 name = "hexastack-cqrs"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_cqrs" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3230,7 +3230,7 @@ provides-extras = ["async", "huey"]
 
 [[package]]
 name = "hexastack-db"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_db" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3304,7 +3304,7 @@ provides-extras = ["sqlite", "postgresql", "pgvector", "duckdb", "analytics", "m
 
 [[package]]
 name = "hexastack-events"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_events" }
 dependencies = [
     { name = "cloudevents" },
@@ -3372,7 +3372,7 @@ provides-extras = ["apprise", "dlt", "filelock", "hexaqueue", "huey", "janus", "
 
 [[package]]
 name = "hexastack-fastapi"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_fastapi" }
 dependencies = [
     { name = "fastapi" },
@@ -3420,7 +3420,7 @@ provides-extras = ["auth", "docs", "granian", "ratelimit", "testing", "ziti"]
 
 [[package]]
 name = "hexastack-flags"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_flags" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3444,7 +3444,7 @@ provides-extras = ["flagd"]
 
 [[package]]
 name = "hexastack-flow"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_flow" }
 dependencies = [
     { name = "hexaflow" },
@@ -3490,7 +3490,7 @@ provides-extras = ["db", "events", "hexaqueue", "otel", "all"]
 
 [[package]]
 name = "hexastack-graphql"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_graphql" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3516,7 +3516,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-grpc"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_grpc" }
 dependencies = [
     { name = "grpcio" },
@@ -3544,7 +3544,7 @@ provides-extras = ["reflection"]
 
 [[package]]
 name = "hexastack-logging"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_logging" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3590,7 +3590,7 @@ provides-extras = ["diagnostics", "loguru", "rich", "structlog", "all", "sentry"
 
 [[package]]
 name = "hexastack-mcp"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_mcp" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3616,7 +3616,7 @@ provides-extras = ["fastapi"]
 
 [[package]]
 name = "hexastack-otel"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_otel" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3648,7 +3648,7 @@ provides-extras = ["otlp"]
 
 [[package]]
 name = "hexastack-qual"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_qual" }
 dependencies = [
     { name = "hexaqual", extra = ["all"] },
@@ -3686,7 +3686,7 @@ provides-extras = ["events", "mcp", "ui", "all"]
 
 [[package]]
 name = "hexastack-ui"
-version = "0.11.0"
+version = "0.11.1"
 source = { editable = "packages/hexastack_ui" }
 dependencies = [
     { name = "hexastack-core" },
@@ -3731,7 +3731,7 @@ provides-extras = ["fastapi", "nicegui", "devtools", "textual", "all"]
 
 [[package]]
 name = "hexastack-workspace"
-version = "0.11.0"
+version = "0.11.1"
 source = { virtual = "." }
 dependencies = [
     { name = "hexastack", extra = ["all"] },
@@ -3832,7 +3832,7 @@ dev = [
     { name = "grpcio-tools", specifier = ">=1.84.0" },
     { name = "hashids", specifier = ">=1.3.1" },
     { name = "hexaqual", extras = ["all"], specifier = ">=0.9.10" },
-    { name = "hexaqueue", specifier = ">=0.8.3" },
+    { name = "hexaqueue", specifier = ">=0.8.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "huey", specifier = ">=3.4.0" },
     { name = "hypothesis", specifier = ">=6.168.1" },
@@ -6785,7 +6785,7 @@ wheels = [
 
 [[package]]
 name = "pytest-hexaqueue"
-version = "0.8.3"
+version = "0.8.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hexaqueue-collateral" },
@@ -6794,9 +6794,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b8/c5/0fb5e2fb5a5c096bcb1589bc8867295a25a4b3d9434af1787d40a0ddf72f/pytest_hexaqueue-0.8.3.tar.gz", hash = "sha256:9fc6fb85aa847109d8ded6f144696a876b0bf88fa63193d92605ee2b8cd6807a", size = 27225, upload-time = "2026-11-05T05:14:20.479Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/72/af/5f74613a76ba79c4a8e24062a84e04e44f96cb6c6aefc32610d24a7cf832/pytest_hexaqueue-0.8.4.tar.gz", hash = "sha256:8ff014d6c6fb83a7ced371604b3f300bfa9ad4a0c1b26777889b80673c66a510", size = 27220, upload-time = "2026-11-05T06:19:15.148Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/c9/57d32941d59e8a83f46506e1ac8f45638a83932a58edd40ffa0c60be0686/pytest_hexaqueue-0.8.3-py3-none-any.whl", hash = "sha256:dc680e194197e51d9952a6af4c8b3ebae11a8558abd92580b8f9e59c90aa5195", size = 35178, upload-time = "2026-11-05T05:14:08.906Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/13/ee9d99f527fef88bdb390307fea973aa4d95ab524170f326fcc3a0e10c26/pytest_hexaqueue-0.8.4-py3-none-any.whl", hash = "sha256:0dd2d9781e941ac72c08e2c558b37caa7d755365149aa4f70f3a979e8310ea46", size = 35182, upload-time = "2026-11-05T06:19:04.52Z" },
 ]
 
 [[package]]
