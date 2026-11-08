@@ -99,10 +99,10 @@ jobs:
 
       - name: Probe Hexaqueue Cloud Fleet
         id: probe
-        uses: TheTrueSCU/hexaqueue@v0.8.5
+        uses: TheTrueSCU/hexaqueue@v0.9.0
         with:
           cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
-          version: ">=0.8.4"
+          version: ">=0.9.0"
           probe-only: "true"
           step-summary: "true"
 
@@ -141,31 +141,31 @@ jobs:
 
       - name: Connect to Hexaqueue Cluster (Cloud Execution)
         if: needs.cluster-probe.outputs.cluster_ready == 'true'
-        uses: TheTrueSCU/hexaqueue@v0.8.5
+        uses: TheTrueSCU/hexaqueue@v0.9.0
         with:
           cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
-          version: ">=0.8.4"
+          version: ">=0.9.0"
           auto-tunnel: "true"
           step-summary: "false"
 
       - name: Run Tests via Hexaqueue Cloud (Push to Main / Manual Dispatch)
         if: needs.cluster-probe.outputs.cluster_ready == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        run: uv run hexaqual test run -U --profile ci --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+        run: uv run hexaqual test run -U --cov=packages --profile ci --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Run Affected Tests via Hexaqueue Cloud (Pull Request)
         if: needs.cluster-probe.outputs.cluster_ready == 'true' && github.event_name == 'pull_request'
-        run: uv run hexaqual test run -A -U --profile ci --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+        run: uv run hexaqual test run -A -U --cov=packages --profile ci --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Run Tests Locally via xdist (Push to Main / Manual Dispatch - Local Fallback)
         if: needs.cluster-probe.outputs.cluster_ready != 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-        run: uv run hexaqual test run -U --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+        run: uv run hexaqual test run -U --cov=packages --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Run Affected Tests Locally via xdist (Pull Request - Local Fallback)
         if: needs.cluster-probe.outputs.cluster_ready != 'true' && github.event_name == 'pull_request'
-        run: uv run hexaqual test run -A -U --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+        run: uv run hexaqual test run -A -U --cov=packages --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v5.4.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
@@ -174,10 +174,12 @@ jobs:
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         continue-on-error: true
-        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v5.4.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: junit.xml
+          files: junit.xml
+          report_type: test_results
+          fail_ci_if_error: false
 
       - name: Generate Test Execution Summary
         if: always() && hashFiles('junit.xml') != ''
@@ -326,7 +328,7 @@ jobs:
 
   mutation-verification:
     name: Mutation Testing Verification
-    needs: [test-suite]
+    needs: [test-suite, cluster-probe]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -349,7 +351,21 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-packages --all-extras --all-groups
 
-      - name: Run Affected Mutation Testing Verification
+      - name: Connect to Hexaqueue Cluster (Cloud Execution)
+        if: needs.cluster-probe.outputs.cluster_ready == 'true'
+        uses: TheTrueSCU/hexaqueue@v0.9.0
+        with:
+          cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
+          version: ">=0.9.0"
+          auto-tunnel: "true"
+          step-summary: "false"
+
+      - name: Run Affected Mutation Testing via Hexaqueue Cloud
+        if: needs.cluster-probe.outputs.cluster_ready == 'true'
+        run: uv run hexaqual mutate run -A -e gremlins -w auto --batch-size 10 -n auto --cluster hexaqueue
+
+      - name: Run Affected Mutation Testing Locally (Fallback)
+        if: needs.cluster-probe.outputs.cluster_ready != 'true'
         run: uv run hexaqual mutate run -A -e gremlins -w auto --batch-size 10 -n auto
 
   # =========================================================================
