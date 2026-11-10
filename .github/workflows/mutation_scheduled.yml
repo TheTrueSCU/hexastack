@@ -48,13 +48,13 @@ jobs:
 
       - name: Connect to Hexaqueue Cluster (Cloud Execution)
         if: steps.cluster-probe.outputs.status == 'healthy'
-        uses: TheTrueSCU/hexaqueue@v0.9.0
+        uses: TheTrueSCU/hexaqueue@v0.10.0
         with:
           host: ${{ secrets.HEXAQUEUE_CLUSTER_HOST }}
           ssh-key: ${{ secrets.HEXAQUEUE_SSH_KEY }}
           user: ${{ secrets.HEXAQUEUE_SSH_USER }}
           port: 8000
-          version: ">=0.9.0"
+          version: ">=0.10.0"
 
       - name: Execute Full Workspace Mutation Sweep
         run: |
