@@ -39,24 +39,29 @@ jobs:
       - name: Cluster Reachability & Health Probe
         id: cluster-probe
         continue-on-error: true
+        env:
+          HEXAQUEUE_ENV: ${{ secrets.HEXAQUEUE_ENV }}
         run: |
-          if [ -z "${{ secrets.HEXAQUEUE_CLUSTER_HOST }}" ] || [ -z "${{ secrets.HEXAQUEUE_SSH_KEY }}" ]; then
+          if [ -z "$HEXAQUEUE_ENV" ]; then
             echo "status=unreachable" >> "$GITHUB_OUTPUT"
+            echo "Hexaqueue cluster secrets not configured - skipping remote distribution"
             exit 0
           fi
           echo "status=healthy" >> "$GITHUB_OUTPUT"
+          echo "Hexaqueue cluster credentials detected"
 
       - name: Connect to Hexaqueue Cluster (Cloud Execution)
         if: steps.cluster-probe.outputs.status == 'healthy'
         uses: TheTrueSCU/hexaqueue@v0.10.0
         with:
-          host: ${{ secrets.HEXAQUEUE_CLUSTER_HOST }}
-          ssh-key: ${{ secrets.HEXAQUEUE_SSH_KEY }}
-          user: ${{ secrets.HEXAQUEUE_SSH_USER }}
-          port: 8000
+          cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
           version: ">=0.10.0"
+          auto-tunnel: "true"
+          step-summary: "false"
 
       - name: Execute Full Workspace Mutation Sweep
+        env:
+          HEXAQUEUE_TIMEOUT: "7200"
         run: |
           CLUSTER_FLAGS=""
           if [ "${{ steps.cluster-probe.outputs.status }}" = "healthy" ]; then
