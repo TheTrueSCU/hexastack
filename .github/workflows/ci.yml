@@ -36,7 +36,7 @@ jobs:
         run: cargo install jscpd --locked
 
       - name: Run Quality Gate via Hexaqual
-        uses: TheTrueSCU/hexaqual@108c0efb126e472efb145d9090133db6786b9451 # v0.9.10
+        uses: TheTrueSCU/hexaqual@b2c312f76c0c447b359b99b96ea02d82116ae287 # v0.10.0
         with:
           sync-args: "--all-packages --all-extras --all-groups"
 
@@ -88,7 +88,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
 

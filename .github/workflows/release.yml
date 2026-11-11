@@ -76,7 +76,7 @@ jobs:
         run: cargo install jscpd --locked
 
       - name: Run Quality Gate via Hexaqual
-        uses: TheTrueSCU/hexaqual@108c0efb126e472efb145d9090133db6786b9451 # v0.9.10
+        uses: TheTrueSCU/hexaqual@b2c312f76c0c447b359b99b96ea02d82116ae287 # v0.10.0
         with:
           sync-args: "--all-packages --all-extras --all-groups"
 
@@ -215,7 +215,7 @@ jobs:
           sbom-path: 'hexastack-${{ needs.release.outputs.version }}-sbom.spdx.json'
 
       - name: Attach SBOMs to GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ needs.release.outputs.tag }}
           target_commitish: ${{ github.sha }}
@@ -288,7 +288,7 @@ jobs:
 
       - name: Create Pull Request in Template Repository
         if: steps.check-token.outputs.enabled == 'true' && steps.diff.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        uses: peter-evans/create-pull-request@15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8 # v8.1.2
         with:
           token: ${{ secrets.TEMPLATE_SYNC_TOKEN }}
           commit-message: "chore(deps): sync template to hexastack v${{ needs.release.outputs.version }}"
