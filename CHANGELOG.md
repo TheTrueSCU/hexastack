@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## v0.11.3 (2026-11-10)
+
+### Ecosystem Upgrades & CI Mutation Optimization
+* **Hexaqueue v0.11.0 Integration & Immutable Action Pinning**:
+  - Pinned `TheTrueSCU/hexaqueue` GitHub Actions across `ci.yml`, `fuzz.yml`, and `mutation_scheduled.yml` to immutable commit SHA (`df477a16f1051624f9518aa87b6d05a4c311217f # v0.11.0`).
+  - Upgraded root dev dependency to `hexaqueue>=0.11.0`.
+* **Hexaflow v0.5.3 Upgrade**:
+  - Upgraded `hexastack-flow` workflow orchestration engine to `hexaflow>=0.5.3`.
+* **Direct-Only Mutation Testing Scoping**:
+  - Accelerated CI mutation testing with `--direct-only` mutation filters and cluster bursting.
+* **Unified Workspace Lockstep Versioning (v0.11.3)**: Synchronized version bump across all 18 subpackages.
+
+## v0.11.2 (2026-11-05)
+
+### Highlights & Maintenance
+* **Hexaqueue Cloud Bursting Upgrade**: Upgraded to `hexaqueue>=0.8.5` and action `v0.8.5`.
+* **Unified Workspace Lockstep Versioning (v0.11.2)**: Synchronized version bump across all 18 subpackages.
+
+## v0.11.1 (2026-11-05)
+
+### Highlights & Maintenance
+* **Hexaqueue Cloud Bursting Upgrade**: Upgraded to `hexaqueue>=0.8.4` and action `v0.8.4`.
+* **Unified Workspace Lockstep Versioning (v0.11.1)**: Synchronized version bump across all 18 subpackages.
+
 ## v0.11.0 (2026-10-29)
 
 ### Highlights & Features
