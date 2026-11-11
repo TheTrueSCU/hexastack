@@ -1,6 +1,6 @@
 [project]
 name = "hexastack-flow"
-version = "0.11.2"
+version = "0.11.3"
 description = "Hexagonal workflow engine adapter integrating hexaflow with CQRS, DB, and Events"
 readme = "README.md"
 license = "Apache-2.0"
@@ -9,7 +9,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "hexaflow>=0.5.2",
+    "hexaflow>=0.5.3",
     "hexastack-core",
     "hexastack-cqrs",
 ]
