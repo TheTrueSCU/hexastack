@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 
+import anyio
 import pytest
 
 from hexastack_core.adapters.lock.file import (
@@ -80,6 +81,7 @@ async def test_async_file_lock_adapter_lifecycle():
         await lock1.release()
         is_locked_rel = await lock1.locked()
         assert is_locked_rel is False
+        await anyio.sleep(0.05)
 
         # Async context manager
         async with lock2:
