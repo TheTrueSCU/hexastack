@@ -41,7 +41,10 @@ class FileLockAdapter(LockPort):
 
         self._path = Path(lock_path)
         self._default_timeout = timeout
-        self._lock: Any = filelock.FileLock(str(self._path))
+        try:
+            self._lock: Any = filelock.FileLock(str(self._path), thread_local=False)
+        except TypeError:  # pragma: no cover
+            self._lock = filelock.FileLock(str(self._path))
 
     def acquire(self, blocking: bool = True, timeout: float = -1.0) -> bool:
         """Acquire the file lock across processes.
