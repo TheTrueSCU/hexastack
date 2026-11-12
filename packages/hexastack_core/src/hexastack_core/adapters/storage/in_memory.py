@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import threading
 from typing import BinaryIO
 
 from hexastack_core.domain.exceptions import StorageError, StorageNotFoundError
-from hexastack_core.ports.storage import AsyncStoragePort, StoragePort
+from hexastack_core.ports.storage import (
+    AsyncPresignedStoragePort,
+    PresignedStoragePort,
+)
 
 
-class InMemoryStorage(StoragePort):
+class InMemoryStorage(PresignedStoragePort):
     """Thread-safe in-memory object storage adapter.
 
     Notes/Architectural Intent:
@@ -118,8 +123,53 @@ class InMemoryStorage(StoragePort):
         with self._lock:
             self._data.clear()
 
+    def generate_presigned_upload_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL for in-memory staging.
 
-class AsyncInMemoryStorage(AsyncStoragePort):
+        Args:
+            path: Target storage path or object key.
+            expires_in_seconds: Token validity duration in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Simulated presigned upload URL string.
+        """
+        token = hmac.new(
+            b"in-memory-storage-key",
+            f"upload:{path}:{expires_in_seconds}".encode(),
+            hashlib.sha256,
+        ).hexdigest()[:16]
+        ct_param = f"&content_type={content_type}" if content_type else ""
+        return f"memory://staging/{path}?action=upload&expires_in={expires_in_seconds}&token={token}{ct_param}"
+
+    def generate_presigned_download_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL for in-memory retrieval.
+
+        Args:
+            path: Target storage path or object key.
+            expires_in_seconds: Token validity duration in seconds (default 3600).
+
+        Returns:
+            Simulated presigned download URL string.
+        """
+        token = hmac.new(
+            b"in-memory-storage-key",
+            f"download:{path}:{expires_in_seconds}".encode(),
+            hashlib.sha256,
+        ).hexdigest()[:16]
+        return f"memory://staging/{path}?action=download&expires_in={expires_in_seconds}&token={token}"
+
+
+class AsyncInMemoryStorage(AsyncPresignedStoragePort):
     """Async wrapper around InMemoryStorage.
 
     Notes/Architectural Intent:
@@ -196,6 +246,44 @@ class AsyncInMemoryStorage(AsyncStoragePort):
     async def clear_async(self) -> None:
         """Clear all stored objects asynchronously."""
         self._sync.clear()
+
+    async def generate_presigned_upload_url_async(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL asynchronously.
+
+        Args:
+            path: Target storage path or object key.
+            expires_in_seconds: Token validity duration in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Simulated presigned upload URL string.
+        """
+        return self._sync.generate_presigned_upload_url(
+            path, expires_in_seconds=expires_in_seconds, content_type=content_type
+        )
+
+    async def generate_presigned_download_url_async(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL asynchronously.
+
+        Args:
+            path: Target storage path or object key.
+            expires_in_seconds: Token validity duration in seconds (default 3600).
+
+        Returns:
+            Simulated presigned download URL string.
+        """
+        return self._sync.generate_presigned_download_url(
+            path, expires_in_seconds=expires_in_seconds
+        )
 
 
 __all__ = [

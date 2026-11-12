@@ -130,6 +130,36 @@ async def test_async_local_storage_adapter_lifecycle() -> None:
         assert del_res is True
         assert await storage.exists_async("async.txt") is False
 
+        up_url = await storage.generate_presigned_upload_url_async("async_up.bin")
+        assert "file://" in up_url
+        assert "action=upload" in up_url
+        down_url = await storage.generate_presigned_download_url_async("async_up.bin")
+        assert "file://" in down_url
+        assert "action=download" in down_url
+
+
+def test_local_storage_presigned_urls() -> None:
+    """Verify local storage presigned URL generation with file and custom HTTP schemes."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        storage = LocalStorageAdapter(
+            root_dir=tmpdir, base_url="http://localhost:8000/storage"
+        )
+        upload_url = storage.generate_presigned_upload_url(
+            "sub/artifact.bin",
+            expires_in_seconds=1800,
+            content_type="application/octet-stream",
+        )
+        assert upload_url.startswith("http://localhost:8000/storage/sub/artifact.bin?")
+        assert "action=upload" in upload_url
+        assert "expires_in=1800" in upload_url
+        assert "content_type=application/octet-stream" in upload_url
+
+        download_url = storage.generate_presigned_download_url("sub/artifact.bin")
+        assert download_url.startswith(
+            "http://localhost:8000/storage/sub/artifact.bin?"
+        )
+        assert "action=download" in download_url
+
 
 def test_local_storage_path_traversal_prevention() -> None:
     """Verify that path traversal attempts raise StorageError."""

@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import BinaryIO
 
+from hexastack_core.domain.exceptions import StorageError
+
 
 class StoragePort(ABC):
     """Abstract port defining synchronous object and file storage operations.
@@ -83,6 +85,97 @@ class StoragePort(ABC):
 
         Raises:
             StorageError: If directory or bucket listing fails.
+        """
+
+    def generate_presigned_upload_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL for direct object staging.
+
+        Args:
+            path: Destination storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Preauthenticated upload URL string.
+
+        Raises:
+            StorageError: If the storage backend does not support presigned URLs or generation fails.
+        """
+        msg = f"{type(self).__name__} does not support presigned upload URLs"
+        raise StorageError(msg)
+
+    def generate_presigned_download_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL for direct object retrieval.
+
+        Args:
+            path: Target storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+
+        Returns:
+            Preauthenticated download URL string.
+
+        Raises:
+            StorageError: If the storage backend does not support presigned URLs or generation fails.
+        """
+        msg = f"{type(self).__name__} does not support presigned download URLs"
+        raise StorageError(msg)
+
+
+class PresignedStoragePort(StoragePort):
+    """Abstract port for storage backends with mandatory presigned URL generation.
+
+    Notes/Architectural Intent:
+        Enforces implementation of presigned URL generation for high-throughput
+        data-plane stages that bypass the application server.
+    """
+
+    @abstractmethod
+    def generate_presigned_upload_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL for direct object staging.
+
+        Args:
+            path: Destination storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Preauthenticated upload URL string.
+
+        Raises:
+            StorageError: If presigned URL generation fails.
+        """
+
+    @abstractmethod
+    def generate_presigned_download_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL for direct object retrieval.
+
+        Args:
+            path: Target storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+
+        Returns:
+            Preauthenticated download URL string.
+
+        Raises:
+            StorageError: If presigned URL generation fails.
         """
 
 
@@ -166,8 +259,145 @@ class AsyncStoragePort(ABC):
             StorageError: If directory or bucket listing fails.
         """
 
+    async def generate_presigned_upload_url_async(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL asynchronously.
+
+        Args:
+            path: Destination storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Preauthenticated upload URL string.
+
+        Raises:
+            StorageError: If the storage backend does not support presigned URLs or generation fails.
+        """
+        msg = f"{type(self).__name__} does not support presigned upload URLs"
+        raise StorageError(msg)
+
+    async def generate_presigned_download_url_async(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL asynchronously.
+
+        Args:
+            path: Target storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+
+        Returns:
+            Preauthenticated download URL string.
+
+        Raises:
+            StorageError: If the storage backend does not support presigned URLs or generation fails.
+        """
+        msg = f"{type(self).__name__} does not support presigned download URLs"
+        raise StorageError(msg)
+
+    async def generate_presigned_upload_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL asynchronously.
+
+        Args:
+            path: Destination storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Preauthenticated upload URL string.
+
+        Raises:
+            StorageError: If the storage backend does not support presigned URLs or generation fails.
+        """
+        return await self.generate_presigned_upload_url_async(
+            path, expires_in_seconds=expires_in_seconds, content_type=content_type
+        )
+
+    async def generate_presigned_download_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL asynchronously.
+
+        Args:
+            path: Target storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+
+        Returns:
+            Preauthenticated download URL string.
+
+        Raises:
+            StorageError: If the storage backend does not support presigned URLs or generation fails.
+        """
+        return await self.generate_presigned_download_url_async(
+            path, expires_in_seconds=expires_in_seconds
+        )
+
+
+class AsyncPresignedStoragePort(AsyncStoragePort):
+    """Abstract port for asynchronous storage backends with mandatory presigned URL generation.
+
+    Notes/Architectural Intent:
+        Enforces asynchronous implementation of presigned URL generation for
+        high-throughput non-blocking data staging.
+    """
+
+    @abstractmethod
+    async def generate_presigned_upload_url_async(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL asynchronously.
+
+        Args:
+            path: Destination storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Preauthenticated upload URL string.
+
+        Raises:
+            StorageError: If presigned URL generation fails.
+        """
+
+    @abstractmethod
+    async def generate_presigned_download_url_async(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL asynchronously.
+
+        Args:
+            path: Target storage path or key.
+            expires_in_seconds: Token validity lifetime in seconds (default 3600).
+
+        Returns:
+            Preauthenticated download URL string.
+
+        Raises:
+            StorageError: If presigned URL generation fails.
+        """
+
 
 __all__ = [
+    "AsyncPresignedStoragePort",
     "AsyncStoragePort",
+    "PresignedStoragePort",
     "StoragePort",
 ]

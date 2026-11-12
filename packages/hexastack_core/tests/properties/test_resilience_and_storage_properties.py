@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import string
 import tempfile
+from typing import Any
 
 import pytest
 from hypothesis import given
@@ -28,8 +29,11 @@ from hexastack_core.adapters.circuit_breaker import (
 )
 from hexastack_core.adapters.storage import (
     AsyncInMemoryStorage,
+    GcsStorageAdapter,
     InMemoryStorage,
     LocalStorageAdapter,
+    OciStorageAdapter,
+    S3StorageAdapter,
 )
 from hexastack_core.ports.circuit_breaker import CircuitState
 
@@ -201,3 +205,282 @@ async def test_async_in_memory_storage_properties(path: str, content: bytes) -> 
     first_del = await storage.delete_async(path)
     assert first_del is True
     assert await storage.exists_async(path) is False
+
+
+class _PropS3Client:
+    def __init__(self) -> None:
+        self.objects: dict[str, bytes] = {}
+
+    def get_object(self, Bucket: str, Key: str) -> dict[str, Any]:
+        import io
+
+        if Key not in self.objects:
+            msg = f"NoSuchKey: {Key}"
+            raise Exception(msg)
+        return {"Body": io.BytesIO(self.objects[Key])}
+
+    def put_object(self, Bucket: str, Key: str, Body: bytes | Any) -> dict[str, Any]:
+        self.objects[Key] = bytes(Body)
+        return {}
+
+    def delete_object(self, Bucket: str, Key: str) -> dict[str, Any]:
+        self.objects.pop(Key, None)
+        return {}
+
+    def head_object(self, Bucket: str, Key: str) -> dict[str, Any]:
+        if Key not in self.objects:
+            msg = f"404 Not Found: {Key}"
+            raise Exception(msg)
+        return {}
+
+    def list_objects_v2(
+        self, Bucket: str, Prefix: str = "", **kwargs: Any
+    ) -> dict[str, Any]:
+        matches = [k for k in sorted(self.objects.keys()) if k.startswith(Prefix)]
+        return {"Contents": [{"Key": k} for k in matches]}
+
+    def generate_presigned_url(
+        self, ClientMethod: str, Params: dict[str, Any], ExpiresIn: int = 3600
+    ) -> str:
+        return f"https://s3.amazonaws.com/{Params.get('Bucket')}/{Params.get('Key')}?action={ClientMethod}"
+
+
+@given(
+    path=clean_paths,
+    content=data_bytes,
+)
+def test_storage_dual_oracle_s3_equivalence(path: str, content: bytes) -> None:
+    """Dual-Oracle Property: S3StorageAdapter is functionally isomorphic to InMemoryStorage reference oracle."""
+    oracle = InMemoryStorage()
+    s3_adapter_inst = S3StorageAdapter(
+        bucket_name="oracle-bucket", client=_PropS3Client()
+    )
+
+    # Initial state
+    oracle_exists_before = oracle.exists(path)
+    s3_exists_before = s3_adapter_inst.exists(path)
+    assert s3_exists_before == oracle_exists_before
+    assert s3_exists_before is False
+
+    # Put operation
+    oracle_put = oracle.put(path, content)
+    s3_put = s3_adapter_inst.put(path, content)
+    assert s3_put == oracle_put
+
+    # Exists & Get
+    oracle_exists = oracle.exists(path)
+    s3_exists = s3_adapter_inst.exists(path)
+    assert s3_exists == oracle_exists
+    assert s3_exists is True
+
+    oracle_val = oracle.get(path)
+    s3_val = s3_adapter_inst.get(path)
+    assert s3_val == oracle_val
+
+    # List files
+    oracle_files = oracle.list_files()
+    s3_files = s3_adapter_inst.list_files()
+    assert s3_files == oracle_files
+
+    # Delete operation
+    oracle_del = oracle.delete(path)
+    s3_del = s3_adapter_inst.delete(path)
+    assert s3_del == oracle_del
+
+    # Post-delete state
+    oracle_exists_after = oracle.exists(path)
+    s3_exists_after = s3_adapter_inst.exists(path)
+    assert s3_exists_after == oracle_exists_after
+    assert s3_exists_after is False
+
+
+class _PropGcsBlob:
+    def __init__(self, name: str, bucket: _PropGcsBucket) -> None:
+        self.name = name
+        self.bucket = bucket
+
+    def exists(self) -> bool:
+        return self.name in self.bucket.blobs
+
+    def download_as_bytes(self) -> bytes:
+        return self.bucket.blobs[self.name]
+
+    def upload_from_string(self, data: bytes) -> None:
+        self.bucket.blobs[self.name] = bytes(data)
+
+    def delete(self) -> None:
+        self.bucket.blobs.pop(self.name, None)
+
+    def generate_signed_url(self, **kwargs: Any) -> str:
+        return f"https://storage.googleapis.com/{self.bucket.name}/{self.name}"
+
+
+class _PropGcsBucket:
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.blobs: dict[str, bytes] = {}
+
+    def blob(self, path: str) -> _PropGcsBlob:
+        return _PropGcsBlob(path, self)
+
+    def list_blobs(self, prefix: str | None = None) -> list[_PropGcsBlob]:
+        pfx = prefix or ""
+        matches = [k for k in sorted(self.blobs.keys()) if k.startswith(pfx)]
+        return [_PropGcsBlob(k, self) for k in matches]
+
+
+class _PropGcsClient:
+    def __init__(self) -> None:
+        self.buckets: dict[str, _PropGcsBucket] = {}
+
+    def bucket(self, name: str) -> _PropGcsBucket:
+        if name not in self.buckets:
+            self.buckets[name] = _PropGcsBucket(name)
+        return self.buckets[name]
+
+
+@given(
+    path=clean_paths,
+    content=data_bytes,
+)
+def test_storage_dual_oracle_gcs_equivalence(path: str, content: bytes) -> None:
+    """Dual-Oracle Property: GcsStorageAdapter is functionally isomorphic to InMemoryStorage reference oracle."""
+    oracle = InMemoryStorage()
+    gcs_adapter_inst = GcsStorageAdapter(
+        bucket_name="oracle-bucket", client=_PropGcsClient()
+    )
+
+    oracle_exists_before = oracle.exists(path)
+    gcs_exists_before = gcs_adapter_inst.exists(path)
+    assert gcs_exists_before == oracle_exists_before
+    assert gcs_exists_before is False
+
+    oracle_put = oracle.put(path, content)
+    gcs_put = gcs_adapter_inst.put(path, content)
+    assert gcs_put == oracle_put
+
+    oracle_exists = oracle.exists(path)
+    gcs_exists = gcs_adapter_inst.exists(path)
+    assert gcs_exists == oracle_exists
+    assert gcs_exists is True
+
+    oracle_val = oracle.get(path)
+    gcs_val = gcs_adapter_inst.get(path)
+    assert gcs_val == oracle_val
+
+    oracle_files = oracle.list_files()
+    gcs_files = gcs_adapter_inst.list_files()
+    assert gcs_files == oracle_files
+
+    oracle_del = oracle.delete(path)
+    gcs_del = gcs_adapter_inst.delete(path)
+    assert gcs_del == oracle_del
+
+    oracle_exists_after = oracle.exists(path)
+    gcs_exists_after = gcs_adapter_inst.exists(path)
+    assert gcs_exists_after == oracle_exists_after
+    assert gcs_exists_after is False
+
+
+class _PropOciResponse:
+    def __init__(self, data: Any) -> None:
+        self.data = data
+
+
+class _PropOciServiceError(Exception):
+    def __init__(self, message: str, status: int = 404) -> None:
+        super().__init__(message)
+        self.status = status
+
+
+class _PropOciClient:
+    def __init__(self) -> None:
+        self.objects: dict[str, bytes] = {}
+
+    def get_object(self, ns: str, b: str, obj: str) -> _PropOciResponse:
+        if obj not in self.objects:
+            raise _PropOciServiceError("NotFound", status=404)
+
+        class _C:
+            def __init__(self, c: bytes) -> None:
+                self.content = c
+
+        return _PropOciResponse(_C(self.objects[obj]))
+
+    def put_object(self, ns: str, b: str, obj: str, body: Any) -> _PropOciResponse:
+        self.objects[obj] = bytes(body)
+        return _PropOciResponse({})
+
+    def delete_object(self, ns: str, b: str, obj: str) -> _PropOciResponse:
+        if obj not in self.objects:
+            raise _PropOciServiceError("NotFound", status=404)
+        del self.objects[obj]
+        return _PropOciResponse({})
+
+    def head_object(self, ns: str, b: str, obj: str) -> _PropOciResponse:
+        if obj not in self.objects:
+            raise _PropOciServiceError("NotFound", status=404)
+        return _PropOciResponse({})
+
+    def list_objects(
+        self, ns: str, b: str, prefix: str | None = None
+    ) -> _PropOciResponse:
+        class _Obj:
+            def __init__(self, name: str) -> None:
+                self.name = name
+
+        pfx = prefix or ""
+        matches = [_Obj(k) for k in sorted(self.objects.keys()) if k.startswith(pfx)]
+        return _PropOciResponse(matches)
+
+    def create_preauthenticated_request(
+        self, ns: str, b: str, details: Any
+    ) -> _PropOciResponse:
+        class _Par:
+            access_uri = f"/p/token/{details.object_name}"
+            full_path = None
+
+        return _PropOciResponse(_Par())
+
+
+@given(
+    path=clean_paths,
+    content=data_bytes,
+)
+def test_storage_dual_oracle_oci_equivalence(path: str, content: bytes) -> None:
+    """Dual-Oracle Property: OciStorageAdapter is functionally isomorphic to InMemoryStorage reference oracle."""
+    oracle = InMemoryStorage()
+    oci_adapter_inst = OciStorageAdapter(
+        bucket_name="b", namespace_name="ns", client=_PropOciClient()
+    )
+
+    oracle_exists_before = oracle.exists(path)
+    oci_exists_before = oci_adapter_inst.exists(path)
+    assert oci_exists_before == oracle_exists_before
+    assert oci_exists_before is False
+
+    oracle_put = oracle.put(path, content)
+    oci_put = oci_adapter_inst.put(path, content)
+    assert oci_put == oracle_put
+
+    oracle_exists = oracle.exists(path)
+    oci_exists = oci_adapter_inst.exists(path)
+    assert oci_exists == oracle_exists
+    assert oci_exists is True
+
+    oracle_val = oracle.get(path)
+    oci_val = oci_adapter_inst.get(path)
+    assert oci_val == oracle_val
+
+    oracle_files = oracle.list_files()
+    oci_files = oci_adapter_inst.list_files()
+    assert oci_files == oracle_files
+
+    oracle_del = oracle.delete(path)
+    oci_del = oci_adapter_inst.delete(path)
+    assert oci_del == oracle_del
+
+    oracle_exists_after = oracle.exists(path)
+    oci_exists_after = oci_adapter_inst.exists(path)
+    assert oci_exists_after == oracle_exists_after
+    assert oci_exists_after is False
