@@ -68,6 +68,6 @@ def create_container(
 
 
 __all__ = [
-    "TripBookingServiceContainer",
     "create_container",
+    "TripBookingServiceContainer",
 ]
