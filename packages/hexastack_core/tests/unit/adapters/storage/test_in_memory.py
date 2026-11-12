@@ -81,6 +81,25 @@ def test_in_memory_storage_sync_lifecycle() -> None:
     del2 = storage.delete("docs/readme.txt")
     assert del2 is False
 
+    # Presigned URLs
+    upload_url = storage.generate_presigned_upload_url(
+        "artifacts/bundle.tar.gz",
+        expires_in_seconds=1200,
+        content_type="application/gzip",
+    )
+    assert "memory://staging/artifacts/bundle.tar.gz" in upload_url
+    assert "action=upload" in upload_url
+    assert "expires_in=1200" in upload_url
+    assert "content_type=application/gzip" in upload_url
+
+    download_url = storage.generate_presigned_download_url(
+        "docs/readme.txt",
+        expires_in_seconds=2400,
+    )
+    assert "memory://staging/docs/readme.txt" in download_url
+    assert "action=download" in download_url
+    assert "expires_in=2400" in download_url
+
     # Clear
     storage.clear()
     assert storage.list_files() == []
@@ -109,6 +128,20 @@ async def test_async_in_memory_storage_lifecycle() -> None:
     assert del_res is True
     assert await storage.exists_async("async_file.txt") is False
 
+    up_url = await storage.generate_presigned_upload_url_async("async_up.bin")
+    assert "memory://staging/async_up.bin" in up_url
+    down_url = await storage.generate_presigned_download_url_async("async_up.bin")
+    assert "memory://staging/async_up.bin" in down_url
+
     await storage.put_async("k1", b"v1")
     await storage.clear_async()
     assert await storage.list_files_async() == []
+
+
+def test_storage_package_init_exports() -> None:
+    """Verify that hexastack_core.adapters.storage exports all public storage adapter symbols."""
+    import hexastack_core.adapters.storage as storage_pkg
+
+    for name in storage_pkg.__all__:
+        has_symbol = hasattr(storage_pkg, name)
+        assert has_symbol is True

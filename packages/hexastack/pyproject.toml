@@ -86,6 +86,9 @@ flow = [
 fsspec = [
     "hexastack-core[fsspec]",
 ]
+gcs = [
+    "hexastack-core[gcs]",
+]
 granian = [
     "hexastack-fastapi[granian]",
 ]
@@ -130,6 +133,9 @@ nats = [
 ]
 nicegui = [
     "hexastack-ui[nicegui]",
+]
+oci = [
+    "hexastack-core[oci]",
 ]
 opa = [
     "hexastack-auth[opa]",
@@ -178,6 +184,9 @@ ratelimit = [
 ]
 redis = [
     "hexastack-core[redis]",
+]
+s3 = [
+    "hexastack-core[s3]",
 ]
 reflection = [
     "hexastack-grpc[reflection]",

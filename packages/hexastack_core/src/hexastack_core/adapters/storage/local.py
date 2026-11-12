@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
 from pathlib import Path
 from typing import BinaryIO
 
 from hexastack_core.domain.exceptions import StorageError, StorageNotFoundError
-from hexastack_core.ports.storage import AsyncStoragePort, StoragePort
+from hexastack_core.ports.storage import (
+    AsyncPresignedStoragePort,
+    PresignedStoragePort,
+)
 
 
-class LocalStorageAdapter(StoragePort):
+class LocalStorageAdapter(PresignedStoragePort):
     """Local filesystem storage adapter adhering to StoragePort.
 
     Notes/Architectural Intent:
@@ -18,14 +23,20 @@ class LocalStorageAdapter(StoragePort):
         creates nested parent directories upon write. Zero external dependencies.
     """
 
-    def __init__(self, root_dir: str | Path = ".") -> None:
+    def __init__(
+        self,
+        root_dir: str | Path = ".",
+        base_url: str = "file://",
+    ) -> None:
         """Initialize local storage adapter with base root directory.
 
         Args:
             root_dir: Root directory path where files are persisted.
+            base_url: Base URI or URL used for generating presigned URLs (default 'file://').
         """
         self._root = Path(root_dir).resolve()
         self._root.mkdir(parents=True, exist_ok=True)
+        self._base_url = base_url
 
     def _resolve_path(self, path: str) -> Path:
         """Resolve a relative or absolute key to a safe path within root directory.
@@ -158,8 +169,63 @@ class LocalStorageAdapter(StoragePort):
             msg = f"Failed to list files with prefix {prefix}: {exc}"
             raise StorageError(msg) from exc
 
+    def generate_presigned_upload_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL for local storage.
 
-class AsyncLocalStorageAdapter(AsyncStoragePort):
+        Args:
+            path: Relative destination path.
+            expires_in_seconds: Expiration lifetime in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Preauthenticated file URI or URL string.
+        """
+        resolved = self._resolve_path(path)
+        token = hmac.new(
+            b"local-storage-token-key",
+            f"upload:{path}:{expires_in_seconds}".encode(),
+            hashlib.sha256,
+        ).hexdigest()[:16]
+        ct_param = f"&content_type={content_type}" if content_type else ""
+        if self._base_url == "file://":
+            return f"file://{resolved}?action=upload&expires_in={expires_in_seconds}&token={token}{ct_param}"
+        base = self._base_url.rstrip("/")
+        clean = path.lstrip("/")
+        return f"{base}/{clean}?action=upload&expires_in={expires_in_seconds}&token={token}{ct_param}"
+
+    def generate_presigned_download_url(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL for local storage.
+
+        Args:
+            path: Relative storage path.
+            expires_in_seconds: Expiration lifetime in seconds (default 3600).
+
+        Returns:
+            Preauthenticated file URI or URL string.
+        """
+        resolved = self._resolve_path(path)
+        token = hmac.new(
+            b"local-storage-token-key",
+            f"download:{path}:{expires_in_seconds}".encode(),
+            hashlib.sha256,
+        ).hexdigest()[:16]
+        if self._base_url == "file://":
+            return f"file://{resolved}?action=download&expires_in={expires_in_seconds}&token={token}"
+        base = self._base_url.rstrip("/")
+        clean = path.lstrip("/")
+        return f"{base}/{clean}?action=download&expires_in={expires_in_seconds}&token={token}"
+
+
+class AsyncLocalStorageAdapter(AsyncPresignedStoragePort):
     """Async wrapper around LocalStorageAdapter offloading I/O to threadpool.
 
     Notes/Architectural Intent:
@@ -167,13 +233,18 @@ class AsyncLocalStorageAdapter(AsyncStoragePort):
         execution in async coroutines.
     """
 
-    def __init__(self, root_dir: str | Path = ".") -> None:
+    def __init__(
+        self,
+        root_dir: str | Path = ".",
+        base_url: str = "file://",
+    ) -> None:
         """Initialize async local storage adapter.
 
         Args:
             root_dir: Root directory path.
+            base_url: Base URI or URL used for generating presigned URLs (default 'file://').
         """
-        self._sync = LocalStorageAdapter(root_dir=root_dir)
+        self._sync = LocalStorageAdapter(root_dir=root_dir, base_url=base_url)
 
     async def get_async(self, path: str) -> bytes:
         """Retrieve binary contents of a local file asynchronously.
@@ -230,6 +301,49 @@ class AsyncLocalStorageAdapter(AsyncStoragePort):
             List of matching relative paths.
         """
         return await asyncio.to_thread(self._sync.list_files, prefix)
+
+    async def generate_presigned_upload_url_async(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+        content_type: str | None = None,
+    ) -> str:
+        """Generate a time-bounded presigned upload URL asynchronously.
+
+        Args:
+            path: Relative destination path.
+            expires_in_seconds: Expiration lifetime in seconds (default 3600).
+            content_type: Optional expected MIME type.
+
+        Returns:
+            Preauthenticated file URI or URL string.
+        """
+        return await asyncio.to_thread(
+            self._sync.generate_presigned_upload_url,
+            path,
+            expires_in_seconds=expires_in_seconds,
+            content_type=content_type,
+        )
+
+    async def generate_presigned_download_url_async(
+        self,
+        path: str,
+        expires_in_seconds: int = 3600,
+    ) -> str:
+        """Generate a time-bounded presigned download URL asynchronously.
+
+        Args:
+            path: Relative storage path.
+            expires_in_seconds: Expiration lifetime in seconds (default 3600).
+
+        Returns:
+            Preauthenticated file URI or URL string.
+        """
+        return await asyncio.to_thread(
+            self._sync.generate_presigned_download_url,
+            path,
+            expires_in_seconds=expires_in_seconds,
+        )
 
 
 __all__ = [
