@@ -36,7 +36,7 @@ jobs:
         run: cargo install jscpd --locked
 
       - name: Run Quality Gate via Hexaqual
-        uses: TheTrueSCU/hexaqual@b2c312f76c0c447b359b99b96ea02d82116ae287 # v0.10.0
+        uses: TheTrueSCU/hexaqual@73151ca7dcd31df0f4b336ffb6312bb0fd63ff41 # v0.10.5
         with:
           sync-args: "--all-packages --all-extras --all-groups"
 
