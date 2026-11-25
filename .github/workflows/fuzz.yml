@@ -55,13 +55,13 @@ jobs:
 
       - name: Connect to Hexaqueue Cluster (Cloud Execution)
         if: steps.cluster-probe.outputs.status == 'healthy'
-        uses: TheTrueSCU/hexaqueue@df477a16f1051624f9518aa87b6d05a4c311217f # v0.11.0
+        uses: TheTrueSCU/hexaqueue@f494760fe17d82d9009d352ee0a827a2d5277cca # v0.12.0
         with:
           host: ${{ secrets.HEXAQUEUE_CLUSTER_HOST }}
           ssh-key: ${{ secrets.HEXAQUEUE_SSH_KEY }}
           user: ${{ secrets.HEXAQUEUE_SSH_USER }}
           port: 8000
-          version: ">=0.11.0"
+          version: ">=0.12.0"
 
       - name: Execute Coverage-Guided & OWASP Fuzzing
         run: |
@@ -75,3 +75,7 @@ jobs:
             CLUSTER_FLAGS="--cluster hexaqueue --cluster-url http://127.0.0.1:8000"
           fi
           uv run hexaqual test run -P --no-cov --allow-empty $CLUSTER_FLAGS
+
+      - name: Disconnect Hexaqueue Cluster Tunnel
+        if: always() && steps.cluster-probe.outputs.status == 'healthy'
+        run: uv run hq cluster tunnel --stop || true
