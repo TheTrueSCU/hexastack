@@ -15,6 +15,7 @@
 [![Powers Hexaqueue](https://img.shields.io/badge/powers-hexaqueue-blue.svg)](https://dopplereffect.us/hexaqueue/)
 [![Powered by Hexaflow](https://img.shields.io/badge/powered%20by-hexaflow-0284c7.svg)](https://dopplereffect.us/hexaflow/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
+[![Tested on Hexaqueue](https://img.shields.io/badge/tested%20on-hexaqueue-blue.svg)](https://dopplereffect.us/hexaqueue/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type checker: ty](https://img.shields.io/badge/type%20checker-ty-blueviolet.svg)](https://github.com/astral-sh/ty)
 
