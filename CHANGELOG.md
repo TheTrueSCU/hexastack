@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v0.12.0 (2026-11-25)
+
+### Features & Architecture
+* **Standardized `PresignedStoragePort` (#271)**:
+  - Added hexagonal presigned URL port in `hexastack-core` with concrete S3, GCS, and OCI adapters for direct client object uploads and downloads.
+
+### Ecosystem Upgrades & CI Reliability
+* **Hexaqual v0.12.1 & Hexaqueue v0.12.1 Integration (#280, #284)**:
+  - Upgraded `hexastack-qual` runtime dependency and workspace tooling to `hexaqual[all]>=0.12.1` (bringing AST-weighted LPT mutation slicing and OpenSSF/PR diagnostics) and upgraded `hexaqueue>=0.12.1` (all 14 subpackages lockstep-aligned).
+  - Pinned CI workflows (`ci.yml`, `fuzz.yml`, `mutation_scheduled.yml`, `release.yml`) to `TheTrueSCU/hexaqual` `v0.12.1` and `TheTrueSCU/hexaqueue` `v0.12.1` SHAs with PR concurrency cancellation, explicit timeouts, `HEXAQUEUE_SESSION_ID_FILE` / `HEXAQUEUE_RUN_ID_FILE` tracking, and `.github/scripts/cancel_orphaned_workload.py` cleanup.
+  - Added **Tested on Hexaqueue** cross-promotion badges across root `README.md` and all 18 package READMEs.
+* **Fixes & Dependency Maintenance (#262, #263, #264, #273, #274, #277, #279, #281, #283)**:
+  - Alphabetized `__all__` in `trip-booking` infra (`#263`) and updated GitHub Actions & workspace/example dependencies.
+* **Unified Workspace Lockstep Versioning (v0.12.0)**: Synchronized `0.12.0` across all 18 subpackages with lockstep `>=0.12.0` core dependencies on the `hexastack` umbrella package.
+
 ## v0.11.3 (2026-11-10)
 
 ### Ecosystem Upgrades & CI Mutation Optimization
