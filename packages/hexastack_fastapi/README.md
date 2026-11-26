@@ -5,7 +5,7 @@
 > FastAPI presentation adapter for Hexastack: automatic CQRS routing, database session middleware, exception mapping, and health check endpoints.
 
 [![PyPI: hexastack-fastapi](https://img.shields.io/pypi/v/hexastack-fastapi.svg)](https://pypi.org/project/hexastack-fastapi/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_fastapi)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Accessibility: WCAG 2.1 AA](https://img.shields.io/badge/accessibility-WCAG%202.1%20AA-brightgreen.svg)](https://www.w3.org/WAI/WCAG21/quickref/?levels=aa)
@@ -26,7 +26,7 @@
 - **Standardized Exception Handlers**: Automatically translates domain exceptions (`EntityNotFoundError`, `UniqueConstraintViolationError`, `HexastackError`) into appropriate HTTP status codes (404, 409, 500) and structured JSON error envelopes.
 - **Observability & Correlation Middleware**: Injects `X-Correlation-ID` headers, logs HTTP request lifecycles, and captures HTTP RED metrics (`HttpMetricsMiddleware`) exposing a standard `/metrics` endpoint.
 - **Built-in Health Checks**: Configurable `/health` and `/ready` endpoints verifying container and subsystem readiness.
-- **NiceGUI Reactive UI & DevTools Dashboard**: Optional `[ui]` presentation adapter providing `ui_page`, `dispatch_command`, `dispatch_query`, and a zero-config interactive developer console (`mount_devtools_dashboard`) for inspecting CQRS buses, feature flags, and DI services.
+- **NiceGUI DevTools Companion (`hexastack-ui`)**: Pair with [`hexastack-ui`](../hexastack_ui/README.md) (`pip install "hexastack[ui]"`) to mount the interactive NiceGUI DevTools dashboard (`mount_devtools_dashboard(app, container)`).
 
 
 ---
@@ -36,7 +36,7 @@
 ```
 hexastack_fastapi/
 ├── domain/          # HealthStatus, HTTP error envelope models, HexastackFastApiConfig
-├── adapters/        # routing decorators, SSE streaming, WebSockets, health endpoints, db_session middleware, dependencies, NiceGUI UI adapter
+├── adapters/        # routing decorators, SSE streaming, WebSockets, health endpoints, db_session middleware, dependencies, ratelimit
 └── infra/           # create_fastapi_app, FastApiBootstrapper (order=30), exception handlers, correlation/logging middlewares
 ```
 
@@ -52,7 +52,6 @@ hexastack_fastapi/
 | **Exception Handlers** | `register_exception_handlers`, `domain_exception_handler` |
 | **Middlewares** | `DbSessionMiddleware`, `AsyncDbSessionMiddleware`, `add_db_session_middleware`, `CorrelationMiddleware`, `HttpLoggingMiddleware` |
 | **Rate Limiting** | `SlowapiRateLimiterAdapter`, `get_remote_address`, `get_user_or_ip_key`, `RateLimitConfig` |
-| **Reactive UI (NiceGUI)** | `dispatch_command`, `dispatch_query`, `mount_devtools_dashboard`, `mount_ui_app`, `ui_page` |
 | **Real-Time Streaming (SSE & WebSockets)** | `EventSourceResponse`, `ServerSentEvent`, `WebSocketConnectionManager`, `WebSocketCqrsBridge` |
 | **Routing** | `CqrsRouter`, `autodiscover_routes` |
 | **Testing, E2E & Demo Narration** | `create_test_client`, `check_openapi_conformance`, `EphemeralServer`, `ephemeral_server`, `find_free_port`, `smart_click`, `DemoNarrator`, `VIRTUAL_CURSOR_SCRIPT` |
@@ -81,7 +80,7 @@ graph TD
 
     subgraph DecoupledProviders ["Decoupled Providers (via DI)"]
         DB_FACTORY["sessionmaker / async_sessionmaker (from hexastack-db)"]
-        LOG_PORT["LoggerPort (from hexastack-logging)"]
+        LOG_PORT["LoggingPort (from hexastack-logging)"]
     end
 
     HTTP --> APP
@@ -91,7 +90,7 @@ graph TD
     ROUTER -->|dispatches to| QBUS
 
     MW -. consumes session factory from DI .-> DB_FACTORY
-    MW -. consumes LoggerPort from DI .-> LOG_PORT
+    MW -. consumes LoggingPort from DI .-> LOG_PORT
 ```
 
 ### Explicit Dependencies (Direct)
@@ -101,7 +100,7 @@ graph TD
 
 ### Implied / Behavioral Relationships (DI-Mediated)
 - **Zero-Dependency DB Session Management**: `DbSessionMiddleware` dynamically resolves SQLAlchemy `sessionmaker` from DI without directly importing `hexastack-db`.
-- **Telemetry Integration**: `HttpLoggingMiddleware` outputs structured request telemetry through `LoggerPort`.
+- **Telemetry Integration**: `HttpLoggingMiddleware` outputs structured request telemetry through `LoggingPort`.
 - **Exception Mapping**: Registers global exception handlers translating core domain errors into standard HTTP error responses.
 
 ---
@@ -112,8 +111,8 @@ graph TD
 # Standalone install
 pip install hexastack-fastapi
 
-# With Uvicorn development server
-pip install "hexastack-fastapi[web]"  # or: pip install "hexastack[web]"
+# With Uvicorn development server (or umbrella web bundle)
+pip install "hexastack[web]"  # or: pip install hexastack-fastapi "uvicorn[standard]"
 
 # Via umbrella package
 pip install "hexastack[fastapi]"
@@ -129,8 +128,11 @@ title = "Hexastack API"
 version = "1.0.0"
 docs_url = "/docs"
 openapi_url = "/openapi.json"
-cors_origins = ["*"]
-enable_correlation_header = true
+correlation_header = "X-Correlation-ID"
+
+[hexastack.fastapi.cors]
+enable = true
+allow_origins = ["*"]
 ```
 
 ---
@@ -140,10 +142,10 @@ enable_correlation_header = true
 ```python
 from dataclasses import dataclass
 from fastapi.testclient import TestClient
+from hexastack_core.domain import Query
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_cqrs.domain.query import Query
 from hexastack_cqrs.infra.decorators import query_handler
-from hexastack_fastapi.adapters.app import create_app
+from hexastack_fastapi.infra.app import create_fastapi_app
 
 
 @dataclass(frozen=True)
@@ -158,7 +160,7 @@ class GetGreetingHandler:
 
 
 runtime = bootstrap(packages_to_scan=[__name__])
-app = create_app(runtime)
+app = create_fastapi_app(container=runtime.container)
 
 client = TestClient(app)
 response = client.get("/health")

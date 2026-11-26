@@ -5,7 +5,7 @@
 > Typer and Rich presentation adapter for Hexastack: nested commands, aliases, piped outputs, and CQRS dispatching.
 
 [![PyPI: hexastack-cli](https://img.shields.io/pypi/v/hexastack-cli.svg)](https://pypi.org/project/hexastack-cli/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_cli)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -85,7 +85,7 @@ graph TD
 - `hexastack-core`: Core kernel, DI container, and ports.
 - `hexastack-cqrs`: `CommandBusPort` and `QueryBusPort` for message dispatching.
 - `typer>=0.27.1`: CLI command parser and shell completion.
-- `rich>=15.0.0`: Terminal formatting, tables, and colors.
+- `rich>=13.8.0`: Terminal formatting, tables, and colors.
 
 ### Implied / Behavioral Relationships (DI-Mediated)
 - **CQRS Integration**: Dispatches CLI argument payloads directly into the application's command and query buses.
@@ -109,8 +109,8 @@ pip install "hexastack[cli]"
 
 ```python
 from dataclasses import dataclass
+from hexastack_core.domain import Query
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_cqrs.domain.query import Query
 from hexastack_cqrs.infra.decorators import query_handler
 from hexastack_cli.infra.decorators import cli_query, cli_group
 

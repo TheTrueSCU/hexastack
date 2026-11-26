@@ -11,7 +11,7 @@
    - `ports/` defines abstract ABC interfaces (`@abstractmethod`).
    - `adapters/` contains concrete implementations (e.g. database, HTTP, Redis, buses). Adapters must **never** import from `infra/`.
    - `infra/` contains pipeline orchestrators, registries, middlewares, and bootstrap logic.
-   - Enforced by `import-linter` via `uv run hexaqual imports check` or pre-commit.
+   - Enforced by `import-linter` via `uv run hexaqual deps linter` or pre-commit.
 
 2. **Docstrings & Public APIs**:
    - Every public module, class, method, and function must have **Google-style docstrings**.
@@ -39,7 +39,7 @@
 
 ## 2. Developer Tools & Workspace Commands (Hexaqual Suite)
 
-Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual[all]>=0.3.0`) as its unified quality, governance, and release engineering toolsuite.
+Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual[all]`) as its unified quality, governance, and release engineering toolsuite.
 
 ### GitHub & PR Diagnostic Tools
 | Tool Command | Purpose |
@@ -97,7 +97,7 @@ Hexastack uses [**Hexaqual**](https://github.com/TheTrueSCU/hexaqual) (`hexaqual
 | `uv run hexaqual release check` | Validates package build distributions and PyPI release version status. |
 | `uv run hexaqual release publish` | Smart PyPI publisher skipping existing releases and handling rate limits. |
 | `uv run hexaqual release reproducible` | Verifies byte-for-byte reproducible wheel package builds across clean environments. |
-| `uv run hexaqual imports check` | Validates root package import boundaries via `.importlinter`. |
+| `uv run hexaqual deps linter` | Validates root package import boundaries via `[tool.importlinter]` in `pyproject.toml`. |
 | `uv run ruff check packages/<pkg>` | Runs Ruff linter on target package. |
 | `uv run ty check packages/<pkg>/src` | Fast static type analysis with Ty. |
 
@@ -171,15 +171,15 @@ gh run list --branch <branch-name>
 
 ## 5. Active Packages in Workspace
 
-All 18 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases (currently **`v0.11.0`**):
+All 18 packages in the workspace are maintained in lockstep version synchronization on minor/patch releases:
 
 - `hexastack-core`: Primitives, ports, events, domain models, caching, rate limiting, and in-memory adapters.
 - `hexastack-cqrs`: Command and Query execution pipelines, registries, buses, and middleware.
-- `hexastack-fastapi`: FastAPI presentation layer, CQRS routing, rate limiting (`slowapi`/`limits`), auth, and UI.
+- `hexastack-fastapi`: FastAPI presentation layer, CQRS routing, rate limiting (`slowapi`/`limits`), and auth.
 - `hexastack-db`: Sync/Async SQLAlchemy and SQLModel repositories and UnitOfWork adapters.
 - `hexastack-events`: Distributed events, CloudEvent envelopes, NATS JetStream, Huey, Apprise, and Janus bridge.
 - `hexastack-flags`: Dynamic feature flagging adapters (OpenFeature, Redis, YAML, env).
-- `hexastack-flow`: Orchestration and workflow engine components integrating `hexaflow>=0.3.0`.
+- `hexastack-flow`: Orchestration and workflow engine components integrating `hexaflow`.
 - `hexastack-graphql`: Strawberry GraphQL schema registration, queries, and mutations.
 - `hexastack-grpc`: Protobuf and gRPC service adapters, interceptors, and decorators.
 - `hexastack-ai`: LLM agents, memory adapters, and tool executors.

@@ -18,13 +18,13 @@ graph TD
         FASTAPI["hexastack-fastapi (FastAPI REST)"]
         GRPC["hexastack-grpc (gRPC Services)"]
         MCP["hexastack-mcp (AI MCP Tools)"]
-        UI["hexastack-fastapi[ui] (NiceGUI DevTools)"]
+        UI["hexastack-ui (NiceGUI DevTools)"]
     end
 
     subgraph Hexagon ["Hexagonal Core"]
         PORTS_IN["Driving Ports (CommandBus, QueryBus, Pipeline)"]
         DOMAIN["Pure Domain Models & Business Invariants"]
-        PORTS_OUT["Driven Ports (RepositoryPort, OutboxPort, LoggerPort)"]
+        PORTS_OUT["Driven Ports (RepositoryPort, OutboxPort, LoggingPort)"]
     end
 
     subgraph DrivenAdapters ["Driven Adapters (Outbound / Infrastructure)"]
@@ -111,7 +111,7 @@ uv run hexastack dev
 - [**Flagship Tutorial: Complete To-Do Microservice**](tutorials/todo-app/index.md): Step-by-step from zero to production.
 - [**Tutorial: Double-Entry Financial Ledger & Invariants**](tutorials/financial-ledger.md): Strict mathematical consistency, double-entry bookkeeping, and property-based fuzzing.
 - [**Architecture & Invariants**](architecture.md): Deep dive into strict package boundaries, tiered CI, and hexagonal rules.
-- [**Monorepo Packages Catalog**](packages.md): Complete index of all 13 specialized packages in the monorepo.
+- [**Monorepo Packages Catalog**](packages.md): Complete index of all 18 specialized packages in the monorepo.
 
 ---
 
@@ -121,11 +121,11 @@ The following articles go deeper on the design decisions behind Hexastack.
 Published on DEV.to with cross-posts to Medium — links populate as articles publish.
 
 !!! tip "Start here"
-    [What Is Hexastack?](devto://what-is-hexastack) — the series introduction covering
+    [What Is Hexastack?](blog/index.md) — the series introduction covering
     architecture, CNCF integrations, and the motivation from 20 years of Python across
     processor design, telecom, healthcare, and autonomy.
 
 !!! note "The Manifesto"
-    [What 20 Years of Python Taught Me About Building in the AI Era](devto://ai-guardrails-manifesto) —
+    [What 20 Years of Python Taught Me About Building in the AI Era](blog/index.md) —
     on why architectural guardrails matter more than ever when AI coding assistants
     are generating code at volume.

@@ -20,11 +20,13 @@ nav = [
             { "Chapter 6: Observability & Tracing" = "tutorials/todo-app/06-production-observability-and-tracing.md" },
             { "Chapter 7: High-Performance gRPC" = "tutorials/todo-app/07-high-performance-grpc-and-microservices.md" }
         ]},
-        { "Financial Ledger & Invariants" = "tutorials/financial-ledger.md" }
+        { "Financial Ledger & Invariants" = "tutorials/financial-ledger.md" },
+        { "Saga Trip Booking" = "tutorials/trip-booking.md" }
     ]},
     { "Architecture" = "architecture.md" },
     { "Architectural Decisions (ADRs)" = "decisions.md" },
     { "Testing & Oracle Rigor" = "developer-guide/testing.md" },
+    { "Debugging & Algorithmic Tracing" = "developer-guide/debugging.md" },
     { "WASM & Edge Profile" = "developer-guide/edge-profile.md" },
     { "Interactive Sandbox Terminals" = "developer-guide/sandbox-terminals.md" },
     { "Ecosystem Architecture" = "ecosystem.md" },

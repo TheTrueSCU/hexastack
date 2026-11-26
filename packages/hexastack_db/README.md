@@ -5,7 +5,7 @@
 > SQLAlchemy 2.0+ persistence layer, generic repositories, Unit of Work, declarative mixins, and Alembic migrations for Hexastack.
 
 [![PyPI: hexastack-db](https://img.shields.io/pypi/v/hexastack-db.svg)](https://pypi.org/project/hexastack-db/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_db)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -96,7 +96,7 @@ graph TD
 ### Implied / Behavioral Relationships (DI-Mediated)
 - **Unit of Work Binding**: Binds `UnitOfWorkPort` into the DI container at `order=15` (before CQRS `order=20`), allowing `UnitOfWorkMiddleware` to manage transactions automatically.
 - **Session Injection**: Injects `sessionmaker` / `async_sessionmaker` into DI, which `hexastack-fastapi` resolves in `DbSessionMiddleware` without requiring a direct package dependency.
-- **Migration CLI Integration**: The `hexastack` umbrella package exposes CLI subcommands (`hexastack db init/upgrade/revision/...`) backed by `hexastack_db.infra.migrations`.
+- **Migration CLI Integration**: The `hexastack` umbrella package exposes CLI subcommands (`hexastack db init/migrate/revision/...`) backed by `hexastack_db.infra.migrations`.
 
 ### Optional Integrations (Extras)
 - `[sqlite]`: Installs `aiosqlite>=0.20.0` for async SQLite support.
@@ -184,18 +184,11 @@ class UserRecord(UuidPrimaryKeyMixin, TimestampMixin, HexastackBase):
 
 register_metadata(HexastackBase.metadata)
 
-# 2. Bootstrap with auto-table creation
-runtime = bootstrap(
-    config_overrides={
-        "db": {
-            "url": "sqlite:///:memory:",
-            "auto_create_tables": True,
-        }
-    }
-)
+# 2. Bootstrap using [hexastack.db] settings from TOML configuration
+runtime = bootstrap(config_path="pyproject.toml")
 
 # 3. Use Unit of Work and Repository
-uow = runtime.container.get(UnitOfWorkPort)
+uow = runtime.container.resolve(UnitOfWorkPort)
 with uow:
     repo = SqlAlchemyRepository(session=uow.session, model_cls=UserRecord)
     user = UserRecord(email="alice@hexastack.dev")

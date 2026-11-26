@@ -18,7 +18,7 @@ it all maintainable at speed — including with AI coding assistants.
 | 10 | What 20 Years of Python Taught Me About Building in the AI Era | Manifesto | — | — |
 | 0 | What Is Hexastack? | Overview | — | — |
 | 6 | Your FastAPI Service, Now AI-Native: LLM Agents + MCP | AI / MCP | — | — |
-| 5 | Managing 17 Python Packages: The `uv` Workspace Monorepo Pattern | Tooling | — | — |
+| 5 | Managing 18 Python Packages: The `uv` Workspace Monorepo Pattern | Tooling | — | — |
 | 1 | Stop Writing Spaghetti FastAPI: Hexagonal Architecture + CQRS | Architecture | — | — |
 | 3 | 90%+ Coverage Isn't Enough: Mutation Testing + OpenSSF Gold | Quality | — | — |
 | 2 | The Dual-Write Trap: Transactional Outbox with NATS JetStream | Events | — | — |
@@ -28,7 +28,7 @@ it all maintainable at speed — including with AI coding assistants.
 | 9 | gRPC and REST from the Same Service, Without Spaghetti | gRPC | — | — |
 | 4 | Reactive DevTools in Python with NiceGUI | DevTools | — | — |
 
-> URLs populate automatically as articles are published via `uv run medium-publish <slug> --publish`.
+> URLs populate automatically as articles are published via `uv run hexaqual docs publish <slug> --publish`.
 
 ---
 

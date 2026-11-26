@@ -5,7 +5,7 @@
 **CNCF CloudEvents 1.0 serialization, Transactional Outbox pattern, NATS JetStream distributed event bus, and janus async-sync thread bridge for Hexastack.**
 
 [![PyPI: hexastack-events](https://img.shields.io/pypi/v/hexastack-events.svg)](https://pypi.org/project/hexastack-events/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_events)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)

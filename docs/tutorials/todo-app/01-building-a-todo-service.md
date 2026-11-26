@@ -403,7 +403,7 @@ Wire handlers and dependencies together in `src/todo_app/infra/bootstrap.py`:
 # src/todo_app/infra/bootstrap.py
 from typing import Any
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_cqrs.infra.decorators import handle
+from hexastack_cqrs.infra.decorators import command_handler, query_handler
 
 import todo_app.adapters.driving.cli
 import todo_app.adapters.driving.http
@@ -425,11 +425,11 @@ from todo_app.infra.handlers import (
 from todo_app.ports.repositories import TodoRepositoryPort
 
 # Register CQRS Handlers
-handle(CreateTodoCommand)(handle_create_todo)
-handle(CompleteTodoCommand)(handle_complete_todo)
-handle(DeleteTodoCommand)(handle_delete_todo)
-handle(ListTodosQuery)(handle_list_todos)
-handle(GetTodoQuery)(handle_get_todo)
+command_handler(CreateTodoCommand)(handle_create_todo)
+command_handler(CompleteTodoCommand)(handle_complete_todo)
+command_handler(DeleteTodoCommand)(handle_delete_todo)
+query_handler(ListTodosQuery)(handle_list_todos)
+query_handler(GetTodoQuery)(handle_get_todo)
 
 
 def create_app() -> dict[str, Any]:
@@ -467,11 +467,11 @@ Ensure your CQRS commands and REST endpoints are correctly bound and discovered:
 # 1. Inspect registered CQRS commands, queries, and handlers
 uv run hexastack inspect registry
 
-# 2. Introspect registered FastAPI REST routes and HTTP methods
-uv run hexastack fastapi routes
+# 2. Verify environment and installed Hexastack packages
+uv run hexastack doctor
 
-# 3. Verify environment and installed Hexastack packages
-uv run hexastack inspect info
+# 3. Inspect generated OpenAPI paths once the dev server is running
+curl -s http://127.0.0.1:8000/openapi.json | jq '.paths | keys'
 ```
 
 ### Interactive OpenAPI Testing & Telemetry Verification

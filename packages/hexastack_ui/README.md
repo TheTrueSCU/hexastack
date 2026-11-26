@@ -3,7 +3,7 @@
 Reactive UI presentation adapters and turnkey DevTools dashboard for Hexastack.
 
 [![PyPI: hexastack-ui](https://img.shields.io/pypi/v/hexastack-ui.svg)](https://pypi.org/project/hexastack-ui/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_ui)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -56,19 +56,21 @@ hexastack ui
 ### Option B: Mount into an Existing FastAPI Application
 ```python
 from fastapi import FastAPI
+from hexastack_core.infra.bootstrap import bootstrap
 from hexastack_ui.adapters.nicegui.devtools import mount_devtools_dashboard
 
+runtime = bootstrap()
 app = FastAPI(title="My Hexastack Service")
 
 # Mount interactive DevTools console under /_devtools
-mount_devtools_dashboard(app, path="/_devtools")
+mount_devtools_dashboard(app, runtime.container, path="/_devtools")
 ```
 
 ### Option C: Defining Reactive Domain Pages
 ```python
 from nicegui import ui
-from hexastack_ui.infra.decorators import ui_page
-from hexastack_ui.adapters.nicegui.dispatcher import dispatch_command
+from hexastack_ui.adapters.nicegui.dispatch import dispatch_command
+from hexastack_ui.adapters.nicegui.page import ui_page
 from my_domain.commands import CreateOrderCommand
 
 

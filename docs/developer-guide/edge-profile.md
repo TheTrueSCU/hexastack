@@ -52,7 +52,7 @@ flowchart TD
 
 ## 2. Runtime & Platform Introspection
 
-The [`hexastack_core.utils.runtime`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/utils/runtime.py) module provides zero-overhead introspection of the active runtime environment:
+The [`hexastack_core.utils.runtime`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/utils/runtime.py) module provides zero-overhead introspection of the active runtime environment:
 
 ```python
 from hexastack_core.utils.runtime import (
@@ -89,10 +89,10 @@ print(f"Allocated memory: {stats.get('allocated_bytes', 0)} bytes")
 
 ## 3. Seamless Dependency Injection: `create_container()`
 
-Hexastack defines an abstract [`ContainerPort`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/ports/container.py) protocol in `hexastack_core.ports`. The [`create_container()`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/infra/container.py) factory automatically selects the appropriate implementation:
+Hexastack defines an abstract [`ContainerPort`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/ports/container.py) protocol in `hexastack_core.ports`. The [`create_container()`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/infra/container.py) factory automatically selects the appropriate implementation:
 
 - **Server/Cloud Runtimes**: Yields `rodi.Container` with full reflection and speed optimizations.
-- **Edge/WASM/MicroPython**: Yields [`MicroContainer`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/infra/container.py), an ultra-lean pure-Python IoC container (<10KB) with single-pass constructor reflection and zero external dependencies.
+- **Edge/WASM/MicroPython**: Yields [`MicroContainer`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/infra/container.py), an ultra-lean pure-Python IoC container (<10KB) with single-pass constructor reflection and zero external dependencies.
 
 ```python
 from hexastack_core.infra.container import create_container
@@ -113,7 +113,7 @@ user_repo = container.resolve(UserRepositoryPort)
 
 ## 4. Universal Ambient Context: `create_context_var()`
 
-Ambient context (such as distributed correlation IDs and multi-tenant user contexts) is decoupled from native C-extension `contextvars` via [`ContextVarPort[T]`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/ports/context.py) and [`create_context_var()`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/utils/context.py):
+Ambient context (such as distributed correlation IDs and multi-tenant user contexts) is decoupled from native C-extension `contextvars` via [`ContextVarPort[T]`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/ports/context.py) and [`create_context_var()`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/utils/context.py):
 
 - Uses native PEP 567 `contextvars` when available.
 - Falls back to pure-Python in-memory token state on MicroPython or restricted runtimes.
@@ -135,7 +135,7 @@ with correlation_scope("req-99120"):
 
 In single-threaded WebAssembly sandboxes (Pyodide without shared-memory pthreads), calling `asyncio.to_thread(func)` raises `RuntimeError: threads not supported`.
 
-Hexastack's [`asyncify`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/utils/concurrency.py) utility checks `supports_threads()`. When running on single-threaded runtimes, it automatically executes synchronous callables cooperatively directly on the current event loop without thread pool allocation.
+Hexastack's [`asyncify`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/utils/concurrency.py) utility checks `supports_threads()`. When running on single-threaded runtimes, it automatically executes synchronous callables cooperatively directly on the current event loop without thread pool allocation.
 
 ```python
 from hexastack_core.utils.concurrency import asyncify
@@ -153,7 +153,7 @@ result = await async_checksum(b"payload")
 
 ## 6. Lightweight Turnkey Edge Pipeline: `create_edge_pipeline()`
 
-For embedded devices and micro-workers, [`hexastack_cqrs.infra.edge.create_edge_pipeline()`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cqrs/src/hexastack_cqrs/infra/edge.py) boots an in-process, sub-millisecond CQRS execution profile under <1MB memory footprint:
+For embedded devices and micro-workers, [`hexastack_cqrs.infra.edge.create_edge_pipeline()`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_cqrs/src/hexastack_cqrs/infra/edge.py) boots an in-process, sub-millisecond CQRS execution profile under <1MB memory footprint:
 
 ```python
 from hexastack_core.domain import Command, Query, Event
@@ -169,14 +169,15 @@ class GetDeviceStatus(Query[dict]):
 # Create edge execution pipeline with in-memory buses and MicroContainer
 edge = create_edge_pipeline()
 
-# Register synchronous or async domain handlers
-@edge.register_handler(SensorReadingCommand)
+# Define and register synchronous or async domain handlers
 def handle_reading(cmd: SensorReadingCommand) -> str:
     return f"stored:{cmd.device_id}"
 
-@edge.register_handler(GetDeviceStatus)
 def handle_status(q: GetDeviceStatus) -> dict:
     return {"device_id": q.device_id, "status": "online"}
+
+edge.register_handler(SensorReadingCommand, handle_reading)
+edge.register_handler(GetDeviceStatus, handle_status)
 
 # Sub-millisecond dispatch
 response = edge.dispatch(SensorReadingCommand(device_id="esp32-1", temperature=22.4))

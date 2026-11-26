@@ -120,8 +120,8 @@ The workspace maintains five dedicated oracle suites covering key infrastructure
   - State machine transitions (`PENDING` $\rightarrow$ `PROCESSING` $\rightarrow$ `PUBLISHED` / `FAILED`).
   - Retry counter increment isolation and max retry threshold enforcement.
 
-### Phase 5: DAG Execution & Compensation Unwinding Oracle (`hexaflow`)
-- **Suite**: `packages/hexaflow/tests/properties/test_dag_oracle.py`
+### Phase 5: DAG Execution & Compensation Unwinding Oracle (`hexaflow` upstream)
+- **Upstream Suite**: [`TheTrueSCU/hexaflow` `tests/properties/test_dag_oracle.py`](https://github.com/TheTrueSCU/hexaflow/blob/main/tests/properties/test_dag_oracle.py) (alongside local property tests in `packages/hexastack_flow/tests/properties/test_flow_properties.py`)
 - **Target**: `AsyncioWorkflowEngine` vs `NaiveSequentialDAGOracle`
 - **Invariants Tested**:
   - Concurrent multi-stage async DAG evaluation producing identical outputs to sequential topological execution.
@@ -165,7 +165,7 @@ The reference oracle should be trivially simple (e.g. pure Python `list` or `dic
 
 Testing time-sensitive operations (cache TTLs, sliding-window rate limiters, token expiration, lease renewals) with `time.sleep` or ad-hoc monkey-patching introduces nondeterminism, test flakiness, and slowdowns across parallel `pytest-xdist` workers.
 
-Hexastack integrates **`time-machine`** via [`hexastack_core.testing.freeze_time`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/testing/clock.py) for C-level clock manipulation without event loop drift:
+Hexastack integrates **`time-machine`** via [`hexastack_core.testing.freeze_time`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/testing/clock.py) for C-level clock manipulation without event loop drift:
 
 ```python
 from hexastack_core.testing import freeze_time

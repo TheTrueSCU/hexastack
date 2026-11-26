@@ -5,7 +5,7 @@
 > Command Query Responsibility Segregation (CQRS) buses, execution pipelines, and middleware for Hexastack.
 
 [![PyPI: hexastack-cqrs](https://img.shields.io/pypi/v/hexastack-cqrs.svg)](https://pypi.org/project/hexastack-cqrs/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_cqrs)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -24,13 +24,13 @@
   - `InOutMiddleware` & `AsyncInOutMiddleware`: Standardized base class template with `before`, `after`, and `on_error` lifecycle hooks.
   - `CorrelationMiddleware`: Propagates correlation IDs across requests and async tasks.
   - `TimingMiddleware`: Measures and records execution latency.
-  - `LoggingMiddleware`: Logs execution lifecycles and errors via `LoggerPort` (dynamically gated via `features.cqrs.logging`).
+  - `LoggingMiddleware`: Logs execution lifecycles and errors via `LoggingPort` (dynamically gated via `features.cqrs.logging`).
   - `CircuitBreakerMiddleware` & `AsyncCircuitBreakerMiddleware`: Non-blocking fail-fast circuit breaker protecting commands/queries from cascading outages.
   - `StaminaRetryMiddleware`: Modern exponential backoff with full jitter powered by `stamina` (dynamically gated via `features.cqrs.retry`).
   - `TenacityRetryMiddleware`: Exponential backoff and retry policies powered by `tenacity` (dynamically gated via `features.cqrs.retry`).
   - `UnitOfWorkMiddleware`: Automatic transaction scoping (`commit()` on success, `rollback()` on failure).
   - `ConditionalFeatureFlagMiddleware`: Evaluates dynamic feature flags before dispatching commands/queries.
-- **Declarative Decorators & Scanning**: `@command_handler`, `@query_handler`, `@event_handler`, `@circuit_breaker`, and `@feature_flag` registered via reflective module scanning.
+- **Declarative Decorators & Scanning**: `@command_handler`, `@query_handler`, `@event_listener`, `@circuit_breaker`, and `@feature_flag` registered via reflective module scanning.
 - **Declarative Query Caching & Tag Invalidation**:
   - `@cached_query(ttl_seconds, tags, key_fields)`: Declaratively caches read projections in `CachePort` / `AsyncCachePort`.
   - `@invalidates_cache(tags)`: Automatically invalidates related cached tag groups when modifying Commands succeed.
@@ -55,7 +55,7 @@ hexastack_cqrs/
 |---|---|
 | **Adapters** | `SynchronousCommandBus`, `SynchronousQueryBus`, `SynchronousEventBus`, `HueyCommandBus`, `HueyEventBus` |
 | **Bootstrap** | `CqrsBootstrapper` (order=20), `CqrsConfig` |
-| **Decorators** | `@command_handler`, `@query_handler`, `@event_handler`, `@circuit_breaker`, `@cached_query`, `@invalidates_cache`, `@feature_flag`, `@presenter` |
+| **Decorators** | `@command_handler`, `@query_handler`, `@event_listener`, `@circuit_breaker`, `@cached_query`, `@invalidates_cache`, `@feature_flag`, `@presenter` |
 | **Domain** | `Command`, `Query`, `Event`, `CommandHandler`, `QueryHandler`, `EventHandler` |
 | **Middlewares** | `AsyncCircuitBreakerMiddleware`, `AsyncInOutMiddleware`, `CircuitBreakerMiddleware`, `CommandCacheInvalidationMiddleware`, `ConditionalFeatureFlagMiddleware`, `CorrelationMiddleware`, `ExecutionPipeline`, `InOutMiddleware`, `LoggingMiddleware`, `QueryCachingMiddleware`, `StaminaRetryMiddleware`, `TenacityRetryMiddleware`, `TimingMiddleware`, `UnitOfWorkMiddleware` |
 | **Ports** | `CommandBusPort`, `QueryBusPort`, `EventBusPort`, `MiddlewarePort` |
@@ -88,7 +88,7 @@ graph TD
     subgraph DrivenDependencies ["Driven Subsystems & Kernel"]
         CORE["hexastack-core (DI & Kernel)"]
         DB["hexastack-db (UnitOfWorkPort)"]
-        LOG["hexastack-logging (LoggerPort)"]
+        LOG["hexastack-logging (LoggingPort)"]
     end
 
     FASTAPI -->|dispatches to| CBUS
@@ -117,7 +117,7 @@ graph TD
 
 ### Implied / Behavioral Relationships (DI-Mediated)
 - **UnitOfWork Scoping**: `UnitOfWorkMiddleware` dynamically resolves `UnitOfWorkPort` from the DI container (injected by `hexastack-db`) to manage transactions.
-- **Telemetry Integration**: `LoggingMiddleware` dynamically resolves `LoggerPort` from the DI container (injected by `hexastack-logging`).
+- **Telemetry Integration**: `LoggingMiddleware` dynamically resolves `LoggingPort` from the DI container (injected by `hexastack-logging`).
 - **Driving Adapters**: Consumed by `hexastack-fastapi` and `hexastack-cli` to route incoming user actions to business handlers.
 
 ### Optional Integrations (Extras)
@@ -144,12 +144,22 @@ pip install hexastack
 
 ```toml
 [hexastack.cqrs]
-enable_correlation = true
-enable_timing = true
-enable_logging = true
-enable_uow = true
-retry_attempts = 3
-retry_backoff_base = 0.5
+use_huey_async = false
+
+[hexastack.cqrs.middleware.correlation]
+enable = true
+
+[hexastack.cqrs.middleware.timing]
+enable = true
+
+[hexastack.cqrs.middleware.logging]
+enable = true
+
+[hexastack.cqrs.middleware.unit_of_work]
+enable = true
+
+[hexastack.cqrs.middleware.retry]
+max_attempts = 3
 ```
 
 ---
@@ -158,8 +168,8 @@ retry_backoff_base = 0.5
 
 ```python
 from dataclasses import dataclass
+from hexastack_core.domain import Command
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_cqrs.domain.command import Command
 from hexastack_cqrs.infra.decorators import command_handler
 from hexastack_cqrs.ports.buses import CommandBusPort
 
@@ -177,7 +187,7 @@ class CreateOrderHandler:
 
 
 runtime = bootstrap(packages_to_scan=[__name__])
-bus = runtime.container.get(CommandBusPort)
+bus = runtime.container.resolve(CommandBusPort)
 
 result = bus.dispatch(CreateOrderCommand(order_id="ord-99", amount=49.99))
 print(result)  # "Order ord-99 created for $49.99"

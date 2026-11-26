@@ -8,7 +8,7 @@
 
 Complex graph traversal (workflow DAG engines in `hexastack-flow`), hierarchical queue fair-share scheduling (in `hexaqueue`), and state machine transitions often require granular line-by-line inspection of local variable evolution.
 
-Hexastack integrates **`snoop`** via [`hexastack_core.utils.debug.snoop_tracer`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/utils/debug.py) to provide instant execution tracing with zero production overhead:
+Hexastack integrates **`snoop`** via [`hexastack_core.utils.debug.snoop_tracer`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/utils/debug.py) to provide instant execution tracing with zero production overhead:
 
 ### Function Decorator Usage
 
@@ -49,7 +49,7 @@ def process_batch(items: list[int]) -> int:
 ### Production Invariant: Zero-Overhead Degradation
 
 If the `hexastack-core[debug]` extra is not installed, or when running in production:
-- [`is_snoop_available()`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/utils/debug.py#L42) safely returns `False`.
+- [`is_snoop_available()`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/utils/debug.py#L42) safely returns `False`.
 - `snoop_tracer` immediately degrades to a no-op decorator and context manager without invoking bytecode instrumentation or runtime overhead.
 
 ---
@@ -58,7 +58,7 @@ If the `hexastack-core[debug]` extra is not installed, or when running in produc
 
 Standard Python exception tracebacks only display file paths, line numbers, and error messages. Diagnosing unhandled failures in background tasks or distributed workers requires inspecting variable values at the point of failure.
 
-Hexastack provides [`DiagnosticExceptionFormatter`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging/src/hexastack_logging/infra/formatters/diagnostics.py) and [`format_diagnostics`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging/src/hexastack_logging/infra/formatters/diagnostics.py) powered by `stackprinter`:
+Hexastack provides [`DiagnosticExceptionFormatter`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_logging/src/hexastack_logging/infra/formatters/diagnostics.py) and [`format_diagnostics`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_logging/src/hexastack_logging/infra/formatters/diagnostics.py) powered by `stackprinter`:
 
 ```python
 from hexastack_logging.infra.formatters import format_diagnostics

@@ -19,7 +19,7 @@ uv sync --all-packages --all-extras --all-groups
 uv run pre-commit install
 ```
 
-That's it. The first `git commit` will run all 26 hooks automatically.
+That's it. Every `git commit` and `git push` will automatically run the pre-commit and pre-push quality gates (27 pre-commit / 35 total hooks).
 
 ---
 
@@ -32,7 +32,7 @@ hexastack/
 │       ├── src/<pkg>/ # Source code
 │       └── tests/     # Unit, integration, and property-based tests
 ├── examples/          # Reference microservices (financial-ledger, trip-booking)
-└── docs/              # MkDocs documentation site
+└── docs/              # Zensical documentation site
 ```
 
 Each directory under `packages/` is an independently publishable PyPI package

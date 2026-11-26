@@ -5,7 +5,7 @@
 > Structured logging, security sanitization, and adapter integrations (Loguru, Rich, Structlog) for Hexastack.
 
 [![PyPI: hexastack-logging](https://img.shields.io/pypi/v/hexastack-logging.svg)](https://pypi.org/project/hexastack-logging/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_logging)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -32,7 +32,7 @@
 ```
 hexastack_logging/
 ├── domain/          # LogRecord, LogLevel, Logging exceptions
-├── ports/           # LoggerPort, FormatterPort, FilterPort, SanitizerPort
+├── ports/           # LoggingPort, FormatterPort, FilterPort, SanitizerPort
 ├── adapters/        # LoguruAdapter, RichAdapter, StructlogAdapter, StructuredLogger, SentryErrorAdapter
 └── infra/           # LoggingBootstrapper (order=10), Formatters, Sanitizers, Config
 ```
@@ -53,7 +53,7 @@ hexastack_logging/
 
 ```mermaid
 graph TD
-    subgraph SiblingConsumers ["Consumers of LoggerPort"]
+    subgraph SiblingConsumers ["Consumers of LoggingPort"]
         CQRS["hexastack-cqrs (LoggingMiddleware)"]
         FASTAPI["hexastack-fastapi (HttpLoggingMiddleware)"]
         GRPC["hexastack-grpc (LoggingServerInterceptor)"]
@@ -78,10 +78,10 @@ graph TD
 ```
 
 ### Explicit Dependencies (Direct)
-- `hexastack-core`: Abstract `LoggerPort`, DI container, and async context tracking.
+- `hexastack-core`: Abstract `LoggingPort`, DI container, and async context tracking.
 
 ### Implied / Behavioral Relationships (DI-Mediated)
-- **Dependency Provider**: Binds `LoggerPort` into the DI container at `order=10` (before CQRS `order=20`), ensuring telemetry is available to all subsequent bootstrappers and middlewares.
+- **Dependency Provider**: Binds `LoggingPort` into the DI container at `order=10` (before CQRS `order=20`), ensuring telemetry is available to all subsequent bootstrappers and middlewares.
 - **Correlation ID Synchronization**: Automatically reads and outputs `get_correlation_id()` stored in `hexastack_core.utils.context`.
 
 ### Optional Integrations (Extras)
@@ -116,8 +116,10 @@ pip install hexastack
 [hexastack.logging]
 level = "INFO" # "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
 format = "json" # "json", "console"
-backend = "structlog" # "standard", "loguru", "rich", "structlog"
-sanitize_keys = ["password", "token", "secret", "authorization", "api_key"]
+
+[hexastack.logging.sanitizer]
+enable = true
+masked_keys = ["password", "token", "secret", "authorization", "api_key"]
 ```
 
 ---
@@ -126,17 +128,11 @@ sanitize_keys = ["password", "token", "secret", "authorization", "api_key"]
 
 ```python
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_core.ports.logging import LoggerPort
+from hexastack_core.ports.logging import LoggingPort
 
-runtime = bootstrap(
-    config_overrides={
-        "logging": {
-            "level": "DEBUG",
-            "format": "console",
-        }
-    }
-)
+# Loads [hexastack.logging] from hexastack.toml / pyproject.toml
+runtime = bootstrap(config_path="pyproject.toml")
 
-logger = runtime.container.get(LoggerPort)
+logger = runtime.container.resolve(LoggingPort)
 logger.info("Application initialized successfully", extra={"user_count": 42})
 ```
