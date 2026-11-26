@@ -5,7 +5,7 @@
 **`hexastack-auth`** is the security, identity, and authorization engine for the Hexastack framework. It provides protocol-agnostic identity primitives, JWT token creation/verification, PBKDF2 password hashing, and declarative `@authorize` access control across CQRS pipelines (RBAC, OPA Policy-as-Code, OpenFGA ReBAC, and SPIFFE Workload Identity).
 
 [![PyPI: hexastack-auth](https://img.shields.io/pypi/v/hexastack-auth.svg)](https://pypi.org/project/hexastack-auth/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_auth)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -107,7 +107,7 @@ trust_domain = "example.org"
 
 ```python
 from hexastack_core.domain import Command
-from hexastack_auth import authorize, requires_role
+from hexastack_auth.infra.decorators import authorize, requires_role
 
 
 # 1. Standard RBAC

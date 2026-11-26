@@ -5,7 +5,7 @@
 > Model Context Protocol (MCP) adapter and AI agent tool integration for Hexastack.
 
 [![PyPI: hexastack-mcp](https://img.shields.io/pypi/v/hexastack-mcp.svg)](https://pypi.org/project/hexastack-mcp/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_mcp)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -134,8 +134,8 @@ auto_mount_fastapi = true # Auto-mount SSE router into FastAPI on bootstrap
 
 ```python
 from dataclasses import dataclass
+from hexastack_core.domain import Query
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_cqrs.domain.query import Query
 from hexastack_cqrs.infra.decorators import query_handler
 from hexastack_mcp.infra.decorators import mcp_tool
 

@@ -86,7 +86,7 @@ Zero-downtime runtime flag hot-swapping directly within the Hexastack DevTools c
 
 ## In-Depth Articles
 
-!!! tip "On DEV.to"
-    [Reactive DevTools in Python with NiceGUI](devto://nicegui-reactive-devtools) —
+!!! tip "Engineering Blog"
+    [Reactive DevTools in Python with NiceGUI](blog/index.md) —
     how the `hexastack-ui` DevTools console works, what you get out of the box, and how to
     extend or override panels for your own service.

@@ -47,7 +47,7 @@
   - *Pydantic models in `domain/`*: Rejected because coupling domain validation to Pydantic v1/v2 breaking changes and serialization decorators leaks framework concerns into pure business rules.
   - *Convention-only documentation*: Rejected because without a compiler or linter, human and AI contributors silently introduce cross-layer shortcuts within weeks.
 - **Enforcement Mechanism**:
-  - Enforced by `.importlinter` via `uv run hexaqual imports check` and pre-commit Git hooks.
+  - Enforced via `[tool.importlinter]` by `uv run hexaqual deps linter` and pre-commit Git hooks.
   - Architectural tests in each package: `tests/architecture/test_hexagonal_boundaries.py`.
 
 ---
@@ -66,7 +66,7 @@
   - *FastAPI `Depends`*: Rejected as the primary DI mechanism because CLI commands, gRPC workers, event consumers, and MCP tools cannot access FastAPI request-scoped dependency graphs.
   - *Global singleton instances*: Rejected due to test-isolation leaks and thread/coroutine state bleeding.
 - **Enforcement Mechanism**:
-  - DI container tests in `hexastack-core/tests/unit/test_di.py`.
+  - DI container tests in `packages/hexastack_core/tests/unit/infra/test_container.py` and `packages/hexastack_core/tests/unit/infra/test_bootstrap.py`.
   - Sanity check verifying that all adapters accept ports via `__init__`.
 
 ---
@@ -160,7 +160,7 @@
   - *Threading correlation arguments everywhere*: Rejected due to severe signature bloat and violation of domain isolation.
   - *Thread-local storage (`threading.local`)*: Rejected because `threading.local` corrupts state across async/await coroutine switches in `asyncio`.
 - **Enforcement Mechanism**:
-  - Ambient context tests in `hexastack-core/tests/unit/test_context.py`.
+  - Ambient context tests in `packages/hexastack_core/tests/unit/utils/test_context.py` and `packages/hexastack_core/tests/unit/ports/test_context.py`.
   - OpenTelemetry span propagation assertions in `hexastack-otel`.
 
 ---
@@ -196,7 +196,7 @@
   - *Single monolithic `.webm` recordings*: Rejected due to high cognitive overload for users and slow, all-or-nothing CI re-runs.
 - **Enforcement Mechanism**:
   - `hexastack_cli.testing.CliNarrator` segment assertions.
-  - Pre-commit file size gates (`check-added-large-files` with `--maxkb=5120`).
+  - Pre-commit file size gates (`check-added-large-files` with `--maxkb=1024`).
 
 ---
 
@@ -216,7 +216,7 @@
   - *Standard Typer/Click defaults*: Rejected due to poor developer ergonomics and zero discoverability for typos.
   - *External unmaintained Click plugins*: Rejected due to missing negative number immunity and potential hanging in CI pipelines.
 - **Enforcement Mechanism**:
-  - Comprehensive unit suite: `packages/hexastack_cli/tests/unit/adapters/suggest/test_suggest.py`.
+  - Comprehensive unit suite: `packages/hexastack_cli/tests/unit/adapters/test_suggest.py`.
   - Non-interactive TTY detection checks.
 
 ---
@@ -270,7 +270,7 @@
 - **Alternatives Considered & Rejected**:
   - *Model-specific prompt injections / ad-hoc tool dictionaries*: Rejected because they fail to enforce security boundaries and require rewriting for each new AI model provider.
 - **Enforcement Mechanism**:
-  - `packages/hexastack_mcp/tests/unit/test_mcp.py` verifying tool registration, parameter injection defense, and authentication.
+  - Unit suites under `packages/hexastack_mcp/tests/unit/` (including `infra/registries/test_server.py`) verifying tool registration, parameter injection defense, and authentication.
 
 ---
 
@@ -300,7 +300,7 @@
   Hexagonal Architecture provides high isolation by routing all operations through abstract ports, adapter dispatchers, dependency injection containers, and middleware pipelines. Without continuous performance governance, internal framework dispatch overhead can silently balloon, diminishing the microsecond performance expected from Python 3.12+ async execution. However, running microbenchmarks under test coverage tools (`--cov`) adds 2x–5x latency overhead that invalidates measurements, and running on noisy shared CI virtualization instances introduces jitter.
 - **Decision**:
   Codify `pytest-benchmark` as a first-class execution tier orchestrated via `hexaqual test bench`:
-  1. **Zero Coverage Instrumentation Overhead**: Whenever benchmarks are run via `hexaqual test bench` or `-B/--bench`, test coverage is strictly disabled (`--no-cov`).
+  1. **Zero Coverage Instrumentation Overhead**: Whenever benchmarks are run via `hexaqual test bench`, test coverage is strictly disabled (`--no-cov`).
   2. **Single-Process Worker Isolation**: Benchmarks automatically enforce `-n 0`, preventing multi-process `pytest-xdist` CPU cache thrashing and conflicting `--benchmark-disable` triggers.
   3. **Automatic Unit Test Exclusion**: Standard test runs (`hexaqual test run`) automatically inject `--benchmark-skip`, ensuring benchmark iterations never slow down developer unit test cycles.
   4. **Dual Execution Modes**:

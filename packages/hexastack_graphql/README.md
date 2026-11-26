@@ -5,7 +5,7 @@
 > Strawberry GraphQL presentation adapter and CQRS integration for Hexastack.
 
 [![PyPI: hexastack-graphql](https://img.shields.io/pypi/v/hexastack-graphql.svg)](https://pypi.org/project/hexastack-graphql/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_graphql)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -139,8 +139,8 @@ title = "Hexastack GraphQL API"
 from dataclasses import dataclass
 import strawberry
 from strawberry.types import Info
+from hexastack_core.domain import Query
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_cqrs.domain.query import Query
 from hexastack_cqrs.infra.decorators import query_handler
 from hexastack_graphql.domain.context import GraphQLContext
 from hexastack_graphql.infra.decorators import graphql_query_type

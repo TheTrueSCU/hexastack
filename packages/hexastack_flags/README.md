@@ -5,7 +5,7 @@
 **CNCF OpenFeature provider adapters and enterprise feature flagging for Hexastack.**
 
 [![PyPI: hexastack-flags](https://img.shields.io/pypi/v/hexastack-flags.svg)](https://pypi.org/project/hexastack-flags/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_flags)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -18,7 +18,7 @@
 
 ## 1. Architectural Overview
 
-`hexastack-flags` provides the production-grade adapter connecting Hexastack's [`FeatureFlagPort`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core/src/hexastack_core/ports/feature_flags.py) to the **CNCF OpenFeature Python SDK**.
+`hexastack-flags` provides the production-grade adapter connecting Hexastack's [`FeatureFlagPort`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_core/src/hexastack_core/ports/feature_flags.py) to the **CNCF OpenFeature Python SDK**.
 
 It decouples your domain, CQRS handlers, REST routes, Typer commands, and GraphQL resolvers from proprietary feature flagging APIs, allowing seamless integration with **Flagd**, **Unleash**, **Flipt**, **GO Feature Flag**, or local in-memory providers.
 

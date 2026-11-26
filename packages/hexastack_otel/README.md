@@ -5,7 +5,7 @@
 **Vendor-agnostic OpenTelemetry distributed tracing and CQRS telemetry middleware for Hexastack.**
 
 [![PyPI: hexastack-otel](https://img.shields.io/pypi/v/hexastack-otel.svg)](https://pypi.org/project/hexastack-otel/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Coverage](https://codecov.io/github/TheTrueSCU/hexastack/graph/badge.svg?component=hexastack_otel)](https://codecov.io/github/TheTrueSCU/hexastack)
 [![Part of Hexastack](https://img.shields.io/badge/part%20of-hexastack-blueviolet.svg)](https://dopplereffect.us/hexastack/)
 [![Governed by Hexaqual](https://img.shields.io/badge/governed%20by-hexaqual-10b981.svg)](https://dopplereffect.us/hexaqual/)
@@ -18,7 +18,7 @@
 
 ## 1. Architectural Overview
 
-`hexastack-otel` provides pure hexagonal port interfaces for distributed tracing ([`TracingPort`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel/src/hexastack_otel/ports/tracing.py)) and metrics collection ([`MetricsPort`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel/src/hexastack_otel/ports/metrics.py)).
+`hexastack-otel` provides pure hexagonal port interfaces for distributed tracing ([`TracingPort`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_otel/src/hexastack_otel/ports/tracing.py)) and metrics collection ([`MetricsPort`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_otel/src/hexastack_otel/ports/metrics.py)).
 
 - **Distributed Tracing**: Backed by the official **OpenTelemetry Python SDK** (`OtelTracingAdapter`, `InMemoryTracingAdapter`), linking correlation IDs and creating spans across CQRS Command/Query executions, HTTP endpoints, and gRPC RPCs.
 - **Prometheus Metrics Engine**: Backed by `prometheus_client` (`PrometheusMetricsAdapter`), tracking throughput counters, execution duration histograms, and system gauges exposed over `/metrics`.
@@ -71,7 +71,7 @@ enabled = true
 
 ## 3. Automatic CQRS Tracing & Dynamic Feature Flagging
 
-The [`TracingMiddleware`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel/src/hexastack_otel/infra/middleware.py) automatically wraps every dispatched command or query in a scoped span:
+The [`TracingMiddleware`](https://github.com/TheTrueSCU/hexastack/blob/main/packages/hexastack_otel/src/hexastack_otel/infra/middleware.py) automatically wraps every dispatched command or query in a scoped span:
 
 - **Dynamic Feature Flag Control**: Evaluates `features.otel.tracing` via `FeatureFlagPort` dynamically per-message, enabling zero-downtime activation/deactivation of telemetry spans.
 - **Span Name**: `cqrs.CreateOrderCommand`

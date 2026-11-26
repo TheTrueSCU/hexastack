@@ -65,8 +65,8 @@ Update `src/todo_app/infra/handlers.py` to record events into the outbox when an
 
 ```python
 # src/todo_app/infra/handlers.py
+from hexastack_core.adapters.notification import InMemoryNotificationAdapter
 from hexastack_core.ports.notification import (
-    InMemoryNotificationAdapter,
     NotificationPort,
     NotificationPriority,
 )
@@ -202,15 +202,13 @@ if __name__ == "__main__":
 
 ## 6. Running the Distributed Outbox Relay Daemon
 
-Hexastack provides a dedicated background outbox relay worker command:
+Launch REST, gRPC, and the background Transactional Outbox relay concurrently during local development:
 
 ```bash
-# 1. Run the outbox relay daemon in background polling mode
-uv run hexastack outbox relay --interval 1.0 --batch-size 50
-
-# 2. Or drain all pending outbox events once (ideal for cron jobs & CI)
-uv run hexastack outbox relay --once
+uv run hexastack dev
 ```
+
+*(Note: `hexastack-events` also provides `OutboxRelay` / `AsyncioOutboxWorker` programmatically for standalone worker scripts or cron jobs.)*
 
 Watch the CLI setup for an event-driven microservice:
 
@@ -227,7 +225,7 @@ Trigger the flow through the interactive Swagger UI:
 
 1. **Delete Item**: Send `DELETE /todos/{id}` with `Authorization: Bearer admin`.
 2. **Inspect Outbox Table**: Verify an event record was persisted inside the same transactional unit of work in `todos.db`.
-3. **Drain Outbox**: Run `uv run hexastack outbox relay --once` to publish events to configured notification channels.
+3. **Relay Outbox Events**: Observe the `hexastack dev` relay worker (or invoke your `OutboxRelay` worker) publishing staged events to configured notification channels.
 
 ---
 

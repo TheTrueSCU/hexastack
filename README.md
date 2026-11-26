@@ -39,7 +39,7 @@ Hexastack was designed from the ground up to **turn vibe-coding into an unfair s
 | Dimension | Typical "AI Slop" / Vibe-Coded Repos | What Hexastack Actually Has |
 |---|---|---|
 | **Architectural Boundaries** | Massive files, circular imports, domain models importing FastAPI `Request` or SQLAlchemy `Session`. | **Hardware-enforced by `import-linter` in pre-commit.** Domain code has **0** framework dependencies. If a domain entity imports Typer, FastAPI, or gRPC, the commit is physically blocked. |
-| **Knowledge Graph & Architecture Auditing** | Guesswork across multi-repo dependencies; hidden cyclic couplings and broken imports between packages. | **Graphify Static AST Knowledge Graph & Zero-Cycle Auditing.** Maps 8,500+ symbol nodes across 14+ packages, enabling instant cross-layer dependency queries (`graphify query`) and shortest path traces (`graphify path`). |
+| **Knowledge Graph & Architecture Auditing** | Guesswork across multi-repo dependencies; hidden cyclic couplings and broken imports between packages. | **Graphify Static AST Knowledge Graph & Zero-Cycle Auditing.** Maps thousands of symbol nodes across 18 packages, enabling instant cross-layer dependency queries (`graphify query`) and shortest path traces (`graphify path`). |
 | **Dependency Injection** | Global variables, singleton decorators with module-level state, tangled lifecycles. | **True dynamic DI with `rodi` & single-pass visitor scanning.** Bootstrapping is explicit, composable, and swappable in unit tests without monkey-patching. |
 | **Test Parity & Veracity** | Mocks asserting that mocks were called; 90% "line coverage" with zero branch assertions; orphaned test suites. | **Tiered testing with 100% test symmetry (`hexaqual parity test`), architecture test parity (`hexaqual parity architecture`), `ty` static typing, Hypothesis property fuzzing, Schemathesis ASGI contract tests, and `mutmut` mutation kill audits.** |
 | **Multi-Transport Parity** | Manual boilerplate, copy-pasting DTOs, running `protoc` with 14 flags manually. | **Write once, dispatch everywhere.** A single `@command_handler` or `@query_handler` serves FastAPI REST, Typer CLI, Claude/Gemini MCP tools, and binary gRPC over HTTP/2 simultaneously. |
@@ -129,12 +129,15 @@ graph TD
     DB["hexastack-db (Persistence & Migrations)"]
     Events["hexastack-events (CloudEvents, Outbox & NATS JetStream)"]
     FastAPI["hexastack-fastapi (REST API)"]
+    Flags["hexastack-flags (OpenFeature Feature Flags)"]
     Flow["hexastack-flow (Durable Workflows & Sagas)"]
     GraphQL["hexastack-graphql (Strawberry GraphQL)"]
     GRPC["hexastack-grpc (gRPC / Protobuf)"]
     Logging["hexastack-logging (Telemetry)"]
     MCP["hexastack-mcp (Model Context Protocol)"]
     Otel["hexastack-otel (OpenTelemetry Tracing)"]
+    Qual["hexastack-qual (CQRS/MCP/UI Quality Adapters)"]
+    UI["hexastack-ui (NiceGUI DevTools)"]
 
     Umbrella --> Core
     Umbrella --> CQRS
@@ -145,15 +148,19 @@ graph TD
     Umbrella -. optional .-> DB
     Umbrella -. optional .-> AI
     Umbrella -. optional .-> FastAPI
+    Umbrella -. optional .-> Flags
     Umbrella -. optional .-> Flow
     Umbrella -. optional .-> GraphQL
     Umbrella -. optional .-> MCP
     Umbrella -. optional .-> GRPC
+    Umbrella -. optional .-> Qual
+    Umbrella -. optional .-> UI
     Umbrella -. optional .-> CLI
 
     CQRS --> Core
     Events --> Core
     Events --> CQRS
+    Flags --> Core
     Flow --> Core
     Flow --> CQRS
     Flow -. optional .-> DB
@@ -176,30 +183,35 @@ graph TD
     MCP -. optional .-> FastAPI
     GRPC --> Core
     GRPC --> CQRS
+    Qual --> Core
+    Qual --> CQRS
+    UI --> Core
+    UI --> CQRS
+    UI -. optional .-> FastAPI
     CLI --> Core
     CLI --> CQRS
 ```
 
 | Package | Description | Standalone Install | Scoped Umbrella Extra |
 |---|---|---|---|
-| [`hexastack`](file:///home/rjdw/Projects/hexastack/packages/hexastack) | Umbrella distribution package and diagnostic demo CLI application | `pip install hexastack` | `hexastack[all]` |
-| [`hexastack-ai`](file:///home/rjdw/Projects/hexastack/packages/hexastack_ai) | Agnostic AI engine (LiteLLM, Instructor, PydanticAI) and CQRS agent tool reflection | `pip install hexastack-ai` | `hexastack[ai]` |
-| [`hexastack-auth`](file:///home/rjdw/Projects/hexastack/packages/hexastack_auth) | Security, RBAC, JWT tokens, PBKDF2 password hashing, and `@authorize` CQRS pipeline middleware | `pip install hexastack-auth` | `hexastack[auth]` |
-| [`hexastack-cli`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cli) | CLI presentation layer with nested commands, command aliases, typo tolerance (`TyperSuggest`), and Rich output | `pip install hexastack-cli` | `hexastack[cli]` |
-| [`hexastack-core`](file:///home/rjdw/Projects/hexastack/packages/hexastack_core) | Core domain abstractions, ports, DI container (`rodi`), feature flags, testing & property fuzzing toolkit (`pytest-archon`, `hypothesis`), bootstrap engine | `pip install hexastack-core` | *(Included by default)* |
-| [`hexastack-cqrs`](file:///home/rjdw/Projects/hexastack/packages/hexastack_cqrs) | Synchronous & asynchronous command, query, and event buses with extensible middleware pipelines | `pip install hexastack-cqrs` | *(Included by default)* |
-| [`hexastack-db`](file:///home/rjdw/Projects/hexastack/packages/hexastack_db) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, pgvector, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
-| [`hexastack-events`](file:///home/rjdw/Projects/hexastack/packages/hexastack_events) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), NATS JetStream distributed event bus, and janus async-sync thread bridge | `pip install hexastack-events` | `hexastack[events]` |
-| [`hexastack-fastapi`](file:///home/rjdw/Projects/hexastack/packages/hexastack_fastapi) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
-| [`hexastack-flags`](file:///home/rjdw/Projects/hexastack/packages/hexastack_flags) | CNCF OpenFeature provider adapters (Flagd, In-Memory, Env) and enterprise feature toggling | `pip install hexastack-flags` | `hexastack[flags]` |
-| [`hexastack-flow`](file:///home/rjdw/Projects/hexastack/packages/hexastack_flow) | Hexagonal workflow engine integrating hexaflow with CQRS, DB checkpoints, DAG visualizers, and saga simulations | `pip install hexastack-flow` | `hexastack[flow]` |
-| [`hexastack-graphql`](file:///home/rjdw/Projects/hexastack/packages/hexastack_graphql) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
-| [`hexastack-grpc`](file:///home/rjdw/Projects/hexastack/packages/hexastack_grpc) | High-performance gRPC presentation adapter, interceptors (correlation, logging, timing) | `pip install hexastack-grpc[reflection]` | `hexastack[grpc]` |
-| [`hexastack-logging`](file:///home/rjdw/Projects/hexastack/packages/hexastack_logging) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
-| [`hexastack-mcp`](file:///home/rjdw/Projects/hexastack/packages/hexastack_mcp) | Model Context Protocol adapter, AI agent CQRS tools, resources, prompts, and SSE transport | `pip install hexastack-mcp[fastapi]` | `hexastack[mcp]` |
-| [`hexastack-otel`](file:///home/rjdw/Projects/hexastack/packages/hexastack_otel) | OpenTelemetry distributed tracing, OTLP gRPC/HTTP export, and CQRS telemetry middleware | `pip install hexastack-otel` | `hexastack[otel]` |
-| [`hexastack-qual`](file:///home/rjdw/Projects/hexastack/packages/hexastack_qual) | Hexagonal quality, governance, and release engineering adapter integrating hexaqual with CQRS, MCP, UI, and Events | `pip install hexastack-qual` | `hexastack[qual]` |
-| [`hexastack-ui`](file:///home/rjdw/Projects/hexastack/packages/hexastack_ui) | Reactive NiceGUI DevTools console, live resource topology, interactive workflow simulator, and command dispatcher | `pip install hexastack-ui[all]` | `hexastack[ui]` |
+| [`hexastack`](packages/hexastack/README.md) | Umbrella distribution package and diagnostic demo CLI application | `pip install hexastack` | `hexastack[all]` |
+| [`hexastack-ai`](packages/hexastack_ai/README.md) | Agnostic AI engine (LiteLLM, Instructor, PydanticAI) and CQRS agent tool reflection | `pip install hexastack-ai` | `hexastack[ai]` |
+| [`hexastack-auth`](packages/hexastack_auth/README.md) | Security, RBAC, JWT tokens, PBKDF2 password hashing, and `@authorize` CQRS pipeline middleware | `pip install hexastack-auth` | `hexastack[auth]` |
+| [`hexastack-cli`](packages/hexastack_cli/README.md) | CLI presentation layer with nested commands, command aliases, typo tolerance (`TyperSuggest`), and Rich output | `pip install hexastack-cli` | `hexastack[cli]` |
+| [`hexastack-core`](packages/hexastack_core/README.md) | Core domain abstractions, ports, DI container (`rodi`), feature flags, testing & property fuzzing toolkit (`pytest-archon`, `hypothesis`), bootstrap engine | `pip install hexastack-core` | *(Included by default)* |
+| [`hexastack-cqrs`](packages/hexastack_cqrs/README.md) | Synchronous & asynchronous command, query, and event buses with extensible middleware pipelines | `pip install hexastack-cqrs` | *(Included by default)* |
+| [`hexastack-db`](packages/hexastack_db/README.md) | SQLAlchemy generic repositories, Unit of Work, declarative mixins, pgvector, and Alembic migrations | `pip install hexastack-db` | `hexastack[db]` |
+| [`hexastack-events`](packages/hexastack_events/README.md) | CloudEvents 1.0 serialization, Transactional Outbox engine (Asyncio/Huey), NATS JetStream distributed event bus, and janus async-sync thread bridge | `pip install hexastack-events` | `hexastack[events]` |
+| [`hexastack-fastapi`](packages/hexastack_fastapi/README.md) | FastAPI integration, automatic CQRS routing, exception handlers, and DB session middleware | `pip install hexastack-fastapi` | `hexastack[fastapi]` |
+| [`hexastack-flags`](packages/hexastack_flags/README.md) | CNCF OpenFeature provider adapters (Flagd, In-Memory, Env) and enterprise feature toggling | `pip install hexastack-flags` | `hexastack[flags]` |
+| [`hexastack-flow`](packages/hexastack_flow/README.md) | Hexagonal workflow engine integrating hexaflow with CQRS, DB checkpoints, DAG visualizers, and saga simulations | `pip install hexastack-flow` | `hexastack[flow]` |
+| [`hexastack-graphql`](packages/hexastack_graphql/README.md) | Strawberry GraphQL adapter, CQRS context injection, schema registry, and FastAPI router | `pip install hexastack-graphql[fastapi]` | `hexastack[graphql]` |
+| [`hexastack-grpc`](packages/hexastack_grpc/README.md) | High-performance gRPC presentation adapter, interceptors (correlation, logging, timing) | `pip install hexastack-grpc[reflection]` | `hexastack[grpc]` |
+| [`hexastack-logging`](packages/hexastack_logging/README.md) | Structured JSON/console logging, PII sanitization, and Loguru / Rich / Structlog adapters | `pip install hexastack-logging` | *(Included by default)* |
+| [`hexastack-mcp`](packages/hexastack_mcp/README.md) | Model Context Protocol adapter, AI agent CQRS tools, resources, prompts, and SSE transport | `pip install hexastack-mcp[fastapi]` | `hexastack[mcp]` |
+| [`hexastack-otel`](packages/hexastack_otel/README.md) | OpenTelemetry distributed tracing, OTLP gRPC/HTTP export, and CQRS telemetry middleware | `pip install hexastack-otel` | `hexastack[otel]` |
+| [`hexastack-qual`](packages/hexastack_qual/README.md) | Hexagonal quality, governance, and release engineering adapter integrating hexaqual with CQRS, MCP, UI, and Events | `pip install hexastack-qual` | `hexastack[qual]` |
+| [`hexastack-ui`](packages/hexastack_ui/README.md) | Reactive NiceGUI DevTools console, live resource topology, interactive workflow simulator, and command dispatcher | `pip install hexastack-ui[all]` | `hexastack[ui]` |
 
 ![Hexastack Packages](docs/assets/static/logos/hexastack_packages.png)
 
@@ -285,9 +297,8 @@ Create a complete application in just a few lines using CQRS and the unified boo
 
 ```python
 from dataclasses import dataclass
+from hexastack_core.domain import Command, Query
 from hexastack_core.infra.bootstrap import bootstrap
-from hexastack_cqrs.domain.command import Command
-from hexastack_cqrs.domain.query import Query
 from hexastack_cqrs.infra.decorators import command_handler, query_handler
 from hexastack_cqrs.ports.buses import CommandBusPort, QueryBusPort
 
@@ -320,8 +331,8 @@ class GetUserHandler:
 # 3. Bootstrap Application
 runtime = bootstrap(packages_to_scan=[__name__])
 
-cmd_bus = runtime.container.get(CommandBusPort)
-query_bus = runtime.container.get(QueryBusPort)
+cmd_bus = runtime.container.resolve(CommandBusPort)
+query_bus = runtime.container.resolve(QueryBusPort)
 
 print(
     cmd_bus.dispatch(RegisterUserCommand(user_id="u-123", email="user@hexastack.dev"))
@@ -411,7 +422,7 @@ mindmap
 # Install all dependencies with uv
 uv sync --all-extras
 
-# Run full pre-commit pipeline (23 hooks across Ruff, Ty, Vulture, Detect-Secrets, Import-Linter)
+# Run full pre-commit pipeline (27 pre-commit hooks across Ruff, Ty, Detect-Secrets, Import-Linter, Hexaqual)
 uv run pre-commit run --all-files
 
 # Run full test suite with statement coverage (>90% gate)
@@ -421,12 +432,12 @@ uv run pytest
 uv run ty check packages
 
 # Validate hexagonal architecture import boundaries
-uv run hexaqual imports check
+uv run hexaqual deps linter
 ```
 
 ### Mutation Testing (`hexaqual mutate`)
 
-Hexastack uses `mutmut` via Hexaqual to ensure high test efficacy and verify that tests fail when code is mutated.
+Hexastack uses dual-engine mutation testing (`pytest-gremlins` and `mutmut`) via Hexaqual to ensure high test efficacy and verify that tests fail when code is mutated.
 
 #### 1. Mutation Test Runner (`hexaqual mutate run`)
 
@@ -493,7 +504,7 @@ graph TD
 
     subgraph Stage 2: Verification & Diagrams [Needs: Stage 1]
         TEST["3. Unit & Integration Tests<br/>hexaqual test run with affected targeting"]
-        DIAG["4. Architecture Diagrams<br/>hexaqual deps graph freshness check"]
+        DIAG["4. Architecture Diagrams<br/>hexaqual deps pydeps --check freshness check"]
     end
 
     subgraph Stage 3: Deep Fuzzing & Releases [Needs: Stage 2]

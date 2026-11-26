@@ -119,24 +119,21 @@ Try the live in-browser terminal widget below — test scaffolding, inspect the 
 
 ### Scenario 1: CLI Scaffolding & Hexagonal Quality Gates
 - **Target Repository**: `TheTrueSCU/hexastack`
-- **Killercoda Scenario Path**: `sandboxes/killercoda/scaffolding-playground/`
 - **Interactive Steps**:
-  1. Initialize a new service: `hexastack new --template minimal my-service`
+  1. Initialize a new service: `uvx hexastack new minimal my-service`
   2. Inspect the generated directory layout and hexagonal layer boundaries (`domain/`, `ports/`, `adapters/`, `infra/`).
-  3. Add a CQRS Command and database repository: `hexastack add command CreateItem`
-  4. Run the Hexaqual pre-commit quality gate: `uv run hexaqual sanity`
+  3. Run the Hexaqual pre-commit quality gate: `uv run hexaqual sanity`
 
 ### Scenario 2: Double-Entry Financial Ledger & Invariants
-- **Target Repository**: `TheTrueSCU/hexastack`
-- **Killercoda Scenario Path**: `sandboxes/killercoda/financial-ledger-playground/`
+- **Target Repository**: `TheTrueSCU/hexastack` (`examples/financial-ledger/`)
 - **Interactive Steps**:
   1. Inspect the mathematical invariant: $\sum \text{Debits} == \sum \text{Credits}$ with `Decimal` precision.
-  2. Post a balanced $500 transfer from Cash to Accounts Receivable:
+  2. Run the financial-ledger reference CLI (`examples/financial-ledger/pyproject.toml`) to create accounts and post a balanced transfer:
      ```bash
-     python -m hexastack dispatch PostTransaction --debit "Cash:500.00" --credit "AR:500.00"
+     uv run financial-ledger create-account --account-id cash --currency USD
+     uv run financial-ledger transfer --source-account-id cash --destination-account-id ar --amount 500.00 --reference TX-001
      ```
-  3. Intentionally post an unbalanced transaction and observe the strict domain rejection:
+  3. Inspect HTTP and property-fuzzing enforcement for unbalanced transactions (`UnbalancedTransactionError`):
      ```bash
-     python -m hexastack dispatch PostTransaction --debit "Cash:500.00" --credit "AR:400.00"
-     # -> Rejection: UnbalancedTransactionError: Debits (500.00) != Credits (400.00)
+     uv run hexaqual test run -e financial-ledger
      ```

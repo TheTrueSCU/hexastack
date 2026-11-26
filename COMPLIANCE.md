@@ -22,7 +22,7 @@ graph TD
         AUTH["hexastack-auth\nSPIFFE/SPIRE mTLS • OpenFGA RBAC • JWT Agility"]
         EVENTS["hexastack-events\nImmutable CQRS Audit Outbox • CloudEvents"]
         LOGS["hexastack-logging\nPII/PHI Regex Redaction • Zero-Leak Sanitizer"]
-        CORE["hexastack-core & hexastack-tools\nFIPS-Ready Crypto • OpenSSF Supply Chain • Zero Warnings"]
+        CORE["hexastack-core & hexastack-qual / hexaqual\nFIPS-Ready Crypto • OpenSSF Supply Chain • Zero Warnings"]
     end
 
     HIPAA --> AUTH & EVENTS & LOGS
@@ -103,7 +103,7 @@ Hexastack maintains a strict **Cryptographic Agility Policy**:
 
 * **OpenSSF Best Practices**: Verified **100% Passing** and **100% Silver Badge** achieved; formalized criteria implemented for **Gold Badge** certification.
 * **SLSA Build Level 3 Provenance**: Automated cryptographic build provenance signing via Sigstore (`actions/attest-build-provenance`) anchored in immutable public transparency logs.
-* **Byte-for-Byte Reproducible Builds**: Deterministic packaging with fixed `SOURCE_DATE_EPOCH` and `uv.lock` hashes, verifiable via `uv run pypi-reproducible-check`.
+* **Byte-for-Byte Reproducible Builds**: Deterministic packaging with fixed `SOURCE_DATE_EPOCH` and `uv.lock` hashes, verifiable via `uv run hexaqual release reproducible`.
 * **Dual-Format Cryptographic SBOMs**: Automated SPDX JSON (`actions/attest-sbom`) and CycloneDX JSON SBOMs generated and attached to every GitHub Release.
 * **Deterministic Dependency Locks**: Every production build and release is locked to exact SHA-256 hashes via `uv.lock`.
 * **Continuous Vulnerability Auditing**: Every pull request and push runs `pip-audit` to detect known CVEs in the PyPI dependency tree.
@@ -122,11 +122,11 @@ For security vulnerability reports or formal compliance mapping inquiries:
 ## In-Depth Articles
 
 !!! tip "Architecture & Regulatory Controls"
-    [Building for HIPAA and FedRAMP: Architecture as Compliance](medium/hipaa-fedramp-compliance.md) —
+    [Building for HIPAA and FedRAMP: Architecture as Compliance](https://dopplereffect.us/hexastack/blog/) —
     how Hexastack's CQRS audit trail, PII sanitizer, `@authorize` pipeline integration, OpenSSF Gold
     supply chain controls, and CNCF-standardized observability map to specific regulatory requirements.
 
 !!! tip "Testing Rigor & Mutation"
-    [90%+ Coverage Isn't Enough: Mutation Testing + OpenSSF Gold](medium/mutation-testing-openssf.md) —
+    [90%+ Coverage Isn't Enough: Mutation Testing + OpenSSF Gold](https://dopplereffect.us/hexastack/blog/) —
     on the difference between coverage theater and actual test rigor, and how the OpenSSF Scorecard
     supply chain controls support FedRAMP SA-11 and SA-22.
