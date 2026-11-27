@@ -9,7 +9,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "hexaqual[all]>=0.12.1",
+    "hexaqual[all]>=0.13.0",
     "hexastack-core",
     "hexastack-cqrs",
 ]
