@@ -40,7 +40,7 @@ jobs:
         run: cargo install jscpd --locked
 
       - name: Run Quality Gate via Hexaqual
-        uses: TheTrueSCU/hexaqual@7981788eea94e3a37cb5e24d4d30a07b1bc0bab4 # v0.13.0
+        uses: TheTrueSCU/hexaqual@b730a8c6e7e2e9a781f6581760756a290aa372e5 # v0.13.1
         with:
           sync-args: "--all-packages --all-extras --all-groups"
 
@@ -365,7 +365,7 @@ jobs:
 
       - name: Plan AST-Weighted Changed Mutation Slices
         id: plan
-        uses: TheTrueSCU/hexaqual/.github/actions/mutate-plan@7981788eea94e3a37cb5e24d4d30a07b1bc0bab4 # v0.13.0
+        uses: TheTrueSCU/hexaqual/.github/actions/mutate-plan@b730a8c6e7e2e9a781f6581760756a290aa372e5 # v0.13.1
         with:
           mode: changed-slices
           base-ref: ${{ github.base_ref }}

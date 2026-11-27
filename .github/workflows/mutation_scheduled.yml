@@ -26,7 +26,7 @@ jobs:
 
       - name: Plan LPT-Ordered Package Matrix
         id: plan
-        uses: TheTrueSCU/hexaqual/.github/actions/mutate-plan@7981788eea94e3a37cb5e24d4d30a07b1bc0bab4 # v0.13.0
+        uses: TheTrueSCU/hexaqual/.github/actions/mutate-plan@b730a8c6e7e2e9a781f6581760756a290aa372e5 # v0.13.1
         with:
           mode: all
 
