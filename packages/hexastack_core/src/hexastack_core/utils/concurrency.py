@@ -190,17 +190,17 @@ def _build_async_wrapper[**P, R](
     async_qualname: str | None = None,
 ) -> Callable[P, Coroutine[Any, Any, R]]:
     @functools.wraps(fn)
-    async def _async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+    async def _async_wrapper(*args: Any, **kwargs: Any) -> Any:
         if not supports_threads():
             return fn(*args, **kwargs)
         ctx = contextvars.copy_context()
-        return cast("R", await asyncio.to_thread(ctx.run, fn, *args, **kwargs))
+        return await asyncio.to_thread(ctx.run, fn, *args, **kwargs)
 
     if async_name is not None:
         _async_wrapper.__name__ = async_name
     if async_qualname is not None:
         _async_wrapper.__qualname__ = async_qualname
-    return _async_wrapper
+    return cast("Callable[P, Coroutine[Any, Any, R]]", _async_wrapper)
 
 
 def to_async[**P, R](
@@ -227,7 +227,8 @@ def to_async[**P, R](
 
 
 class _ClassDecorator(Protocol):
-    def __call__[T: type](self, cls: T, /) -> T: ...
+    def __call__[T: type](self, cls: T, /) -> T:
+        """Attach synthesized async twins to ``cls`` and return it."""
 
 
 def _replace_qualname(qualname: str, new_name: str) -> str:
@@ -271,7 +272,8 @@ def _synthesize_async_descriptor(raw_attr: Any, async_name: str) -> Any | None:
 
 
 @overload
-def auto_async[T: type](cls: T) -> T: ...
+def auto_async[T: type](cls: T) -> T:
+    pass
 
 
 @overload
@@ -280,7 +282,8 @@ def auto_async(
     *,
     suffix: str = "_async",
     exclude: Collection[str] = (),
-) -> _ClassDecorator: ...
+) -> _ClassDecorator:
+    pass
 
 
 def auto_async(
