@@ -13,17 +13,20 @@ import asyncio
 import contextvars
 import functools
 import inspect
-from collections.abc import Awaitable, Callable, Coroutine
-from typing import Any, cast
+from collections.abc import Awaitable, Callable, Collection, Coroutine
+from typing import Any, Protocol, cast, overload
 
 from hexastack_core.utils.imports import optional_dependency, require_dependency
+from hexastack_core.utils.runtime import supports_threads
 
 __all__ = [
     "asyncify",
+    "auto_async",
     "create_task_group",
     "is_coroutine_callable",
     "runnify",
     "syncify",
+    "to_async",
 ]
 
 
@@ -82,8 +85,6 @@ def asyncify[**P, R](
             cancellable=cancellable,
             limiter=limiter,
         )
-
-    from hexastack_core.utils.runtime import supports_threads
 
     if not supports_threads():
 
@@ -180,3 +181,157 @@ def runnify[**P, R](
         return asyncio.run(async_function(*args, **kwargs))
 
     return _runnify_fallback
+
+
+def _build_async_wrapper[**P, R](
+    fn: Callable[P, R],
+    *,
+    async_name: str | None = None,
+    async_qualname: str | None = None,
+) -> Callable[P, Coroutine[Any, Any, R]]:
+    @functools.wraps(fn)
+    async def _async_wrapper(*args: Any, **kwargs: Any) -> Any:
+        if not supports_threads():
+            return fn(*args, **kwargs)
+        ctx = contextvars.copy_context()
+        return await asyncio.to_thread(ctx.run, fn, *args, **kwargs)
+
+    if async_name is not None:
+        _async_wrapper.__name__ = async_name
+    if async_qualname is not None:
+        _async_wrapper.__qualname__ = async_qualname
+    return cast("Callable[P, Coroutine[Any, Any, R]]", _async_wrapper)
+
+
+def to_async[**P, R](
+    fn: Callable[P, R],
+) -> Callable[P, Coroutine[Any, Any, R]]:
+    """Convert a synchronous callable into a thread-offloaded async coroutine function.
+
+    Args:
+        fn: Synchronous function or boundable method to execute without blocking the event loop.
+
+    Returns:
+        Coroutine function preserving parameter types, return type, metadata, and context variables.
+
+    Notes/Architectural Intent:
+        Produces a native ``async def`` coroutine function (unlike generic Awaitable wrappers)
+        so descriptor binding works transparently on class methods and ``inspect.iscoroutinefunction``
+        returns True. Automatically copies active ``contextvars`` across worker thread boundaries and
+        falls back to cooperative in-loop execution when threads are unsupported (ADR-016).
+    """
+    if inspect.iscoroutinefunction(fn):
+        return cast("Callable[P, Coroutine[Any, Any, R]]", fn)
+
+    return _build_async_wrapper(fn)
+
+
+class _ClassDecorator(Protocol):
+    def __call__[T: type](self, cls: T, /) -> T:
+        """Attach synthesized async twins to ``cls`` and return it."""
+
+
+def _replace_qualname(qualname: str, new_name: str) -> str:
+    if "." in qualname:
+        prefix, _ = qualname.rsplit(".", 1)
+        return f"{prefix}.{new_name}"
+    return new_name
+
+
+def _make_async_twin(
+    sync_fn: Callable[..., Any],
+    async_name: str,
+) -> Callable[..., Coroutine[Any, Any, Any]]:
+    orig_qualname = getattr(sync_fn, "__qualname__", async_name)
+    return _build_async_wrapper(
+        sync_fn,
+        async_name=async_name,
+        async_qualname=_replace_qualname(orig_qualname, async_name),
+    )
+
+
+def _synthesize_async_descriptor(raw_attr: Any, async_name: str) -> Any | None:
+    if inspect.isfunction(raw_attr):
+        if is_coroutine_callable(raw_attr):
+            return None
+        return _make_async_twin(raw_attr, async_name)
+
+    if isinstance(raw_attr, staticmethod):
+        inner_fn = raw_attr.__func__
+        if is_coroutine_callable(inner_fn):
+            return None
+        return staticmethod(_make_async_twin(inner_fn, async_name))
+
+    if isinstance(raw_attr, classmethod):
+        inner_cm = raw_attr.__func__
+        if is_coroutine_callable(inner_cm):
+            return None
+        return classmethod(_make_async_twin(inner_cm, async_name))
+
+    return None
+
+
+@overload
+def auto_async[T: type](cls: T) -> T:
+    pass
+
+
+@overload
+def auto_async(
+    cls: None = None,
+    *,
+    suffix: str = "_async",
+    exclude: Collection[str] = (),
+) -> _ClassDecorator:
+    pass
+
+
+def auto_async(
+    cls: type[Any] | None = None,
+    *,
+    suffix: str = "_async",
+    exclude: Collection[str] = (),
+) -> Any:
+    """Class decorator generating thread-offloaded async method twins for public sync methods.
+
+    Args:
+        cls: Class to decorate when used as bare ``@auto_async`` without parentheses.
+        suffix: Suffix appended to synthesized async method names (defaults to ``"_async"``).
+        exclude: Collection of public method names to skip during async twin synthesis.
+
+    Returns:
+        Decorated class when applied directly, or class decorator callable when configured with
+        keyword options.
+
+    Raises:
+        ValueError: If ``suffix`` is empty.
+
+    Notes/Architectural Intent:
+        Eliminates repetitive ``async def op_async(...)`` boilerplate when adapting synchronous
+        third-party SDKs into async CQRS handlers. Inspects ``cls.__dict__`` directly so
+        ``@property`` descriptors are never evaluated during decoration, preserves manually authored
+        async methods without overwriting them, and delegates each wrapper factory cleanly to avoid
+        loop-variable late-binding bugs.
+    """
+    if not suffix:
+        msg = "suffix must be a non-empty string."
+        raise ValueError(msg)
+
+    excluded = frozenset(exclude)
+
+    def _decorate[T: type](target_cls: T) -> T:
+        for attr_name, raw_attr in list(target_cls.__dict__.items()):
+            if attr_name.startswith("_") or attr_name in excluded:
+                continue
+            async_name = f"{attr_name}{suffix}"
+            if hasattr(target_cls, async_name):
+                continue
+            twin = _synthesize_async_descriptor(raw_attr, async_name)
+            if twin is not None:
+                setattr(target_cls, async_name, twin)
+        return target_cls
+
+    if cls is not None:
+        return _decorate(cls)
+
+    return _decorate

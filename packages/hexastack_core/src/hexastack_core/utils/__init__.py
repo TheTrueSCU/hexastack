@@ -1,9 +1,11 @@
 from hexastack_core.utils.concurrency import (
     asyncify,
+    auto_async,
     create_task_group,
     is_coroutine_callable,
     runnify,
     syncify,
+    to_async,
 )
 from hexastack_core.utils.context import (
     ContextVar,
@@ -46,6 +48,7 @@ __all__ = [
     "asyncify",
     "atomic_write_bytes",
     "atomic_write_text",
+    "auto_async",
     "ContextVar",
     "correlation_id_ctx",
     "correlation_scope",
@@ -71,6 +74,7 @@ __all__ = [
     "snoop_tracer",
     "supports_threads",
     "syncify",
+    "to_async",
     "Token",
     "user_ctx",
     "UserContext",
