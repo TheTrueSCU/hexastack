@@ -93,7 +93,6 @@ class DummyOAuthProvider(OAuthProviderPort):
         code_verifier: str | None = None,
         expected_nonce: str | None = None,
     ) -> OAuthUserInfo:
-        del code, redirect_uri, code_verifier, expected_nonce
         return OAuthUserInfo(
             provider="dummy", account_id="acc-1", email="user@dummy.com"
         )

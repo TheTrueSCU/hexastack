@@ -136,10 +136,9 @@ async def test_public_client_exchange_code_with_pkce_and_discovery() -> None:
 
     class _MockJwkClient:
         def get_jwk_set(self, *, refresh: bool = False) -> None:
-            del refresh
+            return
 
         def get_signing_key_from_jwt(self, token: str) -> SimpleNamespace:
-            del token
             return SimpleNamespace(key=priv.public_key())
 
     now = datetime.now(UTC)

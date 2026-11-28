@@ -110,10 +110,17 @@ class _LoopbackOidcState:
         )
 
 
+_ALLOWED_REDIRECT_URIS: dict[str, str] = {
+    "http://testserver/auth/oauth/oidc/callback": "http://testserver/auth/oauth/oidc/callback",
+    "http://127.0.0.1/cb": "http://127.0.0.1/cb",
+}
+
+
 def _make_idp_handler(state: _LoopbackOidcState) -> type[BaseHTTPRequestHandler]:
     class _OidcHandler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: Any) -> None:
-            del format, args
+            """Silence default BaseHTTPRequestHandler stderr logging."""
+            return
 
         def _send_json(self, status_code: int, body: dict[str, Any]) -> None:
             raw = json.dumps(body).encode("utf-8")
@@ -162,26 +169,28 @@ def _make_idp_handler(state: _LoopbackOidcState) -> type[BaseHTTPRequestHandler]
             method = params.get("code_challenge_method", [""])[0]
             challenge = params.get("code_challenge", [""])[0]
             redirect_uri = params.get("redirect_uri", [""])[0]
+            safe_redirect = _ALLOWED_REDIRECT_URIS.get(redirect_uri)
             oauth_state = params.get("state", [""])[0]
             client_id = params.get("client_id", [""])[0]
             nonce = params.get("nonce", [None])[0]
-            if method != "S256" or not challenge:
+            if safe_redirect is None or method != "S256" or not challenge:
                 self._send_json(400, {"error": "pkce_s256_required"})
                 return
             state.code_seq += 1
             code = f"auth-code-{state.code_seq}"
             state.codes[code] = _AuthCodeRecord(
                 client_id=client_id,
-                redirect_uri=redirect_uri,
+                redirect_uri=safe_redirect,
                 code_challenge=challenge,
                 nonce=nonce,
             )
-            sep = "&" if "?" in redirect_uri else "?"
-            location = f"{redirect_uri}{sep}" + urllib.parse.urlencode(
+            sep = "&" if "?" in safe_redirect else "?"
+            raw_location = f"{safe_redirect}{sep}" + urllib.parse.urlencode(
                 {"code": code, "state": oauth_state}
             )
+            clean_location = raw_location.replace("\r", "").replace("\n", "")
             self.send_response(302)
-            self.send_header("Location", location)
+            self.send_header("Location", clean_location)
             self.end_headers()
 
         def _handle_userinfo(self) -> None:

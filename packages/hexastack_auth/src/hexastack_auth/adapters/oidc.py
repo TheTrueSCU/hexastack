@@ -418,7 +418,6 @@ class JwksOidcSecurityAdapter(SecurityPort):
         Raises:
             AuthError: Always raised; tokens are minted only by the upstream OIDC IdP.
         """
-        del identity, ttl
         msg = (
             "JwksOidcSecurityAdapter is verification-only; OIDC tokens must be "
             "issued by the upstream identity provider."
