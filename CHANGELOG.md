@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v0.13.0 (2026-11-27)
+
+### Features
+- **Auth & OIDC (`hexastack-auth`, `hexastack`)**: Add OAuth2 PKCE (`S256`) helpers, OIDC discovery, `JwksOidcSecurityAdapter`, `require_bearer_token`, the optional `oidc` extra (`hexastack-auth[oidc]`), and DevTools reverse-proxy auth recipes (`#287` / `#292`).
+- **Async Concurrency (`hexastack-core`)**: Add `to_async` and `@auto_async` concurrency utilities (`#272` / `#290`).
+
+### Tooling, Documentation & Dependencies
+- **Tooling & Dependencies**: Adopt `hexaqual` `v0.13.0` / `v0.13.1`, sync agent guardrails (`#288`, `#289`), and adopt `hexaqueue` `v0.12.2` (`#291`).
+- **Documentation**: Fix accuracy issues across docs and package READMEs and synchronize the ecosystem doc (`#286`).
+- **Packaging**: Lockstep bump across all 18 workspace packages to `0.13.0`.
+
 ## v0.12.0 (2026-11-25)
 
 ### Features & Architecture
