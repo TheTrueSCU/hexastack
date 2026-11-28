@@ -137,6 +137,9 @@ nicegui = [
 oci = [
     "hexastack-core[oci]",
 ]
+oidc = [
+    "hexastack-auth[oidc]",
+]
 opa = [
     "hexastack-auth[opa]",
 ]

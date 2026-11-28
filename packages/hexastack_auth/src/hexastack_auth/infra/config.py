@@ -1,5 +1,6 @@
 from hexastack_auth.domain.config import (
     HexastackAuthConfig,
+    OidcConfig,
     OpaConfig,
     OpenFgaConfig,
     SpiffeConfig,
@@ -11,6 +12,7 @@ config_section("auth")(HexastackAuthConfig)
 
 __all__ = [
     "HexastackAuthConfig",
+    "OidcConfig",
     "OpaConfig",
     "OpenFgaConfig",
     "register_auth_config",

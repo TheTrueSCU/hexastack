@@ -64,7 +64,8 @@ graph TD
 | Feature / Engine | Scoped Extra | Key Components | Description |
 |---|---|---|---|
 | **Core RBAC & JWT** | *(Included by default)* | `JwtSecurityAdapter`, `Pbkdf2PasswordHasher` | Role/permission-based access control, cryptographic token issuance. |
-| **FastAPI Route Guards** | `hexastack-auth[fastapi]` | `require_policy`, `require_relation` | HTTP endpoint dependencies enforcing OPA policies and OpenFGA relationships. |
+| **OIDC & JWKS Verification** | `hexastack-auth[oidc]` | `JwksOidcSecurityAdapter`, `GenericOidcProvider` | OAuth2 PKCE (`S256`), `.well-known/openid-configuration` discovery, asymmetric JWKS rotation, and bearer ID-token guards. |
+| **FastAPI Route Guards** | `hexastack-auth[fastapi]` | `require_bearer_token`, `require_policy`, `require_relation` | HTTP endpoint dependencies enforcing bearer tokens, OPA policies, and OpenFGA relationships. |
 | **gRPC Auth Interceptor** | `hexastack-auth[grpc]` | `AuthServerInterceptor` | Server interceptor extracting metadata credentials and SPIFFE IDs into `UserContext`. |
 | **Open Policy Agent** | `hexastack-auth[opa]` | `OpaPolicyAdapter` | Policy-as-Code evaluation querying OPA Rego decision endpoints. |
 | **OpenFGA ReBAC** | `hexastack-auth[openfga]` | `OpenFgaPolicyAdapter` | Fine-grained relationship-based access control (user can_edit document). |
@@ -101,6 +102,16 @@ store_id = "01HN7K2M9V..."
 enabled = true
 socket_path = "unix:///tmp/spire-agent/public/api.sock"
 trust_domain = "example.org"
+
+# OIDC / JWKS Resource Server Verification (hexastack-auth[oidc])
+[hexastack.auth.oidc]
+enabled = true
+issuer = "https://auth.example.com/application/o/hexastack/"
+audience = "hexastack-api"
+discovery_url = "https://auth.example.com/application/o/hexastack/.well-known/openid-configuration"
+algorithms = ["RS256", "ES256", "EdDSA"]
+require_access_token_typ = false
+reject_id_tokens = true
 ```
 
 ### 2. Protecting CQRS Messages with `@authorize`
@@ -184,4 +195,80 @@ server = grpc.server(
         )
     ],
 )
+```
+
+---
+
+## 🔐 Federated OIDC, PKCE (`S256`), and Reverse-Proxy DevTools Auth
+
+### 5. OIDC Discovery & JWKS Bearer Verification (`RS256` / `ES256` / `EdDSA`)
+
+```python
+from typing import Annotated
+
+from fastapi import Depends, FastAPI
+from hexastack_auth.adapters.fastapi import create_oauth_router, require_bearer_token
+from hexastack_auth.adapters.handlers import UserLifecycleHandlers
+from hexastack_auth.adapters.oauth import GenericOidcProvider
+from hexastack_auth.adapters.oidc import JwksOidcSecurityAdapter
+from hexastack_auth.domain.models import Identity
+
+# Interactive login with OIDC discovery + mandatory PKCE (S256) & nonce
+oauth_provider = GenericOidcProvider.from_discovery(
+    "https://auth.example.com/application/o/hexastack/",
+    client_id="hexastack-devtools-client",
+)
+
+# Resource-server bearer validation (rejects HS*/none & OIDC ID tokens)
+oidc_security = JwksOidcSecurityAdapter.from_discovery(
+    "https://auth.example.com/application/o/hexastack/",
+    audience="hexastack-api",
+    require_access_token_typ=True,
+)
+
+app = FastAPI()
+app.include_router(create_oauth_router(oauth_provider, UserLifecycleHandlers()))
+
+
+@app.get("/api/me")
+async def read_profile(
+    identity: Annotated[
+        Identity,
+        Depends(require_bearer_token(oidc_security, required_roles={"admin"})),
+    ],
+):
+    return {"user_id": identity.user_id, "roles": sorted(identity.roles)}
+```
+
+### 6. Reverse-Proxy Authentication for Loopback-Only `hexastack-ui` DevTools
+
+Keep `hexastack-ui` bound strictly to `127.0.0.1` (`hexastack ui --host 127.0.0.1 --port 8000`) and terminate TLS + SSO + PKCE authentication in front of it with **`oauth2-proxy`** or **Authelia**:
+
+```ini
+# /etc/oauth2-proxy/hexastack-devtools.cfg
+provider = "oidc"
+oidc_issuer_url = "https://auth.example.com/application/o/hexastack/"
+client_id = "hexastack-devtools"
+client_secret = "${OIDC_CLIENT_SECRET}"
+code_challenge_method = "S256"
+redirect_url = "https://devtools.internal.example.com/oauth2/callback"
+upstreams = ["http://127.0.0.1:8000"]
+http_address = "127.0.0.1:4180"
+email_domains = ["example.com"]
+set_xauthrequest = true
+pass_access_token = true
+cookie_secure = true
+cookie_httponly = true
+cookie_samesite = "lax"
+```
+
+```caddyfile
+# Caddy + Authelia forward_auth (alternative SSO topology)
+devtools.internal.example.com {
+    forward_auth 127.0.0.1:9091 {
+        uri /api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Email
+    }
+    reverse_proxy 127.0.0.1:8000
+}
 ```

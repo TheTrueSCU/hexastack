@@ -1,5 +1,6 @@
 from hexastack_auth.domain.config import (
     HexastackAuthConfig,
+    OidcConfig,
     OpaConfig,
     OpenFgaConfig,
     SpiffeConfig,
@@ -12,6 +13,8 @@ def test_hexastack_auth_config_defaults():
     assert cfg.token_expire_minutes == 60
     assert cfg.provider == "jwt"
     assert cfg.hasher == "pbkdf2"
+    assert isinstance(cfg.oidc, OidcConfig)
+    assert cfg.oidc.enabled is False
     assert isinstance(cfg.opa, OpaConfig)
     assert isinstance(cfg.openfga, OpenFgaConfig)
     assert isinstance(cfg.spiffe, SpiffeConfig)

@@ -112,3 +112,9 @@ Hexastack UI enforces strict accessibility standards verified continuously in CI
 - **Zero Critical/Serious Violations**: Validated under `wcag2a`, `wcag2aa`, and `wcag21aa` tags via `axe-core`.
 - **4.5:1 Minimum Contrast**: Enforced for all body text, status indicators, and syntax highlights.
 - **Accessible Interactive Controls**: Tooltips, aria-labels, and keyboard navigation on all interactive nodes and buttons.
+
+---
+
+## 6. Remote Access Security
+
+Bind DevTools to loopback (`127.0.0.1`) locally, and for shared or remote access terminate TLS and OIDC/PKCE authentication via a reverse proxy (`oauth2-proxy` with `code_challenge_method = "S256"` or Authelia `forward_auth`) alongside [`hexastack-auth`](../hexastack_auth/README.md#6-reverse-proxy-authentication-for-loopback-only-hexastack-ui-devtools).

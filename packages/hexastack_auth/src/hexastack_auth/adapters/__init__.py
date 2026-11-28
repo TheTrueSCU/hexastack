@@ -11,6 +11,11 @@ from hexastack_auth.adapters.oauth import (
     GitHubOAuthProvider,
     GoogleOAuthProvider,
 )
+from hexastack_auth.adapters.oidc import (
+    JwksOidcSecurityAdapter,
+    discover_oidc_configuration,
+    discover_oidc_configuration_async,
+)
 from hexastack_auth.adapters.opa import OpaPolicyAdapter
 from hexastack_auth.adapters.openfga import OpenFgaPolicyAdapter
 from hexastack_auth.adapters.password import (
@@ -36,6 +41,8 @@ __all__ = [
     "AuthServerInterceptor",
     "BaseOAuthProvider",
     "BcryptPasswordHasher",
+    "discover_oidc_configuration",
+    "discover_oidc_configuration_async",
     "GenericOidcProvider",
     "GitHubOAuthProvider",
     "GitHubWebhookVerifier",
@@ -45,6 +52,7 @@ __all__ = [
     "InMemorySecurityService",
     "InMemoryTokenStore",
     "InMemoryUserRepository",
+    "JwksOidcSecurityAdapter",
     "JwtSecurityAdapter",
     "OpaPolicyAdapter",
     "OpenFgaPolicyAdapter",

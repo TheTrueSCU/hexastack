@@ -67,10 +67,32 @@ class DummyOAuthProvider(OAuthProviderPort):
     def name(self) -> str:
         return "dummy"
 
-    def get_authorization_url(self, state: str, redirect_uri: str) -> str:
-        return f"https://example.com/auth?state={state}"
+    def get_authorization_url(
+        self,
+        state: str,
+        redirect_uri: str,
+        *,
+        code_challenge: str | None = None,
+        code_challenge_method: str | None = None,
+        nonce: str | None = None,
+    ) -> str:
+        parts = [f"state={state}", f"redirect_uri={redirect_uri}"]
+        if code_challenge is not None:
+            parts.append(f"code_challenge={code_challenge}")
+        if code_challenge_method is not None:
+            parts.append(f"code_challenge_method={code_challenge_method}")
+        if nonce is not None:
+            parts.append(f"nonce={nonce}")
+        return f"https://example.com/auth?{'&'.join(parts)}"
 
-    async def exchange_code(self, code: str, redirect_uri: str) -> OAuthUserInfo:
+    async def exchange_code(
+        self,
+        code: str,
+        redirect_uri: str,
+        *,
+        code_verifier: str | None = None,
+        expected_nonce: str | None = None,
+    ) -> OAuthUserInfo:
         return OAuthUserInfo(
             provider="dummy", account_id="acc-1", email="user@dummy.com"
         )
@@ -106,6 +128,12 @@ async def test_dummy_user_ports():
     assert prov.name == "dummy"
     url = prov.get_authorization_url("st", "http://callback")
     assert "state=st" in url
+    auth_req = prov.create_authorization_request("http://callback")
+    assert auth_req.code_verifier is not None
+    assert auth_req.code_challenge is not None
+    assert auth_req.code_challenge_method == "S256"
+    assert auth_req.nonce is not None
+    assert f"code_challenge={auth_req.code_challenge}" in auth_req.url
     info = await prov.exchange_code("code", "http://callback")
     assert info.email == "user@dummy.com"
 

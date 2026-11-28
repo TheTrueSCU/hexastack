@@ -9,6 +9,8 @@ Notes/Architectural Intent:
 from __future__ import annotations
 
 import secrets
+import time
+from collections.abc import Collection
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -32,7 +34,12 @@ from hexastack_auth.domain.exceptions import (
 )
 from hexastack_auth.domain.models import Identity
 from hexastack_auth.ports.policy import AuthorizationPolicyPort
-from hexastack_core.utils.context import get_user_context
+from hexastack_auth.ports.security import SecurityPort
+from hexastack_core.utils.context import (
+    UserContext,
+    get_user_context,
+    set_user_context,
+)
 from hexastack_core.utils.imports import optional_dependency, require_dependency
 
 _fastapi_mod = optional_dependency("fastapi")
@@ -245,6 +252,86 @@ def require_relation(
     return _dependency
 
 
+def require_bearer_token(
+    security_port: SecurityPort | None = None,
+    *,
+    required_roles: Collection[str] | None = None,
+    required_permissions: Collection[str] | None = None,
+) -> Any:
+    """FastAPI route dependency enforcing Bearer token authentication and RBAC.
+
+    Args:
+        security_port: Optional explicit ``SecurityPort`` adapter (resolves from
+            ``request.app.state.container`` when omitted).
+        required_roles: Optional collection of roles the caller must hold.
+        required_permissions: Optional collection of permissions the caller must hold.
+
+    Returns:
+        FastAPI async dependency callable returning the verified ``Identity``.
+
+    Notes/Architectural Intent:
+        Supports ``JwksOidcSecurityAdapter``, ``JwtSecurityAdapter``, or any
+        ``SecurityPort`` implementation via constructor or DI container injection,
+        populating ambient ``UserContext`` for downstream CQRS/logging layers.
+    """
+    _require_fastapi()
+    from fastapi import HTTPException, status
+
+    async def _dependency(request: Request) -> Identity:
+        auth_header = request.headers.get("Authorization") or ""
+        scheme, _, raw_token = auth_header.strip().partition(" ")
+        token = raw_token.strip()
+        if scheme.casefold() != "bearer" or not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing or invalid Bearer authentication header.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        resolved_port = security_port
+        if resolved_port is None:
+            container = getattr(request.app.state, "container", None)
+            if container is None or SecurityPort not in container:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="SecurityPort is not configured in DI container.",
+                )
+            resolved_port = container.resolve(SecurityPort)
+
+        try:
+            identity = resolved_port.verify_token(token)
+        except AuthError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(exc),
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from exc
+
+        if required_roles and not identity.has_all_roles(required_roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient role privileges.",
+            )
+        if required_permissions and not identity.has_all_permissions(
+            required_permissions
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions.",
+            )
+
+        set_user_context(
+            UserContext(
+                user_id=identity.user_id,
+                roles=sorted(identity.roles),
+                tenant_id=identity.tenant_id,
+            )
+        )
+        return identity
+
+    return _dependency
+
+
 def create_auth_router(
     handlers: UserLifecycleHandlers,
     jwt_adapter: JwtSecurityAdapter | None = None,
@@ -365,6 +452,11 @@ def create_oauth_router(
     redirect_uri: str = "http://localhost:8000/auth/oauth/callback",
     prefix: str = "/auth/oauth",
     tags: list[str | Enum] | None = None,
+    *,
+    use_pkce: bool = True,
+    use_nonce: bool = True,
+    require_state: bool = True,
+    state_ttl_seconds: int = 300,
 ) -> APIRouter:
     """Generate a turnkey FastAPI APIRouter for social OAuth2 / OIDC login workflows.
 
@@ -375,29 +467,72 @@ def create_oauth_router(
         redirect_uri: Registered callback URL.
         prefix: URL prefix.
         tags: OpenAPI tags.
+        use_pkce: Attach RFC 7636 ``S256`` PKCE challenge/verifier across redirects.
+        use_nonce: Attach OIDC ``nonce`` binding across authorization and callback.
+        require_state: Validate and consume single-use anti-CSRF ``state`` tokens.
+        state_ttl_seconds: Lifetime of ephemeral pending authorization transactions.
 
     Returns:
         Ready-to-mount FastAPI APIRouter instance.
+
+    Notes/Architectural Intent:
+        Stores single-use pending PKCE verifier and OIDC nonce state per transaction
+        keyed by CSPRNG ``state`` so replay, CSRF, and authorization-code injection
+        attacks fail closed at the HTTP callback boundary.
     """
     _require_fastapi()
     from fastapi import APIRouter, HTTPException, status
     from fastapi.responses import RedirectResponse
 
     router = APIRouter(prefix=prefix, tags=tags or [f"OAuth ({oauth_provider.name})"])
+    pending_states: dict[str, tuple[str | None, str | None, float]] = {}
+
+    def _prune_expired(now: float) -> None:
+        expired_keys = [
+            key for key, (_, _, exp) in pending_states.items() if exp <= now
+        ]
+        for key in expired_keys:
+            pending_states.pop(key, None)
 
     @router.get(f"/{oauth_provider.name}/authorize")
     async def authorize() -> RedirectResponse:
-        state = secrets.token_urlsafe(16)
-        auth_url = oauth_provider.get_authorization_url(
-            state=state, redirect_uri=redirect_uri
+        now = time.monotonic()
+        _prune_expired(now)
+        auth_req = oauth_provider.create_authorization_request(
+            redirect_uri=redirect_uri,
+            use_pkce=use_pkce,
+            use_nonce=use_nonce,
         )
-        return RedirectResponse(url=auth_url)
+        pending_states[auth_req.state] = (
+            auth_req.code_verifier,
+            auth_req.nonce,
+            now + max(1, state_ttl_seconds),
+        )
+        return RedirectResponse(url=auth_req.url)
 
     @router.get(f"/{oauth_provider.name}/callback", response_model=TokenResponse)
     async def callback(code: str, state: str | None = None) -> TokenResponse:
+        now = time.monotonic()
+        _prune_expired(now)
+        entry = pending_states.pop(state, None) if state is not None else None
+        if require_state and entry is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid, missing, or expired OAuth state parameter.",
+            )
+
+        code_verifier, expected_nonce, _ = (
+            entry if entry is not None else (None, None, 0.0)
+        )
+        exchange_kwargs: dict[str, Any] = {}
+        if code_verifier is not None:
+            exchange_kwargs["code_verifier"] = code_verifier
+        if expected_nonce is not None:
+            exchange_kwargs["expected_nonce"] = expected_nonce
+
         try:
             user_info = await oauth_provider.exchange_code(
-                code=code, redirect_uri=redirect_uri
+                code=code, redirect_uri=redirect_uri, **exchange_kwargs
             )
             cmd = OAuthLoginCommand(provider=oauth_provider.name, oauth_user=user_info)
             user = await handlers.oauth_login_async(cmd)
@@ -422,6 +557,7 @@ __all__ = [
     "ForgotPasswordRequest",
     "LoginRequest",
     "RegisterRequest",
+    "require_bearer_token",
     "require_policy",
     "require_relation",
     "ResetPasswordRequest",

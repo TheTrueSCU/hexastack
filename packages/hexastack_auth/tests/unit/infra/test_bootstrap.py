@@ -130,3 +130,42 @@ def test_auth_bootstrapper_opa_openfga_and_spiffe_configurations():
     bootstrapper.configure(ctx2)
 
     assert isinstance(c2.resolve(AuthorizationPolicyPort), OpenFgaPolicyAdapter)
+
+
+def test_auth_bootstrapper_oidc_configuration() -> None:
+    """Verify AuthBootstrapper configures JwksOidcSecurityAdapter when provider='oidc'."""
+    from hexastack_auth.adapters.oidc import JwksOidcSecurityAdapter
+    from hexastack_auth.domain.config import OidcConfig
+
+    bootstrapper = AuthBootstrapper()
+    c_oidc = Container()
+    cfg_oidc = HexastackAuthConfig(
+        provider="oidc",
+        oidc=OidcConfig(
+            enabled=True,
+            issuer="https://idp.example.com",
+            audience="hexastack-api",
+            jwks_uri="https://idp.example.com/jwks.json",
+        ),
+    )
+    c_oidc.add_instance(cfg_oidc, declared_class=HexastackAuthConfig)
+    ctx = BootstrapContext(
+        container=c_oidc, config=None, config_registry=ConfigRegistry()
+    )
+    bootstrapper.configure(ctx)
+
+    sec_svc = c_oidc.resolve(SecurityPort)
+    assert isinstance(sec_svc, JwksOidcSecurityAdapter)
+
+    # Incomplete OIDC config fails fast
+    c_bad = Container()
+    c_bad.add_instance(
+        HexastackAuthConfig(provider="oidc"), declared_class=HexastackAuthConfig
+    )
+    bad_ctx = BootstrapContext(
+        container=c_bad, config=None, config_registry=ConfigRegistry()
+    )
+    import pytest
+
+    with pytest.raises(ValueError, match="jwks_uri"):
+        bootstrapper.configure(bad_ctx)
