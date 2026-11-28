@@ -3,6 +3,30 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class OidcConfig(BaseModel):
+    """Configuration options for OIDC discovery and JWKS asymmetric JWT verification.
+
+    Notes/Architectural Intent:
+        Configures remote JWKS verification for federated identity providers such
+        as Keycloak, Authentik, Authelia, Okta, and Entra ID while enforcing
+        asymmetric algorithms and access-token vs. ID-token confusion protections.
+    """
+
+    enabled: bool = False
+    issuer: str = ""
+    audience: str = ""
+    jwks_uri: str | None = None
+    discovery_url: str | None = None
+    algorithms: list[str] = Field(default_factory=lambda: ["RS256", "ES256", "EdDSA"])
+    require_access_token_typ: bool = False
+    reject_id_tokens: bool = True
+    jwks_cache_ttl_seconds: int = 300
+    roles_claim: str = "roles"
+    permissions_claim: str = "permissions"
+    tenant_claim: str = "tenant_id"
+    leeway_seconds: int = 30
+
+
 class OpaConfig(BaseModel):
     """Configuration options for Open Policy Agent integration."""
 
@@ -57,14 +81,15 @@ class HexastackAuthConfig(BaseModel):
         default=None,
         description="Expected token audience string ('aud' claim).",
     )
-    provider: Literal["jwt", "memory"] = Field(
+    provider: Literal["jwt", "memory", "oidc"] = Field(
         default="jwt",
-        description="Security provider backend ('jwt' or 'memory').",
+        description="Security provider backend ('jwt', 'memory', or 'oidc').",
     )
     hasher: Literal["pbkdf2", "memory"] = Field(
         default="pbkdf2",
         description="Password hashing backend ('pbkdf2' or 'memory').",
     )
+    oidc: OidcConfig = Field(default_factory=OidcConfig)
     opa: OpaConfig = Field(default_factory=OpaConfig)
     openfga: OpenFgaConfig = Field(default_factory=OpenFgaConfig)
     spiffe: SpiffeConfig = Field(default_factory=SpiffeConfig)
@@ -76,6 +101,7 @@ class HexastackAuthConfig(BaseModel):
 
 __all__ = [
     "HexastackAuthConfig",
+    "OidcConfig",
     "OpaConfig",
     "OpenFgaConfig",
     "SpiffeConfig",

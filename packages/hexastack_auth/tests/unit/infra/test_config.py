@@ -1,5 +1,6 @@
 from hexastack_auth.infra.config import (
     HexastackAuthConfig,
+    OidcConfig,
     register_auth_config,
 )
 from hexastack_core.infra.registries.config import ConfigRegistry
@@ -44,3 +45,12 @@ def test_register_auth_config():
     assert "auth" in reg
     schema = reg.get("auth")
     assert schema is HexastackAuthConfig
+
+    oidc_cfg = OidcConfig(
+        enabled=True,
+        issuer="https://idp.example.com",
+        audience="hexastack-api",
+        jwks_uri="https://idp.example.com/jwks.json",
+    )
+    assert oidc_cfg.enabled is True
+    assert oidc_cfg.reject_id_tokens is True

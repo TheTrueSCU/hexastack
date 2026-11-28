@@ -7,8 +7,15 @@ Notes/Architectural Intent:
 
 from __future__ import annotations
 
+import secrets
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+from hexastack_auth.domain.oidc import (
+    OAuthAuthorizationRequest,
+    generate_oidc_nonce,
+    generate_pkce_pair,
+)
 
 if TYPE_CHECKING:
     from hexastack_auth.domain.user import OAuthUserInfo, User, VerificationToken
@@ -215,24 +222,102 @@ class OAuthProviderPort(ABC):
         """Canonical name identifier of the provider (e.g. 'google', 'github')."""
 
     @abstractmethod
-    def get_authorization_url(self, state: str, redirect_uri: str) -> str:
+    def get_authorization_url(
+        self,
+        state: str,
+        redirect_uri: str,
+        *,
+        code_challenge: str | None = None,
+        code_challenge_method: str | None = None,
+        nonce: str | None = None,
+    ) -> str:
         """Generate the external provider's login authorization URL.
 
         Args:
             state: Cryptographic anti-CSRF state parameter.
             redirect_uri: Registered callback URL on the application server.
+            code_challenge: Optional PKCE code challenge string (S256).
+            code_challenge_method: Optional PKCE challenge method (``'S256'``).
+            nonce: Optional OIDC ID-token binding nonce.
 
         Returns:
             Full HTTPS authorization URL to redirect user agent.
         """
 
+    def create_authorization_request(
+        self,
+        redirect_uri: str,
+        *,
+        state: str | None = None,
+        use_pkce: bool = True,
+        use_nonce: bool = True,
+    ) -> OAuthAuthorizationRequest:
+        """Construct a stateful authorization redirect bundle with PKCE and OIDC nonce.
+
+        Args:
+            redirect_uri: Registered callback URL on the application server.
+            state: Optional explicit anti-CSRF state (CSPRNG generated if omitted).
+            use_pkce: Whether to attach an RFC 7636 ``S256`` PKCE challenge pair.
+            use_nonce: Whether to attach a CSPRNG OIDC nonce parameter.
+
+        Returns:
+            ``OAuthAuthorizationRequest`` containing redirect URL, ``state``,
+            and ephemeral ``code_verifier`` / ``nonce`` secrets.
+
+        Notes/Architectural Intent:
+            Concrete helper on ``OAuthProviderPort`` so existing providers only
+            implementing the three abstract members gain PKCE and nonce generation
+            without altering ``OAuthProviderPort.__abstractmethods__``.
+        """
+        resolved_state = state or secrets.token_urlsafe(24)
+        code_verifier: str | None = None
+        code_challenge: str | None = None
+        code_challenge_method: str | None = None
+        extra_kwargs: dict[str, Any] = {}
+
+        if use_pkce:
+            pkce_pair = generate_pkce_pair()
+            code_verifier = pkce_pair.code_verifier
+            code_challenge = pkce_pair.code_challenge
+            code_challenge_method = pkce_pair.code_challenge_method
+            extra_kwargs["code_challenge"] = code_challenge
+            extra_kwargs["code_challenge_method"] = code_challenge_method
+
+        nonce: str | None = None
+        if use_nonce:
+            nonce = generate_oidc_nonce()
+            extra_kwargs["nonce"] = nonce
+
+        auth_url = self.get_authorization_url(
+            state=resolved_state,
+            redirect_uri=redirect_uri,
+            **extra_kwargs,
+        )
+        return OAuthAuthorizationRequest(
+            url=auth_url,
+            state=resolved_state,
+            code_verifier=code_verifier,
+            code_challenge=code_challenge,
+            code_challenge_method=code_challenge_method,
+            nonce=nonce,
+        )
+
     @abstractmethod
-    async def exchange_code(self, code: str, redirect_uri: str) -> OAuthUserInfo:
+    async def exchange_code(
+        self,
+        code: str,
+        redirect_uri: str,
+        *,
+        code_verifier: str | None = None,
+        expected_nonce: str | None = None,
+    ) -> OAuthUserInfo:
         """Exchange the provider's authorization code for normalized user claims.
 
         Args:
             code: Temporary authorization code returned by provider.
             redirect_uri: Same redirect URI used in authorization request.
+            code_verifier: Optional RFC 7636 PKCE verifier matching prior challenge.
+            expected_nonce: Optional OIDC nonce expected inside returned ID tokens.
 
         Returns:
             Normalized OAuthUserInfo containing email, provider ID, and claims.

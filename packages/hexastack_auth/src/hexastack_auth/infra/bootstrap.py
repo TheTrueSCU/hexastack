@@ -15,6 +15,49 @@ from hexastack_core.infra.registries.config import ConfigRegistry
 from hexastack_core.ports.bootstrap import BootstrapperPort
 
 
+def _create_oidc_security_adapter(cfg: HexastackAuthConfig) -> SecurityPort:
+    """Instantiate ``JwksOidcSecurityAdapter`` from static config or OIDC discovery."""
+    from hexastack_auth.adapters.oidc import JwksOidcSecurityAdapter
+
+    oidc_cfg = cfg.oidc
+    allowed_algs = tuple(oidc_cfg.algorithms)
+    audience = oidc_cfg.audience or (cfg.audience or "")
+    issuer = oidc_cfg.issuer or (cfg.issuer or "")
+    if oidc_cfg.jwks_uri:
+        return JwksOidcSecurityAdapter(
+            jwks_uri=oidc_cfg.jwks_uri,
+            issuer=issuer,
+            audience=audience,
+            allowed_algorithms=allowed_algs,
+            require_access_token_typ=oidc_cfg.require_access_token_typ,
+            reject_id_tokens=oidc_cfg.reject_id_tokens,
+            jwks_cache_ttl_seconds=oidc_cfg.jwks_cache_ttl_seconds,
+            roles_claim=oidc_cfg.roles_claim,
+            permissions_claim=oidc_cfg.permissions_claim,
+            tenant_claim=oidc_cfg.tenant_claim,
+            leeway_seconds=oidc_cfg.leeway_seconds,
+        )
+    if oidc_cfg.discovery_url or issuer:
+        discovery_target = oidc_cfg.discovery_url or issuer
+        return JwksOidcSecurityAdapter.from_discovery(
+            discovery_target,
+            audience=audience,
+            allowed_algorithms=allowed_algs,
+            require_access_token_typ=oidc_cfg.require_access_token_typ,
+            reject_id_tokens=oidc_cfg.reject_id_tokens,
+            jwks_cache_ttl_seconds=oidc_cfg.jwks_cache_ttl_seconds,
+            roles_claim=oidc_cfg.roles_claim,
+            permissions_claim=oidc_cfg.permissions_claim,
+            tenant_claim=oidc_cfg.tenant_claim,
+            leeway_seconds=oidc_cfg.leeway_seconds,
+        )
+    msg = (
+        "OIDC security provider requires 'oidc.jwks_uri', "
+        "'oidc.discovery_url', or 'oidc.issuer' to be configured."
+    )
+    raise ValueError(msg)
+
+
 class AuthBootstrapper(BootstrapperPort):
     """Bootstrapper configuring authentication, token services, and CQRS security middleware.
 
@@ -49,7 +92,9 @@ class AuthBootstrapper(BootstrapperPort):
 
         # 3. Instantiate Security Port (Token Service)
         security_svc: SecurityPort
-        if cfg.provider == "jwt":
+        if cfg.provider == "oidc" or cfg.oidc.enabled:
+            security_svc = _create_oidc_security_adapter(cfg)
+        elif cfg.provider == "jwt":
             security_svc = JwtSecurityAdapter(
                 secret_key=cfg.secret_key,
                 algorithm=cfg.algorithm,

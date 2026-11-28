@@ -3006,6 +3006,9 @@ nicegui = [
 oci = [
     { name = "hexastack-core", extra = ["oci"] },
 ]
+oidc = [
+    { name = "hexastack-auth", extra = ["oidc"] },
+]
 opa = [
     { name = "hexastack-auth", extra = ["opa"] },
 ]
@@ -3119,6 +3122,7 @@ requires-dist = [
     { name = "hexastack-auth", extras = ["all"], marker = "extra == 'all'", editable = "packages/hexastack_auth" },
     { name = "hexastack-auth", extras = ["argon2"], marker = "extra == 'argon2'", editable = "packages/hexastack_auth" },
     { name = "hexastack-auth", extras = ["bcrypt"], marker = "extra == 'bcrypt'", editable = "packages/hexastack_auth" },
+    { name = "hexastack-auth", extras = ["oidc"], marker = "extra == 'oidc'", editable = "packages/hexastack_auth" },
     { name = "hexastack-auth", extras = ["opa"], marker = "extra == 'opa'", editable = "packages/hexastack_auth" },
     { name = "hexastack-auth", extras = ["openfga"], marker = "extra == 'openfga'", editable = "packages/hexastack_auth" },
     { name = "hexastack-auth", extras = ["spiffe"], marker = "extra == 'spiffe'", editable = "packages/hexastack_auth" },
@@ -3218,7 +3222,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'web'", specifier = ">=0.30.0" },
 ]
-provides-extras = ["ai", "analytics", "argon2", "apprise", "async", "auth", "bcrypt", "cli", "db", "debug", "devtools", "diagnostics", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "gcs", "granian", "graphql", "grpc", "hexaqueue", "huey", "identity", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "oci", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "pointers", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "s3", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
+provides-extras = ["ai", "analytics", "argon2", "apprise", "async", "auth", "bcrypt", "cli", "db", "debug", "devtools", "diagnostics", "dlt", "docs", "duckdb", "events", "fastapi", "filelock", "flagd", "flags", "flow", "fsspec", "gcs", "granian", "graphql", "grpc", "hexaqueue", "huey", "identity", "janus", "kafka", "loguru", "mcp", "migrations", "msgspec", "nats", "nicegui", "oci", "oidc", "opa", "openfga", "otel", "otlp", "pgvector", "postgresql", "pointers", "profiling", "qdrant", "qual", "qual-events", "qual-mcp", "qual-ui", "ratelimit", "redis", "s3", "reflection", "rich", "sentry", "spiffe", "ssh", "sql", "sqlite", "structlog", "testing", "textual", "ui", "valkey", "web", "ziti", "all"]
 
 [[package]]
 name = "hexastack-ai"
@@ -3301,6 +3305,10 @@ fastapi = [
 grpc = [
     { name = "grpcio" },
 ]
+oidc = [
+    { name = "cryptography" },
+    { name = "httpx" },
+]
 opa = [
     { name = "httpx" },
 ]
@@ -3320,6 +3328,7 @@ requires-dist = [
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.2.0" },
     { name = "bcrypt", marker = "extra == 'bcrypt'", specifier = ">=4.2.0" },
     { name = "cryptography", marker = "extra == 'all'", specifier = ">=43.0.0" },
+    { name = "cryptography", marker = "extra == 'oidc'", specifier = ">=43.0.0" },
     { name = "cryptography", marker = "extra == 'spiffe'", specifier = ">=43.0.0" },
     { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.115.0" },
     { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.115.0" },
@@ -3328,6 +3337,7 @@ requires-dist = [
     { name = "hexastack-core", editable = "packages/hexastack_core" },
     { name = "hexastack-cqrs", editable = "packages/hexastack_cqrs" },
     { name = "httpx", marker = "extra == 'all'", specifier = ">=0.27.0" },
+    { name = "httpx", marker = "extra == 'oidc'", specifier = ">=0.27.0" },
     { name = "httpx", marker = "extra == 'opa'", specifier = ">=0.27.0" },
     { name = "httpx", marker = "extra == 'openfga'", specifier = ">=0.27.0" },
     { name = "openfga-sdk", marker = "extra == 'all'", specifier = ">=0.6.0" },
@@ -3337,7 +3347,7 @@ requires-dist = [
     { name = "spiffe", marker = "extra == 'all'", specifier = ">=0.3.0" },
     { name = "spiffe", marker = "extra == 'spiffe'", specifier = ">=0.3.0" },
 ]
-provides-extras = ["argon2", "bcrypt", "fastapi", "grpc", "opa", "openfga", "spiffe", "all"]
+provides-extras = ["argon2", "bcrypt", "fastapi", "grpc", "oidc", "opa", "openfga", "spiffe", "all"]
 
 [[package]]
 name = "hexastack-cli"

@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock
+from urllib.parse import parse_qs, urlparse
 
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
@@ -7,6 +8,7 @@ from rodi import Container
 from hexastack_auth.adapters.fastapi import (
     create_auth_router,
     create_oauth_router,
+    require_bearer_token,
     require_policy,
     require_relation,
 )
@@ -346,14 +348,27 @@ def test_create_oauth_router_flow():
     app.include_router(router)
     client = TestClient(app, follow_redirects=False)
 
-    # 1. Authorize redirect
+    # 1. Authorize redirect includes PKCE S256, OIDC nonce, and single-use state
     res_auth = client.get("/auth/oauth/google/authorize")
     assert res_auth.status_code == 307
     location = res_auth.headers.get("location", "")
     assert location.startswith("https://accounts.google.com/o/oauth2/v2/auth")
-    assert "client_id=mock_client_id" in location
+    query_params = parse_qs(urlparse(location).query)
+    assert query_params["client_id"] == ["mock_client_id"]
+    assert query_params["code_challenge_method"] == ["S256"]
+    assert "code_challenge" in query_params
+    assert "nonce" in query_params
+    real_state = query_params["state"][0]
 
-    # 2. Callback success
+    # 2. Callback with missing or unknown state fails closed with HTTP 400
+    res_missing_state = client.get("/auth/oauth/google/callback?code=valid_code")
+    assert res_missing_state.status_code == 400
+    res_forged_state = client.get(
+        "/auth/oauth/google/callback?code=valid_code&state=forged"
+    )
+    assert res_forged_state.status_code == 400
+
+    # 3. Callback success with matching state forwards PKCE code_verifier & expected_nonce
     mock_user_info = OAuthUserInfo(
         provider="google",
         account_id="google-sub-42",
@@ -362,21 +377,117 @@ def test_create_oauth_router_flow():
     )
     provider.exchange_code = AsyncMock(return_value=mock_user_info)  # type: ignore[method-assign]
 
-    res_callback = client.get("/auth/oauth/google/callback?code=valid_code&state=xyz")
+    res_callback = client.get(
+        f"/auth/oauth/google/callback?code=valid_code&state={real_state}"
+    )
     assert res_callback.status_code == 200
     token_data = res_callback.json()
     assert "access_token" in token_data
+    exchange_kwargs = provider.exchange_code.call_args.kwargs
+    assert "code_verifier" in exchange_kwargs
+    assert exchange_kwargs["expected_nonce"] == query_params["nonce"][0]
+
+    # Replaying consumed single-use state is rejected
+    res_replay = client.get(
+        f"/auth/oauth/google/callback?code=valid_code&state={real_state}"
+    )
+    assert res_replay.status_code == 400
 
     # Verify user was created in repository
     user = user_repo.get_by_email("oauth_dev@example.com")
     assert user is not None
     assert user.is_verified is True
-    assert len(user.oauth_accounts) == 1
+    oauth_acct_count = len(user.oauth_accounts)
+    assert oauth_acct_count == 1
 
-    # 3. Callback error from OAuth provider
+    # 4. Callback error from OAuth provider propagates as HTTP 400
+    res_auth2 = client.get("/auth/oauth/google/authorize")
+    state2 = parse_qs(urlparse(res_auth2.headers.get("location", "")).query)["state"][0]
     provider.exchange_code = AsyncMock(
         side_effect=OAuthProviderError("google", "Token exchange error")
     )  # type: ignore[method-assign]
-    res_err = client.get("/auth/oauth/google/callback?code=bad_code")
+    res_err = client.get(f"/auth/oauth/google/callback?code=bad_code&state={state2}")
     assert res_err.status_code == 400
     assert "Token exchange error" in res_err.json()["detail"]
+
+
+def test_require_bearer_token_and_opt_out_oauth_router() -> None:
+    """Verify require_bearer_token enforces valid JWT, roles/permissions, and DI fallback."""
+    from typing import Annotated
+
+    from hexastack_auth.domain.models import Identity
+    from hexastack_auth.ports.security import SecurityPort
+
+    jwt_adapter = JwtSecurityAdapter(
+        secret_key="unit-test-secret-key-32-bytes-long!"  # pragma: allowlist secret
+    )
+    valid_token = jwt_adapter.create_token(
+        Identity(
+            user_id="svc-user",
+            roles=frozenset({"reader"}),
+            permissions=frozenset({"items:read"}),
+        )
+    )
+
+    app = FastAPI()
+    container = Container()
+    container.add_instance(jwt_adapter, declared_class=SecurityPort)
+    app.state.container = container
+
+    @app.get("/me")
+    def get_me(identity: Annotated[Identity, Depends(require_bearer_token())]):
+        return {"user_id": identity.user_id}
+
+    @app.get(
+        "/admin",
+        dependencies=[
+            Depends(
+                require_bearer_token(
+                    jwt_adapter,
+                    required_roles={"admin"},
+                )
+            )
+        ],
+    )
+    def get_admin():
+        return {"ok": True}
+
+    client = TestClient(app)
+    res_no_hdr = client.get("/me")
+    assert res_no_hdr.status_code == 401
+    res_bad_tok = client.get(
+        "/me", headers={"Authorization": "Bearer not-a-valid-token"}
+    )
+    assert res_bad_tok.status_code == 401
+    res_ok = client.get("/me", headers={"Authorization": f"Bearer {valid_token}"})
+    assert res_ok.status_code == 200
+    assert res_ok.json() == {"user_id": "svc-user"}
+
+    res_forbidden = client.get(
+        "/admin", headers={"Authorization": f"Bearer {valid_token}"}
+    )
+    assert res_forbidden.status_code == 403
+
+    # Also test opt-out stateless callback mode (require_state=False)
+    user_repo = InMemoryUserRepository()
+    handlers = UserLifecycleHandlers(
+        user_repository=user_repo, token_store=InMemoryTokenStore()
+    )
+    provider = GoogleOAuthProvider(client_id="cid")
+    provider.exchange_code = AsyncMock(
+        return_value=OAuthUserInfo(
+            provider="google", account_id="sub-9", email="opt@example.com"
+        )
+    )  # type: ignore[method-assign]
+    app_stateless = FastAPI()
+    app_stateless.include_router(
+        create_oauth_router(
+            provider,
+            handlers,
+            use_pkce=False,
+            use_nonce=False,
+            require_state=False,
+        )
+    )
+    res_opt = TestClient(app_stateless).get("/auth/oauth/google/callback?code=abc")
+    assert res_opt.status_code == 200
