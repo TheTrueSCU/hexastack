@@ -103,10 +103,10 @@ jobs:
 
       - name: Probe Hexaqueue Cloud Fleet
         id: probe
-        uses: TheTrueSCU/hexaqueue@1e7b3c4625c82bece17dbc9eafc72664e4bd501c # v0.12.1
+        uses: TheTrueSCU/hexaqueue@5a6bc4a2325d7002e8ba96dc78c9f8440e980f8e # v0.12.2
         with:
           cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
-          version: ">=0.12.1"
+          version: ">=0.12.2"
           probe-only: "true"
           step-summary: "true"
 
@@ -145,10 +145,10 @@ jobs:
 
       - name: Connect to Hexaqueue Cluster (Cloud Execution)
         if: needs.cluster-probe.outputs.cluster_ready == 'true'
-        uses: TheTrueSCU/hexaqueue@1e7b3c4625c82bece17dbc9eafc72664e4bd501c # v0.12.1
+        uses: TheTrueSCU/hexaqueue@5a6bc4a2325d7002e8ba96dc78c9f8440e980f8e # v0.12.2
         with:
           cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
-          version: ">=0.12.1"
+          version: ">=0.12.2"
           auto-tunnel: "true"
           step-summary: "false"
 
@@ -404,10 +404,10 @@ jobs:
 
       - name: Connect to Hexaqueue Cluster (Cloud Execution)
         if: needs.cluster-probe.outputs.cluster_ready == 'true'
-        uses: TheTrueSCU/hexaqueue@1e7b3c4625c82bece17dbc9eafc72664e4bd501c # v0.12.1
+        uses: TheTrueSCU/hexaqueue@5a6bc4a2325d7002e8ba96dc78c9f8440e980f8e # v0.12.2
         with:
           cluster-env: ${{ secrets.HEXAQUEUE_ENV }}
-          version: ">=0.12.1"
+          version: ">=0.12.2"
           auto-tunnel: "true"
           step-summary: "false"
 
